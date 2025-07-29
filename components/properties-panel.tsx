@@ -1,0 +1,552 @@
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { EmailComponent } from "@/types/email-builder";
+import { Button } from "@/components/ui/button";
+import { ImageUpload } from "./image-upload";
+import { useEffect, useState } from "react";
+import { Checkbox } from "./ui/checkbox";
+
+interface PropertiesPanelProps {
+  component: EmailComponent | undefined;
+  onUpdateComponent: (updates: Partial<EmailComponent>) => void;
+  onSaveAsCustom?: () => void;
+}
+
+export function PropertiesPanel({
+  component,
+  onUpdateComponent,
+  onSaveAsCustom,
+}: PropertiesPanelProps) {
+  const [Links, setLinks] = useState<{ href: string; text: string }[]>([]);
+  if (!component) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        <div className="text-lg font-medium mb-2">No component selected</div>
+        <div className="text-sm">Select a component to edit its properties</div>
+      </div>
+    );
+  }
+
+  const isColumn = component.type === "section" && component.isColumn;
+
+  useEffect(() => {
+    if (component && component.content?.includes("<a")) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(component.content, "text/html");
+      const anchors = doc.querySelectorAll("a");
+      const parsedLinks = Array.from(anchors).map((a) => ({
+        href: a.getAttribute("href") || "",
+        text: a.textContent || "",
+      }));
+      setLinks(parsedLinks);
+    } else {
+      setLinks([]);
+    }
+  }, [component]);
+
+  const updateLink = (index: number, newHref: string, newText: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(component.content!, "text/html");
+    const anchors = doc.querySelectorAll("a");
+
+    if (anchors[index]) {
+      anchors[index].setAttribute("href", newHref);
+      anchors[index].textContent = newText;
+    }
+
+    const updatedHtml = doc.body.innerHTML;
+    onUpdateComponent({ content: updatedHtml });
+  };
+
+  const renderProperties = () => {
+    switch (component.type) {
+      case "section":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="backgroundColor">Background Color</Label>
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={component.backgroundColor || "#ffffff"}
+                onChange={(e) =>
+                  onUpdateComponent({ backgroundColor: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="borderRadius">Border Radius</Label>
+              <Input
+                id="borderRadius"
+                value={component.borderRadius || "0px"}
+                onChange={(e) =>
+                  onUpdateComponent({ borderRadius: e.target.value })
+                }
+                placeholder="0px"
+              />
+            </div>
+
+            {/* Column-specific properties */}
+            {isColumn && (
+              <>
+                <div className="border-t pt-4">
+                  <h4 className="font-medium text-gray-700 mb-3">
+                    Column Layout
+                  </h4>
+
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="columnAlignment">
+                        Horizontal Alignment
+                      </Label>
+                      <Select
+                        value={component.columnAlignment || "left"}
+                        onValueChange={(value) =>
+                          onUpdateComponent({
+                            columnAlignment: value as
+                              | "left"
+                              | "center"
+                              | "right",
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="left">Left</SelectItem>
+                          <SelectItem value="center">Center</SelectItem>
+                          <SelectItem value="right">Right</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="columnVerticalAlignment">
+                        Vertical Alignment
+                      </Label>
+                      <Select
+                        value={component.columnVerticalAlignment || "top"}
+                        onValueChange={(value) =>
+                          onUpdateComponent({
+                            columnVerticalAlignment: value as
+                              | "top"
+                              | "middle"
+                              | "bottom",
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="top">Top</SelectItem>
+                          <SelectItem value="middle">Middle</SelectItem>
+                          <SelectItem value="bottom">Bottom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="columnMinHeight">Minimum Height</Label>
+                      <Input
+                        id="columnMinHeight"
+                        value={component.columnMinHeight || "120px"}
+                        onChange={(e) =>
+                          onUpdateComponent({ columnMinHeight: e.target.value })
+                        }
+                        placeholder="120px"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="columnWidth">Column Width</Label>
+                      <Select
+                        value={component.columnWidth || "auto"}
+                        onValueChange={(value) =>
+                          onUpdateComponent({ columnWidth: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto (Equal)</SelectItem>
+                          <SelectItem value="25%">25%</SelectItem>
+                          <SelectItem value="33.33%">33%</SelectItem>
+                          <SelectItem value="50%">50%</SelectItem>
+                          <SelectItem value="66.67%">67%</SelectItem>
+                          <SelectItem value="75%">75%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Regular section properties */}
+            {!isColumn && (
+              <>
+                <div>
+                  <Label htmlFor="direction">Layout Direction</Label>
+                  <Select
+                    value={component.direction || "column"}
+                    onValueChange={(value) =>
+                      onUpdateComponent({
+                        direction: value as "row" | "column",
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="column">Vertical (Column)</SelectItem>
+                      <SelectItem value="row">Horizontal (Row)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="maxWidth">Max Width</Label>
+                  <Input
+                    id="maxWidth"
+                    value={component.maxWidth || "100%"}
+                    onChange={(e) =>
+                      onUpdateComponent({ maxWidth: e.target.value })
+                    }
+                    placeholder="100%"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="margin">Margin</Label>
+                  <Input
+                    id="margin"
+                    value={component.margin || "0"}
+                    onChange={(e) =>
+                      onUpdateComponent({ margin: e.target.value })
+                    }
+                    placeholder="0"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        );
+
+      case "text":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "16px"}
+                onChange={(e) =>
+                  onUpdateComponent({ fontSize: e.target.value })
+                }
+                placeholder="16px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="color">Text Color</Label>
+              <Input
+                id="color"
+                type="color"
+                value={component.color || "#000000"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="textAlign">Text Align</Label>
+              <Select
+                value={component.textAlign || "left"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="fontWeight">Font Weight</Label>
+              <Select
+                value={component.fontWeight || "normal"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ fontWeight: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="lighter">Light</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* New: Link editor fields if links exist */}
+            {Links.length > 0 && (
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium text-sm">Edit Links</h4>
+                {Links.map((link, index) => (
+                  <div key={index} className="space-y-2">
+                    <div>
+                      <Label>Link Text</Label>
+                      <Input
+                        value={link.text}
+                        onChange={(e) =>
+                          updateLink(index, link.href, e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Link URL</Label>
+                      <Input
+                        value={link.href}
+                        onChange={(e) =>
+                          updateLink(index, e.target.value, link.text)
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "image":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Upload Image</Label>
+              <ImageUpload
+                currentImage={component.src}
+                onImageUpload={(imageUrl) =>
+                  onUpdateComponent({ src: imageUrl })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="src">Image URL</Label>
+              <Input
+                id="src"
+                value={component.src || ""}
+                onChange={(e) => onUpdateComponent({ src: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <div>
+              <Label htmlFor="alt">Alt Text</Label>
+              <Input
+                id="alt"
+                value={component.alt || ""}
+                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                placeholder="Image description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="width">Width</Label>
+              <Input
+                id="width"
+                value={component.width || "100%"}
+                onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                placeholder="100% or 400px"
+              />
+            </div>
+          </div>
+        );
+
+      case "button":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="text">Button Text</Label>
+              <Input
+                id="text"
+                value={component.text || ""}
+                onChange={(e) => onUpdateComponent({ text: e.target.value })}
+                placeholder="Click Me"
+              />
+            </div>
+            <div>
+              <Label htmlFor="href">Link URL</Label>
+              <Input
+                id="href"
+                value={component.href || ""}
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="backgroundColor">Background Color</Label>
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={component.backgroundColor || "#007bff"}
+                onChange={(e) =>
+                  onUpdateComponent({ backgroundColor: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="color">Text Color</Label>
+              <Input
+                id="color"
+                type="color"
+                value={component.color || "#ffffff"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="borderRadius">Border Radius</Label>
+              <Input
+                id="borderRadius"
+                value={component.borderRadius || "4px"}
+                onChange={(e) =>
+                  onUpdateComponent({ borderRadius: e.target.value })
+                }
+                placeholder="4px"
+              />
+            </div>
+          </div>
+        );
+
+      case "divider":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="height">Height</Label>
+              <Input
+                id="height"
+                value={component.height || "1px"}
+                onChange={(e) => onUpdateComponent({ height: e.target.value })}
+                placeholder="1px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="backgroundColor">Color</Label>
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={component.backgroundColor || "#e0e0e0"}
+                onChange={(e) =>
+                  onUpdateComponent({ backgroundColor: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return <div>No properties available</div>;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900">
+          {isColumn
+            ? "Column"
+            : component.type.charAt(0).toUpperCase() +
+              component.type.slice(1)}{" "}
+          Properties
+        </h3>
+        
+      </div>
+
+      {component.type === "section" && (
+        <div
+          className={`${
+            isColumn ? "bg-green-50" : "bg-blue-50"
+          } p-3 rounded-lg`}
+        >
+          <div
+            className={`text-sm ${
+              isColumn ? "text-green-800" : "text-blue-800"
+            } font-medium mb-1`}
+          >
+            {isColumn ? (
+              <>Column Container</>
+            ) : (
+              <>
+                {component.columns
+                  ? `${component.columns} Column Section`
+                  : "Section Container"}
+                {component.isHero && " (Hero Template)"}
+              </>
+            )}
+          </div>
+          <div
+            className={`text-xs ${
+              isColumn ? "text-green-600" : "text-blue-600"
+            }`}
+          >
+            {isColumn ? (
+              <>
+                Individual column with {component.children?.length || 0}{" "}
+                component(s). Customize alignment, background, and layout.
+              </>
+            ) : (
+              <>
+                Contains {component.children?.length || 0} component(s).
+                {component.columns &&
+                  component.columns > 1 &&
+                  " Each column can hold multiple components."}
+                {component.isHero &&
+                  " Pre-configured hero section with text and button."}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {renderProperties()}
+
+      {/* Common Properties */}
+      <div className="border-t pt-4">
+        <h4 className="font-medium text-gray-700 mb-3">Spacing</h4>
+        <div>
+          <Label htmlFor="padding">Padding</Label>
+          <Input
+            id="padding"
+            value={component.padding || "16px"}
+            onChange={(e) => onUpdateComponent({ padding: e.target.value })}
+            placeholder="16px"
+          />
+        </div>
+      </div>
+      <div className="border-t pt-4">
+  <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
+
+  <div className="flex items-center space-x-2">
+    <Checkbox
+      id="isMobileComponent"
+      checked={false}
+      onCheckedChange={(checked) => onUpdateComponent({ isMobileComponent: checked })}
+    />
+    <Label htmlFor="isMobileComponent">Is mobile component</Label>
+  </div>
+</div>
+    </div>
+  );
+}
