@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { devtools, persist } from "zustand/middleware"
 import type { EmailComponent } from "@/types/email-builder"
 import type { EmailTemplate } from "@/types/template"
+import { firebaseService } from "@/services/firebase-service"
 
 interface EmailBuilderState {
   // Template data
@@ -51,6 +52,8 @@ interface EmailBuilderState {
   setSelectedComponent: (id: string | null) => void
   setPreviewMode: (preview: boolean) => void
   addCustomComponent: (component: EmailComponent) => void
+  loadCustomComponents: (components: EmailComponent[]) => void
+  deleteCustomComponent: (id: string) => void
 
   // State management
   setLoading: (loading: boolean) => void
@@ -211,9 +214,28 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         // UI actions
         setSelectedComponent: (id) => set({ selectedComponent: id }),
         setPreviewMode: (preview) => set({ previewMode: preview }),
-        addCustomComponent: (component) => {
+        loadCustomComponents: (components) => {
+          console.log("Loading custom components:", components)
+          set({ customComponents: components })
+        },
+        addCustomComponent: async(component) => {
           const { customComponents } = get()
-          set({ customComponents: [...customComponents, component] })
+          console.log("Adding custom component:");
+          if (!Array.isArray(customComponents)){
+            console.error("Custom components is not an array, resetting to empty array.");
+            const createComponent = await firebaseService.saveCustomComponent(component)
+            set({ customComponents: [createComponent] });
+          }else{
+            const createComponent = await firebaseService.saveCustomComponent(component)
+             set({ customComponents: [...customComponents, createComponent] })
+          }
+        },
+        deleteCustomComponent: async (id) => {
+          const { customComponents } = get()
+          console.log("Deleting custom component with ID:", id);
+          
+          await firebaseService.deleteCustomComponent(id)
+          set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
         },
 
         // State management

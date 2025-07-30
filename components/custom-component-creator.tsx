@@ -24,13 +24,9 @@ import { Textarea } from "./ui/textarea";
 import { toast } from "sonner";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 
-interface CustomComponentCreatorProps {
-  onCreateCustomComponent: (component: EmailComponent) => void;
-}
 
-export function CustomComponentCreator({
-  onCreateCustomComponent,
-}: CustomComponentCreatorProps) {
+
+export function CustomComponentCreator() {
   const [isOpen, setIsOpen] = useState(false);
   const [componentName, setComponentName] = useState("");
   const [componentType, setComponentType] = useState<
@@ -52,7 +48,7 @@ export function CustomComponentCreator({
       
 
       const isTableHTML =
-    /^<tr[\s\S]*<\/tr>$/.test(html) ||
+    /^<table[\s\S]*<\/table>$/.test(html) ||
     (html?.startsWith("<tr") && html?.includes("</tr>"));
 
         if(html && !isTableHTML){
@@ -97,7 +93,7 @@ export function CustomComponentCreator({
         break;
     }
 
-    onCreateCustomComponent(newComponent);
+
     addCustomComponent(newComponent)
     setIsOpen(false);
     setComponentName("");
@@ -205,7 +201,7 @@ export function CustomComponentCreator({
                     html: e.target.value,
                   }))
                 }
-                placeholder="<tr>....</tr>"
+                placeholder="<table>....</table>"
               />
             </div>
           </div>

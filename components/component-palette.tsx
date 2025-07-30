@@ -1,11 +1,14 @@
 "use client"
 
 import { useDrag } from "react-dnd"
-import { Type } from "lucide-react"
+import { Trash2, Type } from "lucide-react"
 import type { EmailComponent } from "@/types/email-builder"
 import { componentTypes } from "@/data/component-types"
 import { sectionTemplates } from "@/data/section-templates"
 import { CustomComponentCreator } from "./custom-component-creator"
+import { Button } from "./ui/button"
+import { useEmailBuilderStore } from "@/store/email-builder-store"
+import { toast } from "sonner"
 
 interface ComponentPaletteProps {
   onAddComponent: (component: EmailComponent, index?: number) => void
@@ -64,6 +67,8 @@ function DraggableComponent({
   const label =
     "label" in componentType ? componentType.label : (componentType as any).name || `Custom ${componentType.type}`
 
+  const {deleteCustomComponent} = useEmailBuilderStore()  
+
   return (
     <div
       ref={drag}
@@ -79,15 +84,17 @@ function DraggableComponent({
       <Icon className="w-5 h-5 text-gray-600" />
       <span className="font-medium text-gray-700">{label}</span>
       {isCustom && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Custom</span>}
+      {isCustom && <Button variant={"outline"} size={"icon"} className="p-0" onClick={()=>{
+        deleteCustomComponent(componentType.id)
+        toast.warning("custom component deleted")
+        }}><Trash2 className="text-red-400"/></Button>}
       {isTemplate && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Template</span>}
     </div>
   )
 }
 
 export function ComponentPalette({ onAddComponent, customComponents }: ComponentPaletteProps) {
-  const handleCreateCustomComponent = (component: EmailComponent) => {
-    onAddComponent(component)
-  }
+  
 
   return (
     <div className="space-y-4 overflow-y-auto h-full">
@@ -111,7 +118,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
       </div>
 
       <div className="pt-4">
-        <CustomComponentCreator onCreateCustomComponent={handleCreateCustomComponent} />
+        <CustomComponentCreator />
       </div>
 
       {customComponents.length > 0 && (

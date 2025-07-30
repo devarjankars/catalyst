@@ -94,64 +94,65 @@ export default function EmailBuilder() {
   const selectedComponentData = components.find((comp) => comp.id === selectedComponent)
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="h-screen flex flex-col bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Email Builder</h1>
-          <div className="flex items-center gap-4">
-            <Button
-              variant={previewMode ? "default" : "outline"}
-              onClick={() => setPreviewMode(!previewMode)}
-              className="flex items-center gap-2"
-            >
-              {previewMode ? <Code className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {previewMode ? "Edit" : "Preview"}
-            </Button>
-            <ExportPanel components={components} canvasRef={canvasRef} />
-          </div>
-        </div>
+    // <DndProvider backend={HTML5Backend}>
+    //   <div className="h-screen flex flex-col bg-gray-50">
+    //     {/* Header */}
+    //     <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+    //       <h1 className="text-2xl font-bold text-gray-900">Email Builder</h1>
+    //       <div className="flex items-center gap-4">
+    //         <Button
+    //           variant={previewMode ? "default" : "outline"}
+    //           onClick={() => setPreviewMode(!previewMode)}
+    //           className="flex items-center gap-2"
+    //         >
+    //           {previewMode ? <Code className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    //           {previewMode ? "Edit" : "Preview"}
+    //         </Button>
+    //         <ExportPanel components={components} canvasRef={canvasRef} />
+    //       </div>
+    //     </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
-          {!previewMode && (
-            <div className="w-80 bg-white border-r flex flex-col">
-              <Tabs defaultValue="components" className="flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 m-4">
-                  <TabsTrigger value="components">Components</TabsTrigger>
-                  <TabsTrigger value="properties">Properties</TabsTrigger>
-                </TabsList>
-                <TabsContent value="components" className="flex-1 p-4 pt-0">
-                  <ComponentPalette onAddComponent={addComponent} customComponents={customComponents} />
-                </TabsContent>
-                <TabsContent value="properties" className="flex-1 p-4 pt-0">
-                  <PropertiesPanel
-                    component={selectedComponentData}
-                    onUpdateComponent={(updates) => selectedComponent && updateComponent(selectedComponent, updates)}
-                    onSaveAsCustom={() => selectedComponentData && saveAsCustomComponent(selectedComponentData)}
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
+    //     {/* Main Content */}
+    //     <div className="flex-1 flex overflow-hidden">
+    //       {!previewMode && (
+    //         <div className="w-80 bg-white border-r flex flex-col">
+    //           <Tabs defaultValue="components" className="flex-1 flex flex-col">
+    //             <TabsList className="grid w-full grid-cols-2 m-4">
+    //               <TabsTrigger value="components">Components</TabsTrigger>
+    //               <TabsTrigger value="properties">Properties</TabsTrigger>
+    //             </TabsList>
+    //             <TabsContent value="components" className="flex-1 p-4 pt-0">
+    //               <ComponentPalette onAddComponent={addComponent} customComponents={customComponents} />
+    //             </TabsContent>
+    //             <TabsContent value="properties" className="flex-1 p-4 pt-0">
+    //               <PropertiesPanel
+    //                 component={selectedComponentData}
+    //                 onUpdateComponent={(updates) => selectedComponent && updateComponent(selectedComponent, updates)}
+    //                 onSaveAsCustom={() => selectedComponentData && saveAsCustomComponent(selectedComponentData)}
+    //               />
+    //             </TabsContent>
+    //           </Tabs>
+    //         </div>
+    //       )}
 
-          {/* Canvas */}
-          <div className="flex-1 overflow-auto bg-gray-100 p-8">
-            <EmailCanvas
-              ref={canvasRef}
-              components={components}
-              selectedComponent={selectedComponent}
-              onSelectComponent={setSelectedComponent}
-              onUpdateComponent={updateComponent}
-              onDeleteComponent={deleteComponent}
-              onMoveComponent={moveComponent}
-              previewMode={previewMode}
-              duplicateComponent={duplicateComponent}
-              addComponent={addComponent}
-            />
-          </div>
-        </div>
-      </div>
-    </DndProvider>
+    //       {/* Canvas */}
+    //       <div className="flex-1 overflow-auto bg-gray-100 p-8">
+    //         <EmailCanvas
+    //           ref={canvasRef}
+    //           components={components}
+    //           selectedComponent={selectedComponent}
+    //           onSelectComponent={setSelectedComponent}
+    //           onUpdateComponent={updateComponent}
+    //           onDeleteComponent={deleteComponent}
+    //           onMoveComponent={moveComponent}
+    //           previewMode={previewMode}
+    //           duplicateComponent={duplicateComponent}
+    //           addComponent={addComponent}
+    //         />
+    //       </div>
+    //     </div>
+    //   </div>
+    // </DndProvider>
+    <h1>hello</h1>
   )
 }

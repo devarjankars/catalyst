@@ -9,7 +9,7 @@ export interface EmailComponent {
 
   // Common properties
   padding?: string
-  isMobileComponent?: boolean
+  displayType?: "all" | "mobile-only" | "desktop-only"
 
   // Section properties
   children?: EmailComponent[] | null

@@ -38,6 +38,9 @@ export function PropertiesPanel({
 
   const isColumn = component.type === "section" && component.isColumn;
 
+  
+  
+
   useEffect(() => {
     if (component && component.content?.includes("<a")) {
       const parser = new DOMParser();
@@ -345,15 +348,16 @@ export function PropertiesPanel({
                 }
               />
             </div>
-            <div>
+            {/* <div>
               <Label htmlFor="src">Image URL</Label>
               <Input
                 id="src"
                 value={component.src || ""}
-                onChange={(e) => onUpdateComponent({ src: e.target.value })}
+                disabled={true}
+                // onChange={(e) => onUpdateComponent({ src: e.target.value })}
                 placeholder="https://example.com/image.jpg"
               />
-            </div>
+            </div> */}
             <div>
               <Label htmlFor="alt">Alt Text</Label>
               <Input
@@ -536,17 +540,24 @@ export function PropertiesPanel({
         </div>
       </div>
       <div className="border-t pt-4">
-  <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
-
-  <div className="flex items-center space-x-2">
-    <Checkbox
-      id="isMobileComponent"
-      checked={false}
-      onCheckedChange={(checked) => onUpdateComponent({ isMobileComponent: checked })}
-    />
-    <Label htmlFor="isMobileComponent">Is mobile component</Label>
-  </div>
-</div>
+          <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
+            <Label htmlFor="diplayType">Select Display type of component</Label>
+            <Select 
+              value={component.displayType || "all"}
+              onValueChange={(value) =>
+                onUpdateComponent({ displayType: value as "all" | "mobile-only" | "desktop-only" })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Devices</SelectItem>
+                <SelectItem value="mobile-only">Mobile Only</SelectItem>
+                <SelectItem value="desktop-only">Desktop Only</SelectItem>
+              </SelectContent>
+            </Select>
+      </div>
     </div>
   );
 }

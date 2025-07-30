@@ -1,28 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { DndProvider } from "react-dnd"
-import { HTML5Backend } from "react-dnd-html5-backend"
-import { EmailCanvas } from "@/components/email-canvas"
-import { ComponentPalette } from "@/components/component-palette"
-import { PropertiesPanel } from "@/components/properties-panel"
-import { ExportPanel } from "@/components/export-panel"
-import { SaveTemplateDialog } from "@/components/save-template-dialog"
-import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw } from "lucide-react"
-import { useEmailBuilderStore } from "@/store/email-builder-store"
-import { firebaseService } from "@/services/firebase-service"
+import { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { EmailCanvas } from "@/components/email-canvas";
+import { ComponentPalette } from "@/components/component-palette";
+import { PropertiesPanel } from "@/components/properties-panel";
+import { ExportPanel } from "@/components/export-panel";
+import { SaveTemplateDialog } from "@/components/save-template-dialog";
+import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw } from "lucide-react";
+import { useEmailBuilderStore } from "@/store/email-builder-store";
+import { firebaseService } from "@/services/firebase-service";
+import EmailPreviewModal from "@/components/email-previw-dalog";
 
 export default function EmailBuilder() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const templateId = searchParams.get("template")
-  const isCopy = searchParams.get("copy") === "true"
-  const isEdit = searchParams.get("edit") === "true"
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("template");
+  const isCopy = searchParams.get("copy") === "true";
+  const isEdit = searchParams.get("edit") === "true";
 
   const {
     currentTemplate,
@@ -54,139 +55,169 @@ export default function EmailBuilder() {
     setSaving,
     markAsNewTemplate,
     resetComponentChanges,
+    loadCustomComponents,
     clearAll,
-  } = useEmailBuilderStore()
+  } = useEmailBuilderStore();
 
-  const [saveTemplateDialog, setSaveTemplateDialog] = useState(false)
-  const [unsavedDialog, setUnsavedDialog] = useState(false)
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
-  const canvasRef = useRef<HTMLDivElement>(null)
+  const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
+  const [unsavedDialog, setUnsavedDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null
+  );
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [openPreview, setOpenPreview] = useState(false);
 
   useEffect(() => {
     if (templateId) {
-      loadTemplate(templateId)
+      loadTemplate(templateId);
+      
     } else {
-      markAsNewTemplate()
+      markAsNewTemplate();
     }
-  }, [templateId])
+    
+    // Load custom components from store
+    const getCustomComponents = async () => {
+      const customComponents = await firebaseService.getCustomComponents()
+       loadCustomComponents(customComponents)
+    }
+
+    getCustomComponents();
+
+
+  }, [templateId]);
+
+  console.log(selectedComponent, "selected component in builder");
+  
 
   // Handle browser back button and navigation
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasComponentChanges || hasUnsavedTemplate) {
-        e.preventDefault()
-        e.returnValue = ""
+        e.preventDefault();
+        e.returnValue = "";
       }
-    }
+    };
 
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [hasComponentChanges, hasUnsavedTemplate])
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasComponentChanges, hasUnsavedTemplate]);
 
   const loadTemplate = async (id: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const template = await firebaseService.getTemplate(id)
+      const template = await firebaseService.getTemplate(id);
       if (template) {
         if (isCopy) {
           // Start working copy - doesn't save until user explicitly saves
-          startWorkingCopy(template)
+          startWorkingCopy(template);
         } else if (isEdit) {
           // Edit existing template
-          setCurrentTemplate(template)
-          setOriginalTemplate(template)
-          setComponents(template.components)
-          setOriginalComponents(template.components)
+          setCurrentTemplate(template);
+          setOriginalTemplate(template);
+          setComponents(template.components);
+          setOriginalComponents(template.components);
         } else {
           // View template (read-only or copy mode)
-          startWorkingCopy(template)
+          startWorkingCopy(template);
         }
       }
     } catch (error) {
-      console.error("Failed to load template:", error)
+      console.error("Failed to load template:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleBackToDashboard = () => {
     if (hasComponentChanges || hasUnsavedTemplate) {
-      setPendingNavigation("/dashboard")
-      setUnsavedDialog(true)
+      setPendingNavigation("/dashboard");
+      setUnsavedDialog(true);
     } else {
-      clearAll()
-      router.push("/dashboard")
+      clearAll();
+      router.push("/dashboard");
     }
-  }
+  };
 
-  const handleUnsavedChangesAction = async (action: "save" | "discard" | "cancel") => {
+  const handleUnsavedChangesAction = async (
+    action: "save" | "discard" | "cancel"
+  ) => {
     if (action === "cancel") {
-      setUnsavedDialog(false)
-      setPendingNavigation(null)
-      return
+      setUnsavedDialog(false);
+      setPendingNavigation(null);
+      return;
     }
 
     if (action === "save") {
       if (hasUnsavedTemplate || isWorkingCopy) {
         // Need to save as template first
-        setUnsavedDialog(false)
-        setSaveTemplateDialog(true)
-        return
+        setUnsavedDialog(false);
+        setSaveTemplateDialog(true);
+        return;
       }
 
       if (hasComponentChanges && currentTemplate) {
         // Save component changes to existing template
-        await handleSaveComponentChanges()
+        await handleSaveComponentChanges();
       }
     }
 
     // Navigate after saving or discarding
     if (pendingNavigation) {
-      clearAll()
-      router.push(pendingNavigation)
+      clearAll();
+      router.push(pendingNavigation);
     }
-    setUnsavedDialog(false)
-    setPendingNavigation(null)
-  }
+    setUnsavedDialog(false);
+    setPendingNavigation(null);
+  };
 
   const handleSaveComponentChanges = async () => {
-    if (!currentTemplate) return
+    if (!currentTemplate) return;
 
-    setSaving(true)
+    setSaving(true);
     try {
-      const updatedTemplate = await firebaseService.updateTemplate(currentTemplate.id, {
-        components,
-        updatedAt: new Date(),
-      })
+      const updatedTemplate = await firebaseService.updateTemplate(
+        currentTemplate.id,
+        {
+          components,
+          updatedAt: new Date(),
+        }
+      );
 
       if (updatedTemplate) {
         // Update store with saved state
-        setCurrentTemplate(updatedTemplate)
-        setOriginalTemplate(updatedTemplate)
-        setOriginalComponents(components)
+        setCurrentTemplate(updatedTemplate);
+        setOriginalTemplate(updatedTemplate);
+        setOriginalComponents(components);
       }
     } catch (error) {
-      console.error("Failed to save component changes:", error)
-      alert("Failed to save changes. Please try again.")
+      console.error("Failed to save component changes:", error);
+      alert("Failed to save changes. Please try again.");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  const handleSaveTemplate = async (name: string, description: string, category: string) => {
-    setSaving(true)
+  const handleSaveTemplate = async (
+    name: string,
+    description: string,
+    category: string
+  ) => {
+    setSaving(true);
     try {
-      let savedTemplate
+      let savedTemplate;
 
       if (isEdit && currentTemplate) {
         // Update existing template metadata and components
-        savedTemplate = await firebaseService.updateTemplate(currentTemplate.id, {
-          name,
-          description,
-          category,
-          components,
-          updatedAt: new Date(),
-        })
+        savedTemplate = await firebaseService.updateTemplate(
+          currentTemplate.id,
+          {
+            name,
+            description,
+            category,
+            components,
+            updatedAt: new Date(),
+          }
+        );
       } else {
         // Create new template (from working copy or new template)
         savedTemplate = await firebaseService.createTemplate({
@@ -195,34 +226,34 @@ export default function EmailBuilder() {
           category,
           components,
           isUserCreated: true,
-        })
+        });
       }
 
       if (savedTemplate) {
-        setCurrentTemplate(savedTemplate)
-        setOriginalTemplate(savedTemplate)
-        setOriginalComponents(components)
+        setCurrentTemplate(savedTemplate);
+        setOriginalTemplate(savedTemplate);
+        setOriginalComponents(components);
 
         // Update URL to reflect saved template
-        const newUrl = `/builder?template=${savedTemplate.id}&edit=true`
-        window.history.replaceState({}, "", newUrl)
+        const newUrl = `/builder?template=${savedTemplate.id}&edit=true`;
+        window.history.replaceState({}, "", newUrl);
       }
 
-      setSaveTemplateDialog(false)
+      setSaveTemplateDialog(false);
 
       // If there was pending navigation after save, execute it
       if (pendingNavigation) {
-        clearAll()
-        router.push(pendingNavigation)
-        setPendingNavigation(null)
+        clearAll();
+        router.push(pendingNavigation);
+        setPendingNavigation(null);
       }
     } catch (error) {
-      console.error("Failed to save template:", error)
-      alert("Failed to save template. Please try again.")
+      console.error("Failed to save template:", error);
+      alert("Failed to save template. Please try again.");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const saveAsCustomComponent = (component: any) => {
     const customComponent = {
@@ -230,37 +261,56 @@ export default function EmailBuilder() {
       id: `custom-${Date.now()}`,
       isCustom: true,
       name: `Custom ${component.type}`,
-    }
-    addCustomComponent(customComponent)
-  }
+    };
+    addCustomComponent(customComponent);
+  };
 
-  const selectedComponentData = components.find((comp) => comp.id === selectedComponent)
+  function findComponentById(components: any[], id: string): any | null {
+  for (const comp of components) {
+    if (comp.id === id) {
+      return comp;
+    }
+
+    if (Array.isArray(comp.children)) {
+      const found = findComponentById(comp.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+
+const selectedComponentData = findComponentById(components, selectedComponent);
+
+  
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner message="Loading template..." />
       </div>
-    )
+    );
   }
 
   const getHeaderTitle = () => {
     if (isWorkingCopy && workingCopySource) {
-      return `${workingCopySource.name} (Working Copy)`
+      return `${workingCopySource.name} (Working Copy)`;
     }
-    if (currentTemplate) return currentTemplate.name
-    return "Untitled Template"
-  }
+    if (currentTemplate) return currentTemplate.name;
+    return "Untitled Template";
+  };
 
   const getHeaderSubtitle = () => {
-    if (isWorkingCopy) return "Working on a copy - save to create your template"
-    if (isEdit && currentTemplate) return "Editing existing template"
-    if (isNewTemplate) return "Creating new template"
-    return "Template builder"
-  }
+    if (isWorkingCopy)
+      return "Working on a copy - save to create your template";
+    if (isEdit && currentTemplate) return "Editing existing template";
+    if (isNewTemplate) return "Creating new template";
+    return "Template builder";
+  };
 
-  const canSaveComponentChanges = currentTemplate && hasComponentChanges && !isWorkingCopy && !isNewTemplate
-  const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy
+  const canSaveComponentChanges =
+    currentTemplate && hasComponentChanges && !isWorkingCopy && !isNewTemplate;
+  const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -268,23 +318,33 @@ export default function EmailBuilder() {
         {/* Header */}
         <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={handleBackToDashboard} className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={handleBackToDashboard}
+              className="flex items-center gap-2"
+            >
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </Button>
             <div className="border-l pl-4">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900">{getHeaderTitle()}</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {getHeaderTitle()}
+                </h1>
                 {hasComponentChanges && (
                   <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
                     Component Changes
                   </span>
                 )}
                 {hasUnsavedTemplate && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Unsaved Template</span>
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Unsaved Template
+                  </span>
                 )}
                 {isWorkingCopy && (
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Working Copy</span>
+                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                    Working Copy
+                  </span>
                 )}
               </div>
               <p className="text-sm text-gray-600">{getHeaderSubtitle()}</p>
@@ -329,15 +389,22 @@ export default function EmailBuilder() {
               className="flex items-center gap-2"
             >
               <FileText className="w-4 h-4" />
-              {currentTemplate && !isNewTemplate && !isWorkingCopy ? "Update Template" : "Save Template"}
+              {currentTemplate && !isNewTemplate && !isWorkingCopy
+                ? "Update Template"
+                : "Save Template"}
             </Button>
 
             <Button
               variant={previewMode ? "default" : "outline"}
-              onClick={() => setPreviewMode(!previewMode)}
+              // onClick={() => setPreviewMode(!previewMode)}
+              onClick={() => setOpenPreview(true)}
               className="flex items-center gap-2"
             >
-              {previewMode ? <Code className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {previewMode ? (
+                <Code className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
               {previewMode ? "Edit" : "Preview"}
             </Button>
 
@@ -347,7 +414,7 @@ export default function EmailBuilder() {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
-          {!previewMode && (
+          {/* {!previewMode && (
             <div className="w-80 bg-white border-r flex flex-col">
               <Tabs defaultValue="components" className="flex-1 flex flex-col overflow-y-auto">
                 <TabsList className="grid w-full grid-cols-2 ">
@@ -366,6 +433,19 @@ export default function EmailBuilder() {
                 </TabsContent>
               </Tabs>
             </div>
+          )} */}
+
+          {/* components panel */}
+          {!previewMode && (
+            <div className="w-80 bg-white border-r flex flex-col p-4 overflow-y-auto">
+              <h4 className="font-bold text-lg text-gray-700 mb-3">
+                Components
+              </h4>
+              <ComponentPalette
+                onAddComponent={addComponent}
+                customComponents={customComponents}
+              />
+            </div>
           )}
 
           {/* Canvas */}
@@ -383,6 +463,22 @@ export default function EmailBuilder() {
               addComponent={addComponent}
             />
           </div>
+
+          {/* Right Panel: Properties */}
+          {!previewMode && selectedComponent && (
+            <div className="w-80 bg-white border-l p-4 overflow-y-auto">
+              <h4 className="font-bold text-lg text-gray-700 mb-3">Properties</h4>
+              <PropertiesPanel
+                component={selectedComponentData}
+                onUpdateComponent={(updates) =>
+                  selectedComponent && updateComponent(selectedComponent, updates)
+                }
+                onSaveAsCustom={() =>
+                  selectedComponentData && saveAsCustomComponent(selectedComponentData)
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -392,8 +488,12 @@ export default function EmailBuilder() {
         onClose={() => setSaveTemplateDialog(false)}
         onSave={handleSaveTemplate}
         initialName={currentTemplate?.name || workingCopySource?.name || ""}
-        initialDescription={currentTemplate?.description || workingCopySource?.description || ""}
-        initialCategory={currentTemplate?.category || workingCopySource?.category || "other"}
+        initialDescription={
+          currentTemplate?.description || workingCopySource?.description || ""
+        }
+        initialCategory={
+          currentTemplate?.category || workingCopySource?.category || "other"
+        }
         isEditing={isEdit && !!currentTemplate}
       />
 
@@ -401,10 +501,18 @@ export default function EmailBuilder() {
       <UnsavedChangesDialog
         open={unsavedDialog}
         onAction={handleUnsavedChangesAction}
-        templateName={currentTemplate?.name || workingCopySource?.name || "Untitled Template"}
+        templateName={
+          currentTemplate?.name ||
+          workingCopySource?.name ||
+          "Untitled Template"
+        }
         hasComponentChanges={hasComponentChanges}
         hasUnsavedTemplate={hasUnsavedTemplate}
       />
+
+
+      {/* Email Preview Modal */}
+      <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />
     </DndProvider>
-  )
+  );
 }

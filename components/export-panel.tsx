@@ -31,14 +31,7 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
     }
   }
 
-  const handlePreviewHTML = () => {
-    const html = generateEmailHTML(components)
-    const newWindow = window.open()
-    if (newWindow) {
-      newWindow.document.write(html)
-      newWindow.document.close()
-    }
-  }
+  
 
   return (
     <Dialog>
@@ -53,14 +46,7 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
           <DialogTitle>Export Email</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Button
-            onClick={handlePreviewHTML}
-            variant="outline"
-            className="w-full flex items-center gap-2 bg-transparent"
-          >
-            <FileText className="w-4 h-4" />
-            Preview HTML
-          </Button>
+         
 
           <Button
             onClick={handleExport}

@@ -10,6 +10,7 @@ import {
   orderBy,
   serverTimestamp,
   Timestamp,
+  setDoc,
 } from "firebase/firestore";
 import {
   ref,
@@ -19,6 +20,7 @@ import {
 } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import type { EmailTemplate } from "@/types/template";
+import { EmailComponent } from "@/types/email-builder";
 
 function removeUndefinedDeep(value: any): any {
   if (Array.isArray(value)) {
@@ -49,6 +51,7 @@ class FirebaseService {
   private templatesCollection = "email-templates";
   private imagesPath = "template-images";
   private isFirebaseAvailable = false;
+  private customComponentsCollection = "custom-components";
 
   constructor() {
     this.isFirebaseAvailable = !!(db && storage);
@@ -66,10 +69,6 @@ class FirebaseService {
     try {
       
       const querySnapshot = await getDocs(collection(db,this.templatesCollection));
-
-      
-      
-
       const templates: EmailTemplate[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -130,6 +129,83 @@ class FirebaseService {
       return this.getLocalTemplate(id);
     }
   }
+
+  async getCustomComponents(): Promise<EmailComponent[]> {
+    if (!this.isFirebaseAvailable) {
+      return [];
+    }
+
+    try {
+      const querySnapshot = await getDocs(
+        collection(db, this.customComponentsCollection)
+      );
+      const components: EmailComponent[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        components.push({
+          id: doc.id,
+          ...data,
+          createdAt: parseDate(data.createdAt),
+          updatedAt: parseDate(data.updatedAt),
+        } as EmailComponent);
+      });
+      return components;
+    } catch (error) {
+      console.error(
+        "Failed to load custom components from Firebase:",
+        error
+      );
+      return [];
+    }
+  }
+
+  async saveCustomComponent(component: EmailComponent): Promise<EmailComponent> {
+  if (!this.isFirebaseAvailable) {
+    return component;
+  }
+
+  console.log("Saving custom component with custom ID:", component.id);
+
+  try {
+    const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
+    await setDoc(docRef, {
+      ...component,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return {
+      ...component,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  } catch (error) {
+    console.error("Failed to save custom component:", error);
+    return component;
+  }
+}
+
+  async deleteCustomComponent(id: string): Promise<boolean> {
+    if (!this.isFirebaseAvailable) {
+      return true; // Fallback to local deletion
+    }
+    try {
+      const docRef = doc(db, this.customComponentsCollection, id);
+      console.log("Deleting custom component with ID in firebase:", docRef.id);
+      const snap = await getDoc(docRef);
+if (!snap.exists()) {
+  console.log("Document not found. Cannot delete.");
+} else {
+  console.log("Found doc, trying to delete...");
+  await deleteDoc(docRef);
+}
+      await deleteDoc(docRef);
+      return true;
+    } catch (error) {
+      console.error("Failed to delete custom component:", error);
+      return false; // Fallback to local deletion
+    }
+  }
+  
 
   async createTemplate(
     data: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">

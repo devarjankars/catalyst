@@ -1,29 +1,47 @@
-import type { EmailComponent } from "@/types/email-builder"
+import type { EmailComponent } from "@/types/email-builder";
+import { getDisplayAttributes } from "./style-generator";
 
 function generateComponentHTML(component: EmailComponent): string {
   switch (component.type) {
     case "section":
-      const childrenHTML = (component.children || []).map((child) => generateComponentHTML(child)).join("")
+      const childrenHTML = (component.children || [])
+        .map((child) => generateComponentHTML(child))
+        .join("");
 
       // Column-specific styles
       const getColumnStyles = (child: EmailComponent) => {
-        if (!child.isColumn) return ""
+        if (!child.isColumn) return "";
 
-        const alignment = child.columnAlignment || "left"
-        const verticalAlignment = child.columnVerticalAlignment || "top"
-        const width = child.columnWidth === "auto" ? undefined : child.columnWidth
+        const alignment = child.columnAlignment || "left";
+        const verticalAlignment = child.columnVerticalAlignment || "top";
+        const width =
+          child.columnWidth === "auto" ? undefined : child.columnWidth;
 
         return `
           text-align: ${alignment};
-          vertical-align: ${verticalAlignment === "top" ? "top" : verticalAlignment === "middle" ? "middle" : "bottom"};
+          vertical-align: ${
+            verticalAlignment === "top"
+              ? "top"
+              : verticalAlignment === "middle"
+              ? "middle"
+              : "bottom"
+          };
           ${width ? `width: ${width};` : ""}
           min-height: ${child.columnMinHeight || "120px"};
-        `
-      }
+        `;
+      };
 
       return `
+      <table
+          role="presentation"
+          width="100%"
+          cellspacing="0"
+          cellpadding="0"
+          border="0" bgColor="${component.backgroundColor || "#ffffff"}"
+          style="background-color: ${component.backgroundColor || "#ffffff"}">
+          <tbody>
     <tr>
-      <td style="padding: ${component.padding || "20px"};">
+      <td style="padding: ${component.padding || "20px"}; bgColor="${component.backgroundColor || "#ffffff"};">
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="
           background-color: ${component.backgroundColor || "#ffffff"};
           border-radius: ${component.borderRadius || "0px"};
@@ -39,10 +57,25 @@ function generateComponentHTML(component: EmailComponent): string {
                 .map(
                   (child, index) => `
                 <td style="
-                  vertical-align: ${child.columnVerticalAlignment === "middle" ? "middle" : child.columnVerticalAlignment === "bottom" ? "bottom" : "top"};
+                  vertical-align: ${
+                    child.columnVerticalAlignment === "middle"
+                      ? "middle"
+                      : child.columnVerticalAlignment === "bottom"
+                      ? "bottom"
+                      : "top"
+                  };
                   text-align: ${child.columnAlignment || "left"};
-                  width: ${child.columnWidth === "auto" ? `${100 / (component.children?.length || 1)}%` : child.columnWidth || `${100 / (component.children?.length || 1)}%`};
-                  ${index < (component.children?.length || 1) - 1 ? "padding-right: 10px;" : ""}
+                  width: ${
+                    child.columnWidth === "auto"
+                      ? `${100 / (component.children?.length || 1)}%`
+                      : child.columnWidth ||
+                        `${100 / (component.children?.length || 1)}%`
+                  };
+                  ${
+                    index < (component.children?.length || 1) - 1
+                      ? "padding-right: 10px;"
+                      : ""
+                  }
                   min-height: ${child.columnMinHeight || "120px"};
                   background-color: ${child.backgroundColor || "transparent"};
                   border-radius: ${child.borderRadius || "0px"};
@@ -52,7 +85,7 @@ function generateComponentHTML(component: EmailComponent): string {
                     ${generateComponentHTML(child)}
                   </table>
                 </td>
-              `,
+              `
                 )
                 .join("")}
             </tr>
@@ -62,115 +95,226 @@ function generateComponentHTML(component: EmailComponent): string {
         </table>
       </td>
     </tr>
-  `
+          </tbody>
+        </table>
+  `;
 
-    case "text":
-      return `
-        <tr>
-          <td style="padding: ${component.padding || "16px"};">
-            <div style="
-              font-size: ${component.fontSize || "16px"};
-              color: ${component.color || "#000000"};
-              text-align: ${component.textAlign || "left"};
-              font-weight: ${component.fontWeight || "normal"};
-              font-family: Arial, sans-serif;
-              line-height: 1.5;
-            ">
-              ${component.content || ""}
-            </div>
-          </td>
-        </tr>
-      `
+    case "text": {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
 
-    case "image":
-      return `
-        <tr>
-          <td style="padding: ${component.padding || "16px"};">
-            <img 
-              src="${component.src || ""}" 
-              alt="${component.alt || "Image"}"
-              style="
-                width: ${component.width || "100%"};
-                height: ${component.height || "auto"};
-                display: block;
-                max-width: 100%;
-              "
-            />
-          </td>
-        </tr>
-      `
+      const { classAttr, tableStyle, innerStyle } =
+        getDisplayAttributes(display);
 
-    case "button":
-      return `
-        <tr>
-          <td style="padding: ${component.padding || "16px"}; text-align: ${component.textAlign || "center"};">
-            <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
-              <tr>
-                <td style="
-                  background-color: ${component.backgroundColor || "#007bff"};
-                  border-radius: ${component.borderRadius || "4px"};
-                  padding: ${component.buttonPadding || "12px 24px"};
-                ">
-                  <a href="${component.href || "#"}" style="
-                    color: ${component.color || "#ffffff"};
-                    text-decoration: none;
-                    font-family: Arial, sans-serif;
-                    font-weight: bold;
-                    display: inline-block;
-                  ">
-                    ${component.text || "Button"}
-                  </a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      `
+      const divStyle = `
+        font-size: ${component.fontSize || "16px"};
+        color: ${component.color || "#000000"};
+        text-align: ${component.textAlign || "left"};
+        font-weight: ${component.fontWeight || "normal"};
+        font-family: Arial, sans-serif;
+        line-height: 1.5;
+        ${innerStyle}
+      `.trim();
 
-    case "divider":
       return `
+        <table
+          role="presentation"
+          width="100%"
+          cellspacing="0"
+          cellpadding="0"
+          border="0"
+          ${classAttr}
+          ${tableStyle}
+        >
+          <tbody>
+            <tr>
+              <td style="padding: ${component.padding || "16px"};">
+                <div style="${divStyle}">
+                  ${component.content || ""}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    case "image": {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, tableStyle, innerStyle } =
+        getDisplayAttributes(display);
+
+      const imgStyle = `
+        width: ${component.width || "100%"};
+        height: ${component.height || "auto"};
+        display: block;
+        max-width: 100%;
+        ${innerStyle}
+      `.trim();
+
+      return `
+        <table
+          role="presentation"
+          width="100%"
+          cellspacing="0"
+          cellpadding="0"
+          border="0"
+          ${classAttr}
+          ${tableStyle}
+        >
+          <tbody>
+            <tr>
+              <td style="padding: ${component.padding || "16px"};">
+                <img 
+                  src="${component.src || ""}" 
+                  alt="${component.alt || "Image"}"
+                  style="${imgStyle}"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    case "button": {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, tableStyle, innerStyle } =
+        getDisplayAttributes(display);
+
+      const linkStyle = `
+        color: ${component.color || "#ffffff"};
+        text-decoration: none;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        display: inline-block;
+        ${innerStyle}
+      `.trim();
+
+      return `
+        <table
+          role="presentation"
+          width="100%"
+          cellspacing="0"
+          cellpadding="0"
+          border="0"
+          ${classAttr}
+          ${tableStyle}
+        >
+          <tbody>
+            <tr>
+              <td style="padding: ${component.padding || "16px"}; text-align: ${
+            component.textAlign || "center"
+          };">
+                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="
+                      background-color: ${component.backgroundColor || "#007bff"};
+                      border-radius: ${component.borderRadius || "4px"};
+                      padding: ${component.buttonPadding || "12px 24px"};
+                    ">
+                      <a href="${component.href || "#"}" style="${linkStyle}">
+                        ${component.text || "Button"}
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    case "divider": {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, tableStyle, innerStyle } =
+        getDisplayAttributes(display);
+
+      const dividerStyle = `
+    height: ${component.height || "1px"};
+    background-color: ${component.backgroundColor || "#e0e0e0"};
+    margin: ${component.margin || "20px 0"};
+    ${innerStyle}
+  `.trim();
+
+      return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      ${classAttr}
+      ${tableStyle}
+    >
+      <tbody>
         <tr>
           <td style="padding: ${component.padding || "16px"};">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
-                <td style="
-                  height: ${component.height || "1px"};
-                  background-color: ${component.backgroundColor || "#e0e0e0"};
-                  margin: ${component.margin || "20px 0"};
-                "></td>
+                <td style="${dividerStyle}"></td>
               </tr>
             </table>
           </td>
         </tr>
-      `
-      case "custom" : 
-          return `${component.html}`
+      </tbody>
+    </table>
+  `;
+    }
+    case "custom":
+      return `${component.html}`;
 
     default:
-      return ""
+      return "";
   }
 }
 
 export function generateEmailHTML(components: EmailComponent[]): string {
-  const componentHTML = components.map((component) => generateComponentHTML(component)).join("")
+  const componentHTML = components
+    .map((component) => generateComponentHTML(component))
+    .join("");
 
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+          <!--Set the initial scale of the email.-->
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <!--Force Outlook clients to render with a better MS engine.-->
+          <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+          <!--Help prevent blue links and autolinking-->
+          <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+          <!--prevent Apple from reformatting and zooming messages.-->
+          <meta name="x-apple-disable-message-reformatting">
+
+          <!--target dark mode-->
+          <meta name="color-scheme" content="light dark">
+          <meta name="supported-color-schemes" content="light dark only">
+
     <title>Email Template</title>
     <!--[if mso]>
     <noscript>
         <xml>
             <o:OfficeDocumentSettings>
+                <o:AllowPNG/>
                 <o:PixelsPerInch>96</o:PixelsPerInch>
             </o:OfficeDocumentSettings>
         </xml>
     </noscript>
     <![endif]-->
+
+    <!--to support dark mode meta tags-->
+    <style type="text/css">
+          :root {
+              color-scheme: light dark;
+              supported-color-schemes: light dark;
+          }
+    </style>
     <style>
         /* Reset styles */
         body, table, td, p, a, li, blockquote {
@@ -186,6 +330,9 @@ export function generateEmailHTML(components: EmailComponent[]): string {
             border: 0;
             outline: none;
             text-decoration: none;
+            height: auto;
+            line-height: 100%;
+            text-decoration: none;
         }
         
         /* Client-specific styles */
@@ -194,12 +341,50 @@ export function generateEmailHTML(components: EmailComponent[]): string {
         .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
             line-height: 100%;
         }
+
+        .mobile {
+          display: none !important;
+        }
+
+        .desktop {
+          display: inline-block !important;
+        }
         
         /* Mobile styles */
         @media only screen and (max-width: 600px) {
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;
+            }
+
+            .mobile {
+              display: inline-block !important;
+            }
+
+            .desktop {
+              display: none !important;
+            }
+
+            .w90p {
+              width: 90% !important;
+            }
+
+            .w95p {
+              width: 95% !important;
+            }
+
+            .w100p {
+              display: block !important;
+              width: 100% !important;
+              max-width: 100% !important;
+            }
+
+            .pL0 {
+              padding-left: 0 !important;
+            }
+
+            .pR0 {
+              padding-right: 0 !important;
             }
         }
     </style>
@@ -209,12 +394,16 @@ export function generateEmailHTML(components: EmailComponent[]): string {
         <tr>
             <td align="center" >
                 <table class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; max-width: 600px;">
-                    ${componentHTML}
+                <tr>
+                    <td>
+                      ${componentHTML}
+                    </td>
+                </tr>
                 </table>
             </td>
         </tr>
     </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }

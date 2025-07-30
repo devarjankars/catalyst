@@ -5,9 +5,9 @@ import './globals.css'
 import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'Email Builder',
+  description: 'Build responsive email templates with ease using our intuitive drag-and-drop interface.',
+
 }
 
 export default function RootLayout({
