@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
+import { TriangleAlert } from "lucide-react";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -267,6 +268,17 @@ export function PropertiesPanel({
                 type="color"
                 value={component.color || "#000000"}
                 onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="backgroundColor">Background color</Label>
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={component.backgroundColor || "#ffffff"}
+                onChange={(e) =>
+                  onUpdateComponent({ backgroundColor: e.target.value })
+                }
               />
             </div>
             <div>
@@ -540,7 +552,7 @@ export function PropertiesPanel({
         </div>
       </div>
       <div className="border-t pt-4">
-          <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
+            <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
             <Label htmlFor="diplayType">Select Display type of component</Label>
             <Select 
               value={component.displayType || "all"}
@@ -557,6 +569,7 @@ export function PropertiesPanel({
                 <SelectItem value="desktop-only">Desktop Only</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground text-orange-500 mt-2 flex"><TriangleAlert className="w-5 h-5 mr-2"/>Responssiveness is seen only in priview</p>
       </div>
     </div>
   );

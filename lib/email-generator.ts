@@ -4,106 +4,130 @@ import { getDisplayAttributes } from "./style-generator";
 function generateComponentHTML(component: EmailComponent): string {
   switch (component.type) {
     case "section":
-      const childrenHTML = (component.children || [])
-        .map((child) => generateComponentHTML(child))
-        .join("");
+  const childrenHTML = (component.children || [])
+    .map((child) => generateComponentHTML(child))
+    .join("");
 
-      // Column-specific styles
-      const getColumnStyles = (child: EmailComponent) => {
-        if (!child.isColumn) return "";
+  const display = (component.displayType || "all") as EmailComponent["displayType"];
+  const { classAttr,  innerStyle } = getDisplayAttributes(display);
+  
 
-        const alignment = child.columnAlignment || "left";
-        const verticalAlignment = child.columnVerticalAlignment || "top";
-        const width =
-          child.columnWidth === "auto" ? undefined : child.columnWidth;
+  const getColumnStyles = (child: EmailComponent) => {
+    if (!child.isColumn) return "";
 
-        return `
-          text-align: ${alignment};
-          vertical-align: ${
-            verticalAlignment === "top"
-              ? "top"
-              : verticalAlignment === "middle"
-              ? "middle"
-              : "bottom"
-          };
-          ${width ? `width: ${width};` : ""}
-          min-height: ${child.columnMinHeight || "120px"};
-        `;
+    const alignment = child.columnAlignment || "left";
+    const verticalAlignment = child.columnVerticalAlignment || "top";
+    const width =
+      child.columnWidth === "auto" ? undefined : child.columnWidth;
+
+    return `
+      text-align: ${alignment};
+      vertical-align: ${
+        verticalAlignment === "top"
+          ? "top"
+          : verticalAlignment === "middle"
+          ? "middle"
+          : "bottom"
       };
+      ${width ? `width: ${width};` : ""}
+      min-height: ${child.columnMinHeight || "120px"};
+    `;
+  };
 
-      return `
-      <table
-          role="presentation"
-          width="100%"
-          cellspacing="0"
-          cellpadding="0"
-          border="0" bgColor="${component.backgroundColor || "#ffffff"}"
-          style="background-color: ${component.backgroundColor || "#ffffff"}">
-          <tbody>
-    <tr>
-      <td style="padding: ${component.padding || "20px"}; bgColor="${component.backgroundColor || "#ffffff"};">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="
-          background-color: ${component.backgroundColor || "#ffffff"};
-          border-radius: ${component.borderRadius || "0px"};
-          max-width: ${component.maxWidth || "100%"};
-          margin: ${component.margin || "0"};
-          ${component.isColumn ? getColumnStyles(component) : ""}
-        ">
-          ${
-            component.direction === "row"
-              ? `
-            <tr>
-              ${(component.children || [])
-                .map(
-                  (child, index) => `
-                <td style="
-                  vertical-align: ${
-                    child.columnVerticalAlignment === "middle"
-                      ? "middle"
-                      : child.columnVerticalAlignment === "bottom"
-                      ? "bottom"
-                      : "top"
-                  };
-                  text-align: ${child.columnAlignment || "left"};
-                  width: ${
-                    child.columnWidth === "auto"
-                      ? `${100 / (component.children?.length || 1)}%`
-                      : child.columnWidth ||
-                        `${100 / (component.children?.length || 1)}%`
-                  };
-                  ${
-                    index < (component.children?.length || 1) - 1
-                      ? "padding-right: 10px;"
-                      : ""
-                  }
-                  min-height: ${child.columnMinHeight || "120px"};
-                  background-color: ${child.backgroundColor || "transparent"};
-                  border-radius: ${child.borderRadius || "0px"};
-                  padding: ${child.padding || "15px"};
-                ">
-                  <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                    ${generateComponentHTML(child)}
-                  </table>
+  return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      ${classAttr}
+      bgcolor="${component.backgroundColor || "#ffffff"}"
+      style="background-color: ${component.backgroundColor || "#ffffff"};${innerStyle}"
+    >
+      <tr>
+        <td ${classAttr} style="padding: ${component.padding || "20px"};${innerStyle}">
+          <table
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            ${classAttr}
+            style="
+              background-color: ${component.backgroundColor || "#ffffff"};
+              border-radius: ${component.borderRadius || "0px"};
+              max-width: ${component.maxWidth || "600px"};
+              margin: ${component.margin || "0 auto"};
+              ${component.isColumn ? getColumnStyles(component) : ""}
+              ${innerStyle}
+            "
+          >
+            ${
+              component.direction === "row"
+                ? `
+              <tr>
+                ${(component.children || [])
+                  .map(
+                    (child, index) => `
+                    <td
+                      
+                      valign="${
+                        child.columnVerticalAlignment || "top"
+                      }"
+                      align="${child.columnAlignment || "left"}"
+                      width="${
+                        child.columnWidth === "auto"
+                          ? `${100 / (component.children?.length || 1)}%`
+                          : child.columnWidth ||
+                            `${100 / (component.children?.length || 1)}%`
+                      }"
+                      style="
+                        vertical-align: ${
+                          child.columnVerticalAlignment || "top"
+                        };
+                        text-align: ${child.columnAlignment || "left"};
+                        padding: ${child.padding || "15px"};
+                        background-color: ${
+                          child.backgroundColor || "transparent"
+                        };
+                        border-radius: ${child.borderRadius || "0px"};
+                        ${
+                          index <
+                          (component.children?.length || 1) - 1
+                            ? "padding-right: 10px;"
+                            : ""
+                        }
+                        min-height: ${child.columnMinHeight || "120px"};
+                       
+                      "
+                    >
+                      ${generateComponentHTML(child)}
+                    </td>
+                  `
+                  )
+                  .join("")}
+              </tr>
+            `
+                : `
+              <tr>
+                <td >
+                  ${childrenHTML}
                 </td>
-              `
-                )
-                .join("")}
-            </tr>
-          `
-              : childrenHTML
-          }
-        </table>
-      </td>
-    </tr>
-          </tbody>
-        </table>
+              </tr>
+            `
+            }
+          </table>
+        </td>
+      </tr>
+    </table>
   `;
+
 
     case "text": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
 
-      const { classAttr, tableStyle, innerStyle } =
+      const { classAttr, innerStyle } =
         getDisplayAttributes(display);
 
       const divStyle = `
@@ -113,7 +137,7 @@ function generateComponentHTML(component: EmailComponent): string {
         font-weight: ${component.fontWeight || "normal"};
         font-family: Arial, sans-serif;
         line-height: 1.5;
-        ${innerStyle}
+        background-color: ${component.backgroundColor || "transparent"};
       `.trim();
 
       return `
@@ -124,11 +148,11 @@ function generateComponentHTML(component: EmailComponent): string {
           cellpadding="0"
           border="0"
           ${classAttr}
-          ${tableStyle}
+          ${innerStyle ? `style="${innerStyle}"` : ""}
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "16px"};">
+              <td style="padding: ${component.padding || "16px"}; background-color:${component.backgroundColor || 'transparent'};" >
                 <div style="${divStyle}">
                   ${component.content || ""}
                 </div>
@@ -142,7 +166,7 @@ function generateComponentHTML(component: EmailComponent): string {
     case "image": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
-      const { classAttr, tableStyle, innerStyle } =
+      const { classAttr, innerStyle } =
         getDisplayAttributes(display);
 
       const imgStyle = `
@@ -161,11 +185,11 @@ function generateComponentHTML(component: EmailComponent): string {
           cellpadding="0"
           border="0"
           ${classAttr}
-          ${tableStyle}
+          ${innerStyle ? `style="${innerStyle}"` : ""}
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "16px"};">
+              <td style="padding: ${component.padding || "16px"};${innerStyle}">
                 <img 
                   src="${component.src || ""}" 
                   alt="${component.alt || "Image"}"
@@ -253,7 +277,7 @@ function generateComponentHTML(component: EmailComponent): string {
     >
       <tbody>
         <tr>
-          <td style="padding: ${component.padding || "16px"};">
+          <td style="padding: ${component.padding || "16px"};" >
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td style="${dividerStyle}"></td>
@@ -349,6 +373,18 @@ export function generateEmailHTML(components: EmailComponent[]): string {
         .desktop {
           display: inline-block !important;
         }
+
+        @media only screen and (max-width: 480px) {
+
+            .mobile {
+                display: block !important;
+              }
+
+              .desktop {
+                display: none !important;
+              }
+
+        }
         
         /* Mobile styles */
         @media only screen and (max-width: 600px) {
@@ -357,13 +393,7 @@ export function generateEmailHTML(components: EmailComponent[]): string {
                 max-width: 100% !important;
             }
 
-            .mobile {
-              display: inline-block !important;
-            }
-
-            .desktop {
-              display: none !important;
-            }
+            
 
             .w90p {
               width: 90% !important;

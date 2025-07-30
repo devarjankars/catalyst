@@ -306,6 +306,7 @@ export function EmailComponentRenderer({
                   color: component.color || "#000000",
                   textAlign: component.textAlign || "left",
                   fontWeight: component.fontWeight || "normal",
+                  backgroundColor: component.backgroundColor || "transparent",
                 }}
                 dangerouslySetInnerHTML={{ __html: component.content || "" }}
               />
@@ -318,6 +319,7 @@ export function EmailComponentRenderer({
                   color: component.color || "#000000",
                   textAlign: component.textAlign || "left",
                   fontWeight: component.fontWeight || "normal",
+                  backgroundColor: component.backgroundColor || "transparent",
                 }}
               />
             )}
