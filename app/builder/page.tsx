@@ -265,22 +265,30 @@ export default function EmailBuilder() {
     addCustomComponent(customComponent);
   };
 
-  function findComponentById(components: any[], id: string): any | null {
+  function findComponentWithParentById(
+  components: any[],
+  targetId: string,
+  parentId: string | null = null
+): { component: any; parentId: string | null } | null {
   for (const comp of components) {
-    if (comp.id === id) {
-      return comp;
+    if (comp.id === targetId) {
+      return { component: comp, parentId };
     }
 
     if (Array.isArray(comp.children)) {
-      const found = findComponentById(comp.children, id);
+      const found = findComponentWithParentById(comp.children, targetId, comp.id);
       if (found) return found;
     }
   }
+
   return null;
 }
 
 
-const selectedComponentData = findComponentById(components, selectedComponent);
+const result = findComponentWithParentById(components, selectedComponent);
+const selectedComponentData = result?.component || null;
+const parentId = result?.parentId || null;
+
 
   
 
@@ -471,7 +479,7 @@ const selectedComponentData = findComponentById(components, selectedComponent);
               <PropertiesPanel
                 component={selectedComponentData}
                 onUpdateComponent={(updates) =>
-                  selectedComponent && updateComponent(selectedComponent, updates)
+                  selectedComponent && updateComponent(selectedComponent, updates,parentId)
                 }
                 onSaveAsCustom={() =>
                   selectedComponentData && saveAsCustomComponent(selectedComponentData)

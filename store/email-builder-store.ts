@@ -43,7 +43,7 @@ interface EmailBuilderState {
 
   // Component actions
   addComponent: (component: EmailComponent, index?: number) => void
-  updateComponent: (id: string, updates: Partial<EmailComponent>) => void
+  updateComponent: (id: string, updates: Partial<EmailComponent>,parentId : string | null) => void
   deleteComponent: (id: string) => void
   moveComponent: (dragIndex: number, hoverIndex: number) => void
   duplicateComponent: (id: string) => void
@@ -170,11 +170,37 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           get().checkForChanges()
         },
 
-        updateComponent: (id, updates) => {
-          const { components } = get()
-          const newComponents = components.map((comp) => (comp.id === id ? { ...comp, ...updates } : comp))
-          set({ components: newComponents })
-          get().checkForChanges()
+        updateComponent: (id, updates, parentId = null) => {
+        const { components } = get();
+
+        // Recursive function to update component
+          const updateInTree = (items) => {
+            return items.map((comp) => {
+              // If parentId is given, look only inside that component's children
+              if (comp.id === parentId && Array.isArray(comp.children)) {
+                const updatedChildren = comp.children.map((child) =>
+                  child.id === id ? { ...child, ...updates } : child
+                );
+                return { ...comp, children: updatedChildren };
+              }
+
+              // If no parentId, update top-level component
+              if (!parentId && comp.id === id) {
+                return { ...comp, ...updates };
+              }
+
+              // Recurse deeper if children exist
+              if (Array.isArray(comp.children)) {
+                return { ...comp, children: updateInTree(comp.children) };
+              }
+
+              return comp;
+            });
+          };
+
+          const newComponents = updateInTree(components);
+          set({ components: newComponents });
+          get().checkForChanges();
         },
 
         deleteComponent: (id) => {
