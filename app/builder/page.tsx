@@ -86,7 +86,7 @@ export default function EmailBuilder() {
 
   }, [templateId]);
 
-  console.log(selectedComponent, "selected component in builder");
+  // console.log(selectedComponent, "selected component in builder");
   
 
   // Handle browser back button and navigation

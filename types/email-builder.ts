@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi"
 
   // Custom component properties
   isCustom?: boolean
@@ -47,7 +47,23 @@ export interface EmailComponent {
   href?: string
   buttonPadding?: string
 
- 
+  //cta-button properties
+  imageSrc?: string
+  imageAlt?: string
+
+ //footer-links properties
+  links?: { text: string; href: string }[]
+
+  //isi properties
+  importantSafetyInformation?: {
+    sections: {
+      title: string
+      items: {
+        isBullet: boolean
+        content: string 
+      }[]
+    }[]
+  }
   
 
   // Divider properties (backgroundColor already defined above)

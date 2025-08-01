@@ -4,23 +4,23 @@ import { getDisplayAttributes } from "./style-generator";
 function generateComponentHTML(component: EmailComponent): string {
   switch (component.type) {
     case "section":
-  const childrenHTML = (component.children || [])
-    .map((child) => generateComponentHTML(child))
-    .join("");
+      const childrenHTML = (component.children || [])
+        .map((child) => generateComponentHTML(child))
+        .join("");
 
-  const display = (component.displayType || "all") as EmailComponent["displayType"];
-  const { classAttr,  innerStyle } = getDisplayAttributes(display);
-  
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
 
-  const getColumnStyles = (child: EmailComponent) => {
-    if (!child.isColumn) return "";
+      const getColumnStyles = (child: EmailComponent) => {
+        if (!child.isColumn) return "";
 
-    const alignment = child.columnAlignment || "left";
-    const verticalAlignment = child.columnVerticalAlignment || "top";
-    const width =
-      child.columnWidth === "auto" ? undefined : child.columnWidth;
+        const alignment = child.columnAlignment || "left";
+        const verticalAlignment = child.columnVerticalAlignment || "center";
+        const width =
+          child.columnWidth === "auto" ? undefined : child.columnWidth;
 
-    return `
+        return `
       text-align: ${alignment};
       vertical-align: ${
         verticalAlignment === "top"
@@ -32,34 +32,40 @@ function generateComponentHTML(component: EmailComponent): string {
       ${width ? `width: ${width};` : ""}
       min-height: ${child.columnMinHeight || "120px"};
     `;
-  };
+      };
 
-  return `
+      return `
     <table
       role="presentation"
       width="100%"
       cellspacing="0"
       cellpadding="0"
       border="0"
-      ${classAttr}
+      align="center"
+      ${classAttr ? classAttr : ""}
       bgcolor="${component.backgroundColor || "#ffffff"}"
-      style="background-color: ${component.backgroundColor || "#ffffff"};${innerStyle}"
+      style="background-color: ${
+        component.backgroundColor || "#ffffff"
+      };${innerStyle ? ` ${innerStyle}` : ""}"
     >
       <tr>
-        <td ${classAttr} style="padding: ${component.padding || "20px"};${innerStyle}">
+        <td ${classAttr ? classAttr : ""} style="padding: ${
+        component.padding || "20px"
+      };${innerStyle ? ` ${innerStyle}` : ""}">
           <table
             cellpadding="0"
             cellspacing="0"
             border="0"
             width="100%"
-            ${classAttr}
+            align="center"
+            ${classAttr ? classAttr : ""}
             style="
               background-color: ${component.backgroundColor || "#ffffff"};
               border-radius: ${component.borderRadius || "0px"};
               max-width: ${component.maxWidth || "600px"};
               margin: ${component.margin || "0 auto"};
               ${component.isColumn ? getColumnStyles(component) : ""}
-              ${innerStyle}
+              ${innerStyle ? ` ${innerStyle}` : ""}
             "
           >
             ${
@@ -71,10 +77,8 @@ function generateComponentHTML(component: EmailComponent): string {
                     (child, index) => `
                     <td
                       
-                      valign="${
-                        child.columnVerticalAlignment || "top"
-                      }"
-                      align="${child.columnAlignment || "left"}"
+                      valign="${child.columnVerticalAlignment || "center"}"
+                      align="${child.columnAlignment || "center"}"
                       width="${
                         child.columnWidth === "auto"
                           ? `${100 / (component.children?.length || 1)}%`
@@ -83,7 +87,7 @@ function generateComponentHTML(component: EmailComponent): string {
                       }"
                       style="
                         vertical-align: ${
-                          child.columnVerticalAlignment || "top"
+                          child.columnVerticalAlignment || "center"
                         };
                         text-align: ${child.columnAlignment || "left"};
                         padding: ${child.padding || "15px"};
@@ -92,8 +96,7 @@ function generateComponentHTML(component: EmailComponent): string {
                         };
                         border-radius: ${child.borderRadius || "0px"};
                         ${
-                          index <
-                          (component.children?.length || 1) - 1
+                          index < (component.children?.length || 1) - 1
                             ? "padding-right: 10px;"
                             : ""
                         }
@@ -110,7 +113,7 @@ function generateComponentHTML(component: EmailComponent): string {
             `
                 : `
               <tr>
-                <td >
+                <td  ${classAttr ? classAttr : ""} ${innerStyle ? ` style="${innerStyle}"` : ""}>
                   ${childrenHTML}
                 </td>
               </tr>
@@ -120,15 +123,13 @@ function generateComponentHTML(component: EmailComponent): string {
         </td>
       </tr>
     </table>
-  `;
-
+  `.trim();
 
     case "text": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
 
-      const { classAttr, innerStyle } =
-        getDisplayAttributes(display);
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const divStyle = `
         font-size: ${component.fontSize || "16px"};
@@ -147,12 +148,16 @@ function generateComponentHTML(component: EmailComponent): string {
           cellspacing="0"
           cellpadding="0"
           border="0"
-          ${classAttr}
+          ${classAttr ? classAttr : ""}
           ${innerStyle ? `style="${innerStyle}"` : ""}
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "16px"}; background-color:${component.backgroundColor || 'transparent'};" >
+              <td style="padding: ${
+                component.padding || "16px"
+              }; background-color:${
+        component.backgroundColor || "transparent"
+      };" >
                 <div style="${divStyle}">
                   ${component.content || ""}
                 </div>
@@ -164,17 +169,16 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "image": {
+     
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
-      const { classAttr, innerStyle } =
-        getDisplayAttributes(display);
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const imgStyle = `
         width: ${component.width || "100%"};
         height: ${component.height || "auto"};
         display: block;
-        max-width: 100%;
-        ${innerStyle}
+        max-width:${component.maxWidth || "100%"};
       `.trim();
 
       return `
@@ -184,17 +188,29 @@ function generateComponentHTML(component: EmailComponent): string {
           cellspacing="0"
           cellpadding="0"
           border="0"
-          ${classAttr}
+          align="center"
+         ${classAttr ? classAttr : ""}
           ${innerStyle ? `style="${innerStyle}"` : ""}
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "16px"};${innerStyle}">
-                <img 
-                  src="${component.src || ""}" 
-                  alt="${component.alt || "Image"}"
-                  style="${imgStyle}"
-                />
+              <td ${classAttr ? classAttr : ""} align='${
+        component.textAlign || "center"
+      }' style="padding: ${component.padding || "16px"};${innerStyle}">
+                <table ${classAttr ? classAttr : ""} cellpadding="0" width="100%" align="center" valign="center" cellspacing="0" border="0" role="presentation" ${innerStyle ? `style="${innerStyle}"` : ""}>
+                  <tr>
+                    <td align='${
+                      component.textAlign || "center"
+                    }' ${classAttr ? classAttr : ""} ${innerStyle ? `style="${innerStyle}"` : ""}>
+                        <img 
+                          width="${component.width || "100%"}"
+                          src="${component.src || ""}" 
+                          alt="${component.alt || "Image"}"
+                          style="${imgStyle}"
+                        />
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </tbody>
@@ -205,15 +221,13 @@ function generateComponentHTML(component: EmailComponent): string {
     case "button": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
-      const { classAttr, tableStyle, innerStyle } =
-        getDisplayAttributes(display);
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const linkStyle = `
         color: ${component.color || "#ffffff"};
         text-decoration: none;
         font-family: Arial, sans-serif;
         font-weight: bold;
-        display: inline-block;
         ${innerStyle}
       `.trim();
 
@@ -224,20 +238,23 @@ function generateComponentHTML(component: EmailComponent): string {
           cellspacing="0"
           cellpadding="0"
           border="0"
-          ${classAttr}
-          ${tableStyle}
+          ${classAttr ? classAttr : ""}
+          ${innerStyle ? `style="${innerStyle}"` : ""}
         >
           <tbody>
             <tr>
               <td style="padding: ${component.padding || "16px"}; text-align: ${
-            component.textAlign || "center"
-          };">
-                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+        component.textAlign || "center"
+      };">
+                <table ${classAttr ? classAttr : ""} cellpadding="0" cellspacing="0" border="0" ${innerStyle ? `style="${innerStyle}"` : ""}>
                   <tr>
-                    <td style="
-                      background-color: ${component.backgroundColor || "#007bff"};
+                    <td ${classAttr ? classAttr : ""} style="
+                      background-color: ${
+                        component.backgroundColor || "#007bff"
+                      };
                       border-radius: ${component.borderRadius || "4px"};
                       padding: ${component.buttonPadding || "12px 24px"};
+                      ${innerStyle ? ` ${innerStyle}` : ""}
                     ">
                       <a href="${component.href || "#"}" style="${linkStyle}">
                         ${component.text || "Button"}
@@ -255,8 +272,7 @@ function generateComponentHTML(component: EmailComponent): string {
     case "divider": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
-      const { classAttr, tableStyle, innerStyle } =
-        getDisplayAttributes(display);
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const dividerStyle = `
     height: ${component.height || "1px"};
@@ -272,13 +288,13 @@ function generateComponentHTML(component: EmailComponent): string {
       cellspacing="0"
       cellpadding="0"
       border="0"
-      ${classAttr}
-      ${tableStyle}
+      ${classAttr ? classAttr : ""}
+      ${innerStyle ? `style="${innerStyle}"` : ""}
     >
       <tbody>
         <tr>
-          <td style="padding: ${component.padding || "16px"};" >
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          <td ${classAttr ? classAttr : ""} style="padding: ${component.padding || "16px"};${innerStyle ? ` ${innerStyle}` : ""}" >
+            <table ${classAttr ? classAttr : ""} cellpadding="0" cellspacing="0" border="0" width="100%" ${innerStyle ? `style="${innerStyle}"` : ""}>
               <tr>
                 <td style="${dividerStyle}"></td>
               </tr>
@@ -292,6 +308,415 @@ function generateComponentHTML(component: EmailComponent): string {
     case "custom":
       return `${component.html}`;
 
+    case "cta-button": {
+      const ctaDisplay = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(ctaDisplay);
+
+      const ctaStyle = `
+    display: inline-block;
+    padding: ${component.buttonPadding || "12px 24px"};
+    text-decoration: none;
+    ${innerStyle}
+  `.trim();
+
+      return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      align="center"
+      ${classAttr ? classAttr : ""}
+      ${innerStyle ? `style="${innerStyle}"` : ""}
+    >
+      <tbody>
+        <tr>
+          <td ${classAttr ? classAttr : ""} align="center" style="text-align:center;padding: ${
+        component.padding || "16px;"
+      };${innerStyle}">
+            <table ${classAttr ? classAttr : ""} align="center" cellpadding="0" cellspacing="0" border="0" width="100%" ${innerStyle ? `style="${innerStyle}"` : ""}>
+              <tr>
+                <td ${classAttr ? classAttr : ""} align="center" ${innerStyle ? `style="${innerStyle}"` : ""} >
+                      <a href="${
+                        component.href || "#"
+                      }" style="${ctaStyle}" target="_blank">
+                        <img
+                          src="${component.imageSrc || "/cta-placeholder.png"}"
+                          alt="${component.imageAlt || "CTA Image"}"
+                          style="
+                            width: ${component.width || "470px"};
+                            height: ${component.height || "auto"};
+                            display: block;
+                            max-width: 100%;
+                            margin: 0 auto;
+                            border: 0;
+                            ${innerStyle ? ` ${innerStyle}` : ""}
+                          "
+                        />
+                      </a>
+                </td>
+              </tr>
+            </table
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+    }
+
+    case "footer-links": {
+      const footerDisplay = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(footerDisplay);
+      const linksHTML = (component.links || [])
+        .map(
+          (link, index) => `
+      <a href="${link.href || "#"}" style="color: ${
+            component.color || "#0000EE"
+          }; text-decoration: underline; font-size: ${
+            component.fontSize || "14px"
+          }; margin-right: 10px;">
+        ${link.text || "Link"}
+      </a>
+      ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
+      ${
+        index < component.links!.length - 1
+          ? index == 1
+            ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
+            : `<span  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
+          : ""
+      }
+    `
+        )
+        .join("");
+      return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+     ${classAttr ? classAttr : ""}
+      ${innerStyle ? `style="${innerStyle}"` : ""}
+    >
+      <tbody>
+        <tr>
+          <td ${classAttr ? classAttr : ""} style="padding: ${component.padding || "16px"}; text-align: ${
+        component.textAlign || "left"
+      }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? ` ${innerStyle}` : ""}">
+            <div style="color: ${component.color || "#000000"}; font-size: ${
+        component.fontSize || "14px"
+      }; line-height: 1.5;${innerStyle ? ` ${innerStyle}` : ""}">
+              ${linksHTML}
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+    }
+
+    case "isi": {
+      return `
+       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+       <tbody>
+          <tr>
+            <td style="padding: 20px;">
+               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tbody>
+                   <tr>
+                                          <td class="f_14 green f_bold" align="left" valign="top"
+                                             style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 18px; ">
+                                             IMPORTANT SAFETY INFORMATION </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="15"
+                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_bold" align="left" valign="top"
+                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                                             Warnings and Precautions </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold"
+                                                            style="font-weight: 700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia
+                                                         and hypertriglyceridemia occurred in patients taking ORSERDU at
+                                                         an incidence of 30% and 27%, respectively. The incidence of
+                                                         Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia
+                                                         were 0.9% and 2.2%, respectively. Monitor lipid profile prior
+                                                         to starting and periodically while taking ORSERDU.
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold" style="font-weight: 700">Embryo-Fetal
+                                                            Toxicity:&nbsp;</span>Based on findings in animals and its
+                                                         mechanism of action, ORSERDU can cause fetal harm when
+                                                         administered to a pregnant woman. Advise pregnant women and
+                                                         females of reproductive potential of the potential risk to a
+                                                         fetus. Advise females of reproductive potential to use
+                                                         effective contraception during treatment with ORSERDU and for 1
+                                                         week after the last dose. Advise male patients with female
+                                                         partners of reproductive potential to use effective
+                                                         contraception during treatment with ORSERDU and for 1 week
+                                                         after the last dose.
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="15"
+                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_bold" align="left" valign="top"
+                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                             Adverse Reactions </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold" style="font-weight: 700">Serious adverse
+                                                            reactions&nbsp;</span>occurred in 12% of patients who
+                                                         received ORSERDU. Serious adverse reactions in &gt;1% of
+                                                         patients who received ORSERDU were musculoskeletal pain (1.7%)
+                                                         and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of
+                                                         patients who received ORSERDU, including cardiac arrest, septic
+                                                         shock, diverticulitis, and unknown cause (one patient each).
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold" style="font-weight: 700">The most common
+                                                            adverse reactions&nbsp;</span>(≥10%), including laboratory
+                                                         abnormalities, of ORSERDU were musculoskeletal pain (41%),
+                                                         nausea (35%), increased cholesterol (30%), increased AST (29%),
+                                                         increased triglycerides (27%), fatigue (26%), decreased
+                                                         hemoglobin (26%), vomiting (19%), increased ALT (17%),
+                                                         decreased sodium (16%), increased creatinine (16%), decreased
+                                                         appetite (15%), diarrhea (13%), headache (12%), constipation
+                                                         (12%), abdominal pain (11%), hot flush (11%), and dyspepsia
+                                                         (10%).
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="15"
+                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_bold" align="left" valign="top"
+                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                             Drug Interactions </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="middle"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold" style="font-weight: 700">Concomitant use
+                                                            with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid
+                                                         concomitant use of strong or moderate CYP3A4 inhibitors with
+                                                         ORSERDU. Avoid concomitant use of strong or moderate CYP3A4
+                                                         inducers with ORSERDU.
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="15"
+                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_bold" align="left" valign="top"
+                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                             Use in Specific Populations </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="middle"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                                                         <span class="f_bold"
+                                                            style="font-weight: 700">Lactation:&nbsp;</span>Advise
+                                                         lactating women to not breastfeed during treatment with ORSERDU
+                                                         and for 1 week after the last dose.
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td>
+                                             <table class="mobile-table" width="100%" align="center" border="0"
+                                                cellspacing="0" cellpadding="0">
+                                                <tbody>
+                                                   <tr>
+                                                      <td class="yellow" valign="top" width="7" v_align="middle"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
+                                                      <td width="3" height="1"
+                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
+                                                         &nbsp; </td>
+                                                      <td class="f_14 black f_normal" align="left" valign="top"
+                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px; ">
+                                                         <span class="f_bold" style="font-weight: 700">Hepatic
+                                                            Impairment:&nbsp;</span>Avoid use of ORSERDU in patients
+                                                         with severe hepatic impairment (Child-Pugh C). Reduce the dose
+                                                         of ORSERDU in patients with moderate hepatic impairment
+                                                         (Child-Pugh B).
+                                                      </td>
+                                                   </tr>
+                                                </tbody>
+                                             </table>
+                                          </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="10"
+                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_normal" align="left" valign="top"
+                                             style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;  ">
+                                             The safety and effectiveness of ORSERDU in pediatric patients have not been
+                                             established. </td>
+                                       </tr>
+                                       <tr>
+                                          <td width="100%" height="15"
+                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                             &nbsp;</td>
+                                       </tr>
+                                       <tr>
+                                          <td class="f_14 black f_normal" align="left" valign="top"
+                                             style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                                             ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
+                                       </tr>
+                </tbody>
+               </table>
+            </td>
+          </tr>
+          </tbody>
+          </table>
+          `;
+    }
     default:
       return "";
   }

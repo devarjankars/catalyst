@@ -7,6 +7,7 @@ import { RichTextEditor } from "./rich-text-editor"
 import { SectionDropZone } from "./section-drop-zone"
 import { RearrangeControls } from "./rearrange-controls"
 import type { EmailComponent } from "@/types/email-builder"
+import { Input } from "./ui/input"
 
 interface EmailComponentRendererProps {
   component: EmailComponent
@@ -189,7 +190,7 @@ export function EmailComponentRenderer({
                 // Multi-column layout
                 <div className="flex flex-row gap-4 w-full">
                   {(component.children || []).map((child, childIndex) => (
-                    <div key={child.id} className="flex-1 min-w-0" style={getColumnStyles(child)}>
+                    <div key={child.id+childIndex} className="flex-1 min-w-0" style={getColumnStyles(child)}>
                       {child.type === "section" && child.isColumn ? (
                         // This is a column section
                         <SectionDropZone
@@ -220,7 +221,7 @@ export function EmailComponentRenderer({
                           renderChildren={() => (
                             <div className="flex flex-col gap-2 w-full">
                               {(child.children || []).map((grandChild, grandChildIndex) => (
-                                <div key={grandChild.id}>
+                                <div key={grandChild.id+new Date().getTime()}>
                                   <EmailComponentRenderer
                                     component={grandChild}
                                     index={grandChildIndex}
@@ -328,16 +329,17 @@ export function EmailComponentRenderer({
 
       case "image":
         return (
-          <div style={baseStyle}>
+          <div style={baseStyle} className={`flex flex-col items-${component.textAlign || "center"}`}>
             {!previewMode && isSelected ? (
               <div className="space-y-2">
                 
-                <input
+                <Input
                   type="text"
                   value={component.alt || ""}
                   onChange={(e) => onUpdate({ alt: e.target.value })}
                   placeholder="Alt text"
                   className="w-full p-2 border mb-2 rounded text-sm"
+                  
                 />
               </div>
             ) : null}
@@ -418,6 +420,113 @@ export function EmailComponentRenderer({
 
           </div>
         )
+
+      case "cta-button":
+        return (
+          <div style={baseStyle} className="flex align-center justify-center">
+           
+            <a
+              href={component.href || "#"}
+              style={{
+                display: "inline-block",
+                
+                color: component.color || "#ffffff",
+                padding: component.buttonPadding || "12px 24px",
+                borderRadius: component.borderRadius || "4px",
+                textDecoration: "none",
+                
+                fontWeight: "bold",
+              }}
+              onClick={(e) => {
+                if (!previewMode) {
+                  e.preventDefault()
+                  onSelect()
+                }
+              }}
+            >
+              <img
+                src={component.imageSrc || "/cta-placeholder.png"}
+                alt={component.imageAlt || "CTA Image"}
+                style={{
+                  width: component.width || "100%",
+                  height: component.height || "15%",
+                  display: "block",
+                  maxWidth: "100%",
+                  margin: "0 auto",
+                }}
+              />    
+              </a>
+        </div>
+        )
+      case "footer-links":
+        return (
+          <div style={baseStyle} className="flex flex-col gap-2">
+            
+            <div className="flex flex-wrap gap-2">
+              {component.links?.map((link, linkIndex) => (
+                 <>
+                <a
+                  key={linkIndex}
+                  href={link.href || "#"}
+                  style={{
+                    color: component.color || "#007bff",
+                    textDecoration: "underline",
+                    
+                  }}
+                  onClick={(e) => {
+                    if (!previewMode) {
+                      e.preventDefault()
+                      onSelect()
+                    }
+                  }}
+                >
+                  {link.text} 
+                </a>
+                 
+                {linkIndex < component.links!.length-1 && <span key={linkIndex} className="text-gray-500">|</span>}
+               </>
+              ))}
+            </div>
+          </div>
+        )
+
+      case "isi":
+        return (
+          <div style={baseStyle} className="flex flex-col gap-2">
+            <h2 className="text-lg font-bold text-green-800 ">IMPORTANT SAFETY INFORMATION</h2>
+            {component.importantSafetyInformation?.sections?.map((section, sectionIndex) => (
+             section.title ? <div key={sectionIndex} className="mb-4">
+                <h3 className="text-md font-semibold ">{section.title}</h3>
+                {/* <p className="text-sm text-gray-700">{section.content}</p> */}
+                {section.items && section.items.length > 0 && (
+                  <ul className="list-disc pl-5 mt-2 ml-3">
+                    {section.items.map((subsection, subIndex) => (
+                      <>
+                      <li key={subIndex} className="text-sm text-gray-700 mt-2">
+                        {subsection.content}
+                      </li>
+                      </>
+                    ))}
+                  </ul> 
+                )}
+              </div>
+              : <div key={sectionIndex}>
+                
+                {/* <p className="text-sm text-gray-700">{section.content}</p> */}
+                {section.items && section.items?.length > 0 && (
+                 section.items.map((subsection, subIndex) => (
+                    <div key={subIndex} className="text-sm text-gray-700 mt-2">
+                      {subsection.content}
+                    </div>
+                  ) 
+                ))}
+              </div>
+            ))}
+
+            
+          </div>
+        )
+
       default:
         return <div>Unknown component type</div>
     }

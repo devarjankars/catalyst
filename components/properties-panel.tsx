@@ -360,16 +360,24 @@ export function PropertiesPanel({
                 }
               />
             </div>
-            {/* <div>
-              <Label htmlFor="src">Image URL</Label>
-              <Input
-                id="src"
-                value={component.src || ""}
-                disabled={true}
-                // onChange={(e) => onUpdateComponent({ src: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div> */}
+            <div>
+              <Label htmlFor="align">Image Alignment</Label>
+              <Select
+                value={component.textAlign || "center"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label htmlFor="alt">Alt Text</Label>
               <Input
@@ -386,6 +394,15 @@ export function PropertiesPanel({
                 value={component.width || "100%"}
                 onChange={(e) => onUpdateComponent({ width: e.target.value })}
                 placeholder="100% or 400px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxWidth">Max Width</Label>
+              <Input
+                id="maxWidth"
+                value={component.maxWidth || "100%"}
+                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value })}
+                placeholder="100%"
               />
             </div>
           </div>
@@ -471,6 +488,126 @@ export function PropertiesPanel({
             </div>
           </div>
         );
+
+      case "cta-button":
+        return (
+          <div className="space-y-4">
+            <div>
+               <ImageUpload
+                currentImage={component.imageSrc}
+                onImageUpload={(imageUrl) =>
+                  onUpdateComponent({ imageSrc: imageUrl })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageAlt">Image Alt Text</Label>
+              <Input
+                id="imageAlt"
+                value={component.imageAlt || ""}
+                onChange={(e) =>
+                  onUpdateComponent({ imageAlt: e.target.value })
+                }
+                placeholder="Image description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="href">Link URL</Label>
+              <Input
+                id="href"
+                value={component.href || ""}
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="width">Width</Label>
+              <Input
+                id="width"
+                value={component.width || "100%"}
+                onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                placeholder="100% or 400px"
+              />
+            </div>
+            </div>
+        );
+        
+      case "footer-links":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="textAlign">Text Align</Label>
+              <Select
+                value={component.textAlign || "left"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "14px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="14px"
+              />  
+            </div>
+            <div>
+              <Label htmlFor="color">Text Color</Label>
+              <Input
+                id="color"
+                type="color"
+                value={component.color || "#007bff"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />  
+            </div>
+            
+            
+            <div className="mt-3">
+              <Label className="text-md mb-2">Links</Label>
+              {component.links?.map((link, index) => (
+                <div key={index} className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2">
+                  <Label>Link text</Label>
+                  <Input
+                    value={link.text}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, text: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link text"
+                  />
+                  <Label>Link url</Label>
+                  <Input
+                    value={link.href}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, href: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link URL"
+                  />
+                </div>
+              ))}
+              
+            </div>  
+
+           </div>
+        );   
 
       default:
         return <div>No properties available</div>;

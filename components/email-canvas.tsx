@@ -1,5 +1,5 @@
 "use client"
-import { forwardRef, useState } from "react"
+import { forwardRef, useEffect, useState } from "react"
 import { useDrop } from "react-dnd"
 import { EmailComponentRenderer } from "./email-component-renderer"
 import type { EmailComponent } from "@/types/email-builder"
@@ -60,38 +60,59 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         return { dropZone: "canvas", dropElement: ref?.current }
       },
       hover: (item: any, monitor) => {
-        if (!item.fromPalette) return
+        if (!item.fromPalette) return;
 
-        const clientOffset = monitor.getClientOffset()
+        const clientOffset = monitor.getClientOffset();
         if (clientOffset && ref?.current) {
-          const canvasRect = ref.current.getBoundingClientRect()
-          const dropY = clientOffset.y - canvasRect.top
+          const canvasRect = ref.current.getBoundingClientRect();
 
-          let dropIndex = components.length
-          let position: "top" | "bottom" = "bottom"
-          const componentElements = ref.current.querySelectorAll("[data-component-id]")
+          // Ignore if mouse is too far outside the canvas
+          const buffer = 50; // Optional: allow some leeway
+          if (
+            clientOffset.y < canvasRect.top - buffer ||
+            clientOffset.y > canvasRect.bottom + buffer
+          ) {
+            setDropIndicator(null);
+            return;
+          }
+
+          const dropY = clientOffset.y - canvasRect.top;
+
+          let dropIndex = components.length;
+          let position: "top" | "bottom" = "top";
+
+          const componentElements = ref.current.querySelectorAll("[data-component-id]");
 
           if (componentElements.length > 0) {
             for (let i = 0; i < componentElements.length; i++) {
-              const element = componentElements[i] as HTMLElement
-              const elementRect = element.getBoundingClientRect()
-              const elementY = elementRect.top - canvasRect.top + elementRect.height / 2
+              const element = componentElements[i] as HTMLElement;
+              const elementRect = element.getBoundingClientRect();
+              const elementMidY = elementRect.top - canvasRect.top + elementRect.height / 2;
 
-              if (dropY < elementY) {
-                dropIndex = i
-                position = "top"
-                break
+              if (dropY < elementMidY) {
+                dropIndex = i;
+                position = "top";
+                break;
               }
             }
           }
 
-          setDropIndicator({ index: dropIndex, position })
+          // Clamp the dropIndex between 0 and components.length
+          dropIndex = Math.max(0, Math.min(dropIndex, components.length));
+
+          setDropIndicator({ index: dropIndex, position });
         }
       },
       collect: (monitor) => ({
         isOver: monitor.isOver({ shallow: true }),
       }),
     })
+
+    useEffect(() => {
+  if (!isOver) {
+    setDropIndicator(null);
+  }
+}, [isOver]);
 
     // Section operations
     const handleAddToSection = (sectionId: string, component: EmailComponent, index?: number) => {
@@ -135,6 +156,9 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       const section = components.find((c) => c.id === sectionId)
       if (!section?.children) return
 
+      console.log(`Deleting child ${childId} from section ${sectionId}`);
+      
+
       const newChildren = section.children.filter((child) => child.id !== childId)
       onUpdateComponent(sectionId, { children: newChildren })
     }
@@ -167,17 +191,19 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               </div>
             </div>
           ) : (
-            <div className="p-0 relative">
+            <div className="p-2 relative">
               {/* Top drop indicator */}
-              {dropIndicator?.index === 0 && dropIndicator.position === "top" && !previewMode && (
-                <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
-                      {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
-                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
-                    </div>
-              )}
+              
 
               {components.map((component, index) => (
+                
                 <div key={component.id} className="relative">
+                  {dropIndicator?.index === index && dropIndicator.position === "top" && !previewMode && (
+                  <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
+                        {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
+                        <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
+                      </div>
+                  )}
                   <EmailComponentRenderer
                     component={component}
                     index={index}
@@ -197,21 +223,16 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                     onDuplicate={() => duplicateComponent(component.id)}
                   />
 
-                  {/* Drop indicator between components */}
-                  {dropIndicator?.index === index + 1 && dropIndicator.position === "top" && !previewMode && (
-                    <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
-                      {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
-                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
-                    </div>
-                  )}
+                  
+                  
                 </div>
               ))}
 
               {/* Final drop indicator */}
-              {dropIndicator?.index === components.length && !previewMode && (
+              {dropIndicator?.index === components.length && isOver && !previewMode && (
                 <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
                       {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
-                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
+                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here final</p>
                     </div>
               )}
 

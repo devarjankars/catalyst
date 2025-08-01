@@ -1,4 +1,4 @@
-
+"use client"
 import JSZip from "jszip"
 import { generateEmailHTML } from "./email-generator"
 import type { EmailComponent } from "@/types/email-builder"
@@ -11,7 +11,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   return await response.blob()
 }
 
-export async function exportToZip(components: EmailComponent[], canvasElement: HTMLElement) {
+export async function exportToZip(components: EmailComponent[], canvasElement: HTMLElement,templateName: string = "email-template") {
   const zip = new JSZip()
   const imageFolder = zip.folder("images")
 
@@ -61,7 +61,7 @@ export async function exportToZip(components: EmailComponent[], canvasElement: H
 
   const link = document.createElement("a")
   link.href = url
-  link.download = "email-template.zip"
+  link.download = templateName || "email-template.zip"
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

@@ -9,6 +9,7 @@ import { Download, FileText, Upload } from "lucide-react"
 import { generateEmailHTML } from "@/lib/email-generator"
 import { exportToZip } from "@/lib/export-utils"
 import type { EmailComponent } from "@/types/email-builder"
+import { useEmailBuilderStore } from "@/store/email-builder-store"
 
 interface ExportPanelProps {
   components: EmailComponent[]
@@ -17,13 +18,14 @@ interface ExportPanelProps {
 
 export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const {currentTemplate} = useEmailBuilderStore()
 
   const handleExport = async () => {
     if (!canvasRef.current) return
 
     setIsExporting(true)
     try {
-      await exportToZip(components, canvasRef.current)
+      await exportToZip(components, canvasRef.current, currentTemplate?.name)
     } catch (error) {
       console.error("Export failed:", error)
     } finally {
