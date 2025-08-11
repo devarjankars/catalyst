@@ -17,6 +17,8 @@ interface SectionDropZoneProps {
   columnAlignment?: "left" | "center" | "right"
 }
 
+//TODO => if direction is row then not able to edit column properties
+
 export function SectionDropZone({
   sectionId,
   children,
@@ -105,7 +107,7 @@ export function SectionDropZone({
       className={`
         ${minHeight} relative p-3 rounded-md transition-all w-full
         ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}
-        ${!previewMode ? `border-2 border-dashed ${isColumn ? "border-green-200 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
+        ${!previewMode ? `border-2 border-dashed ${isColumn ? "border-green-500 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
         ${isColumn ? "flex-1" : "w-full"}
       `}
       style={{

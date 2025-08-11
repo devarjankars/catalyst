@@ -43,7 +43,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
   }
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer" onClick={onUse}>
+    <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-110" onClick={onUse}>
       <CardHeader className="p-0">
         <div className="relative aspect-video bg-gray-100 rounded-t-lg overflow-hidden">
           {imageLoading && (
