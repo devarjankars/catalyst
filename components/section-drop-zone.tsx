@@ -31,6 +31,9 @@ export function SectionDropZone({
 }: SectionDropZoneProps) {
   const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
 
+  // console.log("is coulmn", isColumn);
+  
+
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "component",
     drop: (item: any, monitor) => {
