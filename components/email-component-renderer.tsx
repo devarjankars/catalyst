@@ -209,8 +209,9 @@ export function EmailComponentRenderer({
                 : "auto",
               ...getColumnStyles(component),
             }}
+            className="mt-2"
           >
-            {!previewMode && isSelected && (
+            {/* {!previewMode && isSelected && (
               <div
                 className={`mb-3 text-xs font-medium ${
                   isColumn ? "text-green-600" : "text-blue-600"
@@ -227,7 +228,7 @@ export function EmailComponentRenderer({
                   </>
                 )}
               </div>
-            )}
+            )} */}
 
             {onAddToSection && onMoveWithinSection ? (
               component.direction === "row" ? (
@@ -263,6 +264,7 @@ export function EmailComponentRenderer({
                             onUpdateChild?.(component.id, child.id, {
                               children: updatedChildren,
                             });
+                            
                           }}
                           onMoveWithinSection={(
                             sectionId,
@@ -292,72 +294,7 @@ export function EmailComponentRenderer({
                                   <div
                                     key={grandChild.id + new Date().getTime()}
                                   >
-                                    <EmailComponentRenderer
-                                      component={grandChild}
-                                      index={grandChildIndex}
-                                      isSelected={
-                                        selectedComponent === grandChild.id
-                                      }
-                                      onSelect={() =>
-                                        onSelectChild?.(grandChild.id)
-                                      }
-                                      onUpdate={(updates) => {
-                                        // Update grandchild in the column
-                                        const updatedChildren = (
-                                          child.children || []
-                                        ).map((gc) =>
-                                          gc.id === grandChild.id
-                                            ? { ...gc, ...updates }
-                                            : gc
-                                        );
-                                        onUpdateChild?.(
-                                          component.id,
-                                          child.id,
-                                          { children: updatedChildren }
-                                        );
-                                      }}
-                                      onDelete={() => {
-                                        // Delete grandchild from the column
-                                        const updatedChildren = (
-                                          child.children || []
-                                        ).filter(
-                                          (gc) => gc.id !== grandChild.id
-                                        );
-                                        onUpdateChild?.(
-                                          component.id,
-                                          child.id,
-                                          { children: updatedChildren }
-                                        );
-                                      }}
-                                      onMove={(dragIndex, hoverIndex) => {
-                                        const currentChildren = [
-                                          ...(child.children || []),
-                                        ];
-                                        const draggedComponent =
-                                          currentChildren[dragIndex];
-                                        currentChildren.splice(dragIndex, 1);
-                                        currentChildren.splice(
-                                          hoverIndex,
-                                          0,
-                                          draggedComponent
-                                        );
-                                        onUpdateChild?.(
-                                          component.id,
-                                          child.id,
-                                          { children: currentChildren }
-                                        );
-                                      }}
-                                      onAddToSection={onAddToSection}
-                                      onMoveWithinSection={onMoveWithinSection}
-                                      onUpdateChild={onUpdateChild}
-                                      onDeleteChild={onDeleteChild}
-                                      onSelectChild={onSelectChild}
-                                      selectedComponent={selectedComponent}
-                                      previewMode={previewMode}
-                                      totalComponents={
-                                        child.children?.length || 0
-                                      }
-                                    />
+                                    {renderSectionChild(grandChild, grandChildIndex)}
                                   </div>
                                 )
                               )}
@@ -370,6 +307,8 @@ export function EmailComponentRenderer({
                       )}
                     </div>
                   ))}
+                  
+               
                 </div>
               ) : (
                 // Single column layout
@@ -378,6 +317,7 @@ export function EmailComponentRenderer({
                   children={component.children || []}
                   onAddToSection={onAddToSection}
                   onMoveWithinSection={onMoveWithinSection}
+                  isColumn={true}
                   previewMode={previewMode}
                   columnCount={1}
                   renderChildren={() => (
@@ -409,7 +349,7 @@ export function EmailComponentRenderer({
 
       case "text":
         return (
-          <div style={baseStyle}>
+          <div  className="mt-2">
             {previewMode ? (
               <div
                 style={{
@@ -442,7 +382,7 @@ export function EmailComponentRenderer({
         return (
           <div
             style={baseStyle}
-            className={`flex flex-col items-${component.textAlign || "center"}`}
+            className={`flex flex-col items-${component.textAlign || "center"} mt-2`}
           >
             {!previewMode && isSelected ? (
               <div className="space-y-2">
@@ -476,6 +416,7 @@ export function EmailComponentRenderer({
         return (
           <div
             style={{ ...baseStyle, textAlign: component.textAlign || "center" }}
+            className="mt-2"
           >
             {!previewMode && isSelected ? (
               <div className="space-y-2 mb-2">
@@ -520,7 +461,7 @@ export function EmailComponentRenderer({
 
       case "divider":
         return (
-          <div style={baseStyle}>
+          <div style={baseStyle} className="mt-2">
             <hr
               style={{
                 height: component.height || "1px",
@@ -532,11 +473,11 @@ export function EmailComponentRenderer({
           </div>
         );
       case "custom":
-        return <div dangerouslySetInnerHTML={{ __html: component.html }}></div>;
+        return <div className="mt-2" dangerouslySetInnerHTML={{ __html: component.html }}></div>;
 
       case "cta-button":
         return (
-          <div style={baseStyle} className="flex align-center justify-center">
+          <div style={baseStyle} className="flex align-center justify-center mt-2">
             <a
               href={component.href || "#"}
               style={{
@@ -572,7 +513,7 @@ export function EmailComponentRenderer({
         );
       case "footer-links":
         return (
-          <div style={baseStyle} className="flex flex-col gap-2">
+          <div style={baseStyle} className="flex flex-col gap-2 mt-2">
             <div className="flex flex-wrap gap-2">
               {component.links?.map((link, linkIndex) => (
                 <>

@@ -29,7 +29,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
   }
 
   return (
-    <div style={{ padding: "10px" }}>
+    <div style={{ padding: "10px",marginTop:"5px" }}>
       <ul
         style={{
           listStyleType: "disc",
