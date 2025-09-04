@@ -175,7 +175,7 @@ function generateComponentHTML(component: EmailComponent): string {
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const imgStyle = `
-        width: ${component.width || "100%"};
+      
         height: ${component.height || "auto"};
         display: block;
         max-width:${component.maxWidth || "100%"};
@@ -194,7 +194,7 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td ${classAttr ? classAttr : ""} align='${
+              <td width=${component.width} ${classAttr ? classAttr : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "16px"};${innerStyle}">
                 <table ${classAttr ? classAttr : ""} cellpadding="0" width="100%" align="center" valign="center" cellspacing="0" border="0" role="presentation" ${innerStyle ? `style="${innerStyle}"` : ""}>
@@ -716,6 +716,77 @@ function generateComponentHTML(component: EmailComponent): string {
           </tbody>
           </table>
           `;
+    }
+    case "bullet-list": {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
+
+      const bulletStyle = `
+       color: ${component.markerColor || "#000000"};
+       font-size: ${component.discSize || "16px"};
+       line-height: ${component.lineHeight || "18px"};
+       padding-bottom: 3px
+       ${innerStyle}
+      `.trim();
+
+      const itemStyle = `
+        color: ${component.color || "#000000"};
+        font-size: ${component.fontSize || "16px"};
+        font-weight: ${component.fontWeight || "normal"};
+        text-align: ${component.textAlign || "left"};
+        line-height: ${component.lineHeight || "18px"};
+        padding-left: 5px;
+        font-family: Arial, sans-serif;
+        ${innerStyle}
+      `.trim();
+      
+      const listItemsHTML = (component.listItems || [])
+        .map(
+          (item) => `
+        <tr >
+          <td  align="left" valign="top" width="2%" style="${bulletStyle}">&bullet;</td>
+          
+          <td align="left" valign="middle" style="${itemStyle}">
+            ${item}
+          </td>
+        </tr>
+        <tr><td  height=${component.spaceBetweenItems?.slice(0,3)} style=" font-size: 0px; line-height: ${component.spaceBetweenItems}; mso-line-height-rule: exactly; ">&nbsp; </td></tr>
+      `
+        )
+        .join("");
+
+      return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      ${classAttr ? classAttr : ""}
+      ${innerStyle ? `style="${innerStyle}"` : ""}
+    >
+      <tbody>
+        <tr>
+          <td ${classAttr ? classAttr : ""} style="padding: ${component.padding || "16px"}; background-color: ${component.backgroundColor || "transparent"};${innerStyle ? ` ${innerStyle}` : ""}">
+            <table ${classAttr ? classAttr : ""} cellpadding="0" cellspacing="0" border="0" width="100%" ${innerStyle ? `style="${innerStyle}"` : ""}>
+              <tbody>
+                ${listItemsHTML}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+      // <tr>
+      //  <td class="bullet" align="left" valign="top" width="2%" style=" font-size: 15px; line-height: 16px; color: #5D5D5D; ">•</td>
+      //  <td width="5" height="1" style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">&nbsp; </td>
+      //  <td align="left" valign="middle" style=" color: #5D5D5D; font-family: Arial, sans-serif; font-weight: 400; font-size: 12px  line-height: 17px; ">
+      // The median time to CR/CRc in the pivotal cohort was <b>57 days</b>&nbsp;(‍range, 14-107 days; n=13‍) and 43 days (‍range,    14-131 days; n=29‍) in all cohorts<sup>2-4</sup>
+      // </td>
+      // </tr>
     }
     default:
       return "";

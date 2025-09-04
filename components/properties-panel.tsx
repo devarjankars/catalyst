@@ -300,22 +300,15 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="fontWeight">Font Weight</Label>
-              <Select
-                value={component.fontWeight || "normal"}
-                onValueChange={(value) =>
-                  onUpdateComponent({ fontWeight: value as any })
+              <Label htmlFor="lineHeight">Line Height</Label>
+              <Input
+                id="lineHeight"
+                type="text"
+                value={component.lineHeight || "18px"}
+                onChange={(e) =>
+                  onUpdateComponent({ lineHeight: e.target.value })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="bold">Bold</SelectItem>
-                  <SelectItem value="lighter">Light</SelectItem>
-                </SelectContent>
-              </Select>
+              />
             </div>
             {/* New: Link editor fields if links exist */}
             {Links.length > 0 && (
@@ -609,6 +602,86 @@ export function PropertiesPanel({
            </div>
         );   
 
+      case "bullet-list":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bulletColor">Disc Color</Label>
+              <Input
+                id="bulletColor"
+                type="color"
+                value={component.markerColor || "#000000"}
+                onChange={(e) =>
+                  onUpdateComponent({ markerColor: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="discSize">Disc Size</Label>
+              <Input
+                id="discSize"
+                value={component.discSize || "16px"}
+                onChange={(e) =>
+                  onUpdateComponent({ discSize: e.target.value })
+                }
+                placeholder="16px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="spaceBetweenItems">Space Between Items</Label>
+              <Input
+                id="spaceBetweenItems"
+                value={component.spaceBetweenItems || "8px"}
+                onChange={(e) =>
+                  onUpdateComponent({ spaceBetweenItems: e.target.value })
+                }
+                placeholder="8px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="text-color">Text Color</Label>
+              <Input
+                id="text-color"
+                type="color"
+                value={component.color || "#000000"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "16px"}
+                onChange={(e) =>
+                  onUpdateComponent({ fontSize: e.target.value })
+                }
+                placeholder="16px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="backgroundColor">Background color</Label>
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={component.backgroundColor || "#ffffff"}
+                onChange={(e) =>
+                  onUpdateComponent({ backgroundColor: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="lineHeight">Line Height</Label>
+              <Input
+                id="lineHeight"
+                type="text"
+                value={component.lineHeight || "18px"}
+                onChange={(e) =>
+                  onUpdateComponent({ lineHeight: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        )
       default:
         return <div>No properties available</div>;
     }

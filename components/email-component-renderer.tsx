@@ -8,6 +8,7 @@ import { SectionDropZone } from "./section-drop-zone";
 import { RearrangeControls } from "./rearrange-controls";
 import type { EmailComponent } from "@/types/email-builder";
 import { Input } from "./ui/input";
+import BulletList from "./bullet-list";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -430,6 +431,7 @@ export function EmailComponentRenderer({
                   textAlign: component.textAlign || "left",
                   fontWeight: component.fontWeight || "normal",
                   backgroundColor: component.backgroundColor || "transparent",
+                  lineHeight: component.lineHeight || "18px",
                 }}
               />
             )}
@@ -647,6 +649,56 @@ export function EmailComponentRenderer({
             )}
           </div>
         );
+
+        case "bullet-list" : 
+              return (
+//                 <div style={baseStyle}>
+//   <ul
+//     style={{
+//       listStyleType: "disc",
+//       color: component.markerColor || "#000000",
+//       paddingLeft: "20px",
+//       backgroundColor: component.backgroundColor || "transparent",
+//       fontSize: component.discSize || "16px",
+//     }}
+//   >
+//     {component.listItems?.map((item: string, index: number) => (
+//       <li key={index}>
+//         <RichTextEditor
+//           value={item}
+//           onChange={(content) => {
+//             const updated = [...component.listItems]
+//             updated[index] = content
+//             onUpdate({ listItems: updated })
+//           }}
+//           style={{
+//             fontSize: component.fontSize || "16px",
+//             color: component.color || "#000000",
+//             textAlign: component.textAlign || "left",
+//             fontWeight: component.fontWeight || "normal",
+//             lineHeight: component.lineHeight || "18px",
+//           }}
+//         />
+//       </li>
+//     ))}
+//   </ul>
+
+//   {/* Add new item button */}
+//   {isSelected && <div className="flex justify-center">
+
+//     <button
+//       onClick={() => {
+//         const updated = [...(component.listItems || []), "New Item"]
+//         onUpdate({ listItems: updated })
+//       }}
+//       className="mt-2 px-2 py-1 text-sm border rounded-md border-dashed"
+//     >
+//       + 
+//     </button>
+//   </div>}
+// </div>
+                <BulletList component={component} onUpdate={onUpdate} isSelected={isSelected}/>
+              );
 
       default:
         return <div>Unknown component type</div>;

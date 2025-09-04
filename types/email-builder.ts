@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list"
 
   // Custom component properties
   isCustom?: boolean
@@ -34,6 +34,7 @@ export interface EmailComponent {
   color?: string
   textAlign?: "left" | "center" | "right"
   fontWeight?: "normal" | "bold" | "lighter"
+  lineHeight?: string
 
   // Image properties
   src?: string
@@ -64,6 +65,12 @@ export interface EmailComponent {
       }[]
     }[]
   }
+
+  // bullet-list properties
+  markerColor?: string
+  discSize?: string
+  listItems?: string[]
+  spaceBetweenItems?: string
   
 
   // Divider properties (backgroundColor already defined above)
