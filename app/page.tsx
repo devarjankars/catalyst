@@ -26,7 +26,7 @@ export default function EmailBuilder() {
 
   return (
     <div>
-      
+      hello
     </div>
   )
 }
