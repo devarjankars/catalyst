@@ -48,18 +48,18 @@ export default function EmailPreviewModal({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                autoFocus={screen === "600px"}
+                
                 size="icon"
-                className="focus:bg-black focus:text-white"
+                className={`${screen === "600px"? "bg-black text-white": ""}`}
                 onClick={() => setScreen("600px")}
               >
                 <Monitor />
               </Button>
               <Button
                 variant="outline"
-                autoFocus={screen === "375px"}
+                className={`${screen === "375px"? "bg-black text-white": ""}`}
                 size="icon"
-                className="focus:bg-black focus:text-white"
+                
                 onClick={() => setScreen("375px")}
               >
                 <Smartphone />

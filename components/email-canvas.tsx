@@ -175,7 +175,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             }
           }}
           className={`
-            bg-white shadow-lg max-w-2xl w-full min-h-[600px] relative
+            bg-white shadow-lg max-w-2xl w-full min-h-[600px] relative pb-10
             ${isOver ? "ring-2 ring-blue-500" : ""}
             ${previewMode ? "" : "border-2 border-dashed border-gray-300"}
           `}
@@ -183,27 +183,28 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}
         >
-          {components.length === 0 && !previewMode ? (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <div className="text-lg font-medium mb-2">Start building your email</div>
-                <div className="text-sm">Drag components from the left panel</div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-2 relative">
+         
+            
               {/* Top drop indicator */}
+
+              {
+                components.length === 0 && !isOver && <div className="h-full flex flex-col justify-center items-center text-gray-400">
+                  <p>Drag a component from component pallet to start building </p>
+                </div>
+              }
               
 
               {components.map((component, index) => (
-                
-                <div key={component.id} className="relative">
-                  {dropIndicator?.index === index && dropIndicator.position === "top" && !previewMode && (
+                <>
+               
+                {dropIndicator?.index === index && isOver && !previewMode  && (
                   <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
                         {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
                         <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
                       </div>
                   )}
+                <div key={component.id} className="relative">
+                  
                   <EmailComponentRenderer
                     component={component}
                     index={index}
@@ -226,14 +227,15 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                   
                   
                 </div>
+                </>
               ))}
 
               {/* Final drop indicator */}
               {dropIndicator?.index === components.length && isOver && !previewMode && (
                 <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
-                      {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
-                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here final</p>
-                    </div>
+ 
+                      <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here </p>
+                </div>
               )}
 
               {/* Global drop overlay when dragging */}
@@ -244,8 +246,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                   </div>
                 </div>
               )}
-            </div>
-          )}
+            
+       
         </div>
       </div>
     )

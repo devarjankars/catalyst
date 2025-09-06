@@ -9,6 +9,7 @@ import {
   RectangleHorizontal,
   PanelBottom,
   NotepadText,
+  List,
 } from "lucide-react";
 
 export const componentTypes = [
@@ -185,8 +186,14 @@ export const componentTypes = [
       }
     }
    
-        
-   
-    
   },
+  {
+  type: "bullet-list",
+  label: "Bullet Point",
+  icon: List,
+  defaultProps: {
+    listItems: [`List Item`],   // array of strings
+  },
+}
+
 ];

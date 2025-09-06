@@ -104,6 +104,7 @@ export function RichTextEditor({ value, onChange, style }: RichTextEditorProps) 
       <div className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
         <button
           type="button"
+          style={{color:"#000"}}
           className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
           onClick={() => {
             document.execCommand("bold")
@@ -114,6 +115,7 @@ export function RichTextEditor({ value, onChange, style }: RichTextEditorProps) 
         </button>
         <button
           type="button"
+          style={{color:"#000"}}
           className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
           onClick={() => {
             document.execCommand("italic")
@@ -124,6 +126,7 @@ export function RichTextEditor({ value, onChange, style }: RichTextEditorProps) 
         </button>
         <button
           type="button"
+          style={{color:"#000"}}
           className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
           onClick={() => {
             document.execCommand("underline")
@@ -134,6 +137,7 @@ export function RichTextEditor({ value, onChange, style }: RichTextEditorProps) 
         </button>
         <button
           type="button"
+          style={{color:"#000"}}
           className="px-2 py-1 text-xs hover:bg-gray-100 rounded"
           onClick={() => {
             LinkifyText()

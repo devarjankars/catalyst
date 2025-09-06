@@ -75,20 +75,20 @@ function DraggableComponent({
       className={`
         p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-move
         hover:border-blue-500 hover:bg-blue-50 transition-colors
-        flex items-center gap-3
+        flex flex-col items-center gap-1
         ${isDragging ? "opacity-50" : ""}
         ${isCustom ? "bg-purple-50 border-purple-300" : ""}
         ${isTemplate ? "bg-green-50 border-green-300" : ""}
       `}
     >
       <Icon className="w-5 h-5 text-gray-600" />
-      <span className="font-medium text-gray-700">{label}</span>
+      <span className="font-medium text-gray-700 text-center">{label}</span>
       {isCustom && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Custom</span>}
       {isCustom && <Button variant={"outline"} size={"icon"} className="p-0" onClick={()=>{
         deleteCustomComponent(componentType.id)
         toast.warning("custom component deleted")
         }}><Trash2 className="text-red-400"/></Button>}
-      {isTemplate && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Template</span>}
+      {/* {isTemplate && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Template</span>} */}
     </div>
   )
 }
@@ -99,15 +99,19 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
   return (
     <div className="space-y-4 overflow-y-auto h-full">
       <h3 className="font-semibold text-gray-900 mb-4">Basic Components</h3>
-      {componentTypes
+      <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+         {componentTypes
         .filter((type) => type.type !== "section" )
         .map((componentType) => (
           <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
         ))}
 
+      </div>
+     
       <div className="border-t pt-4">
         <h3 className="font-semibold text-gray-900 mb-4">Section Templates</h3>
-        {sectionTemplates.map((template, index) => (
+         <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+          {sectionTemplates.map((template, index) => (
           <DraggableComponent
             key={`${template.type}-${index}`}
             componentType={template}
@@ -115,6 +119,8 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
             isTemplate={true}
           />
         ))}
+         </div>
+        
       </div>
 
       <div className="pt-4">

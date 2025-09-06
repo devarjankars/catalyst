@@ -114,7 +114,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         // Working copy actions
-        startWorkingCopy: (sourceTemplate) => {
+        startWorkingCopy: (sourceTemplate) => { 
           set({
             isWorkingCopy: true,
             workingCopySource: sourceTemplate,
