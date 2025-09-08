@@ -211,25 +211,7 @@ export function EmailComponentRenderer({
             }}
             className="mt-2"
           >
-            {/* {!previewMode && isSelected && (
-              <div
-                className={`mb-3 text-xs font-medium ${
-                  isColumn ? "text-green-600" : "text-blue-600"
-                }`}
-              >
-                {isColumn ? (
-                  <>Column ({component.columnAlignment || "left"} aligned)</>
-                ) : (
-                  <>
-                    {isMultiColumn
-                      ? `${columnCount} Column Section`
-                      : "Section Container"}
-                    {component.isHero && " (Hero Template)"}
-                  </>
-                )}
-              </div>
-            )} */}
-
+           
             {onAddToSection && onMoveWithinSection ? (
               component.direction === "row" ? (
                 // Multi-column layout
@@ -283,12 +265,13 @@ export function EmailComponentRenderer({
                               children: currentChildren,
                             });
                           }}
+                         
                           previewMode={previewMode}
                           isColumn={true}
                           columnCount={columnCount}
                           columnAlignment={child.columnAlignment}
                           renderChildren={() => (
-                            <div className="flex flex-col gap-2 w-full">
+                            <div className="flex flex-col gap-2 w-full z-20">
                               {(child.children || []).map(
                                 (grandChild, grandChildIndex) => (
                                   <div
@@ -349,7 +332,7 @@ export function EmailComponentRenderer({
 
       case "text":
         return (
-          <div  className="mt-2">
+          <div  className="mt-2 z-50">
             {previewMode ? (
               <div
                 style={{
@@ -592,52 +575,7 @@ export function EmailComponentRenderer({
         );
 
         case "bullet-list" : 
-              return (
-//                 <div style={baseStyle}>
-//   <ul
-//     style={{
-//       listStyleType: "disc",
-//       color: component.markerColor || "#000000",
-//       paddingLeft: "20px",
-//       backgroundColor: component.backgroundColor || "transparent",
-//       fontSize: component.discSize || "16px",
-//     }}
-//   >
-//     {component.listItems?.map((item: string, index: number) => (
-//       <li key={index}>
-//         <RichTextEditor
-//           value={item}
-//           onChange={(content) => {
-//             const updated = [...component.listItems]
-//             updated[index] = content
-//             onUpdate({ listItems: updated })
-//           }}
-//           style={{
-//             fontSize: component.fontSize || "16px",
-//             color: component.color || "#000000",
-//             textAlign: component.textAlign || "left",
-//             fontWeight: component.fontWeight || "normal",
-//             lineHeight: component.lineHeight || "18px",
-//           }}
-//         />
-//       </li>
-//     ))}
-//   </ul>
-
-//   {/* Add new item button */}
-//   {isSelected && <div className="flex justify-center">
-
-//     <button
-//       onClick={() => {
-//         const updated = [...(component.listItems || []), "New Item"]
-//         onUpdate({ listItems: updated })
-//       }}
-//       className="mt-2 px-2 py-1 text-sm border rounded-md border-dashed"
-//     >
-//       + 
-//     </button>
-//   </div>}
-// </div>
+              return (  
                 <BulletList component={component} onUpdate={onUpdate} isSelected={isSelected}/>
               );
 

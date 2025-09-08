@@ -4,6 +4,20 @@ import type { EmailComponent } from "@/types/email-builder"
 import type { EmailTemplate } from "@/types/template"
 import { firebaseService } from "@/services/firebase-service"
 
+function deleteByIdRecursive(components: any[], targetId: string): any[] {
+  return components
+    .filter(comp => comp.id !== targetId) // remove if it's the target itself
+    .map(comp => {
+      if (Array.isArray(comp.children) && comp.children.length > 0) {
+        return {
+          ...comp,
+          children: deleteByIdRecursive(comp.children, targetId), // recurse into children
+        };
+      }
+      return comp;
+    });
+}
+
 interface EmailBuilderState {
   // Template data
   currentTemplate: EmailTemplate | null
@@ -171,6 +185,8 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         updateComponent: (id, updates, parentId = null) => {
+          console.log("Updating component:", id,"under parentId:", parentId);
+          
         const { components } = get();
 
         // Recursive function to update component
@@ -178,6 +194,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             return items.map((comp) => {
               // If parentId is given, look only inside that component's children
               if (comp.id === parentId && Array.isArray(comp.children)) {
+                console.log("Updating child component:", id, "inside parent:", parentId);
                 const updatedChildren = comp.children.map((child) =>
                   child.id === id ? { ...child, ...updates } : child
                 );
@@ -204,13 +221,16 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         deleteComponent: (id) => {
-          const { components, selectedComponent } = get()
-          const newComponents = components.filter((comp) => comp.id !== id)
+          const { components, selectedComponent } = get();
+
+          const newComponents = deleteByIdRecursive(components, id);
+
           set({
             components: newComponents,
             selectedComponent: selectedComponent === id ? null : selectedComponent,
-          })
-          get().checkForChanges()
+          });
+
+          get().checkForChanges();
         },
 
         moveComponent: (dragIndex, hoverIndex) => {

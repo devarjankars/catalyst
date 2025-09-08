@@ -117,6 +117,7 @@ export function SectionDropZone({
         textAlign: isColumn ? columnAlignment : "left",
       }}
       onDragLeave={() => setDropIndicator(null)}
+     
     >
       {children.length === 0 && !previewMode ? (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">

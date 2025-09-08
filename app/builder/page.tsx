@@ -422,26 +422,7 @@ const parentId = result?.parentId || null;
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* {!previewMode && (
-            <div className="w-80 bg-white border-r flex flex-col">
-              <Tabs defaultValue="components" className="flex-1 flex flex-col overflow-y-auto">
-                <TabsList className="grid w-full grid-cols-2 ">
-                  <TabsTrigger value="components">Components</TabsTrigger>
-                  <TabsTrigger value="properties">Properties</TabsTrigger>
-                </TabsList>
-                <TabsContent value="components" className="flex-1 p-4 pt-0 h-full overflow-y-auto">
-                  <ComponentPalette onAddComponent={addComponent} customComponents={customComponents} />
-                </TabsContent>
-                <TabsContent value="properties" className="flex-1 p-4 pt-0">
-                  <PropertiesPanel
-                    component={selectedComponentData}
-                    onUpdateComponent={(updates) => selectedComponent && updateComponent(selectedComponent, updates)}
-                    onSaveAsCustom={() => selectedComponentData && saveAsCustomComponent(selectedComponentData)}
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-          )} */}
+          
 
           {/* components panel */}
           {!previewMode && (

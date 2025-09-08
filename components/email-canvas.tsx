@@ -3,6 +3,8 @@ import { forwardRef, useEffect, useState } from "react"
 import { useDrop } from "react-dnd"
 import { EmailComponentRenderer } from "./email-component-renderer"
 import type { EmailComponent } from "@/types/email-builder"
+import { se } from "date-fns/locale"
+import { Shield } from "lucide-react"
 
 interface EmailCanvasProps {
   components: EmailComponent[]
@@ -158,9 +160,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
       console.log(`Deleting child ${childId} from section ${sectionId}`);
       
-
-      const newChildren = section.children.filter((child) => child.id !== childId)
-      onUpdateComponent(sectionId, { children: newChildren })
+      onDeleteComponent(childId)
     }
 
     return (
@@ -183,10 +183,6 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}
         >
-         
-            
-              {/* Top drop indicator */}
-
               {
                 components.length === 0 && !isOver && <div className="h-full flex flex-col justify-center items-center text-gray-400">
                   <p>Drag a component from component pallet to start building </p>

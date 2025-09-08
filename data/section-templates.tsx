@@ -24,7 +24,7 @@ export const sectionTemplates = [
         {
           id: "col1",
           type: "section",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "#ffffff",
           padding: "15px",
           borderRadius: "4px",
           children: [],
@@ -34,7 +34,7 @@ export const sectionTemplates = [
         {
           id: "col2",
           type: "section",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "#ffffff",
           padding: "15px",
           borderRadius: "4px",
           children: [],
