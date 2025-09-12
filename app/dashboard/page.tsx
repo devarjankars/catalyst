@@ -12,6 +12,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import type { EmailTemplate } from "@/types/template"
 import { firebaseService } from "@/services/firebase-service"
+import CreateProjectDialog from "@/components/create-project"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -19,11 +20,13 @@ export default function Dashboard() {
   const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedclients, setSelectedclients] = useState<string>("elzonris");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
     open: false,
     template: null,
   })
+  const [openCreate , setCreate] = useState(false);
 
   const categories = [
     { id: "all", label: "All Templates", count: 0 },
@@ -32,7 +35,12 @@ export default function Dashboard() {
     { id: "unbranded", label: "Unbranded", count: 0 },
     { id: "other", label: "Other", count: 0 },
   ]
-
+  const clients = [
+    { id: "elzonris", label: "Elzonris", count: 0 },
+    { id: "orserdu", label: "Orserdu", count: 0 },
+    { id: "stemline", label: "Stemline", count: 0 },
+  ]
+console.log(templates)
   useEffect(() => {
     loadTemplates()
   }, [])
@@ -125,26 +133,29 @@ export default function Dashboard() {
       </div>
     )
   }
+   const handleCreate = () => {
+    setCreate(true)
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="max-h-screen bg-gray-50 grid grid-rows-[auto 1fr]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="sticky top-0 z-0 bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
               <p className="text-sm text-gray-600">Create and manage your email templates</p>
             </div>
-            <Button onClick={handleCreateBlank} className="flex items-center gap-2">
+            <Button onClick={handleCreate}  className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              Create Blank Template
+              Create Project
             </Button>
           </div>
         </div>
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="overflow-y-auto">
+      <div className="max-w-7xl h-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -162,8 +173,59 @@ export default function Dashboard() {
               <span className="text-sm text-gray-600">Filter by category</span>
             </div>
           </div>
+          <div className="myWork">
+             <h1 className="font-bold mb-4">My Work</h1>
+            <div className="templates">
+              {filteredTemplates.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Plus className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchQuery || selectedCategory !== "all" ? "No templates found" : "No templates yet"}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {searchQuery || selectedCategory !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : "Get started by creating your first email template"}
+            </p>
+            <Button onClick={handleCreateBlank} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create Your First Template
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onUse={() => handleUseTemplate(template)}
+                onEdit={() => handleEditTemplate(template)}
+                onDelete={() => setDeleteDialog({ open: true, template })}
+                onDuplicate={() => handleDuplicateTemplate(template)}
+              />
+            ))}
+          </div>
+        )}
+            </div> 
+          </div>
+          
 
           {/* Category Tabs */}
+          <h1 className="font-bold mt-2 mb-4">All Projects</h1>
+          {/* <Tabs value={selectedclients} onValueChange={setSelectedclients} className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              {clients.map((clients) => (
+                <TabsTrigger key={clients.id} value={clients.id} className="flex items-center gap-2">
+                  {clients.label}
+                  <Badge variant="secondary" className="text-xs">
+                    {clients.count}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs> */}
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               {categories.map((category) => (
@@ -212,7 +274,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-
+    </div>
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         open={deleteDialog.open}
@@ -220,6 +282,7 @@ export default function Dashboard() {
         onConfirm={() => deleteDialog.template && handleDeleteTemplate(deleteDialog.template)}
         onCancel={() => setDeleteDialog({ open: false, template: null })}
       />
+     <CreateProjectDialog onOpen={openCreate} onClose={() => setCreate(false)}/>
     </div>
   )
 }
