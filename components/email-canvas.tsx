@@ -149,16 +149,19 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       const section = components.find((c) => c.id === sectionId)
       if (!section?.children) return
 
+      console.log("Firing the update child function");
+      
+
       const newChildren = section.children.map((child) => (child.id === childId ? { ...child, ...updates } : child))
 
       onUpdateComponent(sectionId, { children: newChildren })
     }
 
     const handleDeleteChild = (sectionId: string, childId: string) => {
-      const section = components.find((c) => c.id === sectionId)
-      if (!section?.children) return
-
       console.log(`Deleting child ${childId} from section ${sectionId}`);
+      const section = components.find((c) => c.id === sectionId)
+      // if (!section?.children) return
+
       
       onDeleteComponent(childId)
     }

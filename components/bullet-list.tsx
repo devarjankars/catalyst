@@ -17,7 +17,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
   
 
   const handleDeleteItem = (index: number) => {
-    const updated = component.listItems.filter((_: string, i: number) => i !== index)
+    const updated = component.listItems?.filter((_: string, i: number) => i !== index)
     onUpdate({ listItems: updated })
     if (editingIndex === index) setEditingIndex(null) // reset editor if deleted
   }
@@ -46,6 +46,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
                 value={item}
                 
                  // exit editor on blur
+                 isSelected={isSelected}
                 onChange={(content) => handleUpdateItem(index, content)}
                 style={{
                   flex: 1,

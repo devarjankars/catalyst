@@ -10,7 +10,9 @@ interface SectionDropZoneProps {
   children: EmailComponent[]
   onAddToSection: (sectionId: string, component: EmailComponent, index?: number) => void
   onMoveWithinSection: (sectionId: string, dragIndex: number, hoverIndex: number) => void
+  onSelect?: (id: string) => void
   renderChildren: () => React.ReactNode
+  isSelected?: boolean
   previewMode: boolean
   isColumn?: boolean
   columnCount?: number
@@ -20,6 +22,7 @@ interface SectionDropZoneProps {
 //TODO => if direction is row then not able to edit column properties
 
 export function SectionDropZone({
+  onSelect,
   sectionId,
   children,
   onAddToSection,
@@ -28,6 +31,7 @@ export function SectionDropZone({
   isColumn = false,
   columnCount = 1,
   columnAlignment = "left",
+  isSelected
 }: SectionDropZoneProps) {
   const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
 
@@ -39,7 +43,7 @@ export function SectionDropZone({
     drop: (item: any, monitor) => {
       if (monitor.didDrop()) return // Prevent double drops
 
-      if (item.fromPalette && typeof onAddToSection === "function") {
+      if (item.fromPalette && typeof onAddToSection === "function" && item.type !== "section") {
         // Handle palette drops with positioning
         const dropIndex = dropIndicator?.index ?? children.length
         onAddToSection(sectionId, item, dropIndex)
@@ -117,6 +121,11 @@ export function SectionDropZone({
         textAlign: isColumn ? columnAlignment : "left",
       }}
       onDragLeave={() => setDropIndicator(null)}
+
+      onClick={()=> {
+        console.log("section clicked", sectionId);
+        
+        onSelect?.(sectionId)}}
      
     >
       {children.length === 0 && !previewMode ? (

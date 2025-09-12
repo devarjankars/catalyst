@@ -9,6 +9,9 @@ import { RearrangeControls } from "./rearrange-controls";
 import type { EmailComponent } from "@/types/email-builder";
 import { Input } from "./ui/input";
 import BulletList from "./bullet-list";
+import SingleColumnSection from "./section-components/single-column-section";
+import { secondsInDay } from "date-fns/constants";
+import DoubleColumnSection from "./section-components/double-column-section";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -119,24 +122,25 @@ export function EmailComponentRenderer({
     }
   };
 
-  const renderSectionChild = (child: EmailComponent, childIndex: number) => {
+  const renderSectionChild = (child: EmailComponent, childIndex: number,sectionId:string) => {
     return (
       <div
         key={child.id}
-        data-section-child={component.id}
+        data-section-child={sectionId}
         className="relative"
       >
         <EmailComponentRenderer
+          
           component={child}
           index={childIndex}
           isSelected={selectedComponent === child.id}
           onSelect={() => onSelectChild?.(child.id)}
           onUpdate={(updates) =>
-            onUpdateChild?.(component.id, child.id, updates)
+            onUpdateChild?.(sectionId, child.id, updates)
           }
-          onDelete={() => onDeleteChild?.(component.id, child.id)}
+          onDelete={() => onDeleteChild?.(sectionId, child.id)}
           onMove={(dragIndex, hoverIndex) =>
-            onMoveWithinSection?.(component.id, dragIndex, hoverIndex)
+            onMoveWithinSection?.(sectionId, dragIndex, hoverIndex)
           }
           onAddToSection={onAddToSection}
           onMoveWithinSection={onMoveWithinSection}
@@ -192,148 +196,208 @@ export function EmailComponentRenderer({
         const columnCount = component.children?.length || 1;
         const isColumn = component.isColumn;
 
-        return (
-          <div
-            style={{
-              backgroundColor: component.backgroundColor || "#ffffff",
-              borderRadius: component.borderRadius || "0px",
-              padding: component.padding || "20px",
-              margin: component.margin || "0",
-              maxWidth: component.maxWidth || "100%",
-              border:
-                !previewMode && isSelected
-                  ? `2px dashed ${isColumn ? "#10b981" : "#3b82f6"}`
-                  : "none",
-              minHeight: isColumn
-                ? component.columnMinHeight || "120px"
-                : "auto",
-              ...getColumnStyles(component),
-            }}
-            className="mt-2"
-          >
-           
-            {onAddToSection && onMoveWithinSection ? (
-              component.direction === "row" ? (
-                // Multi-column layout
-                <div className="flex flex-row gap-4 w-full">
-                  {(component.children || []).map((child, childIndex) => (
-                    <div
-                      key={child.id + childIndex}
-                      className="flex-1 min-w-0"
-                      style={getColumnStyles(child)}
-                    >
-                      {child.type === "section" && child.isColumn ? (
-                        // This is a column section
-                        <SectionDropZone
-                          sectionId={child.id}
-                          children={child.children || []}
-                          onAddToSection={(sectionId, newComponent, index) => {
-                            // Add component directly to this column
-                            const newComp = {
-                              ...newComponent,
-                              id: Date.now().toString(),
-                            };
-                            const currentChildren = child.children || [];
-                            const updatedChildren =
-                              index !== undefined
-                                ? [
-                                    ...currentChildren.slice(0, index),
-                                    newComp,
-                                    ...currentChildren.slice(index),
-                                  ]
-                                : [...currentChildren, newComp];
+        switch (component.columns) {
+          case 1:
+            return (
+              <SingleColumnSection component={component} sectionId={component.id} onUpdateChild={onUpdateChild} renderSectionChild={renderSectionChild} onAddToSection={onAddToSection} onMoveWithinSection={onMoveWithinSection} />
+            )
+            
+         case 2: 
+            return (
+              <DoubleColumnSection onSelectSection={onselect} isSelected={isSelected} onAddToSection={onAddToSection} renderSectionChild={renderSectionChild} onMoveWithinSection={onMoveWithinSection} onUpdateChild={onUpdateChild} component={component} sectionId={component.id} direction={component.direction || "column"} />
+            )
+          default:
+            break;
+        }
 
-                            onUpdateChild?.(component.id, child.id, {
-                              children: updatedChildren,
-                            });
-                            
-                          }}
-                          onMoveWithinSection={(
-                            sectionId,
-                            dragIndex,
-                            hoverIndex
-                          ) => {
-                            const currentChildren = [...(child.children || [])];
-                            const draggedComponent = currentChildren[dragIndex];
-                            currentChildren.splice(dragIndex, 1);
-                            currentChildren.splice(
-                              hoverIndex,
-                              0,
-                              draggedComponent
-                            );
-                            onUpdateChild?.(component.id, child.id, {
-                              children: currentChildren,
-                            });
-                          }}
-                         
-                          previewMode={previewMode}
-                          isColumn={true}
-                          columnCount={columnCount}
-                          columnAlignment={child.columnAlignment}
-                          renderChildren={() => (
-                            <div className="flex flex-col gap-2 w-full z-20">
-                              {(child.children || []).map(
-                                (grandChild, grandChildIndex) => (
-                                  <div
-                                    key={grandChild.id + new Date().getTime()}
-                                  >
-                                    {renderSectionChild(grandChild, grandChildIndex)}
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )}
-                        />
-                      ) : (
-                        // Regular component in row
-                        renderSectionChild(child, childIndex)
-                      )}
-                    </div>
-                  ))}
-                  
-               
-                </div>
-              ) : (
-                // Single column layout
-                <SectionDropZone
-                  sectionId={component.id}
-                  children={component.children || []}
-                  onAddToSection={onAddToSection}
-                  onMoveWithinSection={onMoveWithinSection}
-                  isColumn={true}
-                  previewMode={previewMode}
-                  columnCount={1}
-                  renderChildren={() => (
-                    <div className="flex flex-col gap-2">
-                      {(component.children || []).map((child, childIndex) =>
-                        renderSectionChild(child, childIndex)
-                      )}
-                    </div>
-                  )}
-                />
-              )
-            ) : (
-              <div
-                className={`
-                  ${
-                    component.direction === "row"
-                      ? "flex flex-row gap-4"
-                      : "flex flex-col gap-2"
-                  }
-                `}
-              >
-                {(component.children || []).map((child, childIndex) =>
-                  renderSectionChild(child, childIndex)
-                )}
-              </div>
-            )}
-          </div>
-        );
+        // return (
+        //   <div
+        //     style={{
+        //       backgroundColor: component.backgroundColor || "#ffffff",
+        //       borderRadius: component.borderRadius || "0px",
+        //       padding: component.padding || "20px",
+        //       margin: component.margin || "0",
+        //       maxWidth: component.maxWidth || "100%",
+        //       border:
+        //         !previewMode && isSelected
+        //           ? `2px dashed ${isColumn ? "#10b981" : "#3b82f6"}`
+        //           : "none",
+        //       minHeight: isColumn
+        //         ? component.columnMinHeight || "120px"
+        //         : "auto",
+        //       ...getColumnStyles(component),
+        //     }}
+        //     className="my-3"
+        //   >
+        //     {onAddToSection && onMoveWithinSection ? (
+        //       component.direction === "row" ? (
+        //         // Multi-column layout
+        //         <div className="flex flex-row gap-4 w-full">
+        //           {(component.children || []).map((child, childIndex) => (
+        //             <div
+        //               key={child.id + childIndex}
+        //               className="flex-1 min-w-0"
+        //               style={getColumnStyles(child)}
+        //             >
+        //               {child.type === "section" && child.isColumn ? (
+        //                 // This is a column section
+        //                 <SectionDropZone
+        //                   sectionId={child.id}
+        //                   children={child.children || []}
+        //                   onAddToSection={(sectionId, newComponent, index) => {
+        //                     // Add component directly to this column
+        //                     const newComp = {
+        //                       ...newComponent,
+        //                       id: Date.now().toString(),
+        //                     };
+        //                     const currentChildren = child.children || [];
+        //                     const updatedChildren =
+        //                       index !== undefined
+        //                         ? [
+        //                             ...currentChildren.slice(0, index),
+        //                             newComp,
+        //                             ...currentChildren.slice(index),
+        //                           ]
+        //                         : [...currentChildren, newComp];
+
+        //                     onUpdateChild?.(component.id, child.id, {
+        //                       children: updatedChildren,
+        //                     });
+        //                   }}
+        //                   onMoveWithinSection={(
+        //                     sectionId,
+        //                     dragIndex,
+        //                     hoverIndex
+        //                   ) => {
+        //                     const currentChildren = [...(child.children || [])];
+        //                     const draggedComponent = currentChildren[dragIndex];
+        //                     currentChildren.splice(dragIndex, 1);
+        //                     currentChildren.splice(
+        //                       hoverIndex,
+        //                       0,
+        //                       draggedComponent
+        //                     );
+        //                     onUpdateChild?.(component.id, child.id, {
+        //                       children: currentChildren,
+        //                     });
+        //                   }}
+        //                   previewMode={previewMode}
+        //                   isColumn={true}
+        //                   columnCount={columnCount}
+        //                   columnAlignment={child.columnAlignment}
+        //                   renderChildren={() => (
+        //                     <div className="flex flex-col gap-2 ">
+        //                       {(child.children || []).map(
+        //                         (grandChild, grandChildIndex) => (
+        //                           <div
+        //                             key={grandChild.id + new Date().getTime()}
+        //                           >
+        //                             {renderSectionChild(
+        //                               grandChild,
+        //                               grandChildIndex
+        //                             )}
+        //                           </div>
+        //                         )
+        //                       )}
+        //                     </div>
+        //                   )}
+        //                 />
+        //               ) : (
+        //                 // Regular component in row
+        //                 renderSectionChild(child, childIndex)
+        //               )}
+        //             </div>
+        //           ))}
+        //         </div>
+        //       ) : (
+        //         // Single column layout
+        //         <div className="flex flex-col gap-2 w-full">
+        //           {(component.children || []).map((child, childIndex) => (
+        //             <div key={child.id + childIndex} className="w-full">
+        //               <SectionDropZone
+        //                 sectionId={child.id}
+        //                 children={child.children || []}
+        //                 onAddToSection={(sectionId, newComponent, index) => {
+        //                   // Add component directly to this column
+        //                   const newComp = {
+        //                     ...newComponent,
+        //                     id: Date.now().toString(),
+        //                   };
+        //                   const currentChildren = child.children || [];
+        //                   const updatedChildren =
+        //                     index !== undefined
+        //                       ? [
+        //                           ...currentChildren.slice(0, index),
+        //                           newComp,
+        //                           ...currentChildren.slice(index),
+        //                         ]
+        //                       : [...currentChildren, newComp];
+
+        //                   onUpdateChild?.(component.id, child.id, {
+        //                     children: updatedChildren,
+        //                   });
+        //                 }}
+        //                 onMoveWithinSection={(
+        //                   sectionId,
+        //                   dragIndex,
+        //                   hoverIndex
+        //                 ) => {
+        //                   const currentChildren = [...(child.children || [])];
+        //                   const draggedComponent = currentChildren[dragIndex];
+        //                   currentChildren.splice(dragIndex, 1);
+        //                   currentChildren.splice(
+        //                     hoverIndex,
+        //                     0,
+        //                     draggedComponent
+        //                   );
+        //                   onUpdateChild?.(component.id, child.id, {
+        //                     children: currentChildren,
+        //                   });
+        //                 }}
+        //                 isColumn={true}
+        //                 previewMode={previewMode}
+        //                 columnCount={1}
+        //                 renderChildren={() => (
+        //                   <div className="flex flex-col gap-2 ">
+        //                     {(child.children || []).map(
+        //                       (grandChild, grandChildIndex) => (
+        //                         <div key={grandChild.id + new Date().getTime()}>
+        //                           {renderSectionChild(
+        //                             grandChild,
+        //                             grandChildIndex
+        //                           )}
+        //                         </div>
+        //                       )
+        //                     )}
+        //                   </div>
+        //                 )}
+        //               />
+        //             </div>
+        //           ))}
+        //         </div>
+        //       )
+        //     ) : (
+        //       <div
+        //         className={`
+        //           ${
+        //             component.direction === "row"
+        //               ? "flex flex-row gap-4"
+        //               : "flex flex-col gap-2"
+        //           }
+        //         `}
+        //       >
+        //         {(component.children || []).map((child, childIndex) =>
+        //           renderSectionChild(child, childIndex)
+        //         )}
+        //       </div>
+        //     )}
+        //   </div>
+        // );
 
       case "text":
         return (
-          <div  className="mt-2 z-50">
-            {previewMode ? (
+          <div className="mt-2 z-50">
+            {/* {previewMode ? (
               <div
                 style={{
                   fontSize: component.fontSize || "16px",
@@ -346,6 +410,8 @@ export function EmailComponentRenderer({
               />
             ) : (
               <RichTextEditor
+              isSelected={isSelected}
+                key={index+component.id+Date.now()}
                 value={component.content || ""}
                 onChange={(content) => onUpdate({ content })}
                 style={{
@@ -357,7 +423,20 @@ export function EmailComponentRenderer({
                   lineHeight: component.lineHeight || "18px",
                 }}
               />
-            )}
+            )} */}
+             <RichTextEditor
+                isSelected={isSelected}
+                value={component.content || ""}
+                onChange={(content) => onUpdate({ content })}
+                style={{
+                  fontSize: component.fontSize || "16px",
+                  color: component.color || "#000000",
+                  textAlign: component.textAlign || "left",
+                  fontWeight: component.fontWeight || "normal",
+                  backgroundColor: component.backgroundColor || "transparent",
+                  lineHeight: component.lineHeight || "18px",
+                }}
+              />
           </div>
         );
 
@@ -365,7 +444,9 @@ export function EmailComponentRenderer({
         return (
           <div
             style={baseStyle}
-            className={`flex flex-col items-${component.textAlign || "center"} mt-2`}
+            className={`flex flex-col items-${
+              component.textAlign || "center"
+            } mt-2`}
           >
             {!previewMode && isSelected ? (
               <div className="space-y-2">
@@ -456,11 +537,19 @@ export function EmailComponentRenderer({
           </div>
         );
       case "custom":
-        return <div className="mt-2" dangerouslySetInnerHTML={{ __html: component.html }}></div>;
+        return (
+          <div
+            className="mt-2"
+            dangerouslySetInnerHTML={{ __html: component.html }}
+          ></div>
+        );
 
       case "cta-button":
         return (
-          <div style={baseStyle} className="flex align-center justify-center mt-2">
+          <div
+            style={baseStyle}
+            className="flex align-center justify-center mt-2"
+          >
             <a
               href={component.href || "#"}
               style={{
@@ -574,10 +663,14 @@ export function EmailComponentRenderer({
           </div>
         );
 
-        case "bullet-list" : 
-              return (  
-                <BulletList component={component} onUpdate={onUpdate} isSelected={isSelected}/>
-              );
+      case "bullet-list":
+        return (
+          <BulletList
+            component={component}
+            onUpdate={onUpdate}
+            isSelected={isSelected}
+          />
+        );
 
       default:
         return <div>Unknown component type</div>;
