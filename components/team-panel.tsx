@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Check, Shield, ShieldCheck, ShieldHalf, Users2, Search, Settings2, Save, ListFilter, ChevronDown } from "lucide-react";
-import type { PermissionKey , Employee , TeamKey , Team } from "@/app/(admin)/admin/page";
+import type { PermissionKey , Employee , TeamKey , Team } from "@/app/dashboard/admin/page";
 
 const PERMISSION_COLUMNS: { key: PermissionKey; label: string }[] = [
   { key: "read", label: "Read" },

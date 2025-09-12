@@ -5,8 +5,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Shield, ShieldCheck, ShieldHalf, Users2, Settings2 } from "lucide-react";
+import { Shield, ShieldCheck, ShieldHalf, Users2, Settings2 , Plus } from "lucide-react";
 import TeamPanel from "@/components/team-panel";
+import { Button } from "@/components/ui/button";
+import { AdduserDialog } from "@/components/add-user-dialog";
 
 // -----------------------------
 // Types
@@ -94,7 +96,14 @@ const iconForTeam = (team: TeamKey) => {
 export default function AdminPermissionsDashboard() {
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [activeTab, setActiveTab] = useState<TeamKey>("tech");
+  const [open , setOpen] = useState(false)
+  
+  function onConfirm() {
 
+  }
+  function onCancel(){
+    setOpen(false)
+  }
   const updateTeam = (updated: Team) => {
     setTeams((prev) => prev.map((t) => (t.key === updated.key ? updated : t)));
   };
@@ -106,24 +115,32 @@ export default function AdminPermissionsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-  <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-slate-200 shadow-sm">
-    <div className="mx-auto w-[94vw] px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-2xl grid place-items-center bg-indigo-100">
-          <Settings2 className="h-5 w-5 text-indigo-600" />
-        </div>
-        <div>
-          <h1 className="text-lg font-semibold leading-tight text-slate-800">
+  <div className="h-full w-full bg-gray-50 grid grid-rows-[auto 1fr]">
+  <header className="sticky top-0 z-0 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-slate-200 shadow-sm">
+    <div className="mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      {/* <div className=""> */}
+        <div className="flex items-center justify-start gap-2 ">
+          <div className="h-9 w-9 rounded-2xl bg-indigo-100 flex place-items-center justify-center">
+               <Settings2 className="h-5 w-5 text-indigo-600" />
+          </div>
+          <div className="">
+              <h1 className="text-lg font-semibold leading-tight text-slate-800">
             Admin Dashboard — Dragcraft
           </h1>
           <p className="text-xs text-slate-600">Manage permissions across teams.</p>
+          </div>
+           
         </div>
-      </div>
+        <div>
+          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4" /> Add User
+          </Button>
+        </div>
+      {/* </div> */}
     </div>
   </header>
 
-  <main className="mx-auto w-[94vw] p-4 space-y-4">
+  <main className="mx-auto w-full p-4 space-y-4">
     <Card className="border border-slate-200 shadow-sm bg-white">
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -162,6 +179,7 @@ export default function AdminPermissionsDashboard() {
       ))}
     </Tabs>
   </main>
+    <AdduserDialog open={open} onConfirm={onConfirm} onCancel={onCancel}/>
 </div>
 
   );
