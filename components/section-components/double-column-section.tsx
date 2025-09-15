@@ -4,6 +4,18 @@ import { on } from "events";
 import { SectionDropZone } from "../section-drop-zone";
 import type { EmailComponent } from "@/types/email-builder";
 
+interface DoubleColumnSectionProps {
+    direction: "row" | "column",
+    sectionId: string, 
+    component: EmailComponent,
+    renderSectionChild: (child: EmailComponent, childIndex: number, sectionId: string) => React.ReactNode,
+    onAddToSection: (sectionId: string, component: EmailComponent, index?: number) => void,
+    onMoveWithinSection: (sectionId: string, dragIndex: number, hoverIndex: number) => void,
+    onUpdateChild: (sectionId: string, childId: string, updates: Partial<EmailComponent>) => void,
+    onSelectSection: (id: string) => void,
+    selectedComponent?: string | null
+}
+
 export default function DoubleColumnSection({
     direction,
     sectionId,
@@ -13,23 +25,37 @@ export default function DoubleColumnSection({
     onMoveWithinSection,
     onUpdateChild,
     onSelectSection,
-    isSelected,
-}) {
+    selectedComponent
+}: DoubleColumnSectionProps) {
     return (
-        <div className="mt-2 w-full flex gap-2  p-[16px]" style={{flexDirection: direction === "row" ? "row" : "column"}}>
+        <div className="mt-2 w-full flex gap-2  p-[16px]" 
+        style={{
+            flexDirection: direction === "row" ? "row" : "column",
+            backgroundColor: component.backgroundColor || "#ffffff"
+            }}>
             {(component.children || []).map((child,index)=>(
-                <div key={child.id} className="flex-1 ">
+                <div key={child.id} 
+                style={{
+                    backgroundColor: child.backgroundColor || "#ffffff",
+                    width : child.columnWidth ? `${child.columnWidth}` : "100%",
+                    
+                }}
+                >
                     <SectionDropZone 
                         sectionId={child.id}
+                       
                         children={child.children}
                         onSelect={onSelectSection}
+                        isSelected={selectedComponent === child.id}
                         previewMode={false}
                         isColumn={true}
                         renderChildren={() => (
                             <div className="flex flex-col gap-2 p-2">
                             {(child.children || []).map(
                                 (grandChild, childIndex) => (
-                                <div key={grandChild.id} > 
+                                <div key={grandChild.id}
+                                    
+                                > 
                                     {/* {console.log("Rendering grand child", grandChild)} */}
                                     {renderSectionChild(
                                     grandChild,

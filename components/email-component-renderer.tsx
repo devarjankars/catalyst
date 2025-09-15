@@ -199,12 +199,12 @@ export function EmailComponentRenderer({
         switch (component.columns) {
           case 1:
             return (
-              <SingleColumnSection component={component} sectionId={component.id} onUpdateChild={onUpdateChild} renderSectionChild={renderSectionChild} onAddToSection={onAddToSection} onMoveWithinSection={onMoveWithinSection} />
+              <SingleColumnSection component={component} selectedComponent={selectedComponent} onSelectSection={onSelect} sectionId={component.id} onUpdateChild={onUpdateChild} renderSectionChild={renderSectionChild} onAddToSection={onAddToSection} onMoveWithinSection={onMoveWithinSection} />
             )
             
          case 2: 
             return (
-              <DoubleColumnSection onSelectSection={onselect} isSelected={isSelected} onAddToSection={onAddToSection} renderSectionChild={renderSectionChild} onMoveWithinSection={onMoveWithinSection} onUpdateChild={onUpdateChild} component={component} sectionId={component.id} direction={component.direction || "column"} />
+              <DoubleColumnSection onSelectSection={onSelectChild} selectedComponent={selectedComponent} onAddToSection={onAddToSection} renderSectionChild={renderSectionChild} onMoveWithinSection={onMoveWithinSection} onUpdateChild={onUpdateChild} component={component} sectionId={component.id} direction={component.direction || "column"} />
             )
           default:
             break;

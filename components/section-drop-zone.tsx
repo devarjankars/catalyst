@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useDrop } from "react-dnd"
 import type { EmailComponent } from "@/types/email-builder"
 
@@ -31,12 +31,10 @@ export function SectionDropZone({
   isColumn = false,
   columnCount = 1,
   columnAlignment = "left",
-  isSelected
+  isSelected,
+
 }: SectionDropZoneProps) {
   const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
-
-  // console.log("is coulmn", isColumn);
-  
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "component",
@@ -112,30 +110,31 @@ export function SectionDropZone({
     <div
       ref={drop}
       className={`
-        ${minHeight} relative p-3 rounded-md transition-all w-full
+        ${minHeight} relative p-3 rounded-md transition-all 
         ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}
-        ${!previewMode ? `border-2 border-dashed ${isColumn ? "border-green-500 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
-        ${isColumn ? "flex-1" : "w-full"}
+        ${!previewMode ? `border-2 border-dashed ${  isSelected ? "border-green-500 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
+        ${isColumn ? "flex" : "w-full"}
+        
       `}
       style={{
         textAlign: isColumn ? columnAlignment : "left",
       }}
       onDragLeave={() => setDropIndicator(null)}
 
-      onClick={()=> {
-        console.log("section clicked", sectionId);
-        
+      onClick={(e)=> { 
+        e.stopPropagation();
         onSelect?.(sectionId)}}
      
     >
-      {children.length === 0 && !previewMode ? (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">
-          <div className="text-center">
-            <div className="mb-1">{isColumn ? `Drop in Column (${columnAlignment})` : "Drop components here"}</div>
-            {isColumn && <div className="text-xs opacity-75">Column {sectionId.split("-").pop()}</div>}
-          </div>
-        </div>
-      ) : (
+        {children.length === 0 && !previewMode && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">
+              <div className="text-center">
+                <div className="mb-1">Drop in Column </div>
+              </div>
+            </div> 
+        )}
+
+
         <div className="relative w-full">
           {/* Top drop indicator */}
           {dropIndicator?.index === 0 && dropIndicator.position === "top" && !previewMode && (
@@ -145,20 +144,8 @@ export function SectionDropZone({
           {renderChildren()}
 
           {/* Drop indicators between and after components */}
-          {children.map((_, index) => (
-            <div key={`indicator-${index}`}>
-              {dropIndicator?.index === index + 1 && dropIndicator.position === "top" && !previewMode && (
-                <div className={`h-1 ${isColumn ? "bg-green-500" : "bg-blue-500"} rounded-full opacity-75 my-2`} />
-              )}
-            </div>
-          ))}
-
-          {/* Final drop indicator */}
-          {dropIndicator?.index === children.length && !previewMode && (
-            <div className={`h-1 ${isColumn ? "bg-green-500" : "bg-blue-500"} rounded-full opacity-75 mt-2`} />
-          )}
-        </div>
-      )}
+          
+          </div>
 
       {isOver && canDrop && !previewMode && (
         <div

@@ -172,27 +172,7 @@ export function PropertiesPanel({
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="columnWidth">Column Width</Label>
-                      <Select
-                        value={component.columnWidth || "auto"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({ columnWidth: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="auto">Auto (Equal)</SelectItem>
-                          <SelectItem value="25%">25%</SelectItem>
-                          <SelectItem value="33.33%">33%</SelectItem>
-                          <SelectItem value="50%">50%</SelectItem>
-                          <SelectItem value="66.67%">67%</SelectItem>
-                          <SelectItem value="75%">75%</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    
                   </div>
                 </div>
               </>

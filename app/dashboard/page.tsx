@@ -53,6 +53,9 @@ export default function Dashboard() {
     }
   }
 
+  
+  
+
   const filterTemplates = () => {
     let filtered = templates
 

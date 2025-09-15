@@ -76,7 +76,7 @@ function generateComponentHTML(component: EmailComponent): string {
                   .map(
                     (child, index) => `
                     <td
-                      
+                      bgcolor="${child.backgroundColor || "transparent"}"
                       valign="${child.columnVerticalAlignment || "center"}"
                       align="${child.columnAlignment || "center"}"
                       width="${

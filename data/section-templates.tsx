@@ -48,6 +48,8 @@ export const sectionTemplates = [
       direction: "row",
       maxWidth: "100%",
       columns: 2,
+      columnsType : "equal",
+      gap : "10px"
     },
   },
   {
@@ -84,7 +86,7 @@ export const sectionTemplates = [
           borderRadius: "4px",
           children: [],
           direction: "column",
-          isColumn: true,
+          isColumn: true
         },
       ],
       backgroundColor: "#ffffff",
@@ -93,6 +95,8 @@ export const sectionTemplates = [
       direction: "row",
       maxWidth: "100%",
       columns: 3,
+      columnType : "equal",
+      gap : "10px"
     },
   },
   {
