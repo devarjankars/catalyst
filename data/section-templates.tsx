@@ -49,7 +49,7 @@ export const sectionTemplates = [
       maxWidth: "100%",
       columns: 2,
       columnsType : "equal",
-      gap : "10px"
+      gap : "5%"
     },
   },
   {
@@ -96,7 +96,7 @@ export const sectionTemplates = [
       maxWidth: "100%",
       columns: 3,
       columnType : "equal",
-      gap : "10px"
+      gap : "5%"
     },
   },
   {

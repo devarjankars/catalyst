@@ -1,8 +1,8 @@
 "use client";
 
-import { on } from "events";
 import { SectionDropZone } from "../section-drop-zone";
 import type { EmailComponent } from "@/types/email-builder";
+import { EmailComponentRenderer } from "../email-component-renderer";
 
 interface DoubleColumnSectionProps {
     direction: "row" | "column",

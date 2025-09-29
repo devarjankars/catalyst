@@ -19,7 +19,6 @@ interface SectionDropZoneProps {
   columnAlignment?: "left" | "center" | "right"
 }
 
-//TODO => if direction is row then not able to edit column properties
 
 export function SectionDropZone({
   onSelect,
@@ -110,7 +109,7 @@ export function SectionDropZone({
     <div
       ref={drop}
       className={`
-        ${minHeight} relative p-3 rounded-md transition-all 
+        ${minHeight} relative  rounded-md transition-all 
         ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}
         ${!previewMode ? `border-2 border-dashed ${  isSelected ? "border-green-500 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
         ${isColumn ? "flex" : "w-full"}
@@ -126,7 +125,7 @@ export function SectionDropZone({
         onSelect?.(sectionId)}}
      
     >
-        {children.length === 0 && !previewMode && (
+        {children?.length === 0 && !previewMode && (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">
               <div className="text-center">
                 <div className="mb-1">Drop in Column </div>

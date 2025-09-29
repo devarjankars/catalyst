@@ -10,6 +10,7 @@ import {
   PanelBottom,
   NotepadText,
   List,
+  Wallpaper,
 } from "lucide-react";
 
 export const componentTypes = [
@@ -194,6 +195,18 @@ export const componentTypes = [
   defaultProps: {
     listItems: [`List Item`],   // array of strings
   },
+},
+{
+  type: "header-image",
+  label: "Header Image",
+  icon : Wallpaper,
+  defaultProps: {
+    src: "/header-placeholder.png",
+    alt: "Header Image",
+    width: "100%",
+    height: "auto",
+    maxWidth: "600px",
+  }
 }
 
 ];

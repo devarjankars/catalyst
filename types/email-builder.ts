@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image"
 
   // Custom component properties
   isCustom?: boolean
@@ -10,6 +10,7 @@ export interface EmailComponent {
   // Common properties
   padding?: string
   displayType?: "all" | "mobile-only" | "desktop-only"
+
 
   // Section properties
   children?: EmailComponent[] | null
@@ -21,6 +22,8 @@ export interface EmailComponent {
   columns?: number
   isColumn?: boolean
   isHero?: boolean
+  columnsType?: "equal" | "custom"
+  gap?: string
 
   // Column-specific properties
   columnAlignment?: "left" | "center" | "right"

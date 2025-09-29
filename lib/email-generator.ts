@@ -1,5 +1,6 @@
 import type { EmailComponent } from "@/types/email-builder";
 import { getDisplayAttributes } from "./style-generator";
+import { generateColumnHtml } from "./column-html-generator";
 
 function generateComponentHTML(component: EmailComponent): string {
   switch (component.type) {
@@ -43,10 +44,8 @@ function generateComponentHTML(component: EmailComponent): string {
       border="0"
       align="center"
       ${classAttr ? classAttr : ""}
-      bgcolor="${component.backgroundColor || "#ffffff"}"
-      style="background-color: ${
-        component.backgroundColor || "#ffffff"
-      };${innerStyle ? ` ${innerStyle}` : ""}"
+      
+     ${innerStyle ? ` ${innerStyle}` : ""}"
     >
       <tr>
         <td ${classAttr ? classAttr : ""} style="padding: ${
@@ -60,7 +59,7 @@ function generateComponentHTML(component: EmailComponent): string {
             align="center"
             ${classAttr ? classAttr : ""}
             style="
-              background-color: ${component.backgroundColor || "#ffffff"};
+              
               border-radius: ${component.borderRadius || "0px"};
               max-width: ${component.maxWidth || "600px"};
               margin: ${component.margin || "0 auto"};
@@ -69,55 +68,10 @@ function generateComponentHTML(component: EmailComponent): string {
             "
           >
             ${
-              component.direction === "row"
-                ? `
-              <tr>
-                ${(component.children || [])
-                  .map(
-                    (child, index) => `
-                    <td
-                      bgcolor="${child.backgroundColor || "transparent"}"
-                      valign="${child.columnVerticalAlignment || "center"}"
-                      align="${child.columnAlignment || "center"}"
-                      width="${
-                        child.columnWidth === "auto"
-                          ? `${100 / (component.children?.length || 1)}%`
-                          : child.columnWidth ||
-                            `${100 / (component.children?.length || 1)}%`
-                      }"
-                      style="
-                        vertical-align: ${
-                          child.columnVerticalAlignment || "center"
-                        };
-                        text-align: ${child.columnAlignment || "left"};
-                        padding: ${child.padding || "15px"};
-                        background-color: ${
-                          child.backgroundColor || "transparent"
-                        };
-                        border-radius: ${child.borderRadius || "0px"};
-                        ${
-                          index < (component.children?.length || 1) - 1
-                            ? "padding-right: 10px;"
-                            : ""
-                        }
-                        min-height: ${child.columnMinHeight || "120px"};
-                       
-                      "
-                    >
-                      ${generateComponentHTML(child)}
-                    </td>
-                  `
-                  )
-                  .join("")}
-              </tr>
-            `
-                : `
-              <tr>
-                <td  ${classAttr ? classAttr : ""} ${innerStyle ? ` style="${innerStyle}"` : ""}>
-                  ${childrenHTML}
-                </td>
-              </tr>
-            `
+              component.columns && component.columns > 1 ? 
+              generateColumnHtml({component,generateComponentHTML}) :
+
+              generateColumnHtml({component,generateComponentHTML,childHtml:childrenHTML})
             }
           </table>
         </td>
@@ -787,6 +741,41 @@ function generateComponentHTML(component: EmailComponent): string {
       // The median time to CR/CRc in the pivotal cohort was <b>57 days</b>&nbsp;(‍range, 14-107 days; n=13‍) and 43 days (‍range,    14-131 days; n=29‍) in all cohorts<sup>2-4</sup>
       // </td>
       // </tr>
+    }
+
+    case "header-image" : {
+      const display = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(display);
+      return `
+      <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      ${classAttr ? classAttr : ""}
+      ${innerStyle ? `style="${innerStyle}"` : ""}
+    >
+      <tbody>
+        <tr>
+          <td ${classAttr ? classAttr : ""} align="center" style="padding: ${component.padding || "0"};${innerStyle ? ` ${innerStyle}` : ""}">
+            <img
+              width="${component.width || "600px"}"
+              src="${component.src || "/header-placeholder.png"}"
+              alt="${component.imageAlt || "Header Image"}"
+              style="
+                width: ${component.width || "600px"};
+                height: ${component.height || "auto"};
+                display: block;
+                max-width: 100%;
+                "
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+      `;
     }
     default:
       return "";

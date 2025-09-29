@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, X, Loader2 } from "lucide-react"
 import { firebaseService } from "@/services/firebase-service"
@@ -17,6 +17,11 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   const [uploadedImage, setUploadedImage] = useState<string>(currentImage || "")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { currentTemplate } = useEmailBuilderStore()
+
+
+  useEffect(() => {
+    setUploadedImage(currentImage || "")
+  }, [currentImage])
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]

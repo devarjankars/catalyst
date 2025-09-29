@@ -185,7 +185,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         updateComponent: (id, updates, parentId = null) => {
-          console.log("Updating component:", id,"under parentId:", parentId);
+          // console.log("Updating component:", id,"under parentId:", parentId);
           
         const { components } = get();
 
