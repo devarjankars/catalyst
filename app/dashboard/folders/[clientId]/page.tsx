@@ -1,0 +1,40 @@
+'use client'
+
+import {useClientStore} from "@/store/client-store"
+import { notFound } from "next/navigation";
+import { Calendar, ChevronRight, Folder } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import Link from "next/link";
+
+
+export default function ClientFoldersPage({
+  params,
+}: {
+  params: { clientId: string };
+}) {
+    const clientsFolders = useClientStore((state) => state.clientsFolders); 
+    
+  const client = clientsFolders.find((c) => c.id === params.clientId);
+
+  if (!client) return notFound();
+
+  return (
+    <div>
+      <h1 className="text-xl font-bold mb-4">{client.label}</h1>
+      <div className="categories w-full flex gap-6">
+        {client.categories.map(category => <Link className='inline-block w-1/3 rounded-2xl' key={category.category} href={`/dashboard/folders/${client.id}/${category.category}`}>
+                  <Card className="w-full relative">
+                  <CardContent className="flex items-center gap-3 py-3">
+                    <div className="logo w-12 h-auto"><Folder /></div>
+                    <div className="title font-bold">{category.category}</div>
+                  </CardContent>
+                  <CardFooter className="text-[#717182] text-xs flex gap-2 items-center py-3">
+                   <Calendar className="w-3" /> Created 15-5-2000
+                  </CardFooter>
+                  <ChevronRight className="absolute h-[20px] top-[calc(50%-10px)] right-2 text-[#717182]" />
+                  </Card>
+              </Link>)}
+      </div>
+    </div>  
+  );
+}

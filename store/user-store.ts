@@ -9,11 +9,7 @@ type userData = {
     updatePermissions: (teamKey: string , employeeId: string , permissions : Record<PermissionKey, boolean>) => void,
     getTeams :() => TeamKey[]
 }
-// type updateParam<T> = {
-//     teamKey: string,
-//     employeeId: string,
-//     permission:T[]
-// }
+
 export const useUserStore= create<userData>()(
     devtools(
         persist(
@@ -23,22 +19,22 @@ export const useUserStore= create<userData>()(
                     teams : state.teams.map((team) => team.key === teamKey ? {...team , employees : [...team.employees , user]} : team)
                 })),
                 updatePermissions : (teamKey , employeeId , permission) => set((state) => ({
-      teams: state.teams.map((team) =>
-        team.key === teamKey
-          ? {
-              ...team,
-              employees: team.employees.map((emp) =>
-                emp.id === employeeId
-                  ? { ...emp, permissions: { ...emp.permissions, ...permission } }
-                  : emp
-              ),
-            }
-          : team
-      ),
-    })),
-    getTeams: () => get().teams.map((team) => team.key),
+                  teams: state.teams.map((team) =>
+                    team.key === teamKey
+                      ? {
+                          ...team,
+                          employees: team.employees.map((emp) =>
+                            emp.id === employeeId
+                              ? { ...emp, permissions: { ...emp.permissions, ...permission } }
+                              : emp
+                          ),
+                        }
+                      : team
+                  ),
+                })),
+                getTeams: () => get().teams.map((team) => team.key),
                 
-    }),
+            }),
             {name : "users"}
         )
     )) 
