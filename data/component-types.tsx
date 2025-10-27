@@ -18,6 +18,7 @@ export const componentTypes = [
     type: "text",
     label: "Text",
     icon: Type,
+    category : "basic",
     defaultProps: {
       content: "Your text here",
       fontSize: "16px",
@@ -29,6 +30,7 @@ export const componentTypes = [
   {
     type: "image",
     label: "Image",
+    category : "basic",
     icon: ImageIcon,
     defaultProps: {
       src: "/placeholder.svg?height=200&width=400&text=Image",
@@ -40,6 +42,7 @@ export const componentTypes = [
   {
     type: "button",
     label: "Button",
+    category : "basic",
     icon: Square,
     defaultProps: {
       text: "Button",
@@ -54,6 +57,7 @@ export const componentTypes = [
   {
     type: "section",
     label: "Section",
+    category : "basic",
     icon: Layout,
     defaultProps: {
       children: [],
@@ -67,6 +71,7 @@ export const componentTypes = [
   {
     type: "divider",
     label: "Divider",
+    category : "basic",
     icon: Minus,
     defaultProps: {
       height: "1px",
@@ -77,6 +82,7 @@ export const componentTypes = [
   {
     type: "cta-button",
     label: "CTA Button",
+    category : "custom",
     icon: RectangleHorizontal,
     defaultProps: {
       href: "#",
@@ -91,6 +97,7 @@ export const componentTypes = [
   {
     type: "footer-links",
     label: "Footer Links",
+    category : "custom",
     icon: PanelBottom,
     defaultProps: {
       links: [
@@ -107,6 +114,7 @@ export const componentTypes = [
   {
     type: "isi",
     label: "Isi Block",
+    category : "custom",
     icon: NotepadText,
     defaultProps: {
       importantSafetyInformation: {
@@ -191,6 +199,7 @@ export const componentTypes = [
   {
   type: "bullet-list",
   label: "Bullet Point",
+  category : "basic",
   icon: List,
   defaultProps: {
     listItems: [`List Item`],   // array of strings
@@ -199,6 +208,7 @@ export const componentTypes = [
 {
   type: "header-image",
   label: "Header Image",
+  category : "custom",
   icon : Wallpaper,
   defaultProps: {
     src: "/header-placeholder.png",

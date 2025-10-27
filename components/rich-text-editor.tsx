@@ -118,7 +118,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
           outline: "none",
           ...style,
         }}
-        className="focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded p-2 "
+        className={"focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-3 py-2"}
       />
 
       {/* Toolbar only visible for this editor when focused */}

@@ -9,6 +9,12 @@ import { CustomComponentCreator } from "./custom-component-creator"
 import { Button } from "./ui/button"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
 import { toast } from "sonner"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 interface ComponentPaletteProps {
   onAddComponent: (component: EmailComponent, index?: number) => void
@@ -67,7 +73,7 @@ function DraggableComponent({
   const label =
     "label" in componentType ? componentType.label : (componentType as any).name || `Custom ${componentType.type}`
 
-  const {deleteCustomComponent} = useEmailBuilderStore()  
+  const { deleteCustomComponent } = useEmailBuilderStore()
 
   return (
     <div
@@ -79,69 +85,102 @@ function DraggableComponent({
         ${isDragging ? "opacity-50" : ""}
         ${isCustom ? "bg-purple-50 border-purple-300" : ""}
         ${isTemplate ? "bg-green-50 border-green-300" : ""}
+        relative
       `}
     >
       <Icon className="w-5 h-5 text-gray-600" />
       <span className="font-medium text-gray-700 text-center">{label}</span>
-      {isCustom && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Custom</span>}
-      {isCustom && <Button variant={"outline"} size={"icon"} className="p-0" onClick={()=>{
+      {/* {isCustom && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Custom</span>} */}
+      {isCustom && <Button variant={"secondary"} size={"icon"} className=" bg-transparent  absolute top-0 right-0" onClick={() => {
         deleteCustomComponent(componentType.id)
         toast.warning("custom component deleted")
-        }}><Trash2 className="text-red-400"/></Button>}
+      }}><Trash2 className="text-red-400 w-4 h-4" /></Button>}
       {/* {isTemplate && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Template</span>} */}
     </div>
   )
 }
 
 export function ComponentPalette({ onAddComponent, customComponents }: ComponentPaletteProps) {
-  
+
 
   return (
-    <div className="space-y-4 overflow-y-auto h-full">
-      <h3 className="font-semibold text-gray-900 mb-4">Basic Components</h3>
-      <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
-         {componentTypes
-        .filter((type) => type.type !== "section" )
-        .map((componentType) => (
-          <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
-        ))}
+    <div className="space-y-4 overflow-y-auto h-full relative">
 
-      </div>
-     
-      <div className="border-t pt-4">
-        <h3 className="font-semibold text-gray-900 mb-4">Section Templates</h3>
-         <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
-          {sectionTemplates.map((template, index) => (
-          <DraggableComponent
-            key={`${template.type}-${index}`}
-            componentType={template}
-            onAddComponent={onAddComponent}
-            isTemplate={true}
-          />
-        ))}
-         </div>
-        
-      </div>
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full"
+        defaultValue="item-1"
+      >
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Basic Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+              {componentTypes
+                .filter((type) => type.type !== "section" && type.category === "basic")
+                .map((componentType) => (
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
+                ))}
 
-      <div className="pt-4">
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-2">
+          <AccordionTrigger>Custom components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+              {componentTypes
+                .filter((type) => type.type !== "section" && type.category === "custom")
+                .map((componentType) => (
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
+                ))}
+
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-3">
+          <AccordionTrigger>Sections</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+              {sectionTemplates.map((template, index) => (
+                <DraggableComponent
+                  key={`${template.type}-${index}`}
+                  componentType={template}
+                  onAddComponent={onAddComponent}
+                  isTemplate={true}
+                />
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-4">
+          <AccordionTrigger>User defined</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            {customComponents.length > 0 && (
+              <>
+                <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+
+                  {customComponents.map((customComponent) => (
+                    <DraggableComponent
+                      key={customComponent.id}
+                      componentType={customComponent}
+                      onAddComponent={onAddComponent}
+                      isCustom={true}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* for super admin only */}
+      <div className="pt-4 absolute bottom-0 w-full">
         <CustomComponentCreator />
       </div>
 
-      {customComponents.length > 0 && (
-        <>
-          <div className="border-t pt-4">
-            <h4 className="font-semibold text-gray-900 mb-4">Custom Components</h4>
-            {customComponents.map((customComponent) => (
-              <DraggableComponent
-                key={customComponent.id}
-                componentType={customComponent}
-                onAddComponent={onAddComponent}
-                isCustom={true}
-              />
-            ))}
-          </div>
-        </>
-      )}
+
     </div>
   )
 }

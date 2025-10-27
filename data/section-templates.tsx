@@ -99,40 +99,5 @@ export const sectionTemplates = [
       gap : "5%"
     },
   },
-  {
-    type: "section",
-    label: "Hero Section",
-    icon: LayoutGrid,
-    defaultProps: {
-      children: [
-        {
-          id: "hero-text",
-          type: "text",
-          content: "<h1>Welcome to Our Newsletter</h1><p>Your amazing content starts here</p>",
-          fontSize: "24px",
-          color: "#ffffff",
-          textAlign: "center",
-          fontWeight: "bold",
-          padding: "20px",
-        },
-        {
-          id: "hero-button",
-          type: "button",
-          text: "Get Started",
-          href: "#",
-          backgroundColor: "#ffffff",
-          color: "#007bff",
-          borderRadius: "25px",
-          buttonPadding: "15px 30px",
-          textAlign: "center",
-        },
-      ],
-      backgroundColor: "#007bff",
-      padding: "40px 20px",
-      borderRadius: "8px",
-      direction: "column",
-      maxWidth: "100%",
-      isHero: true,
-    },
-  },
+  
 ]

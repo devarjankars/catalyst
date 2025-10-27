@@ -13,7 +13,7 @@ export function getDisplayAttributes(displayType: EmailComponent["displayType"])
   switch (displayType) {
     case "mobile-only":
       classAttr = "mobile";
-      innerStyle = "display: none ";
+      innerStyle = "display: none;mso-hide: all; ";
       break;
     case "desktop-only":
       classAttr = "desktop";

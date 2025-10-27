@@ -1,6 +1,7 @@
 export interface EmailComponent {
   id: string
   type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image"
+  category : "basic" | "custom" | "user-created"
 
   // Custom component properties
   isCustom?: boolean

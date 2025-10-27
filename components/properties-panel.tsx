@@ -15,6 +15,7 @@ import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert } from "lucide-react";
+import PaddingInput from "./padding -inputs";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -756,11 +757,9 @@ export function PropertiesPanel({
         <h4 className="font-medium text-gray-700 mb-3">Spacing</h4>
         <div>
           <Label htmlFor="padding">Padding</Label>
-          <Input
-            id="padding"
-            value={component.padding || "16px"}
-            onChange={(e) => onUpdateComponent({ padding: e.target.value })}
-            placeholder="16px"
+          <PaddingInput
+          value={component.padding || "0 16px 10px 16px"}
+          onChange={(value) => onUpdateComponent({ padding: value })}
           />
         </div>
       </div>

@@ -43,18 +43,17 @@ function generateTdHTML(
   gap: string = "0%",
 ): string {
   const verticalAlign = child.columnVerticalAlignment || "center";
-  const alignment = child.columnAlignment || "left";
+  const alignment = child.columnAlignment || "center";
 
   return `
     <td
       bgcolor="${child.backgroundColor || "transparent"}"
       valign="${verticalAlign}"
-      align="${alignment}"
+      align="${alignment }"
       width="${getWidth(totalColumns,child.columnWidth || "")}"
+      ${child.displayType === "mobile-only" ? 'class="mbl-show-cell"' : child.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
       style="
         vertical-align: ${verticalAlign};
-        text-align: ${alignment};
-        padding: ${child.padding || "15px"};
         background-color: ${child.backgroundColor || "transparent"};
         border-radius: ${child.borderRadius || "0px"};
         width: ${getWidth(totalColumns,child.columnWidth || "")};
@@ -88,9 +87,9 @@ if (columns > 1 && direction === "column") {
             <td
                 bgcolor="${child.backgroundColor || "transparent"}"
                 valign="${child.columnVerticalAlignment || "top"}"
-                align="${child.columnAlignment || "left"}"
+                align="${child.columnAlignment || "center"}"
+                ${child.displayType === "mobile-only" ? 'class="mbl-show-cell"' : child.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
                 style="
-                padding: ${child.padding || "15px"};
                 background-color: ${child.backgroundColor || "transparent"};
                 border-radius: ${child.borderRadius || "0px"};
                 min-height: ${child.columnMinHeight || "120px"};
@@ -111,6 +110,7 @@ if (columns > 1 && direction === "column") {
   return `
   <tr>
     <td
+      ${component.displayType === "mobile-only" ? 'class="mbl-show-cell"' : component.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
         bgcolor="${component.backgroundColor || "transparent"}"
         valign="top"
         align="left"
