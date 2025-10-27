@@ -3,8 +3,6 @@ import { forwardRef, useEffect, useState } from "react"
 import { useDrop } from "react-dnd"
 import { EmailComponentRenderer } from "./email-component-renderer"
 import type { EmailComponent } from "@/types/email-builder"
-import { se } from "date-fns/locale"
-import { Shield } from "lucide-react"
 
 interface EmailCanvasProps {
   components: EmailComponent[]
@@ -145,14 +143,23 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       onUpdateComponent(sectionId, { children: newChildren })
     }
 
+    const getSectionREcursively = (id: string, comps: EmailComponent[]): EmailComponent | null => {
+      for (const comp of comps) {
+        if (comp.id === id) return comp
+        if (comp.children) {
+          const found = getSectionREcursively(id, comp.children)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
     const handleUpdateChild = (sectionId: string, childId: string, updates: Partial<EmailComponent>) => {
-      const section = components.find((c) => c.id === sectionId)
+      const section = getSectionREcursively(sectionId, components)
+      
       if (!section?.children) return
 
-      console.log("Firing the update child function");
-      
-
-      const newChildren = section.children.map((child) => (child.id === childId ? { ...child, ...updates } : child))
+      const newChildren = section?.children.map((child) => (child.id === childId ? { ...child, ...updates } : child))
 
       onUpdateComponent(sectionId, { children: newChildren })
     }
@@ -160,8 +167,6 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const handleDeleteChild = (sectionId: string, childId: string) => {
       console.log(`Deleting child ${childId} from section ${sectionId}`);
       const section = components.find((c) => c.id === sectionId)
-      // if (!section?.children) return
-
       
       onDeleteComponent(childId)
     }

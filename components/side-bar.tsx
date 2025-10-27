@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut } from "lucide-react";
+import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SideBar() {
@@ -70,6 +70,50 @@ export default function SideBar() {
           <li>
             <a
               href="#"
+              onClick={() => router.push('/dashboard/tasks')}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+              <ListChecks className="h-5 w-5 text-black-500" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    Task Assignment
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          </li>
+          <li>
+            <a onClick={() => router.push('/dashboard/templates')}
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+              <FileMinus className="h-5 w-5 text-black-500" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    Template Management
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          </li>
+          <li>
+            <a
+            onClick={() => router.push('/dashboard/folders')}
+              href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <LayoutGrid className="h-5 w-5 text-black-500" />
@@ -88,7 +132,7 @@ export default function SideBar() {
               </AnimatePresence>
             </a>
           </li>
-          <li>
+          {/* <li>
             <a
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
@@ -108,7 +152,7 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </a>
-          </li>
+          </li> */}
           <li>
             <a href="#"
               onClick={() => router.push('/dashboard/admin')}
@@ -130,7 +174,7 @@ export default function SideBar() {
               </AnimatePresence>
             </a>
           </li>
-          <li>
+          {/* <li>
             <a
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
@@ -150,7 +194,7 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </a>
-          </li>
+          </li> */}
         </ul>
       </nav>
        <a href="#" className="flex items-center gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">

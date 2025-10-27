@@ -15,6 +15,7 @@ import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert } from "lucide-react";
+import PaddingInput from "./padding -inputs";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -172,27 +173,7 @@ export function PropertiesPanel({
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="columnWidth">Column Width</Label>
-                      <Select
-                        value={component.columnWidth || "auto"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({ columnWidth: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="auto">Auto (Equal)</SelectItem>
-                          <SelectItem value="25%">25%</SelectItem>
-                          <SelectItem value="33.33%">33%</SelectItem>
-                          <SelectItem value="50%">50%</SelectItem>
-                          <SelectItem value="66.67%">67%</SelectItem>
-                          <SelectItem value="75%">75%</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    
                   </div>
                 </div>
               </>
@@ -682,6 +663,29 @@ export function PropertiesPanel({
             </div>
           </div>
         )
+      case "header-image":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Upload Image</Label>
+              <ImageUpload
+                currentImage={component.src}
+                onImageUpload={(imageUrl) =>
+                  onUpdateComponent({ src: imageUrl })
+                }
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="alt">Alt Text</Label>
+              <Input
+                id="alt"
+                value={component.alt || ""}
+                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                placeholder="Image description"
+              />
+            </div>
+            </div>);
       default:
         return <div>No properties available</div>;
     }
@@ -753,11 +757,9 @@ export function PropertiesPanel({
         <h4 className="font-medium text-gray-700 mb-3">Spacing</h4>
         <div>
           <Label htmlFor="padding">Padding</Label>
-          <Input
-            id="padding"
-            value={component.padding || "16px"}
-            onChange={(e) => onUpdateComponent({ padding: e.target.value })}
-            placeholder="16px"
+          <PaddingInput
+          value={component.padding || "0 16px 10px 16px"}
+          onChange={(value) => onUpdateComponent({ padding: value })}
           />
         </div>
       </div>

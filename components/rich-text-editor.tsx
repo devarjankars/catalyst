@@ -1,7 +1,7 @@
 "use client"
 
 
-import { Link } from "lucide-react"
+import { Italic, Link, Superscript } from "lucide-react"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 
@@ -31,10 +31,12 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML)
+      setTimeout(() => {
+
+        onChange(editorRef?.current.innerHTML)
+      }, 1000);
     }else{
       console.log("editorRef.current is null");
-      
     }
   }
 
@@ -116,7 +118,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
           outline: "none",
           ...style,
         }}
-        className="focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded p-2 "
+        className={"focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-3 py-2"}
       />
 
       {/* Toolbar only visible for this editor when focused */}
@@ -145,7 +147,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
               handleInput()
             }}
           >
-            <em>I</em>
+            <Italic className="h-3 w-3"/>
           </button>
           <button
             type="button"
@@ -163,6 +165,16 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
             onClick={() => LinkifyText()}
           >
             <Link className="h-3 w-3" />
+          </button>
+          <button
+           type="button"
+            className="px-2 py-1 text-md hover:bg-gray-100 rounded text-black"
+            onClick={() => {
+              document.execCommand("superscript")
+              handleInput()
+            }}
+          >
+            <Superscript className="h-4 w-4" />
           </button>
         </div>
       )}

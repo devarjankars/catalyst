@@ -6,16 +6,27 @@ import { firebaseService } from "@/services/firebase-service"
 
 function deleteByIdRecursive(components: any[], targetId: string): any[] {
   return components
-    .filter(comp => comp.id !== targetId) // remove if it's the target itself
     .map(comp => {
+      // If this is the target component, do something before deletion
+      if (comp.id === targetId) {
+        if (comp.type === "image") {
+          // e.g., delete file or perform cleanup
+          firebaseService.deleteImage(comp.src)
+        }
+        return null; // mark for removal
+      }
+
+      // Recurse into children
       if (Array.isArray(comp.children) && comp.children.length > 0) {
         return {
           ...comp,
-          children: deleteByIdRecursive(comp.children, targetId), // recurse into children
+          children: deleteByIdRecursive(comp.children, targetId),
         };
       }
+
       return comp;
-    });
+    })
+    .filter(Boolean); // remove the nulls (deleted components)
 }
 
 interface EmailBuilderState {
@@ -185,7 +196,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         updateComponent: (id, updates, parentId = null) => {
-          console.log("Updating component:", id,"under parentId:", parentId);
+          // console.log("Updating component:", id,"under parentId:", parentId);
           
         const { components } = get();
 

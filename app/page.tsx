@@ -6,16 +6,23 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import { useEffect } from "react"
 
 export default  function LandingPage() {
   const router = useRouter()
 
-  const handleStatClick = ()=>{
+  // const handleStatClick = ()=>{
+  //   router.push("/dashboard")
+  // }
+
+  useEffect(() => {
+    // Redirect to /dashboard on page load
     router.push("/dashboard")
-  }
+  }, [])
+
   return (
     <div className="w-full min-h-screen flex flex-col">
-      {/* Hero Section */}
+      {/* Hero Section
       <section className="w-full flex flex-col md:flex-row items-center justify-between px-8 py-20 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
         <div className="md:w-1/2 space-y-6">
           <h1 className="text-4xl md:text-6xl font-bold">Build<br/> Stunning Emails<br/> in Minutes</h1>
@@ -35,20 +42,20 @@ export default  function LandingPage() {
             <img src="/dashboard.png" alt="Editor Mockup" className="rounded-2xl shadow-2xl w-[100%] " />
           </motion.div>
         </div>
-      </section>
+      </section> */}
 
       {/* Social Proof */}
-      <section className="py-12 bg-white text-center">
+      {/* <section className="py-12 bg-white text-center">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Trusted by 500+ brands</h2>
         <div className="flex justify-center space-x-8 opacity-70">
           <img src="/logo1.png" alt="logo" className="h-8" />
           <img src="/logo2.png" alt="logo" className="h-8" />
           <img src="/logo3.png" alt="logo" className="h-8" />
         </div>
-      </section>
+      </section> */}
 
       {/* Features */}
-      <section className="py-20 bg-gray-50 px-8">
+      {/* <section className="py-20 bg-gray-50 px-8">
         <div className="grid md:grid-cols-4 gap-6 text-center">
           {[
             { title: "Drag & Drop Editor", desc: "No coding required." },
@@ -64,10 +71,10 @@ export default  function LandingPage() {
             </Card>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Demo Section */}
-      <section className="py-20 px-8 flex flex-col md:flex-row items-center gap-10">
+      {/* <section className="py-20 px-8 flex flex-col md:flex-row items-center gap-10">
         <div className="md:w-1/2 space-y-6">
           <h2 className="text-3xl font-bold">Your workflow, simplified</h2>
           <p className="text-gray-600">Select a template → Customize → Send → Track performance</p>
@@ -76,10 +83,10 @@ export default  function LandingPage() {
         <div className="md:w-1/2">
           <img src="/dashboard.png" alt="Workflow Demo" className="rounded-xl shadow-lg" />
         </div>
-      </section>
+      </section> */}
 
       {/* Pricing */}
-      <section className="py-20 bg-gray-50 px-8 text-center">
+      {/* <section className="py-20 bg-gray-50 px-8 text-center">
         <h2 className="text-3xl font-bold mb-10">Simple Pricing</h2>
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {[
@@ -101,10 +108,10 @@ export default  function LandingPage() {
             </Card>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* FAQ */}
-      <section className="py-20 px-8 max-w-3xl mx-auto">
+      {/* <section className="py-20 px-8 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-10">Frequently Asked Questions</h2>
         <Accordion type="single" collapsible>
           <AccordionItem value="q1">
@@ -120,16 +127,16 @@ export default  function LandingPage() {
             <AccordionContent>Absolutely, export to HTML or integrate directly.</AccordionContent>
           </AccordionItem>
         </Accordion>
-      </section>
+      </section> */}
 
       {/* Final CTA */}
-      <section className="py-20 bg-indigo-600 text-white text-center">
+      {/* <section className="py-20 bg-indigo-600 text-white text-center">
         <h2 className="text-3xl font-bold mb-6">Ready to build your first email?</h2>
         <Button size="lg" variant="secondary">Start Free Trial</Button>
-      </section>
+      </section> */}
 
       {/* Footer */}
-      <footer className="py-12 bg-gray-900 text-gray-400 text-center">
+      {/* <footer className="py-12 bg-gray-900 text-gray-400 text-center">
         <div className="space-x-6 mb-4">
           <a href="#">Product</a>
           <a href="#">Pricing</a>
@@ -137,7 +144,7 @@ export default  function LandingPage() {
           <a href="#">Blog</a>
         </div>
         <p className="text-sm">© {new Date().getFullYear()} EmailBuilder Inc. All rights reserved.</p>
-      </footer>
+      </footer> */}
     </div>
   )
 }
