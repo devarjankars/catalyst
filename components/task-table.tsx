@@ -15,36 +15,55 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Ellipsis, Folder } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
 
-const tasks = [
-                    {
-                        task_id:"01",
-                        taskname:"MAT-US_ELA-930456",
-                        task_owner:"karishma",
-                        template_id:"123456",
-                        template_name:"MAT-US_ELA-930456",
-                        resources:["Darshan","Kavya"],
-                        createdOn:"10-02-2224",
-                        dueDtae:"10-03-2224",
-                        priority:"high",
-                        type:"RTE",
-                        status:"In progress"
-                    },
-                    {
-                        task_id:"02",
-                        taskname:"MAT-US_ELA-930457",
-                        task_owner:"karishma",
-                        template_id:"654321",
-                        template_name:"MAT-US_ELA-930457",
-                        resources:["Darshan","Kavya"],
-                        createdOn:"15-02-2224",
-                        dueDtae:"15-03-2224",
-                        priority:"medium",
-                        type:"RTE",
-                        status:"In progress"
-                    },
-                ]
-export default function Tasktable() {
+
+interface Task{
+    task_id:string,
+    taskname:string,
+    task_owner:string,
+    template_id:string,
+    template_name:string,
+    resources:string[],
+    createdOn:string,
+    dueDate:string,
+    priority:string,
+    type:string,
+    status:string
+}
+
+// const tasks = [
+//                     {
+//                         task_id:"01",
+//                         taskname:"MAT-US_ELA-930456",
+//                         task_owner:"karishma",
+//                         template_id:"123456",
+//                         template_name:"MAT-US_ELA-930456",
+//                         resources:["Darshan","Kavya"],
+//                         createdOn:"10-02-2224",
+//                         dueDtae:"10-03-2224",
+//                         priority:"high",
+//                         type:"RTE",
+//                         status:"In progress"
+//                     },
+//                     {
+//                         task_id:"02",
+//                         taskname:"MAT-US_ELA-930457",
+//                         task_owner:"karishma",
+//                         template_id:"654321",
+//                         template_name:"MAT-US_ELA-930457",
+//                         resources:["Darshan","Kavya"],
+//                         createdOn:"15-02-2224",
+//                         dueDtae:"15-03-2224",
+//                         priority:"medium",
+//                         type:"RTE",
+//                         status:"In progress"
+//                     },
+//                 ]
+export default function Tasktable({tasks}:{tasks:Task[]}) {
+
+    const router = useRouter();
+    
 
   return (
     <div>
@@ -61,9 +80,9 @@ export default function Tasktable() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
+              {tasks?.map((task) => (
                 <TableRow key={task.task_id}>
-                <TableCell className="flex gap-5 items-center">
+                <TableCell className="flex gap-5 items-center cursor-pointer" onClick={()=>router.push(`/dashboard/tasks/${task.task_id}`)}>
                     <Folder />
                     <p>{task.taskname}</p>
                 </TableCell>
@@ -77,7 +96,7 @@ export default function Tasktable() {
                     <p>{task.status}</p>
                 </TableCell>
                 <TableCell>{task.priority}</TableCell>
-                <TableCell>{task.dueDtae}</TableCell>
+                <TableCell>{task.dueDate}</TableCell>
                 <TableCell className='text-center'>
                     <Popover>
                     <PopoverTrigger><Ellipsis /></PopoverTrigger>

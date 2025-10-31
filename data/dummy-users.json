@@ -1,0 +1,64 @@
+{
+    "users": [
+        {
+            "userId": "admin1",
+            "userEmail": "admin@example.com",
+            "userRole": "admin",
+            "userPermissions": ["write", "read", "modify", "manage_users","manage_projects"],
+            "team": "tech",
+            "tasksAssigned": ["task1", "task2"],
+            "recentTask": {
+                "id": "task1",
+                "title": "Review Code"
+            }
+        },
+        {
+            "userId": "super1",
+            "userEmail": "superadmin@example.com",
+            "userRole": "superadmin",
+            "userPermissions": ["all", "system_config", "user_management"],
+            "team": "tech",
+            "tasksAssigned": ["task3"],
+            "recentTask": {
+                "id": "task3",
+                "title": "System Update"
+            }
+        },
+        {
+            "userId": "content1",
+            "userEmail": "content@example.com",
+            "userRole": "user",
+            "userPermissions": ["read", "write"],
+            "team": "content",
+            "tasksAssigned": ["task4"],
+            "recentTask": {
+                "id": "task4",
+                "title": "Write Blog"
+            }
+        },
+        {
+            "userId": "creative1",
+            "userEmail": "creative@example.com",
+            "userRole": "user",
+            "userPermissions": ["read", "asset_library"],
+            "team": "creative",
+            "tasksAssigned": ["task5"],
+            "recentTask": {
+                "id": "task5",
+                "title": "Design Logo"
+            }
+        },
+        {
+            "userId": "qa1",
+            "userEmail": "qa@example.com",
+            "userRole": "user",
+            "userPermissions": ["read", "test"],
+            "team": "qa",
+            "tasksAssigned": ["task6"],
+            "recentTask": {
+                "id": "task6",
+                "title": "Test Features"
+            }
+        }
+    ]
+}

@@ -4,10 +4,15 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
+import { useLoggedInUserStore } from "@/store/logged-in-user";
+import Link from "next/link";
 
 export default function SideBar() {
   const [open, setOpen] = useState(false);
     const router = useRouter();
+
+    const {logoutUser,userPermissions,userRole} = useLoggedInUserStore()
   return (
     <>
      <motion.aside
@@ -48,7 +53,7 @@ export default function SideBar() {
         <ul className="space-y-1 px-2">
           <li>
             
-            <a href="#" onClick={() => router.push('/dashboard')}
+            <Link href={"/dashboard"} 
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <House className="h-5 w-5 text-black-500" />
@@ -65,12 +70,12 @@ export default function SideBar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
+            </Link>
           </li>
           <li>
-            <a
-              href="#"
-              onClick={() => router.push('/dashboard/tasks')}
+            <Link
+              href="/dashboard/tasks"
+              
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <ListChecks className="h-5 w-5 text-black-500" />
@@ -87,11 +92,11 @@ export default function SideBar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
+            </Link>
           </li>
-          <li>
-            <a onClick={() => router.push('/dashboard/templates')}
-              href="#"
+         {userRole === "superadmin" && <li>
+            <Link 
+              href="/dashboard/templates"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <FileMinus className="h-5 w-5 text-black-500" />
@@ -108,12 +113,12 @@ export default function SideBar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
-          </li>
+            </Link>
+          </li>}
           <li>
-            <a
-            onClick={() => router.push('/dashboard/folders')}
-              href="#"
+            <Link
+           
+              href="/dashboard/folders"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <LayoutGrid className="h-5 w-5 text-black-500" />
@@ -130,7 +135,7 @@ export default function SideBar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
+            </Link>
           </li>
           {/* <li>
             <a
@@ -153,9 +158,9 @@ export default function SideBar() {
               </AnimatePresence>
             </a>
           </li> */}
-          <li>
-            <a href="#"
-              onClick={() => router.push('/dashboard/admin')}
+          {userRole === "superadmin" &&<li>
+            <Link href="/dashboard/admin"
+              
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
               <Users className="h-5 w-5 text-black-500" />
@@ -172,8 +177,8 @@ export default function SideBar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
-          </li>
+            </Link>
+          </li>}
           {/* <li>
             <a
               href="#"
@@ -197,7 +202,7 @@ export default function SideBar() {
           </li> */}
         </ul>
       </nav>
-       <a href="#" className="flex items-center gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">
+       <Button onClick={() =>logoutUser()} variant={"link"} className="flex  gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">
         <LogOut className="h-5 w-5 text-black-500"/>
         <AnimatePresence>
           {open && (
@@ -212,7 +217,7 @@ export default function SideBar() {
             </motion.span>
           )}
         </AnimatePresence>
-      </a>
+      </Button>
     </motion.aside>
     </>
   );

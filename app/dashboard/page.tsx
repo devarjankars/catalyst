@@ -21,6 +21,8 @@ import {
 import {useClientStore} from "@/store/client-store"
 import Link from "next/link"
 import Tasktable from "@/components/task-table"
+import { useLoggedInUserStore } from "@/store/logged-in-user"
+import dummyTasks from "@/data/dummy-tasks.json"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -46,6 +48,9 @@ export default function Dashboard() {
   //   { id: "unbranded", label: "Unbranded", count: 0 },
   //   { id: "other", label: "Other", count: 0 },
   // ]
+
+
+  const {userRole, userPermissions} = useLoggedInUserStore()
   
 console.log(templates)
   useEffect(() => {
@@ -178,10 +183,10 @@ console.log(templates)
               <span className="text-sm text-gray-600">Filter by category</span>
             </div> */}
             {/* </div> */}
-            <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
+           {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
               <Plus className="w-4 h-4" />
               Create Project
-            </Button>
+            </Button>}
           </div>
             
           </div>
@@ -197,7 +202,7 @@ console.log(templates)
               <span role="button" className="text-sm text-[#155DFC]" onClick={handleTaskview}>view all</span>
             </div>
             <div className="tasks">
-              <Tasktable/>
+              <Tasktable tasks={dummyTasks.tasks.slice(0,2)}/>
             </div>
           </div>
           <div className="projectFolders">
