@@ -112,6 +112,22 @@ export const componentTypes = [
     coolr: "#007bff",
   },
   {
+    type: "footer-links(3)",
+    label: "Footer Links(3)",
+    category : "custom",
+    icon: PanelBottom,
+    defaultProps: {
+      links: [
+        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "CCPA Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
+      ],
+    },
+    textAlign: "left",
+    fontSize: "14px",
+    coolr: "#007bff",
+  },
+  {
     type: "isi",
     label: "Isi Block",
     category : "custom",
@@ -217,6 +233,63 @@ export const componentTypes = [
     height: "auto",
     maxWidth: "600px",
   }
+},
+{
+  type: "Salutation",
+  label: "Salutation",
+  category : "custom",
+  icon : NotepadText,
+  defaultProps: {
+      content: "Dear {{customText[Dr.|Mr.|Mrs.|Ms.|Mx.]}} {{accFname}} {{accLname}},",
+      fontSize: "16px",
+      color: "#000000",
+      textAlign: "left",
+      fontWeight: "normal",
+  },
+  
+},
+{
+  type: "footer-tokens",
+  label: "footer-tokens",
+  category : "custom",
+  icon : NotepadText,
+  defaultProps: {
+      footerTokens: {
+        regards : "{{customText[Regards,|Sincerely,|Thank you,|Best,]}}",
+        userPhoto : "{{userPhoto}}",
+        company : "Stemline, a Menarini Group Company, Representative",
+        userName : "{{userName}}",
+        userEmailAddress : "{{userEmailAddress}}",
+        userPhone : "{{User.Phone}}"
+      },
+      fontSize: "16px",
+      color: "#000000",
+      textAlign: "left",
+      fontWeight: "normal",
+  },
+  
+},
+{
+  type: "orsedu-footer",
+  label: "orsedu-footer",
+  category : "custom",
+  icon : NotepadText,
+  defaultProps: {
+      footerText: {
+        reg : "ORSERDU is a registered trademark of the Menarini Group.",
+        year : "© 2024 Stemline Therapeutics, Inc., a Menarini Group Company.",
+        rights : "All rights reserved.",
+        jobcode : "07/25 MAT-US-ELA-00864",
+      },
+      fontSize: "16px",
+      color: "#000000",
+      textAlign: "left",
+      fontWeight: "normal",
+      src: "/placeholder.svg?height=200&width=400&text=Image",
+      alt: "Menarini group logo and Stemline Logo",
+      width: "25px",
+      height: "auto",
+  },
+  
 }
-
 ];

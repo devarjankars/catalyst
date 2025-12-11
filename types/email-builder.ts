@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer"
   category : "basic" | "custom" | "user-created"
 
   // Custom component properties
@@ -76,6 +76,21 @@ export interface EmailComponent {
   listItems?: string[]
   spaceBetweenItems?: string
   
+  // footer tokens properties
+  footerTokens?: {
+  regards?: string
+  userPhoto?: string
+  userName?: string
+  userEmailAddress?: string
+  userPhone?: string
+  company?: string
+  }
 
+   footerText?: {
+        reg?: string 
+        year?: string
+        rights?: string
+        jobcode?: string
+      },
   // Divider properties (backgroundColor already defined above)
 }

@@ -431,7 +431,39 @@ export function EmailComponentRenderer({
             </div>
           </div>
         );
+        case "footer-links(3)":
+        return (
+          <div style={baseStyle} className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-wrap gap-2">
+              {component.links?.map((link, linkIndex) => (
+                <>
+                  <a
+                    key={linkIndex}
+                    href={link.href || "#"}
+                    style={{
+                      color: component.color || "#007bff",
+                      textDecoration: "underline",
+                    }}
+                    onClick={(e) => {
+                      if (!previewMode) {
+                        e.preventDefault();
+                        onSelect();
+                      }
+                    }}
+                  >
+                    {link.text}
+                  </a>
 
+                  {linkIndex < component.links!.length - 1 && (
+                    <span key={linkIndex} className="text-gray-500">
+                      |
+                    </span>
+                  )}
+                </>
+              ))}
+            </div>
+          </div>
+        );
       case "isi":
         return (
           <div style={baseStyle} className="flex flex-col gap-2">
@@ -502,8 +534,33 @@ export function EmailComponentRenderer({
               onClick={() => !previewMode && onSelect()}
             />
           </div>
+        );
+        case "Salutation":
+        return (
+          <div style={baseStyle} className="mt-2 z-50 flex justify-start">
+            <div>{component.content}</div>
+          </div>
         );  
-
+        case "footer-tokens":
+        return (
+          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000]">
+            <div>{component.footerTokens?.regards}</div>
+            <div>{component.footerTokens?.userName}</div>
+            <div>{component.footerTokens?.company}</div>
+            {/* <div>{component.footerTokens?.userPhoto}</div> */}
+            <div>{component.footerTokens?.userPhone}</div>
+            <div>{component.footerTokens?.userEmailAddress}</div>
+          </div>
+        );
+        case "orsedu-footer":
+        return (
+          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000]">
+            <div>{component.footerText?.reg}</div>
+            <div>{component.footerText?.year}</div>
+            <div>{component.footerText?.rights} {component.footerText?.jobcode}</div>
+            
+          </div>
+        );
       default:
         return <div>Unknown component type</div>;
     }
