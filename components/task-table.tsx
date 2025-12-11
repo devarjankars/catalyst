@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React , {useState} from 'react'
 import {
   Table,
   TableBody,
@@ -15,8 +15,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Ellipsis, Folder } from 'lucide-react'
+import DeleteTaskDialog from '@/components/confirmation-modal'
 
-const tasks = [
+const alltasks = [
                     {
                         task_id:"01",
                         taskname:"MAT-US_ELA-930456",
@@ -45,7 +46,13 @@ const tasks = [
                     },
                 ]
 export default function Tasktable() {
-
+    const [tasks , setTasks] = useState(alltasks);
+    const [isDialogOpen, setIsDialogOpen] = useState<{open: boolean; t_id: string;}>({open : false , t_id: "" });
+    const handleDelete = () => {
+        const newTask =  tasks.filter(task => task.task_id != isDialogOpen.t_id);
+        setTasks(newTask);
+        setIsDialogOpen({open : false , t_id:""})
+    }
   return (
     <div>
       <Table>
@@ -84,7 +91,7 @@ export default function Tasktable() {
                     <PopoverContent className='w-max p-2'>
                         <div className='p-1'>Edit Details</div>
                         <div className='p-1'>Edit User</div>
-                        <div className='p-1 border-t mt-2'>Move to Trash</div>
+                        <div className='p-1 border-t mt-2' onClick={() => setIsDialogOpen({open : true , t_id :task.task_id  })}>Move to Trash</div>
                     </PopoverContent>
                     </Popover>
                 </TableCell>
@@ -119,6 +126,7 @@ export default function Tasktable() {
                 </TableRow> */}
             </TableBody>
         </Table>
+        <DeleteTaskDialog open={isDialogOpen.open} onConfirm={() => {handleDelete()}} onCancel={() => setIsDialogOpen({open : false , t_id:""})} />
     </div>
   )
 }
