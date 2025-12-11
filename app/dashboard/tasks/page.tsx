@@ -13,12 +13,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from '@/components/ui/label';
+import dummyTasks from '@/data/dummy-tasks.json';
 
 export default function Mytasks() {
     const [selectedCategory, setCategory] = useState("all");
     const [selectedClient, setClient] = useState("all");
     const [selectedType, setType] = useState("all");
     const {clientsFolders} = useClientStore(); 
+    
+
+
+
   return (
      <div className="">
         <div className="filters flex justify-between p-4 border-y border-gray-200 mb-4">
@@ -66,7 +71,7 @@ export default function Mytasks() {
             </div>
            
         </div>
-        <Tasktable/>
+        <Tasktable tasks={dummyTasks.tasks}/>
     </div>
   )
 }
