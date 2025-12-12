@@ -2,7 +2,7 @@ import { useState } from "react"
 import type { EmailComponent } from "@/types/email-builder"
 import { RichTextEditor } from "./rich-text-editor"
 import { Trash } from "lucide-react";
-import { relative } from "path";
+
 
 export default function BulletList({ component, onUpdate,isSelected }: { component: EmailComponent; onUpdate: (updatedProps: Partial<EmailComponent>) => void; isSelected?:boolean }) {
   // Track which item is being edited
@@ -23,6 +23,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
   }
 
   const handleUpdateItem = (index: number, content: string) => {
+    alert("updatting the component")
     const updated = [...component.listItems]
     updated[index] = `${content}`
     onUpdate({ listItems: updated })
@@ -40,7 +41,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
         }}
       >
         {component.listItems?.map((item: string, index: number) => (
-          <li onBlur={() => setEditingIndex(null) } key={index} style={{ marginBottom: "8px",position:"relative" }}>
+          <li  key={index} style={{ marginBottom: "8px",position:"relative" }}>
             {editingIndex === index ? (
               <RichTextEditor
                 value={item}
