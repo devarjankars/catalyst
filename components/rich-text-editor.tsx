@@ -114,7 +114,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
             }, 0)
         }}
         style={{
-          minHeight: "40px",
+          minHeight: "min-content",
           outline: "none",
           ...style,
         }}

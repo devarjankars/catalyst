@@ -196,7 +196,7 @@ console.log(templates)
       <div className="max-w-7xl h-full mx-auto py-8">
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
-          <div className="tasksList">
+          {/* <div className="tasksList">
             <div className="header flex justify-between">
               <h1 className="font-bold mb-4">My Tasks</h1>
               <span role="button" className="text-sm text-[#155DFC]" onClick={handleTaskview}>view all</span>
@@ -204,8 +204,8 @@ console.log(templates)
             <div className="tasks">
               <Tasktable tasks={dummyTasks.tasks.slice(0,2)}/>
             </div>
-          </div>
-          <div className="projectFolders">
+          </div> */}
+          {/* <div className="projectFolders">
             <div className="header flex justify-between">
               <h1 className="font-bold mb-4">Project Folders</h1>
               <span role="button" className="text-sm text-[#155DFC]" onClick={handleFolderView}>view all</span>
@@ -227,7 +227,7 @@ console.log(templates)
              </div>
 
              
-          </div>
+          </div> */}
           <div className="recentTemps">
           <h1 className="font-bold mb-4">Recent templates</h1>
           <div className="templates">

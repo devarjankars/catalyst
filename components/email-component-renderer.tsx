@@ -535,6 +535,22 @@ export function EmailComponentRenderer({
             />
           </div>
         );
+        case "chevron-divider":
+        return (
+          <div className="mt-2 z-50 flex justify-center">
+            <img
+              src={component.src || "/header-placeholder.png"}
+              alt={component.alt || "Header Image"}
+              style={{
+                width: component.width || "100%",
+                height: component.height || "auto",
+                maxWidth: component.maxWidth || "600px",
+                display: "block",
+              }}
+              onClick={() => !previewMode && onSelect()}
+            />
+          </div>
+        );
         case "Salutation":
         return (
           <div style={baseStyle} className="mt-2 z-50 flex justify-start">
@@ -554,10 +570,34 @@ export function EmailComponentRenderer({
         );
         case "orsedu-footer":
         return (
-          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000]">
-            <div>{component.footerText?.reg}</div>
-            <div>{component.footerText?.year}</div>
-            <div>{component.footerText?.rights} {component.footerText?.jobcode}</div>
+          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000] bg-[#F1F1F1]">
+            <img
+              src={component.src || "/header-placeholder.png"}
+              alt={component.alt || "Header Image"}
+              style={{
+                width: component.width || "100%",
+                height: component.height || "auto",
+                maxWidth: component.maxWidth || "600px",
+                display: "block",
+              }}
+              onClick={() => !previewMode && onSelect()}
+            />
+            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
+            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.year}</div>
+            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.rights}  <RichTextEditor
+              isSelected={isSelected}
+              value={component.footerText?.jobcode || ""}
+              onChange={(content) => onUpdate({ content })}
+              style={{
+                fontSize: component.fontSize || "12px",
+                color: component.color || "#000000",
+                textAlign: component.textAlign || "left",
+                fontWeight: component.fontWeight || "normal",
+                backgroundColor: component.backgroundColor || "transparent",
+                lineHeight: component.lineHeight || "14px",
+                padding: "0px",
+              }}
+            /></div>
             
           </div>
         );

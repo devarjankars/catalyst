@@ -235,6 +235,19 @@ export const componentTypes = [
   }
 },
 {
+  type: "chevron-divider",
+  label: "Chevron Divider",
+  category : "custom",
+  icon : Wallpaper,
+  defaultProps: {
+    src: "/header-placeholder.png",
+    alt: "divider Image",
+    width: "100%",
+    height: "auto",
+    maxWidth: "600px",
+  }
+},
+{
   type: "Salutation",
   label: "Salutation",
   category : "custom",
@@ -279,15 +292,15 @@ export const componentTypes = [
         reg : "ORSERDU is a registered trademark of the Menarini Group.",
         year : "© 2024 Stemline Therapeutics, Inc., a Menarini Group Company.",
         rights : "All rights reserved.",
-        jobcode : "07/25 MAT-US-ELA-00864",
+        jobcode : "0X/2X MAT-US-ELA-00XXX",
       },
-      fontSize: "16px",
+      fontSize: "12px",
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
       src: "/placeholder.svg?height=200&width=400&text=Image",
       alt: "Menarini group logo and Stemline Logo",
-      width: "25px",
+      width: "250px",
       height: "auto",
   },
   
