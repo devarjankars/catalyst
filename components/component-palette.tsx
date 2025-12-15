@@ -104,7 +104,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
 
 
   return (
-    <div className="space-y-4 overflow-y-auto h-full relative">
+    <div className="space-y-4 overflow-y-auto h-full relative overflow-x-hidden">
 
       <Accordion
         type="single"
@@ -128,7 +128,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
         <AccordionItem value="item-2">
           <AccordionTrigger>Custom components</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto">
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "custom")
                 .map((componentType) => (
@@ -176,9 +176,9 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
       </Accordion>
 
       {/* for super admin only */}
-      <div className="pt-4 absolute bottom-0 w-full">
+      {/* <div className="pt-4 absolute bottom-0 w-full">
         <CustomComponentCreator />
-      </div>
+      </div> */}
 
 
     </div>

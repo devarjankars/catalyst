@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2"
   category : "basic" | "custom" | "user-created"
 
   // Custom component properties
@@ -58,6 +58,8 @@ export interface EmailComponent {
 
  //footer-links properties
   links?: { text: string; href: string }[]
+  logoA : {altTex : string,href : string,imgSrc : string}
+  logoB : {altTex : string,href : string,imgSrc : string}
 
   //isi properties
   importantSafetyInformation?: {

@@ -304,5 +304,34 @@ export const componentTypes = [
       height: "auto",
   },
   
-}
+},
+
+{
+    type: "footer-link-2",
+    label: "Elzonris Footer Links",
+    category : "custom",
+    icon: PanelBottom,
+    defaultProps: {
+      links: [
+        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "CCPA Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
+        { text: "Unsubscribe", href: "#" },
+      ],
+      logoA : {
+        altText : "Menarini Group Logo and Stemline Logo",
+        href : '#',
+        imgSrc : "/footer-logo-a.png"
+      },
+      logoB :{
+        altText : "ELZONRIS Logo",
+        href : '#',
+        imgSrc : "/footer-logo-b.png"
+      },
+    },
+    textAlign: "left",
+    fontSize: "14px",
+    coolr: "#007bff",
+  },
+
 ];

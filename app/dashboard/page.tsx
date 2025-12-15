@@ -183,10 +183,10 @@ console.log(templates)
               <span className="text-sm text-gray-600">Filter by category</span>
             </div> */}
             {/* </div> */}
-           {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
+           {/* {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
               <Plus className="w-4 h-4" />
               Create Project
-            </Button>}
+            </Button>} */}
           </div>
             
           </div>
