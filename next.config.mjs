@@ -10,6 +10,7 @@ const nextConfig = {
     unoptimized: true,
   },
   // output: 'export',
+  // trailingSlash: "true",
   distDir: 'build',
   webpack(config) {
     config.watchOptions = {
