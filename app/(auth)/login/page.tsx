@@ -37,7 +37,7 @@ export default function LoginPage() {
     // Simulate login delay
     setTimeout(() => {
       // For demo purposes, we just log in with any credentials
-      const user = dbUsers.users.find(u => u.userEmail === userCreds.email );
+      const user = dbUsers.users.find(u => u.userEmail === userCreds.email && u.userpassword === userCreds.password);
       if(!user){
         toast.error("Invalid email or password");
         setUserCreds({email: "", password: ""});
@@ -45,7 +45,16 @@ export default function LoginPage() {
         return;
       }
 
-      loginUser(user.userEmail, user.userId, user.userRole, user.userPermissions);
+      sessionStorage.setItem(
+      "auth",
+      JSON.stringify({
+        userEmail: user.userEmail,
+        userpassword: user.userpassword,
+      })
+      );
+
+      loginUser(user.userEmail,user.userpassword, user.userId, user.userRole, user.userPermissions);
+      
       toast.success("Logged in successfully");
       setLoading(false);
       setUserCreds({email: "", password: ""});

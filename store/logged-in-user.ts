@@ -4,10 +4,18 @@ import { devtools, persist } from "zustand/middleware"
 // ---- Store ----
 interface LoggedInUserStore {
   userEmail: string | null;
+  userpassword: string | null;
   userId: string | null;
   userRole: string | null;
   userPermissions: string[] | null;
-  loginUser: (email: string, id: string, role: string, permissions: string[]) => void;
+  loginUser: (
+    email: string,
+    password: string,
+    id: string,
+    role: string,
+    permissions: string[]
+  ) => void;
+  hydrate: (data: { userEmail: string | null; userpassword: string | null }) => void;
   logoutUser: () => void;
   tasksAssigned: string[] | null;
   setTasksAssigned: (tasks: string[]) => void;
@@ -17,38 +25,46 @@ interface LoggedInUserStore {
 
 export const useLoggedInUserStore = create<LoggedInUserStore>()(
   devtools(
-    persist(
-        (set,get) => ({
+      (set, get) => ({
+        userEmail: null,
+        userpassword: null,
+        userId: null,
+        userRole: null,
+        userPermissions: null,
+        tasksAssigned: null,
+        recentTask: null,
+
+        loginUser: (email, password, id, role, permissions) =>
+          set(() => ({
+            userEmail: email,
+            userpassword: password,
+            userId: id,
+            userRole: role,
+            userPermissions: permissions,
+          })),
+        hydrate: ({
+          userEmail,
+          userpassword,
+        }: {
+          userEmail: string | null;
+          userpassword: string | null;
+        }) => set({ userEmail, userpassword }),
+        logoutUser: () =>
+          set(() => ({
             userEmail: null,
             userId: null,
             userRole: null,
             userPermissions: null,
-            tasksAssigned: null,
-            recentTask: null,
-
-            loginUser: (email, id, role, permissions) => set(() => ({
-                userEmail: email,
-                userId: id,
-                userRole: role,
-                userPermissions: permissions,
-            })),
-            logoutUser: () => set(() => ({
-                userEmail: null,
-                userId: null,
-                userRole: null,
-                userPermissions: null,
-            })),
-            setTasksAssigned: (tasks) => set(() => ({
-                tasksAssigned: tasks,
-            })),
-            setRecentTask: (task) => set(() => ({
-                recentTask: task,
-            })),
-        }
-    ),
-        {
-             name: "logged-in-user-storage" 
-        }
-    )
-)
-)      
+            userpassword: null,
+          })),
+        setTasksAssigned: (tasks) =>
+          set(() => ({
+            tasksAssigned: tasks,
+          })),
+        setRecentTask: (task) =>
+          set(() => ({
+            recentTask: task,
+          })),
+      })
+  )
+);      
