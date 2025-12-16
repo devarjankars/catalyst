@@ -180,7 +180,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const { components } = get()
           const newComponent = {
             ...component,
-            id: `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: component.id || `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           }
 
           let newComponents
@@ -312,10 +312,16 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         resetComponentChanges: () => {
-          const { originalComponents } = get()
+          const { originalComponents, selectedComponent } = get()
+          
+          // Check if the currently selected component still exists in the original components
+          const selectedComponentExists = originalComponents.some(comp => comp.id === selectedComponent) ||
+            originalComponents.some(comp => comp.children?.some(child => child.id === selectedComponent));
+          
           set({
             components: [...originalComponents],
             hasComponentChanges: false,
+            selectedComponent: selectedComponentExists ? selectedComponent : null,
           })
         },
 
