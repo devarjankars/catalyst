@@ -1,7 +1,7 @@
 "use client"
 
 import type { EmailComponent } from "@/types/email-builder"
-
+import { getDisplayAttributes } from "./style-generator";
 
 /*
 takes column component and generates html for it
@@ -24,6 +24,8 @@ interface GenerateColumnHtmlProps {
 
 export function generateColumnHtml({component,generateComponentHTML,childHtml}:GenerateColumnHtmlProps): string {
 const { children, columns, columnsType, gap , direction} = component;
+const { classAttr, innerStyle } = getDisplayAttributes(component.displayType);
+
 
 const getWidth = (colCount: number | undefined,width : string): string => {
     if (!colCount || colCount <= 1) return "100%";
@@ -58,6 +60,8 @@ function generateTdHTML(
         border-radius: ${child.borderRadius || "0px"};
         width: ${getWidth(totalColumns,child.columnWidth || "")};
         min-height: ${child.columnMinHeight || "120px"};
+        padding : ${child.padding || 0}
+       ${ innerStyle ? innerStyle : "" }
       "
     >
       ${generateComponentHTML(child)}
@@ -67,9 +71,9 @@ function generateTdHTML(
 }
 
 // Wrap in a table row for email compatibility
-if(columns > 1 &&direction === "row"){
+if(columns > 1 && direction === "row"){
     return `
-    <tr>
+    <tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
       ${children
         ?.map((child, index) =>
           generateTdHTML(child, index, children?.length, gap)
@@ -79,11 +83,12 @@ if(columns > 1 &&direction === "row"){
   `;
 }
 
+// this is for vertical alignment
 if (columns > 1 && direction === "column") {
     return (children
     ?.map(
         (child,index) => `
-        <tr>
+        <tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
             <td
                 bgcolor="${child.backgroundColor || "transparent"}"
                 valign="${child.columnVerticalAlignment || "top"}"
@@ -94,18 +99,19 @@ if (columns > 1 && direction === "column") {
                 border-radius: ${child.borderRadius || "0px"};
                 min-height: ${child.columnMinHeight || "120px"};
                 width: 100%;
+                padding:${child.padding || 0}
                 "
             >
                 ${generateComponentHTML(child)}
             </td>
         </tr>
-        ${index < (children?.length || 0) - 1 ? `<tr><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
+        ${index < (children?.length || 0) - 1 ? `<tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
     `
     )
     .join(""))
   }
 
-  
+  // single column section 
 
   return `
   <tr>
@@ -117,6 +123,7 @@ if (columns > 1 && direction === "column") {
         style="
         width: 100%;
         background-color: ${component.backgroundColor || "transparent"};
+        ${ innerStyle ? innerStyle : "" }
         "
     >
        ${childHtml}

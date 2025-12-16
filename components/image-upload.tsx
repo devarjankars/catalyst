@@ -20,6 +20,8 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
 
 
   useEffect(() => {
+    console.log("current image from upload image",currentImage);
+    
     setUploadedImage(currentImage || "")
   }, [currentImage])
 
@@ -85,7 +87,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
         disabled={isUploading}
       />
 
-      {uploadedImage ? (
+      {uploadedImage && uploadedImage.startsWith("https://firebase") ? (
         <div className="relative">
           <img
             src={uploadedImage || "/placeholder.svg"}

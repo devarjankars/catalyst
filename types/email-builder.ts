@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2"
   category : "basic" | "custom" | "user-created"
 
   // Custom component properties

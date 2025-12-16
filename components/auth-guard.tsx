@@ -19,13 +19,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
        router.replace("/login");
     }
 
-    else if(userId && userRole !== "superadmin" && isUserManagementPage){
+    // else if(userId && userRole !== "superadmin" && isUserManagementPage){
+    //     router.replace("/dashboard");
+    // }
+    // else if (userId && userRole !== "superadmin"  && isTemplateManagementPage){
+    //     router.replace("/dashboard");
+    // }
+    else if(userId && userRole !== "superadmin"){
         router.replace("/dashboard");
     }
-    else if (userId && userRole !== "superadmin"  && isTemplateManagementPage){
+    else if (userId && userRole !== "superadmin"){
         router.replace("/dashboard");
     }
-    
     else {
         setIsChecking(false);
     }

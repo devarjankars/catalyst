@@ -582,6 +582,133 @@ export function PropertiesPanel({
 
            </div>
         );   
+        case "footer-link-2":  
+        return (
+          <div className="space-y-2">
+            <h1 className="font-bold">Logo 1 </h1>
+            <div>
+              <h1 className="font-semibold">image </h1>
+              <ImageUpload
+                currentImage={component.logoA.imgSrc}
+                onImageUpload={(imageUrl) => {
+                  component.logoA.imgSrc = imageUrl;
+                  onUpdateComponent(component.logoA);
+                }}
+              />
+            </div>
+            <div>
+                <Label >alt text</Label>
+            <Input
+              value={component.logoA.altTex}
+              onChange={(e) => {
+                component.logoA.altTex = e.target.value;
+                onUpdateComponent(component.logoA);
+              }}
+              placeholder="alt-text"
+            />
+            </div>
+            <div>
+               <Label>Link</Label>
+            <Input
+              value={component.logoA.altTex}
+              onChange={(e) => {
+                component.logoA.altTex = e.target.value;
+                onUpdateComponent(component.logoA);
+              }}
+              placeholder="Link URL"
+            />
+            </div>
+           
+
+            <h1 className="font-bold">Logo 2 </h1>
+            <div>
+              <ImageUpload
+                currentImage={component.logoB.imgSrc}
+                onImageUpload={(imageUrl) => {
+                  component.logoB.imgSrc = imageUrl;
+                  onUpdateComponent(component.logoB);
+                }}
+              />
+            </div>
+             <div>
+                <Label >alt text</Label>
+            <Input
+              value={component.logoB.altTex}
+              onChange={(e) => {
+                component.logoB.altTex = e.target.value;
+                onUpdateComponent(component.logoB);
+              }}
+              placeholder="alt-text"
+            />
+            </div>
+            <div>
+               <Label>Link</Label>
+            <Input
+              value={component.logoB.altTex}
+              onChange={(e) => {
+                component.logoB.altTex = e.target.value;
+                onUpdateComponent(component.logoB);
+              }}
+              placeholder="Link URL"
+            />
+            </div>
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "14px"}
+                onChange={(e) =>
+                  onUpdateComponent({ fontSize: e.target.value })
+                }
+                placeholder="14px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="color">Text Color</Label>
+              <Input
+                id="color"
+                type="color"
+                value={component.color || "#007bff"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />
+            </div>
+
+            <div className="mt-3">
+              <Label className="text-md mb-2">Links</Label>
+              {component.links?.map((link, index) => (
+                <div
+                  key={index}
+                  className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2"
+                >
+                  <Label>Link text</Label>
+                  <Input
+                    value={link.text}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, text: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link text"
+                  />
+                  <Label>Link url</Label>
+                  <Input
+                    value={link.href}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, href: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link URL"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
 
       case "footer-links(3)":
         return (
