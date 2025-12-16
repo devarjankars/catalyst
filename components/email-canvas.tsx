@@ -55,6 +55,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
           addComponent(newComponent, dropIndex)
           setDropIndicator(null)
+          // Select the newly dropped component to open properties panel
+          onSelectComponent(newComponent.id)
           return { dropZone: "canvas", dropIndex, dropElement: ref?.current, handled: true }
         }
         return { dropZone: "canvas", dropElement: ref?.current }
