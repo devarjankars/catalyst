@@ -88,7 +88,7 @@ export default function SideBar() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden whitespace-nowrap"
                   >
-                    Task Assignment
+                    My Work
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -109,34 +109,34 @@ export default function SideBar() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden whitespace-nowrap"
                   >
-                    Template Management
+                    Standard Templates
                   </motion.span>
                 )}
               </AnimatePresence>
             </Link>
           </li>}
-            {/* <li>
-              <Link
-            
-                href="/dashboard/folders"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
-              >
-                <LayoutGrid className="h-5 w-5 text-black-500" />
-                <AnimatePresence>
-                  {open && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden whitespace-nowrap"
-                    >
-                      Projects
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Link>
-            </li> */}
+          <li>
+            <Link
+           
+              href="/dashboard/folders"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+              <LayoutGrid className="h-5 w-5 text-black-500" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    Projects
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+          </li>
           {/* <li>
             <a
               href="#"
@@ -158,27 +158,7 @@ export default function SideBar() {
               </AnimatePresence>
             </a>
           </li> */}
-          {/* {userRole === "superadmin" &&<li>
-            <Link href="/dashboard/admin"
-              
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
-            >
-              <Users className="h-5 w-5 text-black-500" />
-              <AnimatePresence>
-                {open && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden whitespace-nowrap"
-                  >
-                    Users & Permissions
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          </li>} */}
+          
           {/* <li>
             <a
               href="#"

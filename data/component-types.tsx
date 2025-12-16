@@ -305,8 +305,8 @@ export const componentTypes = [
   },
   
 },
+
 {
-  
     type: "footer-link-2",
     label: "Elzonris Footer Links",
     category : "custom",
@@ -333,4 +333,5 @@ export const componentTypes = [
     fontSize: "14px",
     coolr: "#007bff",
   },
+
 ];

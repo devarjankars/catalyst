@@ -58,6 +58,8 @@ export interface EmailComponent {
 
  //footer-links properties
   links?: { text: string; href: string }[]
+  logoA : {altTex : string,href : string,imgSrc : string}
+  logoB : {altTex : string,href : string,imgSrc : string}
 
   //isi properties
   importantSafetyInformation?: {

@@ -27,7 +27,7 @@ export default function LoginPage() {
     setUserCreds((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e) =>{
+  const handleSubmit = (e : any) =>{
     e.preventDefault();
     setLoading(true);
     if(!userCreds.email || !userCreds.password){

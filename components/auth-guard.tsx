@@ -8,7 +8,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
     const {userId, userEmail,userRole} = useLoggedInUserStore()
-    const [isChecking, setIsChecking] = useState(true);
+    const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");

@@ -153,6 +153,13 @@ export function EmailComponentRenderer({
     );
   };
 
+
+  const ImageAlimentMap = {
+    "left" : "start",
+    "right" : "end",
+    "center" : "center"
+  }
+
   const getColumnStyles = (child: EmailComponent) => {
     if (!child.isColumn) return {};
 
@@ -260,7 +267,7 @@ export function EmailComponentRenderer({
           <div
             style={baseStyle}
             className={`flex flex-col items-${
-              component.textAlign || "center"
+              ImageAlimentMap[component?.textAlign ] || "center"
             } mt-2`}
           >
             {!previewMode && isSelected ? (
@@ -505,6 +512,48 @@ export function EmailComponentRenderer({
             </div>
           </div>
         );
+      case "footer-link-2" :
+        return (
+          <div className="flex flex-col gap-3 " style={baseStyle}>
+            <div className="flex items-center justify-between w-full mb-2">
+              <div className="w-[45%]">
+               
+                  <img width={"100%"} src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex}/>
+          
+              </div>
+              <div className="w-[35%]">
+               
+                  <img width={"100%"} src={component?.logoB.imgSrc} alt={component.logoB.altTex}/>
+           
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-evenly gap-10">
+              {component.links?.map((link, linkIndex) => (
+                <>
+                  <a
+                    key={linkIndex}
+                    href={link.href || "#"}
+                    style={{
+                      color: component.color || "#007bff",
+                      textDecoration: "underline",
+                    }}
+                    onClick={(e) => {
+                      if (!previewMode) {
+                        e.preventDefault();
+                        onSelect();
+                      }
+                    }}
+                  >
+                    {link.text}
+                  </a>
+
+                 
+                </>
+              ))}
+            </div>
+          </div>
+        )  
+
       case "isi":
         return (
           <div style={baseStyle} className="flex flex-col gap-2">
