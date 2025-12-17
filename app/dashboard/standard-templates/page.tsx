@@ -26,11 +26,13 @@ export default function ManageTemplates() {
   const {userRole} = useLoggedInUserStore()
     useEffect(() => {
         loadTemplates();
-         setFilteredTemplates(templates);
+        
+        setFilteredTemplates(templates);
       }, [])
   useEffect(() => {
         handleSearch();
   }, [templates,searchQuery])
+
     const handleSearch = () => {
       let temps = templates;
       if(searchQuery.trim()){
@@ -42,12 +44,11 @@ export default function ManageTemplates() {
        setLoading(true);
        try{
           const loadedTemplates = await firebaseService.getAllTemplates();
-          setTemplates(loadedTemplates);
+          setTemplates(loadedTemplates.filter(t => !t.isUserCreated));
        }catch(error){
         console.error("Failed to load templates:", error)
        }finally{
           setLoading(false);
-         
        }
     }
     const handleCreateBlank = () => {
@@ -123,7 +124,7 @@ export default function ManageTemplates() {
           
           <div className="Templates mt-6">
             <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">All Emailers</h1>
+              <h1 className="font-bold mb-4">Standard Templates</h1>
             </div>
             <div className="templates">
                   <div className="templates">

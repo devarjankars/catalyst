@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks, FilePenLine } from "lucide-react";
+import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks, FilePenLine, FileCheck   } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
@@ -12,7 +12,12 @@ export default function SideBar() {
   const [open, setOpen] = useState(false);
     const router = useRouter();
 
-    const {logoutUser,userPermissions,userRole} = useLoggedInUserStore()
+    const {logoutUser} = useLoggedInUserStore()
+
+    function handleLogout() {
+      logoutUser();
+      router.replace("/login");
+    }
   return (
     <>
      <motion.aside
@@ -31,7 +36,7 @@ export default function SideBar() {
 
       <div className="flex items-center gap-2 px-4 py-4">
         <div className="h-9 w-9 rounded-xl bg-[#FFE7E7] text-[#4A5565] grid place-items-center font-bold shadow-sm">
-          D
+          E
         </div>
         <AnimatePresence>
           {open && (
@@ -42,7 +47,7 @@ export default function SideBar() {
               transition={{ duration: 0.2 }}
               className="text-lg font-semibold text-[#4A5565] overflow-hidden whitespace-nowrap"
             >
-              DragCraft
+              Email Builder
             </motion.span>
           )}
         </AnimatePresence>
@@ -72,6 +77,7 @@ export default function SideBar() {
               </AnimatePresence>
             </Link>
           </li>
+         
           {/* <li>
             <Link
               href="/dashboard/tasks"
@@ -94,12 +100,12 @@ export default function SideBar() {
               </AnimatePresence>
             </Link>
           </li> */}
-         {userRole === "superadmin" && <li>
+         <li>
             <Link 
-              href="/dashboard/templates"
+              href="/dashboard/standard-templates"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
-              <FileMinus className="h-5 w-5 text-black-500" />
+              <FileCheck className="h-5 w-5 text-black-500" />
               <AnimatePresence>
                 {open && (
                   <motion.span
@@ -114,8 +120,8 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </Link>
-          </li>}
-          <li>
+          </li>
+          {/* <li>
             <Link
            
               href="/dashboard/folders"
@@ -136,7 +142,7 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </Link>
-          </li>
+          </li> */}
           {/* <li>
             <a
               href="#"
@@ -181,8 +187,8 @@ export default function SideBar() {
             </a>
           </li> */}
           <li>
-            <a
-              href="#"
+           <Link 
+              href="/dashboard/templates"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
             >
              <FileMinus className="h-5 w-5 text-black-500" />
@@ -195,13 +201,13 @@ export default function SideBar() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden whitespace-nowrap"
                   >
-                    All Templates
+                    All Emailers
                   </motion.span>
                 )}
               </AnimatePresence>
-            </a>
+            </Link>
           </li>
-          <li>
+          {/* <li>
             <a
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
@@ -221,32 +227,11 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </a>
-          </li>
-          <li>
-            <a
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
-            >
-             
-              <FilePenLine className="h-5 w-5 text-black-500"/>
-              <AnimatePresence>
-                {open && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden whitespace-nowrap"
-                  >
-                    My Work
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </a>
-          </li>
+          </li> */}
+          
         </ul>
       </nav>
-       <Button onClick={() =>logoutUser()} variant={"link"} className="flex  gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">
+       <Button onClick={handleLogout} variant={"link"} className="flex  gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">
         <LogOut className="h-5 w-5 text-black-500"/>
         <AnimatePresence>
           {open && (

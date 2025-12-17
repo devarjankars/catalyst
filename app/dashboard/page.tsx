@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo , lazy , Suspense } from "react"
+import { useState, useEffect, useMemo , lazy , Suspense, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [userName , setUserName] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedclients, setSelectedclients] = useState<string>("elzonris");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
@@ -52,16 +53,31 @@ export default function Dashboard() {
   // ]
 
 
-  const {userRole, userPermissions} = useLoggedInUserStore()
+  const {userEmail , userRole, userPermissions} = useLoggedInUserStore();
+  console.log("khdhwjh "  + userEmail);
   
 console.log(templates)
   useEffect(() => {
-    loadTemplates()
+    loadTemplates();
+    setUserName(() => getFirstNameFromEmail(userEmail));
   }, [])
 
   useEffect(() => {
     filterTemplates();
   }, [templates, searchQuery, selectedCategory])
+
+
+  function getFirstNameFromEmail(email : string | null): string {
+  if (!email || !email.includes("@")) return "";
+
+  const localPart = email.split("@")[0];
+
+  const firstName = localPart
+    .split(/[._-]/)[0]
+    .replace(/[^a-zA-Z]/g, "");
+
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1);
+}
 
   const loadTemplates = async () => {
     setLoading(true)
@@ -156,13 +172,19 @@ console.log(templates)
   const handleFolderView = () => {
     router.push('/dashboard/folders');
   }
+  const handlestandardTemps = () => {
+    router.push('/dashboard/standard-templates');
+  }
   const handleTaskview = () => {
     router.push('/dashboard/tasks');
   }
   return (
     <div className="max-h-screen bg-gray-50 grid grid-rows-[auto 1fr]">
       {/* Header */}
-      <div className="sticky top-4 z-10">
+      <div className="sticky top-0 right-0 z-10 py-4 bg-white border-b border-gray-200 text-gray-800 shadow-sm">
+        <h5 className="text-end px-3 font-mono">Hi {userName} </h5>
+      </div>
+      {/* <div className="sticky top-4 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border rounded-lg bg-[linear-gradient(168deg,rgba(255,160,162,1)_0%,rgba(255,239,239,1)_100%)]" >
           <div className="flex flex-col items-start">
             <div className="mb-5">
@@ -170,7 +192,6 @@ console.log(templates)
               <p className="text-lg text-[#101828] font-semibold">Create and manage your email templates</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-8 w-full">
-            {/* <div className="flex flex-col sm:flex-row gap-4"> */}
               <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
@@ -180,20 +201,20 @@ console.log(templates)
                 className="pl-10 w-2/3 rounded-full"
               />
             </div>
-            {/* <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-600">Filter by category</span>
-            </div> */}
-            {/* </div> */}
-           {/* {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
+            </div>
+           
+           {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
               <Plus className="w-4 h-4" />
               Create Project
-            </Button>} */}
+            </Button>}
           </div>
             
           </div>
         </div>
-      </div>
+      </div> */}
     <div className="overflow-y-auto">
       <div className="max-w-7xl h-full mx-auto py-8">
         {/* Search and Filters */}
@@ -245,7 +266,7 @@ console.log(templates)
           <div className="StandardTemps">
           <div className="header flex justify-between">
               <h1 className="font-bold mb-4">Standard Templates</h1>
-              <span role="button" className="text-sm text-[#155DFC]">view all</span>
+              <span role="button" className="text-sm text-[#155DFC]" onClick={handlestandardTemps}>view all</span>
             </div>
           <div className="templates">
             <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>

@@ -21,7 +21,7 @@ export default function StandardTemplates({ temps, handleUseTemplate, handleEdit
     if (!temps || temps.length === 0) return [];
 
     return [...temps]
-        .filter(t => t.isUserCreated)
+        .filter(t => !t.isUserCreated)
         .slice(0, 4);
         
     }, [temps]);
