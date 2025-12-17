@@ -410,6 +410,94 @@ function generateComponentHTML(component: EmailComponent): string {
     </table>
   `;
     }
+
+    case "footer-link-2" :
+      const linkHtml = component.links?.map((link,index)=>{
+         return `
+          <td class="footer-link-col" align={${index == 0 ? "left" : "center"}} valign="top" width={${index == 0 ? "30%" : "25%"}} style="padding: 5px;">
+            <a href="${link.href}" target="_blank"
+              style="color: #0463c1; text-decoration: underline; font-family: Arial, sans-serif; font-size: 12px;">
+              ${link.text}
+            </a>
+          </td>
+         `.trim()
+      }).join("")
+
+      return `
+              <table 
+              role="presentation"
+              width="100%" 
+              cellpadding="0" 
+              cellspacing="0" 
+              border="0" 
+              bgcolor="${component.backgroundColor || "#ffffff"}"
+              align="center"
+              style="max-width:600px;"
+              >
+                <tbody>
+                      <tr>
+                        <td align="center" style="padding: 10px 20px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <tbody>
+                              <tr >
+                                <td style="padding: 5px 0;" >
+                                  <table width="100%" border="0" cellspacing="0" cellpadding="0" class="mbl-center">
+                                    <tbody>
+                                      <tr >
+                                        <td class="footer-link-col"  valign="top" width="50%"
+                                          style="padding: 5px;" >
+                                          <table role="presentation"  cellpadding="0" cellspacing="0" border="0"
+                                            width="200" align="center" class="mbl-pR0 " style="padding:0 60px 0 0px">
+                                            <tr>
+                                              <td align="center" >
+                                                <a href="${component.logoA.href}" target="_blank">
+                                                  <img src="${component.logoA.imgSrc}" width="200"
+                                                    style="display: block; border: 0;" alt="${component.logoA.altTex}" />
+                                                </a>
+                                              </td>
+                                            </tr>
+                                          </table>
+                                        </td>
+                                        <td class="footer-link-col" align="right" valign="top" width="50%"
+                                          style="padding: 5px;">
+                                          <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                                             width="150" align="center" class="mbl-pL0 mbl-pT10" style="padding:0 0 0 107px">
+                                            <tr>
+                                              <td align="center" >
+                                                <a href="${component.logoB.href}" target="_blank">
+                                                  <img src="${component.logoB.imgSrc}" width="150"
+                                                    style="display: block; border: 0;" alt="${component.logoB.altTex}" />
+                                                </a>
+                                              </td>
+                                            </tr>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                              <tr align="center">
+                                <td valign="middle" style="padding:0 0 0px 0;">
+                                  <table width="100%" valign="middle" border="0" cellspacing="0" cellpadding="0">
+                                    <tbody>
+                                      <tr>
+                                        ${linkHtml}
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+      `.trim()
+
+
+
     case "isi": {
       return `
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
@@ -709,6 +797,8 @@ function generateComponentHTML(component: EmailComponent): string {
           </table>
           `;
     }
+
+
 
     case "bullet-list": {
       const display = (component.displayType ||
