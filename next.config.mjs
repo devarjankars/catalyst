@@ -9,8 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // output: 'export',
-  // trailingSlash: "true",
+  output: 'export',
   distDir: 'build',
   webpack(config) {
     config.watchOptions = {

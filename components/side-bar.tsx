@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks } from "lucide-react";
+import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks, FilePenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
@@ -72,7 +72,7 @@ export default function SideBar() {
               </AnimatePresence>
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               href="/dashboard/tasks"
               
@@ -93,7 +93,7 @@ export default function SideBar() {
                 )}
               </AnimatePresence>
             </Link>
-          </li>
+          </li> */}
          {userRole === "superadmin" && <li>
             <Link 
               href="/dashboard/templates"
@@ -131,7 +131,7 @@ export default function SideBar() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden whitespace-nowrap"
                   >
-                    All Emailers
+                    Projects
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -180,6 +180,70 @@ export default function SideBar() {
               </AnimatePresence>
             </a>
           </li> */}
+          <li>
+            <a
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+             <FileMinus className="h-5 w-5 text-black-500" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    All Templates
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          </li>
+          <li>
+            <a
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+              <FileMinus className="h-5 w-5 text-black-500" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    Standard Templates
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          </li>
+          <li>
+            <a
+              href="#"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#FFE7E7] hover:text-[#4A5565] transition"
+            >
+             
+              <FilePenLine className="h-5 w-5 text-black-500"/>
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    My Work
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </a>
+          </li>
         </ul>
       </nav>
        <Button onClick={() =>logoutUser()} variant={"link"} className="flex  gap-3 border-t border-gray-200 p-4 text-xs text-gray-500 hover:font-bold">

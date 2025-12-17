@@ -15,9 +15,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const isUserManagementPage = pathname.startsWith("/dashboard/admin");
     const isTemplateManagementPage = pathname.startsWith("/dashboard/templates");
 
-    // if (!userId && !isAuthPage) {
-    //    router.replace("/login");
-    // }
+    if (!userId && !isAuthPage) {
+       router.replace("/login");
+    }
 
     // else if(userId && userRole !== "superadmin" && isUserManagementPage){
     //     router.replace("/dashboard");
@@ -25,10 +25,15 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // else if (userId && userRole !== "superadmin"  && isTemplateManagementPage){
     //     router.replace("/dashboard");
     // }
-    
-    // else {
-    //     setIsChecking(false);
-    // }
+    else if(userId && userRole !== "superadmin"){
+        router.replace("/dashboard");
+    }
+    else if (userId && userRole !== "superadmin"){
+        router.replace("/dashboard");
+    }
+    else {
+        setIsChecking(false);
+    }
 
   }, [pathname, router, userId]);
 

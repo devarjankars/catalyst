@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo , lazy , Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,10 +24,12 @@ import Tasktable from "@/components/task-table"
 import { useLoggedInUserStore } from "@/store/logged-in-user"
 import dummyTasks from "@/data/dummy-tasks.json"
 
+const RecentTemplates = lazy(() => import("@/components/recent-templates"));
+const StandardTemplates = lazy(() => import("@/components/standard-templates"))
 export default function Dashboard() {
   const router = useRouter()
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
-  const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([])
+  const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -58,7 +60,7 @@ console.log(templates)
   }, [])
 
   useEffect(() => {
-    filterTemplates()
+    filterTemplates();
   }, [templates, searchQuery, selectedCategory])
 
   const loadTemplates = async () => {
@@ -231,41 +233,31 @@ console.log(templates)
           <div className="recentTemps">
           <h1 className="font-bold mb-4">Recent templates</h1>
           <div className="templates">
-          {loading ? (<div className="h-[30vh] flex items-center justify-center bg-gray-50">
-                          <LoadingSpinner message="Loading your email templates..." />
-                      </div>) : filteredTemplates.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <Plus className="w-8 h-8 text-gray-400" />
+          <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
+           <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
+                                  setDeleteDialog={setDeleteDialog} 
+                                  handleDuplicateTemplate={handleDuplicateTemplate}
+                                  handleCreateBlank={handleCreateBlank}
+                                  loading={loading}/>
+           </Suspense>
+            </div> 
+          </div>
+          <div className="StandardTemps">
+          <div className="header flex justify-between">
+              <h1 className="font-bold mb-4">Standard Templates</h1>
+              <span role="button" className="text-sm text-[#155DFC]">view all</span>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory !== "all" ? "No templates found" : "No templates yet"}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {searchQuery || selectedCategory !== "all"
-                ? "Try adjusting your search or filter criteria"
-                : "Get started by creating your first email template"}
-            </p>
-            <Button onClick={handleCreateBlank} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create Your First Template
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredTemplates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onUse={() => handleUseTemplate(template)}
-                onEdit={() => handleEditTemplate(template)}
-                onDelete={() => setDeleteDialog({ open: true, template })}
-                onDuplicate={() => handleDuplicateTemplate(template)}
-              />
-            ))}
-          </div>
-        )}
-          
+          <div className="templates">
+            <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
+              <StandardTemplates temps={templates} 
+                                  handleUseTemplate={handleUseTemplate} 
+                                  handleEditTemplate={handleEditTemplate} 
+                                  setDeleteDialog={setDeleteDialog} 
+                                  handleDuplicateTemplate={handleDuplicateTemplate}
+                                  handleCreateBlank={handleCreateBlank}
+                                  loading={loading}
+                                  />
+          </Suspense>
             </div> 
           </div>
         </div>
