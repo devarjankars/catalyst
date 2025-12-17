@@ -23,9 +23,6 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value
     }
-
-    
-    
   }, [value])
 
   
@@ -43,35 +40,123 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   
 
   const LinkifyText = () => {
-    const url = prompt("Enter the URL:")
-    if (!url) return
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
 
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
+  const range = selection.getRangeAt(0)
+  if (range.collapsed) {
+    alert("Please select text to link.")
+    return
+  }
 
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) {
-      alert("Please select text to link.")
+  // Check if the entire selection is within a single existing anchor element
+  const commonAncestor = range.commonAncestorContainer
+
+  // Get the parent element (handle both text nodes and element nodes)
+  let targetElement: HTMLElement | null = null
+  
+  if (commonAncestor.nodeType === Node.TEXT_NODE) {
+    // If common ancestor is a text node, check its parent
+    targetElement = commonAncestor.parentElement
+  } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
+    // If it's already an element, use it
+    targetElement = commonAncestor as HTMLElement
+  }
+
+  // Check if the target is an anchor and contains the entire selection
+  if (
+    targetElement &&
+    targetElement.nodeName === 'A' &&
+    targetElement.contains(range.startContainer) &&
+    targetElement.contains(range.endContainer)
+  ) {
+    // Check if the entire anchor content is selected
+    const anchorText = targetElement.textContent?.trim() || ''
+    const selectedText = range.toString().trim()
+    
+    if (anchorText === selectedText) {
+      //returning since selected text already have link tag 
       return
     }
-
-    const anchor = document.createElement("a")
-    anchor.href = url
-    anchor.target = "_blank"
-    anchor.rel = "noopener noreferrer"
-    anchor.style.color = "#3498eb"
-    anchor.style.textDecoration = "underline"
-    anchor.appendChild(range.extractContents())
-    range.insertNode(anchor)
-
-    // Move caret after link
-    range.setStartAfter(anchor)
-    range.setEndAfter(anchor)
-    selection.removeAllRanges()
-    selection.addRange(range)
-
-    handleInput()
   }
+
+  const url = prompt("Enter the URL:")
+  if (!url) return
+
+  // Otherwise, create a new anchor for the selected text only
+  const anchor = document.createElement("a")
+  anchor.href = url
+  anchor.target = "_blank"
+  anchor.rel = "noopener noreferrer"
+  anchor.style.color = "inherit"
+  anchor.style.textDecoration = "underline"
+  anchor.appendChild(range.extractContents())
+  range.insertNode(anchor)
+
+  // Move caret after link
+  range.setStartAfter(anchor)
+  range.setEndAfter(anchor)
+  selection.removeAllRanges()
+  selection.addRange(range)
+
+  handleInput()
+}
+
+  const applyColor = (color: string) => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+
+  const range = selection.getRangeAt(0)
+  if (range.collapsed) return
+
+  console.log(range)
+  const commonAncestor = range.commonAncestorContainer
+  console.log(commonAncestor, commonAncestor.parentElement)
+
+  // Get the parent element (handle both text nodes and element nodes)
+  let targetElement: HTMLElement | null = null
+  
+  if (commonAncestor.nodeType === Node.TEXT_NODE) {
+    // If common ancestor is a text node, check its parent
+    targetElement = commonAncestor.parentElement
+  } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
+    // If it's already an element, use it
+    targetElement = commonAncestor as HTMLElement
+  }
+
+  // Check if the target is a span and contains the entire selection
+  if (
+    targetElement &&
+    targetElement.nodeName === 'SPAN' &&
+    targetElement.contains(range.startContainer) &&
+    targetElement.contains(range.endContainer)
+  ) {
+    // Check if the entire span content is selected
+    const spanText = targetElement.textContent?.trim() || ''
+    const selectedText = range.toString().trim()
+    
+    if (spanText === selectedText) {
+      // Update the existing span's color
+      targetElement.style.color = color
+      handleInput()
+      return
+    }
+  }
+
+  // Otherwise, create a new span for the selected text
+  const span = document.createElement("span")
+  span.style.color = color
+  span.appendChild(range.extractContents())
+  range.insertNode(span)
+
+  // Move caret after the colored text
+  range.setStartAfter(span)
+  range.setEndAfter(span)
+  selection.removeAllRanges()
+  selection.addRange(range)
+
+  handleInput()
+}
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
@@ -176,6 +261,14 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
           >
             <Superscript className="h-4 w-4" />
           </button>
+          <div className="relative">
+            <input
+              type="color"
+              className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+              onChange={(e) => applyColor(e.target.value)}
+              title="Text Color"
+            />
+          </div>
         </div>
       )}
     </div>

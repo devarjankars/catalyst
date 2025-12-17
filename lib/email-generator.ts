@@ -91,7 +91,7 @@ function generateComponentHTML(component: EmailComponent): string {
         font-family: Arial, sans-serif;
         line-height: ${component.lineHeight || "1.5"};
         background-color: ${component.backgroundColor || "transparent"};
-        ${ innerStyle ? innerStyle : "" }
+       
       `.trim();
 
       return `
@@ -111,7 +111,7 @@ function generateComponentHTML(component: EmailComponent): string {
                 component.padding || "0 16px 10px 16px"
               }; background-color:${
         component.backgroundColor || "transparent"
-      };${ innerStyle ? innerStyle : "" }" bgcolor=${component.backgroundColor || "transferent"}>
+      };${ innerStyle ? innerStyle : "" }" bgcolor=${component.backgroundColor || "transferent"}   ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}> 
                 <div style="${divStyle}">
                   ${component.content || ""}
                 </div>
@@ -794,6 +794,7 @@ function generateComponentHTML(component: EmailComponent): string {
           </table>
           `;
     }
+
     case "bullet-list": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];

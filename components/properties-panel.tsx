@@ -371,6 +371,15 @@ export function PropertiesPanel({
               />
             </div>
             <div>
+              <Label htmlFor="height">Height</Label>
+              <Input
+                id="height"
+                value={component.height || "100px"}
+                onChange={(e) => onUpdateComponent({ height: e.target.value })}
+                placeholder="100% or 400px"
+              />
+            </div>
+            <div>
               <Label htmlFor="maxWidth">Max Width</Label>
               <Input
                 id="maxWidth"

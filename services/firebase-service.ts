@@ -17,6 +17,8 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  listAll,
+  getMetadata
 } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import type { EmailTemplate } from "@/types/template";
@@ -305,30 +307,75 @@ if (!snap.exists()) {
     });
   }
 
+  async getStorageUsage(templateId?: string): Promise<number> {
+  if (!this.isFirebaseAvailable || !storage) {
+    return 0;
+  }
+
+  try {
+    const folderPath = templateId
+      ? `${this.imagesPath}/${templateId}`
+      : `${this.imagesPath}/general`;
+
+    const folderRef = ref(storage, folderPath);
+    const listResult = await listAll(folderRef);
+
+    let totalSize = 0;
+
+    // Get metadata for each file and sum up sizes
+    const metadataPromises = listResult.items.map(async (itemRef) => {
+      const metadata = await getMetadata(itemRef);
+      return metadata.size; // Size in bytes
+    });
+
+    const sizes = await Promise.all(metadataPromises);
+    totalSize = sizes.reduce((sum, size) => sum + size, 0);
+
+    return totalSize; // Returns size in bytes
+  } catch (error) {
+    console.error("Failed to get storage usage:", error);
+    return 0;
+  }
+}
+
   // Image operations
   async uploadImage(file: File, templateId?: string): Promise<string> {
-    if (!this.isFirebaseAvailable || !storage) {
-      // Fallback to creating a local blob URL for development
-      return URL.createObjectURL(file);
-    }
-
-    try {
-      const fileName = `${Date.now()}-${file.name}`;
-      const imagePath = templateId
-        ? `${this.imagesPath}/${templateId}/${fileName}`
-        : `${this.imagesPath}/general/${fileName}`;
-
-      const imageRef = ref(storage, imagePath);
-      const snapshot = await uploadBytes(imageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      return downloadURL;
-    } catch (error) {
-      console.error("Failed to upload image to Firebase:", error);
-      // Fallback to local blob URL
-      return URL.createObjectURL(file);
-    }
+  if (!this.isFirebaseAvailable || !storage) {
+    return URL.createObjectURL(file);
   }
+
+  try {
+    // Check storage limit (e.g., 100MB = 100 * 1024 * 1024 bytes)
+    const MAX_STORAGE_SIZE = 1 * 1024 * 1024; // 100MB
+    const currentUsage = await this.getStorageUsage(templateId);
+
+    console.log("toytal size",currentUsage,MAX_STORAGE_SIZE,file.size);
+    
+
+    if (currentUsage + file.size > MAX_STORAGE_SIZE) {
+      console.log(
+        `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
+        `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
+        `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
+      );
+      return "MAX_LIMIT"
+    }
+
+    const fileName = `${Date.now()}-${file.name}`;
+    const imagePath = templateId
+      ? `${this.imagesPath}/${templateId}/${fileName}`
+      : `${this.imagesPath}/general/${fileName}`;
+
+    const imageRef = ref(storage, imagePath);
+    const snapshot = await uploadBytes(imageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Failed to upload image to Firebase:", error);
+    throw error; // Throw instead of fallback so you can handle the error appropriately
+  }
+}
 
   async deleteImage(imageUrl: string): Promise<boolean> {
     if (!this.isFirebaseAvailable || !storage || imageUrl.startsWith("blob:")) {

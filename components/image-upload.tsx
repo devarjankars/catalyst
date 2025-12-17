@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, X, Loader2 } from "lucide-react"
 import { firebaseService } from "@/services/firebase-service"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
+import { toast } from "sonner"
 
 interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void
@@ -45,6 +46,11 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
     try {
       // Upload to Firebase Storage
       const imageUrl = await firebaseService.uploadImage(file, currentTemplate?.id)
+
+      if (imageUrl === "MAX_LIMIT") {
+        toast.error("Max limit of 1MB is reached")
+        return
+      }
       setUploadedImage(imageUrl)
       onImageUpload(imageUrl)
     } catch (error) {

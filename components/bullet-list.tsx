@@ -23,7 +23,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
   }
 
   const handleUpdateItem = (index: number, content: string) => {
-    alert("updatting the component")
+   
     const updated = [...component.listItems]
     updated[index] = `${content}`
     onUpdate({ listItems: updated })
