@@ -209,7 +209,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                         <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
                       </div>
                   )}
-                <div key={component.id} className="relative">
+                <div key={component.id} className="relative ">
                   
                   <EmailComponentRenderer
                     component={component}

@@ -79,7 +79,7 @@ function DraggableComponent({
     <div
       ref={drag}
       className={`
-        p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-move
+        p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-grabbing
         hover:border-blue-500 hover:bg-blue-50 transition-colors
         flex flex-col items-center gap-1
         ${isDragging ? "opacity-50" : ""}

@@ -711,6 +711,7 @@ export function EmailComponentRenderer({
             : ""
         }
         ${isDragging ? "opacity-50" : ""}
+       
       `}
       onClick={(e) => {
         e.stopPropagation();
@@ -747,7 +748,7 @@ export function EmailComponentRenderer({
           {component.type !== "text" &&
             component.type !== "section" &&
             isSelected && (
-              <div className="absolute inset-0 bg-blue-500 bg-opacity-10   pointer-events-none" />
+              <div className="absolute inset-0 bg-blue-500 bg-opacity-10 hover:border-black  pointer-events-none" />
             )}
         </>
       )}
