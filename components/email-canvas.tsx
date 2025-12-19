@@ -187,7 +187,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           className={`
             bg-white shadow-lg max-w-2xl w-full min-h-[600px] relative pb-10
             ${isOver ? "ring-2 ring-blue-500" : ""}
-            ${previewMode ? "" : "border-2 border-dashed border-gray-300"}
+           
           `}
           style={{ width: "600px" }}
           onClick={() => !previewMode && onSelectComponent(null)}

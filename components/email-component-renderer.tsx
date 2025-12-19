@@ -747,7 +747,7 @@ export function EmailComponentRenderer({
           {component.type !== "text" &&
             component.type !== "section" &&
             isSelected && (
-              <div className="absolute inset-0 bg-blue-500 bg-opacity-10 border-2 border-blue-500 border-dashed pointer-events-none" />
+              <div className="absolute inset-0 bg-blue-500 bg-opacity-10   pointer-events-none" />
             )}
         </>
       )}
