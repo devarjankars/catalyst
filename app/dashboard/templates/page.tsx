@@ -26,7 +26,8 @@ export default function ManageTemplates() {
   const {userRole} = useLoggedInUserStore()
     useEffect(() => {
         loadTemplates();
-         setFilteredTemplates(templates);
+       
+        setFilteredTemplates(templates);
       }, [])
   useEffect(() => {
         handleSearch();
@@ -42,7 +43,7 @@ export default function ManageTemplates() {
        setLoading(true);
        try{
           const loadedTemplates = await firebaseService.getAllTemplates();
-          setTemplates(loadedTemplates);
+          setTemplates(loadedTemplates.filter(t => t.isUserCreated));
        }catch(error){
         console.error("Failed to load templates:", error)
        }finally{

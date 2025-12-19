@@ -252,7 +252,7 @@ console.log(templates)
              
           </div> */}
           <div className="recentTemps">
-          <h1 className="font-bold mb-4">Recent templates</h1>
+          <h1 className="font-bold mb-4">Recent Emailes</h1>
           <div className="templates">
           <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
            <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 

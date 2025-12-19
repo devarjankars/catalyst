@@ -88,7 +88,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
             <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>
             <p className="text-sm text-gray-600 line-clamp-2 mt-1">{template.description}</p>
           </div>
-          <DropdownMenu>
+         {template.isUserCreated && <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -100,15 +100,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onUse()
-                }}
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Use Template
-              </DropdownMenuItem>
+             
               {template.isUserCreated && (
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -117,18 +109,10 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
                   }}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Original
+                  Edit 
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDuplicate()
-                }}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
+             
               {template.isUserCreated && (
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -142,7 +126,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu>}
         </div>
 
         <div className="flex items-center justify-between mt-3">

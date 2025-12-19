@@ -77,7 +77,7 @@ export default function BulletList({ component, onUpdate,isSelected }: { compone
             {/* Delete button */}
              {component.listItems?.length > 1 && <button
               onClick={() => handleDeleteItem(index)}
-              className="ml-2 text-red-500 hover:text-red-700 absolute right-0 top-1"
+              className="ml-2 text-red-500 hover:text-red-700 absolute right-0 top-1 "
             >
               <Trash className="h-4 w-4"/>
             </button>}

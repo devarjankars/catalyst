@@ -18,6 +18,7 @@ interface ExportPanelProps {
 
 export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const {currentTemplate} = useEmailBuilderStore()
 
   const handleExport = async () => {
@@ -26,17 +27,17 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
     setIsExporting(true)
     try {
       await exportToZip(components, canvasRef.current, currentTemplate?.name)
+      setIsOpen(false) // Close the dialog after successful export
     } catch (error) {
       console.error("Export failed:", error)
+      // Optionally keep the dialog open on error so user can retry
     } finally {
       setIsExporting(false)
     }
   }
 
-  
-
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Upload className="w-4 h-4" />
@@ -48,8 +49,6 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
           <DialogTitle>Export Email</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-         
-
           <Button
             onClick={handleExport}
             disabled={isExporting || components.length === 0}

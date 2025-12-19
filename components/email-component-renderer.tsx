@@ -270,7 +270,7 @@ export function EmailComponentRenderer({
               ImageAlimentMap[component?.textAlign ] || "center"
             } mt-2`}
           >
-            {!previewMode && isSelected ? (
+            {/* {!previewMode && isSelected ? (
               <div className="space-y-2">
                 <Input
                   type="text"
@@ -280,7 +280,7 @@ export function EmailComponentRenderer({
                   className="w-full p-2 border mb-2 rounded text-sm"
                 />
               </div>
-            ) : null}
+            ) : null} */}
             <img
               src={
                 component.src ||

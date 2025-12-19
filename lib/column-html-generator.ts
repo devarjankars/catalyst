@@ -73,7 +73,7 @@ function generateTdHTML(
 // Wrap in a table row for email compatibility
 if(columns > 1 && direction === "row"){
     return `
-    <tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
+    <tr bgcolor="${component.backgroundColor}" style="background-color='${component.backgroundColor}'" ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
       ${children
         ?.map((child, index) =>
           generateTdHTML(child, index, children?.length, gap)

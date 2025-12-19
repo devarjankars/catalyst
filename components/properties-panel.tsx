@@ -1162,8 +1162,8 @@ export function PropertiesPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Devices</SelectItem>
-                <SelectItem value="mobile-only">Mobile Only</SelectItem>
                 <SelectItem value="desktop-only">Desktop Only</SelectItem>
+                <SelectItem value="mobile-only">Mobile Only</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground text-orange-500 mt-2 flex"><TriangleAlert className="w-5 h-5 mr-2"/>Responssiveness is seen only in priview</p>

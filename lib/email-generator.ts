@@ -46,23 +46,31 @@ function generateComponentHTML(component: EmailComponent): string {
       cellpadding="0"
       border="0"
       align="center"
+      bgcolor=${component.backgroundColor}
        ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
-       ${ innerStyle ? `style="${innerStyle}"` : ""}
+       
+
+       style="
+        background-color:'${component.backgroundColor};
+        ${ innerStyle ? innerStyle : "" }
+       "
     >
-      <tr>
-        <td align="${component.columnAlignment || "center"}"  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="${ innerStyle ? innerStyle : "" }">
+      <tr bgcolor=${component.backgroundColor} style="background-color:'${component.backgroundColor};">
+        <td bgcolor=${component.backgroundColor} align="${component.columnAlignment || "center"}"  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="background-color:${component.backgroundColor};padding:${component.padding};${ innerStyle ? innerStyle : "" }">
           <table
             cellpadding="0"
             cellspacing="0"
             border="0"
             width="100%"
             align="center"
+            bgcolor=${component.backgroundColor}
              ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
             style="
               max-width: ${component.maxWidth || "600px"};
               margin: ${component.margin || "0 auto"};
               ${component.isColumn ? getColumnStyles(component) : ""}
               ${ innerStyle ? innerStyle : "" }
+              background-color:'${component.backgroundColor};
             "
           >
             ${
@@ -223,7 +231,7 @@ function generateComponentHTML(component: EmailComponent): string {
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const dividerStyle = `
-    height: ${component.height || "1px"};
+    line-height: ${component.height || "1px"};
     background-color: ${component.backgroundColor || "#e0e0e0"};
     margin: ${component.margin || "20px 0"};
     ${ innerStyle ? innerStyle : "" }
@@ -811,6 +819,7 @@ function generateComponentHTML(component: EmailComponent): string {
        line-height: ${component.lineHeight || "18px"};
        padding-bottom: 3px;
       ${ innerStyle ? innerStyle : "" }
+      background-color: ${component.backgroundColor}
       `.trim();
 
       const itemStyle = `
@@ -821,20 +830,20 @@ function generateComponentHTML(component: EmailComponent): string {
         line-height: ${component.lineHeight || "18px"};
         padding-left: 5px;
         font-family: Arial, sans-serif;
-        
+        background-color : ${component.backgroundColor}
       `.trim();
       
       const listItemsHTML = (component.listItems || [])
         .map(
           (item) => `
         <tr >
-          <td  align="left" valign="top" width="2%" style="${bulletStyle}">&bull;</td>
+          <td bgcolor="${component.backgroundColor} align="left" valign="top" width="2%" style="${bulletStyle}">&bull;</td>
           
-          <td align="left" valign="middle" style="${itemStyle}">
+          <td bgcolor="${component.backgroundColor} align="left" valign="middle" style="${itemStyle}">
             ${item}
           </td>
         </tr>
-        <tr><td  height="${component.spaceBetweenItems?.slice(0,3) || 5 }" style=" font-size: 0px; line-height: ${component.spaceBetweenItems|| 5 }px; mso-line-height-rule: exactly; ">&nbsp; </td></tr>
+        <tr><td bgcolor="${component.backgroundColor} height="${component.spaceBetweenItems?.slice(0,3) || 5 }" style=" font-size: 0px; line-height: ${component.spaceBetweenItems|| 5 }px; mso-line-height-rule: exactly;background-color:${component.backgroundColor} ">&nbsp; </td></tr>
       `
         )
         .join("");
@@ -846,13 +855,14 @@ function generateComponentHTML(component: EmailComponent): string {
       cellspacing="0"
       cellpadding="0"
       border="0"
-       ${ innerStyle ? `style="${innerStyle}"` : ""}
+      bgcolor="${component.backgroundColor}"
+      style="background-color:${component.backgroundColor};${innerStyle ? innerStyle : ""}"
       ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""}
     >
       <tbody>
         <tr>
-          <td ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "16px"}; background-color: ${component.backgroundColor || "transparent"};${ innerStyle ? innerStyle : "" }">
-            <table  ${ innerStyle ? `style="${innerStyle}"` : ""} ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0" width="100%" >
+          <td bgcolor="${component.backgroundColor}" ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "16px"}; background-color: ${component.backgroundColor || "transparent"};${ innerStyle ? innerStyle : "" }">
+            <table bgcolor="${component.backgroundColor}" style="background-color:${component.backgroundColor};${innerStyle ? innerStyle : ""}" ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0" width="100%" >
               <tbody>
                 ${listItemsHTML}
               </tbody>

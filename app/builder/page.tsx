@@ -408,12 +408,10 @@ const parentId = result?.parentId || null;
               onClick={() => setOpenPreview(true)}
               className="flex items-center gap-2"
             >
-              {previewMode ? (
-                <Code className="w-4 h-4" />
-              ) : (
+             
                 <Eye className="w-4 h-4" />
-              )}
-              {previewMode ? "Edit" : "Preview"}
+             
+               Preview
             </Button>
 
             <ExportPanel components={components} canvasRef={canvasRef} />
@@ -438,7 +436,11 @@ const parentId = result?.parentId || null;
           )}
 
           {/* Canvas */}
-          <div className="flex-1 overflow-auto bg-gray-100 p-8">
+          <div className="flex-1 overflow-auto bg-gray-100 p-8" 
+            onClick={(e)=>{
+              e.stopPropagation()
+              setSelectedComponent(null)
+            }}>
             <EmailCanvas
               ref={canvasRef}
               components={components}

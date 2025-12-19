@@ -21,7 +21,7 @@ export default function RecentTemplates({ temps, handleUseTemplate, handleEditTe
   if (!temps || temps.length === 0) return [];
 
   return [...temps]
-    .filter(t => t.updatedAt) 
+    .filter(t => t.updatedAt && t.isUserCreated) 
     .sort(
       (a, b) =>
         new Date(b.updatedAt).getTime() -
