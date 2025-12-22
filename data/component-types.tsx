@@ -129,7 +129,7 @@ export const componentTypes = [
   },
   {
     type: "isi",
-    label: "Isi Block",
+    label: "ISI Block",
     category : "custom",
     icon: NotepadText,
     defaultProps: {
@@ -240,7 +240,7 @@ export const componentTypes = [
   category : "custom",
   icon : Wallpaper,
   defaultProps: {
-    src: "/header-placeholder.png",
+    src: "/chevron.png",
     alt: "divider Image",
     width: "100%",
     height: "auto",
@@ -263,7 +263,7 @@ export const componentTypes = [
 },
 {
   type: "footer-tokens",
-  label: "footer-tokens",
+  label: "Footer-Tokens",
   category : "custom",
   icon : NotepadText,
   defaultProps: {
@@ -284,7 +284,7 @@ export const componentTypes = [
 },
 {
   type: "orsedu-footer",
-  label: "orsedu-footer",
+  label: "Orsedu-Footer",
   category : "custom",
   icon : NotepadText,
   defaultProps: {
@@ -298,7 +298,7 @@ export const componentTypes = [
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
-      src: "/placeholder.svg?height=200&width=400&text=Image",
+      src: "/menarini-stemline-logos.png",
       alt: "Menarini group logo and Stemline Logo",
       width: "250px",
       height: "auto",

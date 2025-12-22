@@ -11,6 +11,7 @@ const nextConfig = {
   },
   output: 'export',
   distDir: 'build',
+  trailingSlash: true,
   webpack(config) {
     config.watchOptions = {
       ignored: [

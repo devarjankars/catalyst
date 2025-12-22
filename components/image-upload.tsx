@@ -19,25 +19,30 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { currentTemplate } = useEmailBuilderStore()
 
+  const acceptedFileTypes = ["image/jpeg", "image/png"]
+
 
   useEffect(() => {
-    console.log("current image from upload image",currentImage);
-    
     setUploadedImage(currentImage || "")
+    
+    // Reset the file input when the current image changes
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }, [currentImage])
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/") && !acceptedFileTypes.includes(file.type)) {
       alert("Please select an image file")
       return
     }
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB")
+    // Check file size (max 1MB)
+    if (file.size > 1 * 1024 * 1024) {
+      alert("File size must be less than 1MB")
       return
     }
 
@@ -53,9 +58,19 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
       }
       setUploadedImage(imageUrl)
       onImageUpload(imageUrl)
+      
+      // Reset the file input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     } catch (error) {
       console.error("Failed to upload image:", error)
       alert("Failed to upload image. Please try again.")
+      
+      // Reset the file input on error too
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     } finally {
       setIsUploading(false)
     }
@@ -126,7 +141,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
             <>
               <Upload className="w-6 h-6 text-gray-400" />
               <span className="text-sm text-gray-500">Click to upload image</span>
-              <span className="text-xs text-gray-400">Max 5MB</span>
+              <span className="text-xs text-gray-400">Max 1MB</span>
             </>
           )}
         </Button>

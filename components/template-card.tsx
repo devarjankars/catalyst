@@ -76,7 +76,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
             <div className="absolute top-2 left-2">
               <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
                 <Sparkles className="w-3 h-3 mr-1" />
-                Sample
+                Standard
               </Badge>
             </div>
           )}

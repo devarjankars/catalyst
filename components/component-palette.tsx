@@ -153,7 +153,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-4">
+        {/* <AccordionItem value="item-4">
           <AccordionTrigger>User defined</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
             {customComponents.length > 0 && (
@@ -172,7 +172,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
               </>
             )}
           </AccordionContent>
-        </AccordionItem>
+        </AccordionItem> */}
       </Accordion>
 
       {/* for super admin only */}

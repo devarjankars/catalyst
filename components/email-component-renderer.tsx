@@ -293,7 +293,10 @@ export function EmailComponentRenderer({
                 display: "block",
                 maxWidth: "100%",
               }}
-              onClick={() => !previewMode && onSelect()}
+              onClick={(e) => {
+                e.stopPropagation()
+                !previewMode && onSelect()
+              }}
             />
           </div>
         );
@@ -621,7 +624,10 @@ export function EmailComponentRenderer({
                 maxWidth: component.maxWidth || "600px",
                 display: "block",
               }}
-              onClick={() => !previewMode && onSelect()}
+              onClick={(e) => {
+                e.stopPropagation()
+                !previewMode && onSelect()
+              }}
             />
           </div>
         );
@@ -629,7 +635,7 @@ export function EmailComponentRenderer({
         return (
           <div className="mt-2 z-50 flex justify-center">
             <img
-              src={component.src || "/header-placeholder.png"}
+              src={component.src || "/chevron.png"}
               alt={component.alt || "Header Image"}
               style={{
                 width: component.width || "100%",
@@ -637,7 +643,10 @@ export function EmailComponentRenderer({
                 maxWidth: component.maxWidth || "600px",
                 display: "block",
               }}
-              onClick={() => !previewMode && onSelect()}
+              onClick={(e) => {
+                e.stopPropagation()
+                !previewMode && onSelect()
+              }}
             />
           </div>
         );
@@ -662,7 +671,7 @@ export function EmailComponentRenderer({
         return (
           <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000] bg-[#F1F1F1]">
             <img
-              src={component.src || "/header-placeholder.png"}
+              src={component.src || "/footer-logo-a.png"}
               alt={component.alt || "Header Image"}
               style={{
                 width: component.width || "100%",
@@ -670,7 +679,10 @@ export function EmailComponentRenderer({
                 maxWidth: component.maxWidth || "600px",
                 display: "block",
               }}
-              onClick={() => !previewMode && onSelect()}
+              onClick={(e) => {
+                e.stopPropagation()
+                !previewMode && onSelect()
+              }}
             />
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.year}</div>
