@@ -109,7 +109,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
   {
     type: "footer-links(3)",
@@ -125,7 +125,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
   {
     type: "isi",
@@ -290,7 +290,7 @@ export const componentTypes = [
   defaultProps: {
       footerText: {
         reg : "ORSERDU is a registered trademark of the Menarini Group.",
-        year : "© 2024 Stemline Therapeutics, Inc., a Menarini Group Company.",
+        year : "© 2025 Stemline Therapeutics, Inc., a Menarini Group Company.",
         rights : "All rights reserved.",
         jobcode : "0X/2X MAT-US-ELA-00XXX",
       },
@@ -331,7 +331,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
 
 ];

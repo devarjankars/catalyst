@@ -351,14 +351,14 @@ if (!snap.exists()) {
     console.log("toytal size",currentUsage,MAX_STORAGE_SIZE,file.size);
     
 
-    if (currentUsage + file.size > MAX_STORAGE_SIZE) {
-      console.log(
-        `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
-        `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
-        `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
-      );
-      return "MAX_LIMIT"
-    }
+    // if (currentUsage + file.size > MAX_STORAGE_SIZE) {
+    //   console.log(
+    //     `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
+    //     `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
+    //     `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
+    //   );
+    //   return "MAX_LIMIT"
+    // }
 
     const fileName = `${Date.now()}-${file.name}`;
     const imagePath = `${this.imagesPath}/${templateId}/${fileName}`

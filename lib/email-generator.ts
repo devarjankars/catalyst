@@ -1105,21 +1105,21 @@ function generateComponentHTML(component: EmailComponent): string {
             <td width="100%" height="15" style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">&nbsp; </td>
         </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 8px 30px"}; ${itemStyle}">
                  ${component.footerText?.reg || ""}
               </td>
             </tr>
-            
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+            <tr>
+              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 2px 30px"}; ${itemStyle}">
                  ${component.footerText?.year || ""}
               </td>
             </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 0px 30px"}; ${itemStyle}">
                  ${component.footerText?.rights || ""} ${ component.content || ""}

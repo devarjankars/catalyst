@@ -128,7 +128,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
         <AccordionItem value="item-2">
           <AccordionTrigger>Custom components</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "custom")
                 .map((componentType) => (

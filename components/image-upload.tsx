@@ -41,7 +41,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
     }
 
     // Check file size (max 1MB)
-    if (file.size > 1 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       alert("File size must be less than 1MB")
       return
     }
