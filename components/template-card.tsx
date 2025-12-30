@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit, Trash2, Copy, MoreVertical, Calendar, Play, Sparkles } from "lucide-react"
 import type { EmailTemplate } from "@/types/template"
+import { Timestamp } from "firebase/firestore";
+
 
 interface TemplateCardProps {
   template: EmailTemplate
@@ -34,13 +36,30 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
     }
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(date)
+  
+const formatDate = (value: Date | Timestamp | any) => {
+  if (!value) return "";
+
+  let date: Date;
+
+  if (value instanceof Date) {
+    date = value;
+  } else if (value instanceof Timestamp) {
+    date = value.toDate();
+  } else if (value.seconds) {
+    date = new Date(value.seconds * 1000);
+  } else {
+    date = new Date(value);
   }
+
+  if (isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+};
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-110" onClick={onUse}>
