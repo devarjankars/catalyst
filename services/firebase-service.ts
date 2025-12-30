@@ -8,7 +8,6 @@ import {
   deleteDoc,
   query,
   orderBy,
-  serverTimestamp,
   Timestamp,
   setDoc,
 } from "firebase/firestore";
@@ -42,11 +41,11 @@ function removeUndefinedDeep(value: any): any {
 
 
  const parseDate = (value: any) => {
-    if (!value) return new Date();
+    if (!value) return new Date('2025-12-22'); // Default to a fixed date instead of current time
     if (value instanceof Timestamp) return value.toDate();
     if (value instanceof Date) return value;
     if (typeof value === "string") return new Date(value);
-    return new Date(); // fallback
+    return new Date('2025-12-22'); // fallback
   };
 
 class FirebaseService {
@@ -172,8 +171,8 @@ class FirebaseService {
     const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
     await setDoc(docRef, {
       ...component,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     return {
       ...component,
@@ -220,8 +219,8 @@ if (!snap.exists()) {
       // Remove undefined fields
       const rawData = {
         ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const cleanData = removeUndefinedDeep(rawData);
@@ -260,7 +259,7 @@ if (!snap.exists()) {
       const docRef = doc(db, this.templatesCollection, id);
       const updateData = {
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date(),
       };
 
       const cleanData = removeUndefinedDeep(updateData)
@@ -350,6 +349,9 @@ if (!snap.exists()) {
 
     console.log("toytal size",currentUsage,MAX_STORAGE_SIZE,file.size);
     
+    if(!templateId){
+      return "PATH_NOT_FOUND"
+    }
 
     if (currentUsage + file.size > MAX_STORAGE_SIZE) {
       console.log(
@@ -365,6 +367,9 @@ if (!snap.exists()) {
       
 
     const imageRef = ref(storage, imagePath);
+
+   
+
     const snapshot = await uploadBytes(imageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 

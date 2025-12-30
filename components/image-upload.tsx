@@ -52,10 +52,18 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
       // Upload to Firebase Storage
       const imageUrl = await firebaseService.uploadImage(file, currentTemplate?.id)
 
+      if(imageUrl === "PATH_NOT_FOUND"){
+        toast.warning("Please save the email!")
+        return
+      }
+
       if (imageUrl === "MAX_LIMIT") {
         toast.error("Max limit of 1MB is reached")
         return
       }
+
+
+
       setUploadedImage(imageUrl)
       onImageUpload(imageUrl)
       

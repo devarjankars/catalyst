@@ -109,7 +109,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
   {
     type: "footer-links(3)",
@@ -125,7 +125,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
   {
     type: "isi",
@@ -331,7 +331,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    coolr: "#007bff",
+    color: "#007bff",
   },
 
 ];
