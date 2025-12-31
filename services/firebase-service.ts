@@ -41,13 +41,27 @@ function removeUndefinedDeep(value: any): any {
 }
 
 
- const parseDate = (value: any) => {
-    if (!value) return new Date();
-    if (value instanceof Timestamp) return value.toDate();
-    if (value instanceof Date) return value;
-    if (typeof value === "string") return new Date(value);
-    return new Date(); // fallback
-  };
+//  const parseDate = (value: any) => {
+//     if (!value) return new Date();
+//     if (value instanceof Timestamp) return value.toDate();
+//     if (value instanceof Date) return value;
+//     if (typeof value === "string") return new Date(value);
+//     return new Date(); // fallback
+//   };
+
+const parseDate  = (value: any): Date | null => {
+  if (!value) return null;
+
+  if (value._methodName === "serverTimestamp") return null;
+
+  if (value.toDate) return value.toDate();
+
+  if (typeof value.seconds === "number") {
+    return new Date(value.seconds * 1000);
+  }
+
+  return null;
+}
 
 class FirebaseService {
   private templatesCollection = "email-templates";
@@ -64,18 +78,34 @@ class FirebaseService {
 
   // Template operations
   async getAllTemplates(): Promise<EmailTemplate[]> {
+    
     if (!this.isFirebaseAvailable) {
       return this.getLocalTemplates();
     }
 
     try {
-      
       const querySnapshot = await getDocs(collection(db,this.templatesCollection));
       const templates: EmailTemplate[] = [];
+      for (const docSnap of querySnapshot.docs) {
+  const data = docSnap.data();
+
+  if (data.createdAt?._methodName || data.updatedAt?._methodName) {
+    await updateDoc(docSnap.ref, {
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         console.log(data,"dhggfdgfg data fdrom firebase");
-        
+        console.log(
+  "RAW Firestore data:",
+  data.createdAt,
+  data.updatedAt,
+  typeof data.createdAt
+);
+
        templates.push({
     id: doc.id,
     ...data,
@@ -255,18 +285,30 @@ if (!snap.exists()) {
     if (!this.isFirebaseAvailable) {
       return this.updateLocalTemplate(id, updates);
     }
-
+    const { createdAt, updatedAt, ...safeUpdates } = updates;
     try {
       const docRef = doc(db, this.templatesCollection, id);
-      const updateData = {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      };
+     
 
-      const cleanData = removeUndefinedDeep(updateData)
+      await updateDoc(docRef, {
+    ...removeUndefinedDeep(safeUpdates),
+    updatedAt: serverTimestamp(),
+  });
+      const snap = await getDoc(docRef);
+  const data = snap.data();
 
-      await updateDoc(docRef, cleanData);
-      return this.getTemplate(id);
+  if (!data?.updatedAt || data.updatedAt._methodName) {
+    // Firestore hasn't resolved yet — wait one tick
+    await new Promise(r => setTimeout(r, 100));
+    return this.getTemplate(id);
+  }
+
+  return {
+    id,
+    ...data,
+    createdAt: data.createdAt.toDate(),
+    updatedAt: data.updatedAt.toDate(),
+  };
     } catch (error) {
       console.error(
         "Failed to update template in Firebase, falling back to localStorage:",
