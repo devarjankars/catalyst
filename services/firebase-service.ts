@@ -8,7 +8,6 @@ import {
   deleteDoc,
   query,
   orderBy,
-  serverTimestamp,
   Timestamp,
   setDoc,
 } from "firebase/firestore";
@@ -202,8 +201,8 @@ class FirebaseService {
     const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
     await setDoc(docRef, {
       ...component,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     return {
       ...component,
@@ -250,8 +249,8 @@ if (!snap.exists()) {
       // Remove undefined fields
       const rawData = {
         ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const cleanData = removeUndefinedDeep(rawData);
@@ -392,21 +391,27 @@ if (!snap.exists()) {
 
     console.log("toytal size",currentUsage,MAX_STORAGE_SIZE,file.size);
     
+    if(!templateId){
+      return "PATH_NOT_FOUND"
+    }
 
-    // if (currentUsage + file.size > MAX_STORAGE_SIZE) {
-    //   console.log(
-    //     `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
-    //     `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
-    //     `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
-    //   );
-    //   return "MAX_LIMIT"
-    // }
+    if (currentUsage + file.size > MAX_STORAGE_SIZE) {
+      console.log(
+        `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
+        `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
+        `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
+      );
+      return "MAX_LIMIT"
+    }
 
     const fileName = `${Date.now()}-${file.name}`;
     const imagePath = `${this.imagesPath}/${templateId}/${fileName}`
       
 
     const imageRef = ref(storage, imagePath);
+
+   
+
     const snapshot = await uploadBytes(imageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
 

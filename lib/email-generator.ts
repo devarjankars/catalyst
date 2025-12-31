@@ -332,8 +332,8 @@ function generateComponentHTML(component: EmailComponent): string {
       ${
         index < component.links!.length - 1
           ? index == 1
-            ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
-            : `<span  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
+            ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+            : `<span  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
           : ""
       }
     `
@@ -355,7 +355,7 @@ function generateComponentHTML(component: EmailComponent): string {
           <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "16px"}; text-align: ${
         component.textAlign || "left"
       }; background-color: ${component.backgroundColor || "#fffff"};${ innerStyle ? innerStyle : "" }">
-            <div style="color: ${component.color || "#000000"}; font-size: ${
+            <div style="color: ${component.color || "#0463c1"}; font-size: ${
         component.fontSize || "14px"
       }; line-height: 1.5;">
               ${linksHTML}
@@ -1013,35 +1013,35 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.footerTokens?.regards || ""}
               </td>
             </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.footerTokens?.userName || ""}
               </td>
             </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.footerTokens?.company || ""}
               </td>
             </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.footerTokens?.userEmailAddress || ""}
               </td>
             </tr>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.footerTokens?.userPhone || ""}
@@ -1105,29 +1105,29 @@ function generateComponentHTML(component: EmailComponent): string {
             <td width="100%" height="15" style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">&nbsp; </td>
         </tr>
             <tr>
-              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 8px 30px"}; ${itemStyle}">
                  ${component.footerText?.reg || ""}
               </td>
             </tr>
             <tr>
-              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 2px 30px"}; ${itemStyle}">
                  ${component.footerText?.year || ""}
               </td>
             </tr>
             <tr>
-              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
       }' style="padding: ${component.padding || "0 16px 0px 30px"}; ${itemStyle}">
                  ${component.footerText?.rights || ""} ${ component.content || ""}
               </td>
             </tr>
              <tr>
-            <td width="100%" height="20" style=" font-size: 0px; line-height: 20px; mso-line-height-rule: exactly; ">&nbsp; </td>
-        </tr>
+                <td width="100%" height="20" style=" font-size: 0px; line-height: 20px; mso-line-height-rule: exactly; ">&nbsp; </td>
+            </tr>
           </tbody>
         </table>
       `;
