@@ -170,6 +170,12 @@ export default function ManageTemplates() {
             </div>
           </div>
           </div>
+          <DeleteConfirmDialog
+        open={deleteDialog.open}
+        template={deleteDialog.template}
+        onConfirm={() => deleteDialog.template && handleDeleteTemplate(deleteDialog.template)}
+        onCancel={() => setDeleteDialog({ open: false, template: null })}
+      />
     </div>
   )
 }

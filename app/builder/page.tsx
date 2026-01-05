@@ -397,8 +397,8 @@ const parentId = result?.parentId || null;
             >
               <FileText className="w-4 h-4" />
               {currentTemplate && !isNewTemplate && !isWorkingCopy
-                ? "Update Template"
-                : "Save Template"}
+                ? "Update Email"
+                : "Save Email"}
             </Button>
 
             <Button
