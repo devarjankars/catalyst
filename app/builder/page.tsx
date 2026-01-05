@@ -205,7 +205,7 @@ export default function EmailBuilder() {
     setSaving(true);
     try {
       let savedTemplate;
-
+ 
       if (isEdit && currentTemplate) {
         // Update existing template metadata and components
         savedTemplate = await firebaseService.updateTemplate(
@@ -215,7 +215,6 @@ export default function EmailBuilder() {
             description,
             category,
             components,
-            updatedAt: new Date(),
           }
         );
       } else {

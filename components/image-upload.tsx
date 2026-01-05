@@ -20,7 +20,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   const { currentTemplate } = useEmailBuilderStore()
 
   const acceptedFileTypes = ["image/jpeg", "image/png"]
-
+ 
 
   useEffect(() => {
     setUploadedImage(currentImage || "")

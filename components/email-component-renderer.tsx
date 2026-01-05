@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
@@ -413,9 +413,8 @@ export function EmailComponentRenderer({
           <div style={baseStyle} className="flex flex-col gap-2 mt-2">
             <div className="flex flex-wrap gap-2">
               {component.links?.map((link, linkIndex) => (
-                <>
+                <React.Fragment key={linkIndex}>
                   <a
-                    key={linkIndex}
                     href={link.href || "#"}
                     style={{
                       color: component.color || "#007bff",
@@ -432,11 +431,11 @@ export function EmailComponentRenderer({
                   </a>
 
                   {linkIndex < component.links!.length - 1 && (
-                    <span key={linkIndex} className="text-gray-500">
+                    <span className="text-gray-500">
                       |
                     </span>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -458,9 +457,8 @@ export function EmailComponentRenderer({
             </div>
             <div className="flex flex-wrap justify-evenly gap-10">
               {component.links?.map((link, linkIndex) => (
-                <>
+                <React.Fragment key={linkIndex}>
                   <a
-                    key={linkIndex}
                     href={link.href || "#"}
                     style={{
                       color: component.color || "#007bff",
@@ -477,7 +475,7 @@ export function EmailComponentRenderer({
                   </a>
 
                  
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -487,9 +485,8 @@ export function EmailComponentRenderer({
           <div style={baseStyle} className="flex flex-col gap-2 mt-2">
             <div className="flex flex-wrap gap-2">
               {component.links?.map((link, linkIndex) => (
-                <>
+                <React.Fragment key={linkIndex}>
                   <a
-                    key={linkIndex}
                     href={link.href || "#"}
                     style={{
                       color: component.color || "#007bff",
@@ -506,11 +503,11 @@ export function EmailComponentRenderer({
                   </a>
 
                   {linkIndex < component.links!.length - 1 && (
-                    <span key={linkIndex} className="text-gray-500">
+                    <span className="text-gray-500">
                       |
                     </span>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -532,9 +529,8 @@ export function EmailComponentRenderer({
             </div>
             <div className="flex flex-wrap justify-evenly gap-10">
               {component.links?.map((link, linkIndex) => (
-                <>
+                <React.Fragment key={linkIndex}>
                   <a
-                    key={linkIndex}
                     href={link.href || "#"}
                     style={{
                       color: component.color || "#007bff",
@@ -551,7 +547,7 @@ export function EmailComponentRenderer({
                   </a>
 
                  
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -572,14 +568,12 @@ export function EmailComponentRenderer({
                     {section.items && section.items.length > 0 && (
                       <ul className="list-disc pl-5 mt-2 ml-3">
                         {section.items.map((subsection, subIndex) => (
-                          <>
-                            <li
-                              key={subIndex}
-                              className="text-sm text-gray-700 mt-2"
-                            >
-                              {subsection.content}
-                            </li>
-                          </>
+                          <li
+                            key={subIndex}
+                            className="text-sm text-gray-700 mt-2"
+                          >
+                            {subsection.content}
+                          </li>
                         ))}
                       </ul>
                     )}

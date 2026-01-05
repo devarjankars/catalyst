@@ -24,8 +24,8 @@ interface AdduserDialogProps {
 export function AdduserDialog({ open, onConfirm, onCancel }: AdduserDialogProps) {
   const {teams , addUser , getTeams} = useUserStore();
   const allteams = getTeams();
-console.log(teams);
-console.log(allteams);
+// console.log(teams);
+// console.log(allteams);
   
 
   return (

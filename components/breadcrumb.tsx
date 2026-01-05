@@ -19,7 +19,7 @@ export default function Breadcrumb() {
     const label = labelMap[segment] || (segment.charAt(0).toUpperCase() + segment.slice(1));
     return { label, href };
   });
-console.log(paths)
+// console.log(paths)
   return (
     <div className="flex items-center gap-2 text-sm text-gray-600">
       {paths.map((crumb, i) => (

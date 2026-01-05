@@ -54,9 +54,9 @@ export default function Dashboard() {
 
 
   const {userEmail , userRole, userPermissions} = useLoggedInUserStore();
-  console.log("khdhwjh "  + userEmail);
+  // console.log("khdhwjh "  + userEmail);
   
-console.log(templates)
+// console.log(templates)
   useEffect(() => {
     loadTemplates();
     setUserName(() => getFirstNameFromEmail(userEmail));
