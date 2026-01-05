@@ -173,6 +173,17 @@ export function PropertiesPanel({
                       />
                     </div>
 
+                    <div>
+                      <Label htmlFor="columnWidth">Column Width</Label>
+                      <Input
+                        id="columnWidth"
+                        value={component.columnWidth || "auto"}
+                        onChange={(e) =>
+                          onUpdateComponent({ columnWidth: e.target.value })
+                        }
+                        placeholder="auto, 50%, 200px"
+                      />
+                    </div>
                     
                   </div>
                 </div>
@@ -222,6 +233,138 @@ export function PropertiesPanel({
                     }
                     placeholder="0"
                   />
+                </div>
+              </>
+            )}
+
+            {/* Column Width Controls for Parent Multi-Column Sections */}
+            {!isColumn && component.children && component.children.length > 1 && (
+              <>
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium text-gray-700 mb-3">
+                    Column Widths
+                  </h4>
+
+                  {/* Preset Buttons */}
+                  <div className="mb-4">
+                    <Label className="text-sm mb-2 block">Presets</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {component.children.length === 2 && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child, idx) => ({
+                                ...child,
+                                columnWidth: "50%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            50/50
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child, idx) => ({
+                                ...child,
+                                columnWidth: idx === 0 ? "30%" : "70%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            30/70
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child, idx) => ({
+                                ...child,
+                                columnWidth: idx === 0 ? "70%" : "30%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            70/30
+                          </Button>
+                        </>
+                      )}
+                      {component.children.length === 3 && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child) => ({
+                                ...child,
+                                columnWidth: "33.33%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            33/33/33
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child, idx) => ({
+                                ...child,
+                                columnWidth: idx === 1 ? "50%" : "25%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            25/50/25
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const updatedChildren = component.children!.map((child, idx) => ({
+                                ...child,
+                                columnWidth: idx === 0 ? "50%" : "25%"
+                              }));
+                              onUpdateComponent({ children: updatedChildren });
+                            }}
+                          >
+                            50/25/25
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Individual Column Width Inputs */}
+                  <div className="space-y-3">
+                    {component.children.map((child, idx) => (
+                      <div key={child.id}>
+                        <Label htmlFor={`column-width-${idx}`}>
+                          Column {idx + 1} Width
+                        </Label>
+                        <Input
+                          id={`column-width-${idx}`}
+                          value={child.columnWidth || (component.children!.length === 2 ? "50%" : "33.33%")}
+                          onChange={(e) => {
+                            const updatedChildren = component.children!.map((c, i) =>
+                              i === idx ? { ...c, columnWidth: e.target.value } : c
+                            );
+                            onUpdateComponent({ children: updatedChildren });
+                          }}
+                          placeholder="50%, 200px, auto"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

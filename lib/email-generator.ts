@@ -19,8 +19,6 @@ function generateComponentHTML(component: EmailComponent): string {
 
         const alignment = child.columnAlignment || "left";
         const verticalAlignment = child.columnVerticalAlignment || "center";
-        const width =
-          child.columnWidth === "auto" ? undefined : child.columnWidth;
 
         return `
       text-align: ${alignment};
@@ -31,7 +29,6 @@ function generateComponentHTML(component: EmailComponent): string {
           ? "middle"
           : "bottom"
       };
-      ${width ? `width: ${width};` : ""}
       min-height: ${child.columnMinHeight || "120px"};
     `;
       };
@@ -56,7 +53,7 @@ function generateComponentHTML(component: EmailComponent): string {
        "
     >
       <tr bgcolor="${component.backgroundColor}" style="background-color:${component.backgroundColor};">
-        <td bgcolor="${component.backgroundColor}" align="${component.columnAlignment || "center"}"  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="background-color:${component.backgroundColor};padding:${component.padding};${ innerStyle ? innerStyle : "" }">
+        <td bgcolor="${component.backgroundColor}" align="${component.columnAlignment || "top"}"  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="background-color:${component.backgroundColor};padding:${component.padding || "0 16px 0 16px"};${ innerStyle ? innerStyle : "" }">
           <table
             cellpadding="0"
             cellspacing="0"
@@ -67,7 +64,6 @@ function generateComponentHTML(component: EmailComponent): string {
              ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
             style="
               max-width: ${component.maxWidth || "600px"};
-              margin: ${component.margin || "0 auto"};
               ${component.isColumn ? getColumnStyles(component) : ""}
               ${ innerStyle ? innerStyle : "" }
               background-color:${component.backgroundColor};
@@ -160,7 +156,7 @@ function generateComponentHTML(component: EmailComponent): string {
             <tr>
               <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
         component.textAlign || "center"
-      }' style="padding: ${component.padding || "0 16px 16px 16px"};">
+      }' style="padding: ${component.padding || "0 0 0 0"};">
                  <img 
                     width="${component.width || "100%"}"
                     src="${component.src || ""}" 

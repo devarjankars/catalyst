@@ -28,13 +28,9 @@ const { classAttr, innerStyle } = getDisplayAttributes(component.displayType);
 
 
 const getWidth = (colCount: number | undefined,width : string): string => {
+    if (width && width !== "auto") return width;
     if (!colCount || colCount <= 1) return "100%";
-    if(columnsType === "equal"){
-        return `${(100 / colCount)-5}%`;
-    } else {
-        return `${parseInt(width.slice(0,2))-5}%` || `${(100 / colCount)-5}%`;
-    }
-
+    return `${100 / colCount}%`;
 }
 
 
@@ -49,6 +45,7 @@ function generateTdHTML(
 
   return `
     <td
+    
       bgcolor="${child.backgroundColor || "transparent"}"
       valign="${verticalAlign}"
       align="${alignment }"
@@ -66,10 +63,10 @@ function generateTdHTML(
     >
       ${generateComponentHTML(child)}
     </td>
-    ${index < totalColumns - 1 ? `<td width="${gap}" style="width: ${gap};">&nbsp;</td>` : ""}
+    
   `.trim();
 }
-
+// ${index < totalColumns - 1 ? `<td width="${gap}" style="width: ${gap};">&nbsp;</td>` : ""}
 // Wrap in a table row for email compatibility
 if(columns > 1 && direction === "row"){
     return `
@@ -105,12 +102,12 @@ if (columns > 1 && direction === "column") {
                 ${generateComponentHTML(child)}
             </td>
         </tr>
-        ${index < (children?.length || 0) - 1 ? `<tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
+        
     `
     )
     .join(""))
   }
-
+// ${index < (children?.length || 0) - 1 ? `<tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
   // single column section 
 
   return `
