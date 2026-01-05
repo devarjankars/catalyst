@@ -175,6 +175,9 @@ export default function Dashboard() {
   const handlestandardTemps = () => {
     router.push('/dashboard/standard-templates');
   }
+  const handleRecentTemps = () => {
+    router.push('/dashboard/templates');
+  }
   const handleTaskview = () => {
     router.push('/dashboard/tasks');
   }
@@ -251,18 +254,7 @@ export default function Dashboard() {
 
              
           </div> */}
-          <div className="recentTemps">
-          <h1 className="font-bold mb-4">Recent Emailes</h1>
-          <div className="templates">
-          <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
-           <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
-                                  setDeleteDialog={setDeleteDialog} 
-                                  handleDuplicateTemplate={handleDuplicateTemplate}
-                                  handleCreateBlank={handleCreateBlank}
-                                  loading={loading}/>
-           </Suspense>
-            </div> 
-          </div>
+          
           <div className="StandardTemps">
           <div className="header flex justify-between">
               <h1 className="font-bold mb-4">Standard Templates</h1>
@@ -279,6 +271,21 @@ export default function Dashboard() {
                                   loading={loading}
                                   />
           </Suspense>
+            </div> 
+          </div>
+
+          <div className="recentTemps">
+          <div className="header flex justify-between">
+              <h1 className="font-bold mb-4">Recent Emailers</h1>
+              <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>view all</span>
+            </div>          <div className="templates">
+          <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
+           <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
+                                  setDeleteDialog={setDeleteDialog} 
+                                  handleDuplicateTemplate={handleDuplicateTemplate}
+                                  handleCreateBlank={handleCreateBlank}
+                                  loading={loading}/>
+           </Suspense>
             </div> 
           </div>
         </div>

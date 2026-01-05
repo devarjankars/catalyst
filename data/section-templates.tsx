@@ -9,6 +9,7 @@ export const sectionTemplates = [
       children: [],
       backgroundColor: "#ffffff",
       // padding: "20px",
+      // padding: "20px",
       borderRadius: "0px",
       direction: "column",
       maxWidth: "100%",
@@ -30,6 +31,7 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
+          columnWidth: "50%",
         },
         {
           id: "col2",
@@ -40,6 +42,7 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
+          columnWidth: "50%",
         },
       ],
       backgroundColor: "#ffffff",
@@ -49,7 +52,7 @@ export const sectionTemplates = [
       maxWidth: "100%",
       columns: 2,
       columnsType : "equal",
-      gap : "2px"
+      gap : "0px"
     },
   },
   {
@@ -67,6 +70,7 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
+          columnWidth: "33.33%",
         },
         {
           id: "col2",
@@ -77,6 +81,7 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
+          columnWidth: "33.33%",
         },
         {
           id: "col3",
@@ -86,7 +91,8 @@ export const sectionTemplates = [
           borderRadius: "4px",
           children: [],
           direction: "column",
-          isColumn: true
+          isColumn: true,
+          columnWidth: "33.33%",
         },
       ],
       backgroundColor: "#ffffff",
@@ -96,7 +102,7 @@ export const sectionTemplates = [
       maxWidth: "100%",
       columns: 3,
       columnType : "equal",
-      gap : "2px"
+      gap : "0px"
     },
   },
   
