@@ -75,7 +75,17 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
     const selectedText = range.toString().trim()
     
     if (anchorText === selectedText) {
-      //returning since selected text already have link tag 
+      // Remove the link - replace anchor with its text content
+      const textNode = document.createTextNode(targetElement.textContent || '')
+      targetElement.parentNode?.replaceChild(textNode, targetElement)
+      
+      // Select the text that was unlinked
+      const newRange = document.createRange()
+      newRange.selectNodeContents(textNode)
+      selection.removeAllRanges()
+      selection.addRange(newRange)
+      
+      handleInput()
       return
     }
   }
@@ -99,6 +109,59 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   selection.removeAllRanges()
   selection.addRange(range)
 
+  handleInput()
+}
+
+  const toggleSuperscript = () => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+
+  const range = selection.getRangeAt(0)
+  if (range.collapsed) return
+
+  // Check if the entire selection is within a single existing sup element
+  const commonAncestor = range.commonAncestorContainer
+
+  // Get the parent element (handle both text nodes and element nodes)
+  let targetElement: HTMLElement | null = null
+  
+  if (commonAncestor.nodeType === Node.TEXT_NODE) {
+    // If common ancestor is a text node, check its parent
+    targetElement = commonAncestor.parentElement
+  } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
+    // If it's already an element, use it
+    targetElement = commonAncestor as HTMLElement
+  }
+
+  // Check if the target is a sup element and contains the entire selection
+  if (
+    targetElement &&
+    targetElement.nodeName === 'SUP' &&
+    targetElement.contains(range.startContainer) &&
+    targetElement.contains(range.endContainer)
+  ) {
+    // Check if the entire sup content is selected
+    const supText = targetElement.textContent?.trim() || ''
+    const selectedText = range.toString().trim()
+    
+    if (supText === selectedText) {
+      // Remove the superscript - replace sup with its text content
+      const textNode = document.createTextNode(targetElement.textContent || '')
+      targetElement.parentNode?.replaceChild(textNode, targetElement)
+      
+      // Select the text that was unsuperscripted
+      const newRange = document.createRange()
+      newRange.selectNodeContents(textNode)
+      selection.removeAllRanges()
+      selection.addRange(newRange)
+      
+      handleInput()
+      return
+    }
+  }
+
+  // Otherwise, apply superscript
+  document.execCommand("superscript")
   handleInput()
 }
 
@@ -254,10 +317,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
           <button
            type="button"
             className="px-2 py-1 text-md hover:bg-gray-100 rounded text-black"
-            onClick={() => {
-              document.execCommand("superscript")
-              handleInput()
-            }}
+            onClick={() => toggleSuperscript()}
           >
             <Superscript className="h-4 w-4" />
           </button>
