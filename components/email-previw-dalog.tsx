@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmailComponent } from "@/types/email-builder";
 import { generateEmailHTML } from "@/lib/email-generator";
-import { Monitor, Smartphone } from "lucide-react";
+import { Monitor, Smartphone, Download, Upload } from "lucide-react";
 import EmailPreview from "./email-preview-frame";
+import { exportToPDF } from "@/lib/pdf-export-utils";
+import { useEmailBuilderStore } from "@/store/email-builder-store";
 
 type EmailPreviewModalProps = {
   open: boolean;
@@ -28,12 +30,37 @@ export default function EmailPreviewModal({
   
   const [htmlContent, setHtmlContent] = useState<string>("");
   const [screen, setScreen] = useState<"600px" | "375px">("600px");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { currentTemplate } = useEmailBuilderStore();
 
   useMemo(() => {
     // Generate HTML content based on the current components and their properties
     const emailHtml = generateEmailHTML(components);
     setHtmlContent(emailHtml);
   }, [components]);
+  
+  const handlePDFExport = async () => {
+    if (!iframeRef.current) {
+      console.error("Iframe reference not available");
+      return;
+    }
+
+    setIsExportingPDF(true);
+    try {
+      const viewMode = screen === "600px" ? "desktop" : "mobile";
+      const fileName = currentTemplate?.name 
+        ? `${currentTemplate.name}-${viewMode}` 
+        : `email-preview-${viewMode}`;
+      
+      await exportToPDF(iframeRef.current, fileName, viewMode);
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("Failed to export PDF. Please try again.");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={()=>{
@@ -64,12 +91,21 @@ export default function EmailPreviewModal({
               >
                 <Smartphone />
               </Button>
+              <Button
+                variant="default"
+                
+                onClick={handlePDFExport}
+                disabled={isExportingPDF}
+                title="Export current view as PDF"
+              >
+                <Upload className={isExportingPDF ? "animate-pulse" : ""} /> Export as PDF
+              </Button> 
             </div>
           </div>
         </DialogHeader>
 
         <div className="w-full h-full flex-1 flex items-center justify-center border-t">
-          <EmailPreview html={htmlContent} width={screen} />
+          <EmailPreview ref={iframeRef} html={htmlContent} width={screen} />
         </div>
       </DialogContent>
     </Dialog>

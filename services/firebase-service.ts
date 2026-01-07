@@ -48,7 +48,7 @@ function removeUndefinedDeep(value: any): any {
 //     return new Date(); // fallback
 //   };
 
-const parseDate  = (value: any): Date | null => {
+const parseDate = (value: any): Date | null => {
   if (!value) return null;
 
   if (value._methodName === "serverTimestamp") return null;
@@ -77,40 +77,41 @@ class FirebaseService {
 
   // Template operations
   async getAllTemplates(): Promise<EmailTemplate[]> {
-    
+
     if (!this.isFirebaseAvailable) {
       return this.getLocalTemplates();
     }
 
     try {
-      const querySnapshot = await getDocs(collection(db,this.templatesCollection));
+      const querySnapshot = await getDocs(collection(db, this.templatesCollection));
       const templates: EmailTemplate[] = [];
-      for (const docSnap of querySnapshot.docs) {
-  const data = docSnap.data();
+      // for (const docSnap of querySnapshot.docs) {
+      //   const data = docSnap.data();
 
-  if (data.createdAt?._methodName || data.updatedAt?._methodName) {
-    await updateDoc(docSnap.ref, {
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  }
-}
+      //   if (data.createdAt?._methodName || data.updatedAt?._methodName) {
+      //     await updateDoc(docSnap.ref, {
+      //       createdAt: serverTimestamp(),
+      //       updatedAt: serverTimestamp(),
+      //     });
+      //   }
+      // }
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(data,"dhggfdgfg data fdrom firebase");
+        console.log(data, "dhggfdgfg data fdrom firebase");
         console.log(
-  "RAW Firestore data:",
-  data.createdAt,
-  data.updatedAt,
-  typeof data.createdAt
-);
+          "RAW Firestore data:",
+          data.createdAt,
+          data.updatedAt,
+          typeof data.createdAt
+        );
 
-       templates.push({
-    id: doc.id,
-    ...data,
-    createdAt: parseDate(data.createdAt),
-    updatedAt: parseDate(data.updatedAt),
-  } as EmailTemplate);
+        templates.push({
+          id: doc.id,
+          ...data,
+          createdAt: parseDate(data.createdAt),
+          updatedAt: parseDate(data.updatedAt),
+        } as EmailTemplate);
       });
 
       // Add sample templates if no templates exist
@@ -146,7 +147,7 @@ class FirebaseService {
         return {
           id: docSnap.id,
           ...data,
-         createdAt: parseDate(data.createdAt),
+          createdAt: parseDate(data.createdAt),
           updatedAt: parseDate(data.updatedAt),
         } as EmailTemplate;
       }
@@ -191,29 +192,29 @@ class FirebaseService {
   }
 
   async saveCustomComponent(component: EmailComponent): Promise<EmailComponent> {
-  if (!this.isFirebaseAvailable) {
-    return component;
-  }
+    if (!this.isFirebaseAvailable) {
+      return component;
+    }
 
-  console.log("Saving custom component with custom ID:", component.id);
+    console.log("Saving custom component with custom ID:", component.id);
 
-  try {
-    const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
-    await setDoc(docRef, {
-      ...component,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return {
-      ...component,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  } catch (error) {
-    console.error("Failed to save custom component:", error);
-    return component;
+    try {
+      const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
+      await setDoc(docRef, {
+        ...component,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return {
+        ...component,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    } catch (error) {
+      console.error("Failed to save custom component:", error);
+      return component;
+    }
   }
-}
 
   async deleteCustomComponent(id: string): Promise<boolean> {
     if (!this.isFirebaseAvailable) {
@@ -223,12 +224,12 @@ class FirebaseService {
       const docRef = doc(db, this.customComponentsCollection, id);
       console.log("Deleting custom component with ID in firebase:", docRef.id);
       const snap = await getDoc(docRef);
-if (!snap.exists()) {
-  console.log("Document not found. Cannot delete.");
-} else {
-  console.log("Found doc, trying to delete...");
-  await deleteDoc(docRef);
-}
+      if (!snap.exists()) {
+        console.log("Document not found. Cannot delete.");
+      } else {
+        console.log("Found doc, trying to delete...");
+        await deleteDoc(docRef);
+      }
       await deleteDoc(docRef);
       return true;
     } catch (error) {
@@ -236,7 +237,7 @@ if (!snap.exists()) {
       return false; // Fallback to local deletion
     }
   }
-  
+
 
   async createTemplate(
     data: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">
@@ -287,27 +288,27 @@ if (!snap.exists()) {
     const { createdAt, updatedAt, ...safeUpdates } = updates;
     try {
       const docRef = doc(db, this.templatesCollection, id);
-     
+
 
       await updateDoc(docRef, {
-    ...removeUndefinedDeep(safeUpdates),
-    updatedAt: serverTimestamp(),
-  });
+        ...removeUndefinedDeep(safeUpdates),
+        updatedAt: new Date(),
+      });
       const snap = await getDoc(docRef);
-  const data = snap.data();
+      const data = snap.data();
 
-  if (!data?.updatedAt || data.updatedAt._methodName) {
-    // Firestore hasn't resolved yet — wait one tick
-    await new Promise(r => setTimeout(r, 100));
-    return this.getTemplate(id);
-  }
+      if (!data?.updatedAt || data.updatedAt._methodName) {
+        // Firestore hasn't resolved yet — wait one tick
+        await new Promise(r => setTimeout(r, 100));
+        return this.getTemplate(id);
+      }
 
-  return {
-    id,
-    ...data,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
-  };
+      return {
+        id,
+        ...data,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      };
     } catch (error) {
       console.error(
         "Failed to update template in Firebase, falling back to localStorage:",
@@ -349,78 +350,78 @@ if (!snap.exists()) {
   }
 
   async getStorageUsage(templateId?: string): Promise<number> {
-  if (!this.isFirebaseAvailable || !storage) {
-    return 0;
+    if (!this.isFirebaseAvailable || !storage) {
+      return 0;
+    }
+
+    try {
+      const folderPath = `${this.imagesPath}/${templateId}`
+
+
+      const folderRef = ref(storage, folderPath);
+      const listResult = await listAll(folderRef);
+
+      let totalSize = 0;
+
+      // Get metadata for each file and sum up sizes
+      const metadataPromises = listResult.items.map(async (itemRef) => {
+        const metadata = await getMetadata(itemRef);
+        return metadata.size; // Size in bytes
+      });
+
+      const sizes = await Promise.all(metadataPromises);
+      totalSize = sizes.reduce((sum, size) => sum + size, 0);
+
+      return totalSize; // Returns size in bytes
+    } catch (error) {
+      console.error("Failed to get storage usage:", error);
+      return 0;
+    }
   }
-
-  try {
-    const folderPath = `${this.imagesPath}/${templateId}`
-      
-
-    const folderRef = ref(storage, folderPath);
-    const listResult = await listAll(folderRef);
-
-    let totalSize = 0;
-
-    // Get metadata for each file and sum up sizes
-    const metadataPromises = listResult.items.map(async (itemRef) => {
-      const metadata = await getMetadata(itemRef);
-      return metadata.size; // Size in bytes
-    });
-
-    const sizes = await Promise.all(metadataPromises);
-    totalSize = sizes.reduce((sum, size) => sum + size, 0);
-
-    return totalSize; // Returns size in bytes
-  } catch (error) {
-    console.error("Failed to get storage usage:", error);
-    return 0;
-  }
-}
 
   // Image operations
   async uploadImage(file: File, templateId?: string): Promise<string> {
-  if (!this.isFirebaseAvailable || !storage) {
-    return URL.createObjectURL(file);
-  }
-
-  try {
-    // Check storage limit (e.g., 100MB = 100 * 1024 * 1024 bytes)
-    const MAX_STORAGE_SIZE = 1 * 1024 * 1024; // 100MB
-    const currentUsage = await this.getStorageUsage(templateId);
-
-    console.log("toytal size",currentUsage,MAX_STORAGE_SIZE,file.size);
-    
-    if(!templateId){
-      return "PATH_NOT_FOUND"
+    if (!this.isFirebaseAvailable || !storage) {
+      return URL.createObjectURL(file);
     }
 
-    if (currentUsage + file.size > MAX_STORAGE_SIZE) {
-      console.log(
-        `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
-        `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
-        `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
-      );
-      return "MAX_LIMIT"
+    try {
+      // Check storage limit (e.g., 100MB = 100 * 1024 * 1024 bytes)
+      const MAX_STORAGE_SIZE = 1 * 1024 * 1024; // 100MB
+      const currentUsage = await this.getStorageUsage(templateId);
+
+      console.log("toytal size", currentUsage, MAX_STORAGE_SIZE, file.size);
+
+      if (!templateId) {
+        return "PATH_NOT_FOUND"
+      }
+
+      if (currentUsage + file.size > MAX_STORAGE_SIZE) {
+        console.log(
+          `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
+          `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
+          `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
+        );
+        return "MAX_LIMIT"
+      }
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const imagePath = `${this.imagesPath}/${templateId}/${fileName}`
+
+
+      const imageRef = ref(storage, imagePath);
+
+
+
+      const snapshot = await uploadBytes(imageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      return downloadURL;
+    } catch (error) {
+      console.error("Failed to upload image to Firebase:", error);
+      throw error; // Throw instead of fallback so you can handle the error appropriately
     }
-
-    const fileName = `${Date.now()}-${file.name}`;
-    const imagePath = `${this.imagesPath}/${templateId}/${fileName}`
-      
-
-    const imageRef = ref(storage, imagePath);
-
-   
-
-    const snapshot = await uploadBytes(imageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-
-    return downloadURL;
-  } catch (error) {
-    console.error("Failed to upload image to Firebase:", error);
-    throw error; // Throw instead of fallback so you can handle the error appropriately
   }
-}
 
   async deleteImage(imageUrl: string): Promise<boolean> {
     if (!this.isFirebaseAvailable || !storage || imageUrl.startsWith("blob:")) {

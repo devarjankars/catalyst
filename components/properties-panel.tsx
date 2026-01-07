@@ -28,7 +28,7 @@ export function PropertiesPanel({
   onUpdateComponent,
   onSaveAsCustom,
 }: PropertiesPanelProps) {
-  const [Links, setLinks] = useState<{ href: string; text: string }[]>([]);
+  const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   if (!component) {
     return (
       <div className="text-center text-gray-500 py-8">
@@ -48,17 +48,25 @@ export function PropertiesPanel({
       const parser = new DOMParser();
       const doc = parser.parseFromString(component.content, "text/html");
       const anchors = doc.querySelectorAll("a");
-      const parsedLinks = Array.from(anchors).map((a) => ({
-        href: a.getAttribute("href") || "",
-        text: a.textContent || "",
-      }));
+      const parsedLinks = Array.from(anchors).map((a) => {
+        const style = a.getAttribute("style") || "";
+        const colorMatch = style.match(/color:\s*([^;]+)/i);
+        // Default color if not found
+        const color = colorMatch ? colorMatch[1].trim() : "#0000EE"; 
+        
+        return {
+          href: a.getAttribute("href") || "",
+          text: a.textContent || "",
+          color: color,
+        };
+      });
       setLinks(parsedLinks);
     } else {
       setLinks([]);
     }
   }, [component]);
 
-  const updateLink = (index: number, newHref: string, newText: string) => {
+  const updateLink = (index: number, newHref: string, newText: string, newColor: string) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(component.content!, "text/html");
     const anchors = doc.querySelectorAll("a");
@@ -66,6 +74,21 @@ export function PropertiesPanel({
     if (anchors[index]) {
       anchors[index].setAttribute("href", newHref);
       anchors[index].textContent = newText;
+      
+      let style = anchors[index].getAttribute("style") || "";
+      // Handle color update in inline style
+      if (/color:\s*[^;]+/i.test(style)) {
+        style = style.replace(/color:\s*[^;]+/i, `color: ${newColor}`);
+      } else {
+        style = style ? `${style}; color: ${newColor}` : `color: ${newColor}`;
+      }
+      
+      // Ensure text-decoration matches standard link style if likely intended
+      if (!style.includes("text-decoration")) {
+          style += "; text-decoration: underline";
+      }
+      
+      anchors[index].setAttribute("style", style);
     }
 
     const updatedHtml = doc.body.innerHTML;
@@ -445,7 +468,7 @@ export function PropertiesPanel({
                       <Input
                         value={link.text}
                         onChange={(e) =>
-                          updateLink(index, link.href, e.target.value)
+                          updateLink(index, link.href, e.target.value, link.color)
                         }
                       />
                     </div>
@@ -454,9 +477,23 @@ export function PropertiesPanel({
                       <Input
                         value={link.href}
                         onChange={(e) =>
-                          updateLink(index, e.target.value, link.text)
+                          updateLink(index, e.target.value, link.text, link.color)
                         }
                       />
+                    </div>
+                    <div>
+                      <Label>Link Color</Label>
+                      <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            value={link.color}
+                            onChange={(e) =>
+                              updateLink(index, link.href, link.text, e.target.value)
+                            }
+                            className="w-12 h-8 p-1 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-500">{link.color}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

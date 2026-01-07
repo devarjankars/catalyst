@@ -1,12 +1,12 @@
 export interface EmailComponent {
   id: string
   type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2"
-  category : "basic" | "custom" | "user-created"
+  category: "basic" | "custom" | "user-created"
 
   // Custom component properties
   isCustom?: boolean
   name?: string
-  html?:string
+  html?: string
 
   // Common properties
   padding?: string
@@ -56,10 +56,10 @@ export interface EmailComponent {
   imageSrc?: string
   imageAlt?: string
 
- //footer-links properties
+  //footer-links properties
   links?: { text: string; href: string }[]
-  logoA : {altTex : string,href : string,imgSrc : string}
-  logoB : {altTex : string,href : string,imgSrc : string}
+  logoA: { altTex: string, href: string, imgSrc: string }
+  logoB: { altTex: string, href: string, imgSrc: string }
 
   //isi properties
   importantSafetyInformation?: {
@@ -67,7 +67,7 @@ export interface EmailComponent {
       title: string
       items: {
         isBullet: boolean
-        content: string 
+        content: string
       }[]
     }[]
   }
@@ -77,22 +77,23 @@ export interface EmailComponent {
   discSize?: string
   listItems?: string[]
   spaceBetweenItems?: string
-  
+
   // footer tokens properties
   footerTokens?: {
-  regards?: string
-  userPhoto?: string
-  userName?: string
-  userEmailAddress?: string
-  userPhone?: string
-  company?: string
+    regards?: string
+    userPhoto?: string
+    userName?: string
+    userEmailAddress?: string
+    userPhone?: string
+    company?: string
   }
 
-   footerText?: {
-        reg?: string 
-        year?: string
-        rights?: string
-        jobcode?: string
-      },
+  footerText?: {
+    reg?: string
+    year?: string
+    address?: string
+    rights?: string
+    jobcode?: string
+  },
   // Divider properties (backgroundColor already defined above)
 }

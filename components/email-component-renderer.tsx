@@ -655,7 +655,7 @@ export function EmailComponentRenderer({
           <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000]">
             <div>{component.footerTokens?.regards}</div>
             <div>{component.footerTokens?.userName}</div>
-            <div>{component.footerTokens?.company}</div>
+            <div dangerouslySetInnerHTML={{__html : component.footerTokens?.company}}></div>
             {/* <div>{component.footerTokens?.userPhoto}</div> */}
             <div>{component.footerTokens?.userPhone}</div>
             <div>{component.footerTokens?.userEmailAddress}</div>
@@ -680,6 +680,7 @@ export function EmailComponentRenderer({
             />
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.year}</div>
+            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.address}</div>
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.rights}  <RichTextEditor
               isSelected={isSelected}
               value={component.footerText?.jobcode || ""}

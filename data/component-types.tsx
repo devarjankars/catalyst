@@ -270,7 +270,7 @@ export const componentTypes = [
       footerTokens: {
         regards : "{{customText[Regards,|Sincerely,|Thank you,|Best,]}}",
         userPhoto : "{{userPhoto}}",
-        company : "Stemline, a Menarini Group Company, Representative",
+        company : "An ORSERDU<sup>®</sup> Representative",
         userName : "{{userName}}",
         userEmailAddress : "{{userEmailAddress}}",
         userPhone : "{{User.Phone}}"
@@ -290,7 +290,8 @@ export const componentTypes = [
   defaultProps: {
       footerText: {
         reg : "ORSERDU is a registered trademark of the Menarini Group.",
-        year : "© 2025 Stemline Therapeutics, Inc., a Menarini Group Company.",
+        year : "© 2026 Stemline Therapeutics, Inc., a Menarini Group Company.",
+        address : "750​ Lex​ington​ Ave​nue,​ 4​th​ Floor,​ New​ York,​ NY​ 10022.",
         rights : "All rights reserved.",
         jobcode : "0X/2X MAT-US-ELA-00XXX",
       },
