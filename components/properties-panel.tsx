@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert } from "lucide-react";
 import PaddingInput from "./padding -inputs";
+import { useEmailBuilderStore } from "@/store/email-builder-store";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -29,6 +30,7 @@ export function PropertiesPanel({
   onSaveAsCustom,
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
+  const { preHeaderText, setPreheader } = useEmailBuilderStore();
   if (!component) {
     return (
       <div className="text-center text-gray-500 py-8">
@@ -416,6 +418,24 @@ export function PropertiesPanel({
                 value={component.color || "#000000"}
                 onChange={(e) => onUpdateComponent({ color: e.target.value })}
               />
+            </div>
+            <div>
+              <Label>Font weight</Label>
+              <Select
+                value={component.fontWeight || "normal"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ fontWeight: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="lighter">Lighter</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background color</Label>
@@ -1200,12 +1220,26 @@ export function PropertiesPanel({
               <Label htmlFor="alt">Alt Text</Label>
               <Input
                 id="alt"
-                value={component.alt || ""}
-                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
-                placeholder="Image description"
+                value={component.imageAlt || ""}
+                onChange={(e) => onUpdateComponent({ imageAlt: e.target.value })}
+                placeholder="Image alt text"
               />
             </div>
-            </div>);
+
+            <div className="border-t pt-4">
+              <Label htmlFor="preheader">Preheader Text</Label>
+              <Input
+                id="preheader"
+                value={preHeaderText || ""}
+                onChange={(e) => setPreheader(e.target.value)}
+                placeholder="Enter preheader text..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Visible in email clients after the subject line.
+              </p>
+            </div>
+          </div>
+        );
       case "chevron-divider":
         return (
           <div className="space-y-4">
@@ -1222,8 +1256,8 @@ export function PropertiesPanel({
               <Label htmlFor="alt">Alt Text</Label>
               <Input
                 id="alt"
-                value={component.alt || ""}
-                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                value={component.imageAlt || ""}
+                onChange={(e) => onUpdateComponent({ imageAlt: e.target.value })}
                 placeholder="Image description"
               />
             </div>
@@ -1323,7 +1357,7 @@ export function PropertiesPanel({
         <div>
           <Label htmlFor="padding">Padding</Label>
           <PaddingInput
-          value={component.padding || "0 16px 10px 16px"}
+          value={component.padding || "0 20px 10px 20px"}
           onChange={(value) => onUpdateComponent({ padding: value })}
           />
         </div>

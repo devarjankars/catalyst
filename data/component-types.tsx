@@ -62,7 +62,7 @@ export const componentTypes = [
     defaultProps: {
       children: [],
       backgroundColor: "#ffffff",
-      padding: "20px",
+      padding: "0px 20px 0 20px",
       borderRadius: "0px",
       direction: "column",
       maxWidth: "100%",
@@ -228,7 +228,7 @@ export const componentTypes = [
   icon : Wallpaper,
   defaultProps: {
     src: "/header-placeholder.png",
-    alt: "Header Image",
+    imageAlt: "Header Image",
     width: "100%",
     height: "auto",
     maxWidth: "600px",
@@ -241,7 +241,7 @@ export const componentTypes = [
   icon : Wallpaper,
   defaultProps: {
     src: "/chevron.png",
-    alt: "divider Image",
+    imageAlt: "divider Image",
     width: "100%",
     height: "auto",
     maxWidth: "600px",

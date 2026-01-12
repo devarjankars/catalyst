@@ -102,6 +102,46 @@ export default function EmailBuilder() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasComponentChanges, hasUnsavedTemplate]);
 
+const PLACEHOLDER_IMAGE = "/placeholder.svg?";
+
+function replaceImagesInComponents(components: any[]): any[] {
+  return components.map((comp) => {
+    const newComp = { ...comp };
+
+    // Handle standard image components and others with src
+    if (
+      (newComp.type === "image" ||
+        newComp.type === "header-image" ) &&
+      newComp.src
+    ) {
+      newComp.src = PLACEHOLDER_IMAGE;
+    }
+
+    // Handle CTA button images
+    if (newComp.type === "cta-button" && newComp.imageSrc) {
+      newComp.imageSrc = PLACEHOLDER_IMAGE;
+    }
+
+    // Handle footer tokens user photo
+    if (
+      newComp.type === "footer-tokens" &&
+      newComp.footerTokens?.userPhoto
+    ) {
+      newComp.footerTokens = {
+        ...newComp.footerTokens,
+        userPhoto: PLACEHOLDER_IMAGE,
+      };
+    }
+
+    // Recursively handle children
+    if (Array.isArray(newComp.children) && newComp.children.length > 0) {
+      newComp.children = replaceImagesInComponents(newComp.children);
+    }
+
+    return newComp;
+  });
+}
+
   const loadTemplate = async (id: string) => {
     setLoading(true);
     try {
@@ -109,7 +149,12 @@ export default function EmailBuilder() {
       if (template) {
         if (isCopy) {
           // Start working copy - doesn't save until user explicitly saves
-          startWorkingCopy(template);
+          // Replace images with placeholders for copies
+          const templateWithPlaceholders = {
+            ...template,
+            components: replaceImagesInComponents(template.components),
+          };
+          startWorkingCopy(templateWithPlaceholders);
         } else if (isEdit) {
           // Edit existing template
           setCurrentTemplate(template);

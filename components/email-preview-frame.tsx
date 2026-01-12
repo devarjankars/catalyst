@@ -14,15 +14,6 @@ const EmailPreview = forwardRef<HTMLIFrameElement, EmailPreviewProps>(
     // Expose the iframe ref to parent components
     useImperativeHandle(ref, () => iframeRef.current!)
 
-    const adjustHeight = () => {
-      const iframe = iframeRef.current
-      // if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-      //   // Reset height to allow shrinking
-      //   iframe.style.height = '0px'; 
-      //   const newHeight = iframe.contentDocument.documentElement.scrollHeight
-      //   iframe.style.height = `${newHeight}px`
-      // }
-    }
 
     useEffect(() => {
       if (!iframeRef.current) return
@@ -35,15 +26,15 @@ const EmailPreview = forwardRef<HTMLIFrameElement, EmailPreviewProps>(
       doc.close()
       
       // Delay slightly to ensure rendering is complete
-      setTimeout(adjustHeight, 50)
+      // setTimeout(adjustHeight, 50)
       
       // Add load listener for images etc
-      iframeRef.current.onload = adjustHeight
+      // iframeRef.current.onload = adjustHeight
     }, [html])
 
     // Update height when width changes (mobile/desktop toggle)
     useEffect(() => {
-        setTimeout(adjustHeight, 50)
+        // setTimeout(adjustHeight, 50)
     }, [width])
 
     return (

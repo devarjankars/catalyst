@@ -35,6 +35,7 @@ interface EmailBuilderState {
   originalTemplate: EmailTemplate | null
   components: EmailComponent[]
   originalComponents: EmailComponent[]
+  preHeaderText : string
 
   // Working copy state (for template copies that aren't saved yet)
   isWorkingCopy: boolean
@@ -79,6 +80,7 @@ interface EmailBuilderState {
   addCustomComponent: (component: EmailComponent) => void
   loadCustomComponents: (components: EmailComponent[]) => void
   deleteCustomComponent: (id: string) => void
+  setPreheader : (preheaderTest : string) => void
 
   // State management
   setLoading: (loading: boolean) => void
@@ -110,6 +112,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         isNewTemplate: false,
         loading: false,
         saving: false,
+        preHeaderText: "",
 
         // Template actions
         setCurrentTemplate: (template) => {
@@ -119,6 +122,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             workingCopySource: null,
             hasUnsavedTemplate: false,
             isNewTemplate: false,
+            preHeaderText : '',
           })
           get().checkForChanges()
         },
@@ -136,6 +140,10 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         setOriginalComponents: (components) => {
           set({ originalComponents: components })
           get().checkForChanges()
+        },
+
+        setPreheader : (preheadertext) => {
+            set({preHeaderText : preheadertext})
         },
 
         // Working copy actions

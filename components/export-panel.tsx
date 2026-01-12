@@ -6,7 +6,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Download, FileText, Upload } from "lucide-react"
-import { generateEmailHTML } from "@/lib/email-generator"
 import { exportToZip } from "@/lib/export-utils"
 import type { EmailComponent } from "@/types/email-builder"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
@@ -19,14 +18,14 @@ interface ExportPanelProps {
 export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const {currentTemplate} = useEmailBuilderStore()
+  const { currentTemplate, preHeaderText } = useEmailBuilderStore()
 
   const handleExport = async () => {
     if (!canvasRef.current) return
 
     setIsExporting(true)
     try {
-      await exportToZip(components, canvasRef.current, currentTemplate?.name)
+      await exportToZip(components, canvasRef.current, currentTemplate?.name,preHeaderText)
       setIsOpen(false) // Close the dialog after successful export
     } catch (error) {
       console.error("Export failed:", error)

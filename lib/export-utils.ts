@@ -12,7 +12,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   return await response.blob()
 }
 
-export async function exportToZip(components: EmailComponent[], canvasElement: HTMLElement, templateName: string = "email-template") {
+export async function exportToZip(components: EmailComponent[], canvasElement: HTMLElement, templateName: string = "email-template", preHeaderText?: string) {
   const zip = new JSZip()
 
   // Create root folder with template name (remove .zip if present)
@@ -21,7 +21,7 @@ export async function exportToZip(components: EmailComponent[], canvasElement: H
   const imageFolder = rootFolder!.folder("images")
 
   // Step 1: Generate HTML
-  let html = generateEmailHTML(components)
+  let html = generateEmailHTML(components, preHeaderText)
 
   // Step 2: Find all image srcs (firebase links or any external)
   const imageRegex = /<img[^>]+src="([^">]+)"/g

@@ -32,7 +32,7 @@ export async function exportToPDF(
             const clone = style.cloneNode(true) as Element
             element.prepend(clone)
             injectedStyles.push(clone)
-        })
+        })        
 
         // Try to get the actual content height to avoid massive whitespace
         const emailContainer = iframeDoc.querySelector('.email-container')
@@ -48,7 +48,7 @@ export async function exportToPDF(
         const opt = {
             margin: 0,
             filename: pdfFileName,
-            image: { type: 'jpeg' as const, quality: 0.98 },
+            image: { type: 'png' as const, quality: 0.98 },
             html2canvas: {
                 scale: 2,
                 useCORS: true,
