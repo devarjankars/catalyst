@@ -29,10 +29,11 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   const handleInput = () => {
     if (editorRef.current) {
       setTimeout(() => {
-
-        onChange(editorRef?.current.innerHTML)
+        if (editorRef.current) {
+          onChange(editorRef.current.innerHTML)
+        }
       }, 1000);
-    }else{
+    } else {
       console.log("editorRef.current is null");
     }
   }
@@ -221,6 +222,12 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   handleInput()
 }
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData("text/plain")
+    document.execCommand("insertText", false, text)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
@@ -250,6 +257,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
         contentEditable
         onInput={handleInput} 
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
           // Delay so that clicks on toolbar don't immediately hide

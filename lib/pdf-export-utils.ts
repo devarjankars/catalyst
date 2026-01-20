@@ -23,8 +23,17 @@ export async function exportToPDF(
         // Use body to ensure links are clickable (documentElement offsets can break html2pdf links)
         const element = iframeDoc.body
 
+        // Force the capture width on the body to ensure media queries trigger correctly
+        const width = viewMode === "desktop" ? 600 : 375
+        const originalBodyWidth = element.style.width
+        const originalBodyOverflow = element.style.overflow
+        const originalMinWidth = element.style.minWidth
+
+        element.style.width = `${width}px`
+        element.style.minWidth = `${width}px`
+        element.style.overflow = "visible"
+
         // Temporarily inject styles from head to body to ensure html2canvas captures them
-        // (This fixes the issue where mobile styles were lost when capturing body)
         const styles = iframeDoc.head.querySelectorAll('style, link[rel="stylesheet"]')
         const injectedStyles: Element[] = []
 
@@ -32,17 +41,30 @@ export async function exportToPDF(
             const clone = style.cloneNode(true) as Element
             element.prepend(clone)
             injectedStyles.push(clone)
-        })        
+        })
+
+        // Inject centering style for email tables
+        const centeringStyle = iframeDoc.createElement('style')
+        centeringStyle.textContent = `
+            body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: ${width}px !important; 
+            }
+            .email-container, table[align="center"] { 
+                margin: 0 auto !important; 
+            }
+        `
+        element.prepend(centeringStyle)
+        injectedStyles.push(centeringStyle)
 
         // Try to get the actual content height to avoid massive whitespace
         const emailContainer = iframeDoc.querySelector('.email-container')
 
         // Calculate height: prioritize email container, then body, then document
         let contentHeight = emailContainer ? emailContainer.scrollHeight : element.scrollHeight
-        // Add a small buffer just in case
-        contentHeight += 20
-
-        const width = viewMode === "desktop" ? 600 : 375
+        // Add a buffer to prevent cutting off content
+        contentHeight += 40
 
         // Options for html2pdf
         const opt = {
@@ -53,9 +75,8 @@ export async function exportToPDF(
                 scale: 2,
                 useCORS: true,
                 logging: false,
+                width: width,
                 windowWidth: width,
-                // Important: clear the height so it doesn't force a specific canvas size unnecessarily
-                // unless we want to clip it. limiting windowHeight can help if issues persist.
             },
             jsPDF: {
                 unit: 'px' as const,
@@ -63,14 +84,18 @@ export async function exportToPDF(
                 orientation: 'portrait' as const,
                 hotfixes: ["px_scaling"]
             },
-            enableLinks: true
+            enableLinks: true,
+            pagebreak: { mode: 'avoid-all' },
         }
 
         try {
             await html2pdf().set(opt).from(element).save()
         } finally {
-            // Cleanup injected styles
+            // Cleanup injected styles and restore original body styles
             injectedStyles.forEach(style => style.remove())
+            element.style.width = originalBodyWidth
+            element.style.minWidth = originalMinWidth
+            element.style.overflow = originalBodyOverflow
         }
 
         return true

@@ -15,6 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { ImageGallery } from "./image-gallery"
 
 interface ComponentPaletteProps {
   onAddComponent: (component: EmailComponent, index?: number) => void
@@ -112,6 +113,12 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
         className="w-full"
         defaultValue="item-1"
       >
+        <AccordionItem value="item-gallery">
+          <AccordionTrigger>Images</AccordionTrigger>
+          <AccordionContent className="p-0">
+            <ImageGallery />
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="item-1">
           <AccordionTrigger>Basic Components</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">

@@ -56,6 +56,7 @@ export default function EmailBuilder() {
     markAsNewTemplate,
     resetComponentChanges,
     loadCustomComponents,
+    loadTemplateImages,
     clearAll,
   } = useEmailBuilderStore();
 
@@ -79,6 +80,10 @@ export default function EmailBuilder() {
     const getCustomComponents = async () => {
       const customComponents = await firebaseService.getCustomComponents()
        loadCustomComponents(customComponents)
+    }
+
+    if (templateId) {
+        loadTemplateImages(templateId)
     }
 
     getCustomComponents();

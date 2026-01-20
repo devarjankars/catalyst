@@ -35,7 +35,7 @@ interface EmailBuilderState {
   originalTemplate: EmailTemplate | null
   components: EmailComponent[]
   originalComponents: EmailComponent[]
-  preHeaderText : string
+  preHeaderText: string
 
   // Working copy state (for template copies that aren't saved yet)
   isWorkingCopy: boolean
@@ -45,6 +45,7 @@ interface EmailBuilderState {
   selectedComponent: string | null
   previewMode: boolean
   customComponents: EmailComponent[]
+  templateImages: string[]
 
   // Change tracking - separate component changes from template saving
   hasComponentChanges: boolean // Changes to components (add/edit/delete/move)
@@ -69,7 +70,7 @@ interface EmailBuilderState {
 
   // Component actions
   addComponent: (component: EmailComponent, index?: number) => void
-  updateComponent: (id: string, updates: Partial<EmailComponent>,parentId : string | null) => void
+  updateComponent: (id: string, updates: Partial<EmailComponent>, parentId: string | null) => void
   deleteComponent: (id: string) => void
   moveComponent: (dragIndex: number, hoverIndex: number) => void
   duplicateComponent: (id: string) => void
@@ -80,7 +81,11 @@ interface EmailBuilderState {
   addCustomComponent: (component: EmailComponent) => void
   loadCustomComponents: (components: EmailComponent[]) => void
   deleteCustomComponent: (id: string) => void
-  setPreheader : (preheaderTest : string) => void
+  setPreheader: (preheaderTest: string) => void
+  setTemplateImages: (images: string[]) => void
+  loadTemplateImages: (templateId: string) => Promise<void>
+  addTemplateImage: (imageUrl: string) => void
+  removeTemplateImage: (imageUrl: string) => void
 
   // State management
   setLoading: (loading: boolean) => void
@@ -113,6 +118,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         loading: false,
         saving: false,
         preHeaderText: "",
+        templateImages: [],
 
         // Template actions
         setCurrentTemplate: (template) => {
@@ -122,8 +128,12 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             workingCopySource: null,
             hasUnsavedTemplate: false,
             isNewTemplate: false,
-            preHeaderText : '',
+            preHeaderText: '',
+            templateImages: [],
           })
+          if (template?.id) {
+            get().loadTemplateImages(template.id)
+          }
           get().checkForChanges()
         },
 
@@ -142,12 +152,12 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           get().checkForChanges()
         },
 
-        setPreheader : (preheadertext) => {
-            set({preHeaderText : preheadertext})
+        setPreheader: (preheadertext) => {
+          set({ preHeaderText: preheadertext })
         },
 
         // Working copy actions
-        startWorkingCopy: (sourceTemplate) => { 
+        startWorkingCopy: (sourceTemplate) => {
           set({
             isWorkingCopy: true,
             workingCopySource: sourceTemplate,
@@ -205,10 +215,10 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         updateComponent: (id, updates, parentId = null) => {
           // console.log("Updating component:", id,"under parentId:", parentId);
-          
-        const { components } = get();
 
-        // Recursive function to update component
+          const { components } = get();
+
+          // Recursive function to update component
           const updateInTree = (items) => {
             return items.map((comp) => {
               // If parentId is given, look only inside that component's children
@@ -283,24 +293,44 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           console.log("Loading custom components:", components)
           set({ customComponents: components })
         },
-        addCustomComponent: async(component) => {
+        addCustomComponent: async (component) => {
           const { customComponents } = get()
           console.log("Adding custom component:");
-          if (!Array.isArray(customComponents)){
+          if (!Array.isArray(customComponents)) {
             console.error("Custom components is not an array, resetting to empty array.");
             const createComponent = await firebaseService.saveCustomComponent(component)
             set({ customComponents: [createComponent] });
-          }else{
+          } else {
             const createComponent = await firebaseService.saveCustomComponent(component)
-             set({ customComponents: [...customComponents, createComponent] })
+            set({ customComponents: [...customComponents, createComponent] })
           }
         },
         deleteCustomComponent: async (id) => {
           const { customComponents } = get()
           console.log("Deleting custom component with ID:", id);
-          
+
           await firebaseService.deleteCustomComponent(id)
           set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
+        },
+
+        setTemplateImages: (images) => set({ templateImages: images }),
+
+        loadTemplateImages: async (templateId) => {
+          if (!templateId) return
+          const images = await firebaseService.getTemplateImages(templateId)
+          set({ templateImages: images })
+        },
+
+        addTemplateImage: (imageUrl) => {
+          const { templateImages } = get()
+          if (!templateImages.includes(imageUrl)) {
+            set({ templateImages: [...templateImages, imageUrl] })
+          }
+        },
+
+        removeTemplateImage: (imageUrl) => {
+          const { templateImages } = get()
+          set({ templateImages: templateImages.filter((url) => url !== imageUrl) })
         },
 
         // State management
@@ -321,11 +351,11 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         resetComponentChanges: () => {
           const { originalComponents, selectedComponent } = get()
-          
+
           // Check if the currently selected component still exists in the original components
           const selectedComponentExists = originalComponents.some(comp => comp.id === selectedComponent) ||
             originalComponents.some(comp => comp.children?.some(child => child.id === selectedComponent));
-          
+
           set({
             components: [...originalComponents],
             hasComponentChanges: false,

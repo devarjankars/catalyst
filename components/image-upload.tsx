@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, X, Loader2 } from "lucide-react"
+import { Upload, X, Loader2, Trash } from "lucide-react"
 import { firebaseService } from "@/services/firebase-service"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
 import { toast } from "sonner"
@@ -17,7 +17,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<string>(currentImage || "")
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { currentTemplate } = useEmailBuilderStore()
+  const { currentTemplate, addTemplateImage } = useEmailBuilderStore()
 
   const acceptedFileTypes = ["image/jpeg", "image/png"]
  
@@ -66,6 +66,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
 
       setUploadedImage(imageUrl)
       onImageUpload(imageUrl)
+      addTemplateImage(imageUrl)
       
       // Reset the file input so the same file can be selected again
       if (fileInputRef.current) {
@@ -85,14 +86,8 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   }
 
   const handleRemoveImage = async () => {
-    if (uploadedImage && uploadedImage.includes("firebase")) {
-      try {
-        await firebaseService.deleteImage(uploadedImage)
-      } catch (error) {
-        console.error("Failed to delete image:", error)
-      }
-    }
-
+    // Strategy: Only unlink from the component property.
+    // We do NOT delete from Firebase here because other components might be using the same image.
     setUploadedImage("")
     onImageUpload("")
     if (fileInputRef.current) {
@@ -130,7 +125,7 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
             onClick={handleRemoveImage}
             disabled={isUploading}
           >
-            <X className="w-3 h-3" />
+            <Trash className="w-3 h-3" />
           </Button>
         </div>
       ) : (

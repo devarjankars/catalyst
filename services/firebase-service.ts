@@ -379,6 +379,27 @@ class FirebaseService {
     }
   }
 
+  async getTemplateImages(templateId: string): Promise<string[]> {
+    if (!this.isFirebaseAvailable || !storage || !templateId) {
+      return [];
+    }
+
+    try {
+      const folderPath = `${this.imagesPath}/${templateId}`;
+      const folderRef = ref(storage, folderPath);
+      const listResult = await listAll(folderRef);
+
+      const urlPromises = listResult.items.map(async (itemRef) => {
+        return await getDownloadURL(itemRef);
+      });
+
+      return await Promise.all(urlPromises);
+    } catch (error) {
+      console.error("Failed to fetch template images:", error);
+      return [];
+    }
+  }
+
   // Image operations
   async uploadImage(file: File, templateId?: string): Promise<string> {
     if (!this.isFirebaseAvailable || !storage) {
