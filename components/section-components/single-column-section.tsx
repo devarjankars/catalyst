@@ -35,11 +35,14 @@ export default function SingleColumnSection({sectionId,component,renderSectionCh
                 renderChildren={() => (
                     <div className="flex flex-col gap-2 ">
                     {(component.children || []).map(
-                        (child, childIndex) => (
-                        <div key={child.id} >
-                            {renderSectionChild(child,childIndex,sectionId,)}
-                        </div>
-                        )
+                        (child, childIndex) => {
+                            if (!child) return null;
+                            return (
+                                <div key={child.id} >
+                                    {renderSectionChild(child,childIndex,sectionId,)}
+                                </div>
+                            )
+                        }
                     )}
                     </div>
                 )}

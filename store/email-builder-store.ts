@@ -35,7 +35,7 @@ interface EmailBuilderState {
   originalTemplate: EmailTemplate | null
   components: EmailComponent[]
   originalComponents: EmailComponent[]
-  preHeaderText: string
+  preheaderText: string
 
   // Working copy state (for template copies that aren't saved yet)
   isWorkingCopy: boolean
@@ -70,7 +70,7 @@ interface EmailBuilderState {
 
   // Component actions
   addComponent: (component: EmailComponent, index?: number) => void
-  updateComponent: (id: string, updates: Partial<EmailComponent>, parentId: string | null) => void
+  updateComponent: (id: string, updates: Partial<EmailComponent>, parentId?: string | null) => void
   deleteComponent: (id: string) => void
   moveComponent: (dragIndex: number, hoverIndex: number) => void
   duplicateComponent: (id: string) => void
@@ -96,6 +96,10 @@ interface EmailBuilderState {
 
   // Change detection
   checkForChanges: () => void
+
+  // Helper methods
+  deepCloneComponent: (component: EmailComponent) => EmailComponent
+  deepCloneComponents: (components: EmailComponent[]) => EmailComponent[]
 }
 
 export const useEmailBuilderStore = create<EmailBuilderState>()(
@@ -117,7 +121,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         isNewTemplate: false,
         loading: false,
         saving: false,
-        preHeaderText: "",
+        preheaderText: "",
         templateImages: [],
 
         // Template actions
@@ -128,7 +132,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             workingCopySource: null,
             hasUnsavedTemplate: false,
             isNewTemplate: false,
-            preHeaderText: '',
+            preheaderText: template?.preheaderText || '',
             templateImages: [],
           })
           if (template?.id) {
@@ -153,7 +157,12 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         setPreheader: (preheadertext) => {
-          set({ preHeaderText: preheadertext })
+          set({ preheaderText: preheadertext })
+          const { currentTemplate } = get()
+          if (currentTemplate) {
+            set({ currentTemplate: { ...currentTemplate, preheaderText: preheadertext } })
+          }
+          get().checkForChanges()
         },
 
         // Working copy actions
@@ -219,12 +228,12 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const { components } = get();
 
           // Recursive function to update component
-          const updateInTree = (items) => {
+          const updateInTree = (items: any[]): any[] => {
             return items.map((comp) => {
               // If parentId is given, look only inside that component's children
               if (comp.id === parentId && Array.isArray(comp.children)) {
                 console.log("Updating child component:", id, "inside parent:", parentId);
-                const updatedChildren = comp.children.map((child) =>
+                const updatedChildren = comp.children.map((child: any) =>
                   child.id === id ? { ...child, ...updates } : child
                 );
                 return { ...comp, children: updatedChildren };
@@ -383,9 +392,10 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const { components, originalComponents, isWorkingCopy, isNewTemplate } = get()
 
           const componentsChanged = JSON.stringify(components) !== JSON.stringify(originalComponents)
+          const preheaderChanged = get().preheaderText !== (get().originalTemplate?.preheaderText || "")
 
           set({
-            hasComponentChanges: componentsChanged,
+            hasComponentChanges: componentsChanged || preheaderChanged,
             hasUnsavedTemplate: isWorkingCopy || isNewTemplate,
           })
         },

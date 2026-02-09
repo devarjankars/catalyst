@@ -10,4 +10,5 @@ export interface EmailTemplate {
   createdAt: Date
   updatedAt: Date
   isUserCreated?: boolean
+  preheaderText?: string
 }

@@ -4,9 +4,11 @@ import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 
 function generateComponentHTML(component: EmailComponent): string {
+  if (!component) return ""; // Defensive check
   switch (component.type) {
     case "section":
       const childrenHTML = (component.children || [])
+        .filter((child) => !!child) // Filter out undefined children
         .map((child) => generateComponentHTML(child))
         .join("");
 
@@ -68,10 +70,13 @@ function generateComponentHTML(component: EmailComponent): string {
               background-color:${component.backgroundColor};
             "
           >
-            ${component.columns && component.columns > 1 ?
-          generateColumnHtml({ component, generateComponentHTML }) :
-
-          generateColumnHtml({ component, generateComponentHTML, childHtml: childrenHTML })
+            ${component.columns && component.columns > 1
+          ? generateColumnHtml({ component, generateComponentHTML })
+          : generateColumnHtml({
+            component,
+            generateComponentHTML,
+            childHtml: childrenHTML,
+          })
         }
           </table>
         </td>
@@ -124,7 +129,6 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "image": {
-
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
@@ -252,7 +256,6 @@ function generateComponentHTML(component: EmailComponent): string {
       </tbody>
     </table>
   `;
-
     }
     case "custom":
       return `${component.html}`;
@@ -261,7 +264,6 @@ function generateComponentHTML(component: EmailComponent): string {
       const ctaDisplay = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(ctaDisplay);
-
 
       return `
     <table
@@ -281,8 +283,7 @@ function generateComponentHTML(component: EmailComponent): string {
             <table width="${(component.width || "470").toString().replace("px", "")}" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} align="center" cellpadding="0" cellspacing="0" border="0"  ${innerStyle ? `style="${innerStyle}"` : ""}>
               <tr>
                 <td width="${(component.width || "470").toString().replace("px", "")}" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-cell"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} align="center"  ${innerStyle ? `style="${innerStyle}"` : ""} style="mso-line-height-rule: exactly;">
-                      <a href="${component.href || "#"
-        }"  target="_blank">
+                      <a href="${component.href || "#"}"  target="_blank">
                         <img
                           width="${(component.width || "470").toString().replace("px", "")}"
                           src="${component.imageSrc || "/cta-placeholder.png"}"
@@ -314,7 +315,7 @@ function generateComponentHTML(component: EmailComponent): string {
         .map(
           (link, index) => `
       <a target="_blank" href="${link.href || "#"}" style="color: ${component.color || "#0463c1"
-            }; text-decoration: underline; font-size: ${component.fontSize || "14px"
+            }; text-decoration: underline; font-size: ${component.fontSize || "12px"
             }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
         ${link.text || "Link"}
       </a>
@@ -326,7 +327,7 @@ function generateComponentHTML(component: EmailComponent): string {
                 : `<span  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
               : ""
             }
-    `
+    `,
         )
         .join("");
       return `
@@ -374,7 +375,7 @@ function generateComponentHTML(component: EmailComponent): string {
                 : `<span  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
               : ""
             }
-    `
+    `,
         )
         .join("");
       return `
@@ -404,16 +405,18 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "footer-link-2":
-      const linkHtml = component.links?.map((link, index) => {
-        return `
+      const linkHtml = component.links
+        ?.map((link, index) => {
+          return `
           <td class="footer-link-col" align={${index == 0 ? "left" : "center"}} valign="top" width={${index == 0 ? "30%" : "25%"}} style="padding: 5px;">
             <a href="${link.href}" target="_blank"
               style="color: #0463c1; text-decoration: underline; font-family: Arial, sans-serif; font-size: 12px;">
               ${link.text}
             </a>
           </td>
-         `.trim()
-      }).join("")
+         `.trim();
+        })
+        .join("");
 
       return `
               <table 
@@ -486,9 +489,7 @@ function generateComponentHTML(component: EmailComponent): string {
                       </tr>
                     </tbody>
                   </table>
-      `.trim()
-
-
+      `.trim();
 
     case "isi": {
       return `
@@ -525,10 +526,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tbody>
                                                    <tr>
                                                       <td class="yellow" valign="top" width="7" v_align="top"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold"
@@ -556,10 +554,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tbody>
                                                    <tr>
                                                       <td class="yellow" valign="top" width="7" v_align="top"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold" style="font-weight: 700">Embryo-Fetal
@@ -601,10 +596,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tbody>
                                                    <tr>
                                                       <td class="yellow" valign="top" width="7" v_align="top"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold" style="font-weight: 700">Serious adverse
@@ -632,10 +624,8 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tbody>
                                                    <tr>
                                                       <td class="yellow" valign="top" width="7" v_align="top"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
+                                                      
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold" style="font-weight: 700">The most common
@@ -675,11 +665,9 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td class="yellow" valign="top" width="7" v_align="middle"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                      <td class="yellow" valign="top" width="7" align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
+                                                    
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold" style="font-weight: 700">Concomitant use
@@ -714,11 +702,9 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td class="yellow" valign="top" width="7" v_align="middle"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                      <td class="yellow" valign="top" width="7" align="top"
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
+                                                      
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
                                                          <span class="f_bold"
@@ -743,10 +729,8 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tbody>
                                                    <tr>
                                                       <td class="yellow" valign="top" width="7" v_align="middle"
-                                                         symbol="&amp;bull;" style="color: #6BCDB2">•</td>
-                                                      <td width="3" height="1"
-                                                         style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">
-                                                         &nbsp; </td>
+                                                         symbol="&amp;bull;" style="color: #6BCDB2;padding: 0 5px 0 0">•</td>
+                                                     
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px; ">
                                                          <span class="f_bold" style="font-weight: 700">Hepatic
@@ -790,8 +774,6 @@ function generateComponentHTML(component: EmailComponent): string {
           `;
     }
 
-
-
     case "bullet-list": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -801,7 +783,6 @@ function generateComponentHTML(component: EmailComponent): string {
        color: ${component.markerColor || "#000000"};
        font-size: ${component.discSize || "16px"};
        line-height: ${component.lineHeight || "18px"};
-       padding-bottom: 3px;
       ${innerStyle ? innerStyle : ""}
       background-color: ${component.backgroundColor}
       `.trim();
@@ -828,7 +809,7 @@ function generateComponentHTML(component: EmailComponent): string {
           </td>
         </tr>
         <tr><td bgcolor="${component.backgroundColor || "#ffffff"}" height="${component.spaceBetweenItems?.slice(0, 3) || 5}" style=" font-size: 0px; line-height: ${component.spaceBetweenItems || 5}px; mso-line-height-rule: exactly;background-color:${component.backgroundColor || "#ffffff"} ">&nbsp; </td></tr>
-      `
+      `,
         )
         .join("");
 
@@ -856,7 +837,6 @@ function generateComponentHTML(component: EmailComponent): string {
       </tbody>
     </table>
   `;
-
     }
 
     case "header-image": {
@@ -934,7 +914,6 @@ function generateComponentHTML(component: EmailComponent): string {
       `;
     }
     case "Salutation": {
-
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
@@ -971,7 +950,6 @@ function generateComponentHTML(component: EmailComponent): string {
       `;
     }
     case "footer-tokens": {
-
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
@@ -1033,7 +1011,6 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "orsedu-footer": {
-
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
@@ -1067,7 +1044,7 @@ function generateComponentHTML(component: EmailComponent): string {
           <td 
          ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""}
           align="left"  
-          style="padding: ${component.padding || "0 0 0 17px"}; ${(innerStyle || "")}; mso-line-height-rule: exactly;" 
+          style="padding: ${component.padding || "0 0 0 17px"}; ${innerStyle || ""}; mso-line-height-rule: exactly;" 
           width="${(component.width || "200").toString().replace("px", "")}">
             <img
               width="${(component.width || "200").toString().replace("px", "")}"
@@ -1107,7 +1084,7 @@ function generateComponentHTML(component: EmailComponent): string {
             <tr>
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
         }' style="padding: ${component.padding || "0 20px 0px 20px"}; ${itemStyle}">
-                 ${component.footerText?.rights || ""} ${component.content || ""}
+                 ${component.footerText?.rights || ""} ${component.footerText?.jobcode || ""}
               </td>
             </tr>
              <tr>
@@ -1116,6 +1093,57 @@ function generateComponentHTML(component: EmailComponent): string {
           </tbody>
         </table>
       `;
+    }
+    case "footer-with-Preferences": {
+      const footerDisplay = (component.displayType ||
+        "all") as EmailComponent["displayType"];
+      const { classAttr, innerStyle } = getDisplayAttributes(footerDisplay);
+      const linksHTML = (component.links || [])
+        .map(
+          (link, index) => `
+      <a target="_blank"   href="${link.href || "#links"}" style="color: ${index === component!.links.length - 1 ? "#FF66CC" : (component.color || "#0563C1")
+            };  font-size: ${component.fontSize || "12px"
+            }; font-family: Arial, sans-serif;text-decoration:underline !important; text-decoration-skip-ink:auto;${innerStyle ? innerStyle : ""}">
+        ${link.text || "Link"}
+      </a>
+      ${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}
+      ${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}
+      ${index < component.links!.length - 1
+              ? index == 1
+                ? `<span class='desktop'  style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
+                : index === component.links!.length - 2 ? `<span class="desktop" style="color:#FF66CC; font-size:12px; ">&nbsp;&nbsp;|&nbsp;</span><span class="mobile" style="color:#FF66CC; font-size:12px;display:none; mso-hide:all;">|&nbsp;</span>` : `<span  style="color:#000000; font-size:12px; ">&nbsp;&nbsp;|&nbsp;</span>`
+              : ""
+            }
+    `,
+        )
+        .join("");
+      return `
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      bgcolor="${component.backgroundColor || "#ffffff"}"
+       ${innerStyle ? `style="${innerStyle}"` : ""}
+     ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
+    >
+      <tbody>
+        <tr>
+          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${component.textAlign || "left"
+        }; background-color: ${component.backgroundColor || "#ffffff"};${innerStyle ? innerStyle : ""}">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td align="${component.textAlign || "left"}" style="color: ${"#FF66CC"}; font-size: ${component.fontSize || "12px"}; line-height: ${component.lineHeight || "12px"};">
+                  ${linksHTML}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `.trim();
     }
     default:
       return "";
@@ -1252,7 +1280,7 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
         @media only screen and (max-width: 480px) {
 
             .mobile {
-                display: block !important;
+                display: inline-block !important;
               }
 
               .desktop {
@@ -1311,6 +1339,7 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
         
         /* Mobile styles */
         @media only screen and (max-width: 600px) {
+
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;

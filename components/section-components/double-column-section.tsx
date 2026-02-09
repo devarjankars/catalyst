@@ -33,7 +33,9 @@ export default function DoubleColumnSection({
             flexDirection: direction === "row" ? "row" : "column",
             backgroundColor: component.backgroundColor || "#ffffff"
             }}>
-            {(component.children || []).map((child,index)=>(
+            {(component.children || []).map((child,index)=> {
+                if (!child) return null;
+                return (
                 <div key={child.id} 
                 style={{
                     backgroundColor: child.backgroundColor || "#ffffff",
@@ -52,7 +54,9 @@ export default function DoubleColumnSection({
                         renderChildren={() => (
                             <div className="flex flex-col gap-2 p-2">
                             {(child.children || []).map(
-                                (grandChild, childIndex) => (
+                                (grandChild, childIndex) => {
+                                if (!grandChild) return null;
+                                return (
                                 <div key={grandChild.id}
                                     
                                 > 
@@ -64,6 +68,7 @@ export default function DoubleColumnSection({
                                     )}
                                 </div>
                                 )
+                                }
                             )}
                             </div>
                         )}
@@ -90,7 +95,7 @@ export default function DoubleColumnSection({
                         onMoveWithinSection={onMoveWithinSection}
                     />
                 </div>
-            ))}
+            )})}
         </div>
     )
 }

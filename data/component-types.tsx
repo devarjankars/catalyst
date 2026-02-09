@@ -334,5 +334,24 @@ export const componentTypes = [
     fontSize: "14px",
     color: "#007bff",
   },
+  {
+    type: "footer-with-Preferences",
+    label: "Footer with Email Preference",
+    category : "custom",
+    icon : PanelBottom,
+    defaultProps: {
+      links: [
+        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "CCPA Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
+        { text: "Unsubscribe", href: "#" },
+        { text: "[Email Preferences]", href: "#link" },
+      ],
+    },
+    textAlign: "left",
+    fontSize: "12px",
+    lineheight: "12px",
+    color: "#0563C1",
+  }
 
 ];

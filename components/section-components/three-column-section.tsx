@@ -32,7 +32,9 @@ export default function ThreeColumnSection({
             flexDirection: direction === "row" ? "row" : "column",
             backgroundColor: component.backgroundColor || "#ffffff"
             }}>
-            {(component.children || []).map((child,index)=>(
+            {(component.children || []).map((child,index)=> {
+                if (!child) return null;
+                return (
                 <div key={child.id} 
                 style={{
                     backgroundColor: child.backgroundColor || "#ffffff",
@@ -51,7 +53,9 @@ export default function ThreeColumnSection({
                         renderChildren={() => (
                             <div className="flex flex-col gap-2 p-2">
                             {(child.children || []).map(
-                                (grandChild, childIndex) => (
+                                (grandChild, childIndex) => {
+                                if (!grandChild) return null;
+                                return (
                                 <div key={grandChild.id}
                                     
                                 > 
@@ -63,6 +67,7 @@ export default function ThreeColumnSection({
                                     )}
                                 </div>
                                 )
+                                }
                             )}
                             </div>
                         )}
@@ -89,7 +94,7 @@ export default function ThreeColumnSection({
                         onMoveWithinSection={onMoveWithinSection}
                     />
                 </div>
-            ))}
+            )})}
         </div>
     )
 }

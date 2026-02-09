@@ -32,13 +32,13 @@ export default function EmailPreviewModal({
   const [screen, setScreen] = useState<"600px" | "375px">("600px");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { currentTemplate, preHeaderText } = useEmailBuilderStore();
+  const { currentTemplate, preheaderText } = useEmailBuilderStore();
 
   useEffect(() => {
     // Generate HTML content based on the current components and their properties
-    const emailHtml = generateEmailHTML(components, preHeaderText);
+    const emailHtml = generateEmailHTML(components, preheaderText);
     setHtmlContent(emailHtml);
-  }, [components, preHeaderText]);
+  }, [components, preheaderText]);
   
   const handlePDFExport = async () => {
     if (!iframeRef.current) {

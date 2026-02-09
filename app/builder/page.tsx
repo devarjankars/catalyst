@@ -38,6 +38,7 @@ export default function EmailBuilder() {
     workingCopySource,
     loading,
     saving,
+    preheaderText,
     setCurrentTemplate,
     setOriginalTemplate,
     setComponents,
@@ -229,6 +230,7 @@ function replaceImagesInComponents(components: any[]): any[] {
         currentTemplate.id,
         {
           components,
+          preheaderText,
           updatedAt: new Date(),
         }
       );
@@ -261,10 +263,9 @@ function replaceImagesInComponents(components: any[]): any[] {
         savedTemplate = await firebaseService.updateTemplate(
           currentTemplate.id,
           {
-            name,
-            description,
-            category,
+            category: category as any,
             components,
+            preheaderText,
           }
         );
       } else {
@@ -272,8 +273,9 @@ function replaceImagesInComponents(components: any[]): any[] {
         savedTemplate = await firebaseService.createTemplate({
           name,
           description,
-          category,
+          category: category as any,
           components,
+          preheaderText,
           isUserCreated: true,
         });
       }
@@ -320,6 +322,7 @@ function replaceImagesInComponents(components: any[]): any[] {
   parentId: string | null = null
 ): { component: any; parentId: string | null } | null {
   for (const comp of components) {
+    if (!comp) continue; // Defensive check
     if (comp.id === targetId) {
       return { component: comp, parentId };
     }
@@ -334,7 +337,7 @@ function replaceImagesInComponents(components: any[]): any[] {
 }
 
 
-const result = findComponentWithParentById(components, selectedComponent);
+const result = findComponentWithParentById(components, selectedComponent!);
 const selectedComponentData = result?.component || null;
 const parentId = result?.parentId || null;
 

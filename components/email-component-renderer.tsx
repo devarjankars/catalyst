@@ -43,6 +43,7 @@ interface EmailComponentRendererProps {
   previewMode: boolean;
   totalComponents?: number;
   onDuplicate?: () => void;
+  parentId?: string; // New prop for container isolation
 }
 
 export function EmailComponentRenderer({
@@ -62,8 +63,10 @@ export function EmailComponentRenderer({
   previewMode,
   totalComponents = 0,
   onDuplicate,
+  parentId = "root", // Default to root
 }: EmailComponentRendererProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const dragHandleRef = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
     accept: "component",
@@ -81,6 +84,9 @@ export function EmailComponentRenderer({
 
       if (dragIndex === hoverIndex) return;
 
+      // STRICT CONTEXT CHECK: Only allow sorting if items are in the same container
+      if (item.parentId !== parentId) return;
+
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
       const hoverMiddleY =
         (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
@@ -95,15 +101,16 @@ export function EmailComponentRenderer({
     },
   });
 
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag, preview] = useDrag({
     type: "component",
-    item: () => ({ id: component.id, index }),
+    item: () => ({ id: component.id, index, parentId }), // Include parentId in drag item
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
-  drag(drop(ref));
+  preview(drop(ref));
+  drag(dragHandleRef);
 
   const handleMoveUp = () => {
     if (index > 0) {
@@ -128,6 +135,7 @@ export function EmailComponentRenderer({
     childIndex: number,
     sectionId: string,
   ) => {
+    if (!child) return null; // Defensive check
     return (
       <div key={child.id} data-section-child={sectionId} className="relative">
         <EmailComponentRenderer
@@ -148,6 +156,7 @@ export function EmailComponentRenderer({
           selectedComponent={selectedComponent}
           previewMode={previewMode}
           totalComponents={component.children?.length || 0}
+          parentId={sectionId} // Pass sectionId as parentId for children
         />
       </div>
     );
@@ -663,7 +672,7 @@ export function EmailComponentRenderer({
         );
         case "orsedu-footer":
         return (
-          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000] bg-[#F1F1F1]">
+          <div style={baseStyle} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">
             <img
               src={component.src || "/footer-logo-a.png"}
               alt={component.alt || "Header Image"}
@@ -681,10 +690,10 @@ export function EmailComponentRenderer({
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.year}</div>
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.address}</div>
-            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.rights}  <RichTextEditor
+            <div style={{fontSize: component.fontSize || "12px",display : "grid",gap : 2, width : "100%",gridTemplateColumns : "100px 1fr",alignItems : "center"}}>{component.footerText?.rights}  <RichTextEditor
               isSelected={isSelected}
               value={component.footerText?.jobcode || ""}
-              onChange={(content) => onUpdate({ content })}
+              onChange={(content) => onUpdate({ footerText: { ...component.footerText, jobcode: content } })}
               style={{
                 fontSize: component.fontSize || "12px",
                 color: component.color || "#000000",
@@ -698,6 +707,63 @@ export function EmailComponentRenderer({
             
           </div>
         );
+        case "footer-with-Preferences":
+          return (
+            <div style={baseStyle} className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-wrap gap-3">
+              {component.links?.map((link, linkIndex) => (
+                <React.Fragment key={linkIndex}>
+                  {linkIndex === component.links!.length - 1 ? 
+
+                   <a
+                    href={link.href || "#"}
+                    style={{
+                      color: "#FF66CC",
+                      textDecoration: "underline",
+                      fontSize: component.fontSize || "12px",
+                    }}
+                    onClick={(e) => {
+                      if (!previewMode) {
+                        e.preventDefault();
+                        onSelect();
+                      }
+                    }}
+                  >
+                    {link.text}
+                  </a>
+                  
+                  :<a
+                    href={link.href || "#"}
+                    style={{
+                      color: component.color || "#0563C1",
+                      textDecoration: "underline",
+                      fontSize: component.fontSize || "12px",
+                    }}
+                    onClick={(e) => {
+                      if (!previewMode) {
+                        e.preventDefault();
+                        onSelect();
+                      }
+                    }}
+                  >
+                    {link.text}
+                  </a>}
+
+                  {linkIndex < component.links!.length - 2 && (
+                    <span className="text-gray-500 text-[12px]">
+                      |
+                    </span>
+                  )}
+                  {linkIndex === component.links!.length - 2 && (
+                    <span className="text-[#FF66CC] text-[12px]">
+                      |
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          )
       default:
         return <div>Unknown component type</div>;
     }
@@ -729,7 +795,10 @@ export function EmailComponentRenderer({
         <>
           {/* Drag Handle */}
           { !isColumn && 
-            <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div
+              ref={dragHandleRef}
+              className="absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
               <GripVertical
                 className={`w-4 h-4 cursor-move ${
                   isColumn ? "text-green-400" : "text-gray-400"

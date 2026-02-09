@@ -200,41 +200,41 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               }
               
 
-              {components.map((component, index) => (
-                <>
-               
-                {dropIndicator?.index === index && isOver && !previewMode  && (
-                  <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center">
-                        {/* <div className="absolute left-1/2 transform -translate-x-1/2 -top-1 w-3 h-3 bg-blue-500 rounded-full"></div> */}
-                        <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
-                      </div>
-                  )}
-                <div key={component.id} className="relative ">
-                  
-                  <EmailComponentRenderer
-                    component={component}
-                    index={index}
-                    isSelected={selectedComponent === component.id}
-                    onSelect={() => !previewMode && onSelectComponent(component.id)}
-                    onUpdate={(updates) => onUpdateComponent(component.id, updates)}
-                    onDelete={() => onDeleteComponent(component.id)}
-                    onMove={onMoveComponent}
-                    onAddToSection={handleAddToSection}
-                    onMoveWithinSection={handleMoveWithinSection}
-                    onUpdateChild={handleUpdateChild}
-                    onDeleteChild={handleDeleteChild}
-                    onSelectChild={onSelectComponent}
-                    selectedComponent={selectedComponent}
-                    previewMode={previewMode}
-                    totalComponents={components.length}
-                    onDuplicate={() => duplicateComponent(component.id)}
-                  />
+              {components.map((component, index) => {
+                if (!component) return null; // Defensive check to prevent crash
 
-                  
-                  
-                </div>
-                </>
-              ))}
+                return (
+                  <div key={component.id || index} className="relative">
+                    {/* Drop Indicator */}
+                    {dropIndicator?.index === index && isOver && !previewMode && (
+                      <div className="h-1 bg-blue-600 mx-2 rounded-sm opacity-75 my-2 shadow-lg relative flex align-center justify-center animate-grow-x origin-center">
+                        {/* <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">
+                          drop here
+                        </p> */}
+                      </div>
+                    )}
+                    
+                    <EmailComponentRenderer
+                      component={component}
+                      index={index}
+                      isSelected={selectedComponent === component.id}
+                      onSelect={() => !previewMode && onSelectComponent(component.id)}
+                      onUpdate={(updates) => onUpdateComponent(component.id, updates)}
+                      onDelete={() => onDeleteComponent(component.id)}
+                      onMove={onMoveComponent}
+                      onAddToSection={handleAddToSection}
+                      onMoveWithinSection={handleMoveWithinSection}
+                      onUpdateChild={handleUpdateChild}
+                      onDeleteChild={handleDeleteChild}
+                      onSelectChild={onSelectComponent}
+                      selectedComponent={selectedComponent}
+                      previewMode={previewMode}
+                      totalComponents={components.length}
+                      onDuplicate={() => duplicateComponent(component.id)}
+                    />
+                  </div>
+                );
+              })}
 
               {/* Final drop indicator */}
               {dropIndicator?.index === components.length && isOver && !previewMode && (
@@ -245,13 +245,13 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               )}
 
               {/* Global drop overlay when dragging */}
-              {isOver && !previewMode && (
+              {/* {isOver && !previewMode && (
                 <div className="absolute inset-0 bg-blue-50 bg-opacity-30 border-2 border-blue-400 border-dashed rounded-md pointer-events-none">
                   <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                     Drop correctly on the dropzone indicated
                   </div>
                 </div>
-              )}
+              )} */}
             
        
         </div>

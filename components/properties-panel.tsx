@@ -30,7 +30,7 @@ export function PropertiesPanel({
   onSaveAsCustom,
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
-  const { preHeaderText, setPreheader } = useEmailBuilderStore();
+  const { preheaderText, setPreheader } = useEmailBuilderStore();
   if (!component) {
     return (
       <div className="text-center text-gray-500 py-8">
@@ -1230,7 +1230,7 @@ export function PropertiesPanel({
               <Label htmlFor="preheader">Preheader Text</Label>
               <Input
                 id="preheader"
-                value={preHeaderText || ""}
+                value={preheaderText || ""}
                 onChange={(e) => setPreheader(e.target.value)}
                 placeholder="Enter preheader text..."
               />
@@ -1285,6 +1285,84 @@ export function PropertiesPanel({
               />
             </div>
             </div>);
+            
+            case "footer-with-Preferences" :
+                 return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="textAlign">Text Align</Label>
+              <Select
+                value={component.textAlign || "left"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "12px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="12px"
+              />  
+            </div>
+            <div>
+              <Label htmlFor="color">Text Color</Label>
+              <Input
+                id="color"
+                type="color"
+                value={component.color || "#007bff"}
+                onChange={(e) => onUpdateComponent({ color: e.target.value })}
+              />  
+            </div>
+            
+            
+            <div className="mt-3">
+              <Label className="text-md mb-2">Links</Label>
+              {component.links?.map((link, index) => (
+                <div key={index} className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2">
+                  <Label>Link text</Label>
+                  <Input
+                    value={link.text}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, text: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link text"
+                  />
+                  <Label>Link url</Label>
+                  <Input
+                    value={link.href}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, href: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link URL"
+                  />
+                </div>
+              ))}
+              
+            </div>  
+
+           </div>
+        );   
+
       default:
         return <div>No properties available</div>;
     }

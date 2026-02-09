@@ -18,14 +18,14 @@ interface ExportPanelProps {
 export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const { currentTemplate, preHeaderText } = useEmailBuilderStore()
+  const { currentTemplate, preheaderText } = useEmailBuilderStore()
 
   const handleExport = async () => {
     if (!canvasRef.current) return
 
     setIsExporting(true)
     try {
-      await exportToZip(components, canvasRef.current, currentTemplate?.name,preHeaderText)
+      await exportToZip(components, canvasRef.current, currentTemplate?.name, preheaderText)
       setIsOpen(false) // Close the dialog after successful export
     } catch (error) {
       console.error("Export failed:", error)
