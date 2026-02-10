@@ -1279,8 +1279,8 @@ export function PropertiesPanel({
               <Label htmlFor="alt">Alt Text</Label>
               <Input
                 id="alt"
-                value={component.alt || ""}
-                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                value={component.imageAlt || ""}
+                onChange={(e) => onUpdateComponent({ imageAlt: e.target.value })}
                 placeholder="Image description"
               />
             </div>
