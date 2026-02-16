@@ -15,6 +15,7 @@ import { Monitor, Smartphone, Download, Upload } from "lucide-react";
 import EmailPreview from "./email-preview-frame";
 import { exportToPDF } from "@/lib/pdf-export-utils";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
+import { handlePdfAction } from "@/app/actions";
 
 type EmailPreviewModalProps = {
   open: boolean;
@@ -33,6 +34,7 @@ export default function EmailPreviewModal({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { currentTemplate, preheaderText } = useEmailBuilderStore();
+
 
   useEffect(() => {
     // Generate HTML content based on the current components and their properties
@@ -53,7 +55,23 @@ export default function EmailPreviewModal({
         ? `${currentTemplate.name}-${viewMode}` 
         : `email-preview-${viewMode}`;
       
-      await exportToPDF(iframeRef.current, fileName, viewMode);
+      // 1. Extract the HTML string from the iframe (Client-side)
+      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
+      if (!iframeDoc) throw new Error("Iframe content inaccessible");
+      
+      const htmlString = iframeDoc.documentElement.outerHTML;
+
+      // 2. Pass the STRING (not the element) to the Server Action
+      const base64 = await handlePdfAction(htmlString, viewMode);
+
+      // 3. Trigger the download in the browser
+      const link = document.createElement('a');
+      link.href = `data:application/pdf;base64,${base64}`;
+      link.download = `${fileName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("Failed to export PDF. Please try again.");

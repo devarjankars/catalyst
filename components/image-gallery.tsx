@@ -40,7 +40,7 @@ export function ImageGallery() {
   }
 
   const selectedData = getSelectedComponentData()
-  const imageSupportedTypes = ["image", "header-image", "cta-button", "footer-link-2"]
+  const imageSupportedTypes = ["image", "header-image", "cta-button", "footer-link-2","image-with-link"]
   const isImageComponentSelected = selectedData && imageSupportedTypes.includes(selectedData.type)
 
   const handleImageSelect = (imageUrl: string) => {

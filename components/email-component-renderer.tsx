@@ -13,6 +13,7 @@ import SingleColumnSection from "./section-components/single-column-section";
 import { secondsInDay } from "date-fns/constants";
 import DoubleColumnSection from "./section-components/double-column-section";
 import ThreeColumnSection from "./section-components/three-column-section";
+import { se } from "date-fns/locale";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -279,17 +280,7 @@ export function EmailComponentRenderer({
               ImageAlimentMap[component?.textAlign ] || "center"
             } mt-2`}
           >
-            {/* {!previewMode && isSelected ? (
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  value={component.alt || ""}
-                  onChange={(e) => onUpdate({ alt: e.target.value })}
-                  placeholder="Alt text"
-                  className="w-full p-2 border mb-2 rounded text-sm"
-                />
-              </div>
-            ) : null} */}
+           
             <img
               src={
                 component.src ||
@@ -575,13 +566,14 @@ export function EmailComponentRenderer({
                     <h3 className="text-md font-semibold ">{section.title}</h3>
                     {/* <p className="text-sm text-gray-700">{section.content}</p> */}
                     {section.items && section.items.length > 0 && (
-                      <ul className="list-disc pl-5 mt-2 ml-3">
+                      <ul className="list-disc pl-5 mt-2 ml-3 marker:text-[#69D6B5]">
                         {section.items.map((subsection, subIndex) => (
                           <li
                             key={subIndex}
                             className="text-sm text-gray-700 mt-2"
+                            dangerouslySetInnerHTML={{__html :subsection.content}} 
                           >
-                            {subsection.content}
+                            
                           </li>
                         ))}
                       </ul>
@@ -596,8 +588,9 @@ export function EmailComponentRenderer({
                         <div
                           key={subIndex}
                           className="text-sm text-gray-700 mt-2"
+                           dangerouslySetInnerHTML={{__html :subsection.content}} 
                         >
-                          {subsection.content}
+                         
                         </div>
                       ))}
                   </div>
@@ -764,6 +757,108 @@ export function EmailComponentRenderer({
             </div>
           </div>
           )
+
+         case "elzonris-divider" : 
+          return (
+            <div style={baseStyle} className="flex flex-col gap-2 justify-center items-center mt-2">
+              <img
+                src={component.src || "/footer-line.png"}
+                alt={component.alt || "Divider Image"}/>
+                <p style={{
+                   color : component.color || "#646464",
+                   fontSize : component.fontSize || "15px",
+                   fontWeight : "bold"
+                }}>VISIT <span className="text-[#F15625]"><a href={component.href}>ELZONRIS.COM/HCP</a></span> FOR MORE INFORMATION.</p>
+              <img
+                src={component.src || "/footer-line.png"}
+                alt={component.alt || "Divider Image"}/>
+            </div>
+
+          ) ;
+          case "image-with-link" :
+             return (
+          <div
+            style={baseStyle}
+            className={`flex flex-col items-${
+              ImageAlimentMap[component?.textAlign ] || "center"
+            } mt-2`}
+          >
+           
+            <img
+              src={
+                component.src ||
+                "/placeholder.svg?height=200&width=400&text=Click to edit"
+              }
+              alt={component.alt || "Image"}
+              style={{
+                width: component.width || "100%",
+                height: component.height || "auto",
+                display: "block",
+                maxWidth: "100%",
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                !previewMode && onSelect()
+              }}
+            />
+          </div>
+        );
+        case "ferring-footer" :
+          return (
+            <div
+              
+              className="z-50 mt-2 p-[30px] flex flex-col w-full justify-start text-[#ffffff] bg-[#0083BF]"
+            >
+              <div className="flex items-center justify-between w-full mb-2">
+                <div className="w-[45%]">
+                  <img width={"112"} src={component?.logo?.logoSrc} alt={component?.logo?.altTex}/>
+                </div>
+                <div className="w-[45%] flex justify-end items-center">
+                  {component.socialMediaLinks?.map((link, index) => (
+                    <a key={index} href={link.href} className="mx-2">
+                      <img src={link.iconSrc} alt={link.altText} style={{ width: "33px", height: "33px" }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3 flex items-start justify-between">
+                  <div className="flex flex-col gap-4">
+                    <p className="text-white text-[9.5px]">
+                      Ferring Pharmaceuticals, 100 Interpace Parkway, Parsippany, NJ 07054<br/>
+                      { isSelected ? 
+                       <Input
+                       value={component.jobCode || ""}
+                       onChange={(e) => onUpdate({ jobCode: e.target.value })}
+                       className="bg-transparent border h-8 outline-none  text-[9.5px] focus:ring-0 focus:outline-none"
+                       /> 
+                       : <span>{component.jobCode}</span>
+                      }
+                    </p>
+                     <p className="text-white text-[9.5px]">
+                      © 2026 Ferring<br/>
+                      FERRING and the Ferring Pharmaceuticals logo are trademarks of the Ferring.<br/>
+                      This is intended for healthcare professionals only.
+                    </p>
+                  </div>
+                 <div className="flex flex-col gap-1  items-end">
+                      {component.links?.map((link, linkIndex) => (
+                        <React.Fragment key={linkIndex}>
+                          <a
+                            href={link.href || "#"}
+                            style={{
+                              color: "#FFFFFF",
+                              textDecoration: "underline",
+                              fontSize: "10px",
+                            }}
+                            >
+                            {link.text}
+                            </a>
+                        </React.Fragment>
+                      ))}
+                 </div>
+              </div>
+            </div>
+          );
       default:
         return <div>Unknown component type</div>;
     }

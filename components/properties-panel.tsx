@@ -1286,7 +1286,7 @@ export function PropertiesPanel({
             </div>
             </div>);
             
-            case "footer-with-Preferences" :
+          case "footer-with-Preferences" :
                  return (
           <div className="space-y-4">
             <div>
@@ -1362,7 +1362,173 @@ export function PropertiesPanel({
 
            </div>
         );   
+        case "elzonris-divider" :
+          return (
+            <div className="space-y-4">
+              <div>
+                <Label >Line image</Label>
+                <ImageUpload
+                  currentImage={component.src}
+                  onImageUpload={(imageUrl) => onUpdateComponent({ src: imageUrl })}
+                />
+              </div>
+              <div>
+                <Label>font size</Label>
+                <Input
+                  id="fontSize"
+                  value={component.fontSize || "14px"}
+                  onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                  placeholder="14px"
+                />
+              </div>
+              <div>
+                <Label htmlFor="color">Text Color</Label>
+                <Input
+                  id="color"
+                  type="color"
+                  value={component.color || "#646464"}
+                  onChange={(e) => onUpdateComponent({ color: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Link</Label>
+                <Input
+                  value={component.href}
+                  onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                  placeholder="Link URL"
+                />
+              </div>
+             </div>
+            );
 
+      case "image-with-link":
+             return (
+          <div className="space-y-4">
+            <div>
+              <Label>Upload Image</Label>
+              <ImageUpload
+                currentImage={component.src}
+                onImageUpload={(imageUrl) =>
+                  onUpdateComponent({ src: imageUrl })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="align">Image Alignment</Label>
+              <Select
+                value={component.textAlign || "center"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="alt">Alt Text</Label>
+              <Input
+                id="alt"
+                value={component.alt || ""}
+                onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                placeholder="Image description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="width">Width</Label>
+              <Input
+                id="width"
+                value={component.width || "100%"}
+                onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                placeholder="100% or 400px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="height">Height</Label>
+              <Input
+                id="height"
+                value={component.height || "100px"}
+                onChange={(e) => onUpdateComponent({ height: e.target.value })}
+                placeholder="100% or 400px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxWidth">Max Width</Label>
+              <Input
+                id="maxWidth"
+                value={component.maxWidth || "100%"}
+                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value })}
+                placeholder="100%"
+              />
+            </div>
+             <div>
+              <Label >Link</Label>
+              <Input
+                
+                value={component.href }
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="add link url here"
+              />
+            </div>
+          </div>
+        );
+        case "ferring-footer":
+          return (
+            <div className="space-y-4">
+              <div>
+                <Label>Social Media Links</Label>
+                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
+                  {component.socialMediaLinks?.map((link, index) => (
+                    <div key={index} className="flex flex-col items-center gap-2">
+                       <Input
+                      value={link.altText}
+                      />
+                      <Input
+                        value={link.href}
+                        onChange={(e) =>
+                          onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
+                            i === index ? { ...l, href: e.target.value } : l
+                          )})
+                        }
+                        placeholder="Social media URL"
+                      />
+                      </div>
+                     ))}
+                </div>
+              </div>
+              <div>
+                <Label >Footer links</Label>
+                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
+                  {component.links?.map((link, index) => (
+                    <div key={index} className="flex flex-col items-center gap-2">
+                       <Input
+                      value={link.text}
+                      onChange={(e)=> onUpdateComponent({
+                        links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l
+                        ),
+                      })}
+                      />
+                      <Input
+                        value={link.href}
+                        onChange={(e) =>
+                          onUpdateComponent({ links: component.links?.map((l, i) =>
+                            i === index ? { ...l, href: e.target.value } : l
+                          )})
+                        }
+                        placeholder="Footer link URL"
+                      />
+                      </div>
+                     ))}
+                </div>
+              </div>
+            </div>
+          )
       default:
         return <div>No properties available</div>;
     }

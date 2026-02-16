@@ -11,6 +11,7 @@ import {
   NotepadText,
   List,
   Wallpaper,
+  SeparatorHorizontal,
 } from "lucide-react";
 
 export const componentTypes = [
@@ -141,12 +142,12 @@ export const componentTypes = [
               {
                 isBullet: true,
                 content:
-                  "Dyslipidemia Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.",
+                  `<b>Dyslipidemia:</b> Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.`,
               },
               {
                 isBullet: true,
                 content:
-                  "Embryo-Fetal Toxicity Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise pregnant women and females of reproductive potential of the potential risk to a fetus. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose. Advise male patients with female partners of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.",
+                  `<b>Embryo-Fetal Toxicity:</b> Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise pregnant women and females of reproductive potential of the potential risk to a fetus. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose. Advise male patients with female partners of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.`,
               },
             ],
           },
@@ -156,12 +157,12 @@ export const componentTypes = [
               {
                 isBullet: true,
                 content:
-                  "Serious adverse reactions occurred in 12% of patients who received ORSERDU. Serious adverse reactions in >1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).",
+                  `<b>Serious adverse reactions</b> occurred in 12% of patients who received ORSERDU. Serious adverse reactions in >1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).`,
               },
               {
                 isBullet: true,
                 content:
-                  "The most common adverse reactions (≥10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).",
+                  `<b>The most common adverse reactions</b> (≥10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).`,
               },
             ],
           },
@@ -172,7 +173,7 @@ export const componentTypes = [
                 isBullet: true,
                  
                 content:
-                  "Concomitant use with CYP3A4 inducers and/or inhibitors Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.",
+                  `<b>Concomitant use with CYP3A4 inducers and/or inhibitors:</b> Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.`,
               },
             ],
           },
@@ -182,12 +183,12 @@ export const componentTypes = [
               {
                 isBullet: true,
                 content:
-                  "Lactation Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.",
+                  `<b>Lactation:</b> Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.`,
               },
               {
                 isBullet: true,
                 content:
-                  "Hepatic Impairmen Avoid use of ORSERDU in patients with severe hepatic impairment (Child-Pugh C). Reduce the dose of ORSERDU in patients with moderate hepatic impairment (Child-Pugh B).",
+                  `<b>Hepatic Impairment:</b> Avoid use of ORSERDU in patients with severe hepatic impairment (Child-Pugh C). Reduce the dose of ORSERDU in patients with moderate hepatic impairment (Child-Pugh B).`,
               },
               
             ],
@@ -352,6 +353,58 @@ export const componentTypes = [
     fontSize: "12px",
     lineheight: "12px",
     color: "#0563C1",
-  }
+  },
+
+  {
+    type: "elzonris-divider",
+    label: "Elzonris Divider",
+    category : "custom",
+    icon : SeparatorHorizontal,
+    
+    defaultProps: {
+      src: "/footer-line.png",
+      alt: "footer-line",
+      href: "https://elzonris.com/HCP/",
+    },
+  },
+   {
+    type: "image-with-link",
+    label: "Image with Link",
+    category : "basic",
+    icon: ImageIcon,
+    defaultProps: {
+      src: "/placeholder.svg?height=200&width=400&text=Image",
+      alt: "Image",
+      width: "100%",
+      href : "#", 
+      height: "auto",
+    },
+  },
+
+  {
+    type: "ferring-footer",
+    label: "Ferring Footer",
+    category : "custom",
+    icon : PanelBottom,
+    defaultProps: {
+      links: [
+        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "CCPA Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
+        { text: "Unsubscribe", href: "#" },
+      ],
+      logo : {
+        altText : "Ferring Logo",
+        href : '#',
+        logoSrc : "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Fferring_logo.png?alt=media&token=a9e00791-4a65-4356-aa6d-2c601d26118b"
+      },
+      socialMediaLinks : [
+        { iconSrc: "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Ffacebook_icon.png?alt=media&token=e6c1979a-8c6e-4c65-9515-ea1720228c5c", href: "#" , altText: "Facebook Icon"},
+        { iconSrc: "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Finstagram_icon.png?alt=media&token=4fbddb4b-d7ff-4830-b01d-0fc11eb76340", href: "#", altText: "Instagram Icon" },
+        { iconSrc: "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Flinkedin_icon.png?alt=media&token=ba56b0ea-bdc6-410e-bf6c-bbfcd581c731", href: "#", altText: "LinkedIn Icon" },
+      ], 
+      jobCode: "02/26 GL-RMMH-2600016"
+    },
+  },
 
 ];
