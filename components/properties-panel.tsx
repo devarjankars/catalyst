@@ -18,6 +18,8 @@ import { TriangleAlert, Code } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
+import { verifyHtml } from "@/lib/verify-html";
+import { toast } from "sonner";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -32,6 +34,7 @@ export function PropertiesPanel({
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
+  const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
   const { preheaderText, setPreheader } = useEmailBuilderStore();
   if (!component) {
     return (
@@ -97,6 +100,16 @@ export function PropertiesPanel({
 
     const updatedHtml = doc.body.innerHTML;
     onUpdateComponent({ content: updatedHtml });
+  };
+
+
+  const saveRawHtml = (rawHtml: string) => {
+    if (verifyHtml(rawHtml)) {
+      onUpdateComponent({ html: rawHtml });
+      setIsRawHtmlEditorOpen(false);
+    } else {
+      toast.error("Invalid HTML");
+    }
   };
 
   const renderProperties = () => {
@@ -487,7 +500,7 @@ export function PropertiesPanel({
                 onClick={() => setIsHtmlEditorOpen(true)}
               >
                 <Code className="w-4 h-4" />
-                Edit HTML
+                Edit as HTML
               </Button>
             </div>
             {/* New: Link editor fields if links exist */}
@@ -1542,6 +1555,12 @@ export function PropertiesPanel({
               </div>
             </div>
           )
+          case "raw-html":
+            return (
+              <div className="flex items-center justify-center">
+                <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Add or Edit HTML</Button>
+              </div>
+            )
       default:
         return <div>No properties available</div>;
     }
@@ -1639,11 +1658,19 @@ export function PropertiesPanel({
             </Select>
             <p className="text-sm text-muted-foreground text-orange-500 mt-2 flex"><TriangleAlert className="w-5 h-5 mr-2"/>Responssiveness is seen only in priview</p>
       </div>
+      {/* text html editor modal */}
       <HtmlEditorModal
         isOpen={isHtmlEditorOpen}
         onClose={() => setIsHtmlEditorOpen(false)}
         initialValue={component.content || ""}
         onSave={(newHtml) => onUpdateComponent({ content: newHtml })}
+      />
+      {/* raw  */}
+      <HtmlEditorModal
+        isOpen={isRawHtmlEditorOpen}
+        onClose={() => setIsRawHtmlEditorOpen(false)}
+        initialValue={component.html || ""}
+        onSave={saveRawHtml}
       />
     </div>
   );

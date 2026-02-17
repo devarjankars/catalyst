@@ -1,7 +1,7 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "footer-with-Preferences" | "elzonris-divider" | "image-with-link" | "ferring-footer"
-  
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "footer-with-Preferences" | "elzonris-divider" | "image-with-link" | "ferring-footer" | "raw-html"
+
   category: "basic" | "custom" | "user-created"
 
   // Custom component properties
@@ -62,8 +62,8 @@ export interface EmailComponent {
   logoA: { altTex: string, href: string, imgSrc: string }
   logoB: { altTex: string, href: string, imgSrc: string }
   jobCode?: string
-  socialMediaLinks?: { altText: string; href: string,iconSrc :string }[]
-  logo? : { altTex: string, href: string, logoSrc: string }
+  socialMediaLinks?: { altText: string; href: string, iconSrc: string }[]
+  logo?: { altTex: string, href: string, logoSrc: string }
 
   //isi properties
   importantSafetyInformation?: {

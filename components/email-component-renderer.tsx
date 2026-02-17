@@ -361,10 +361,10 @@ export function EmailComponentRenderer({
             />
           </div>
         );
-      case "custom":
+      case "raw-html":
         return (
           <div
-            className="mt-2"
+            className="mt-2 p-5"
             dangerouslySetInnerHTML={{ __html: component.html }}
           ></div>
         );

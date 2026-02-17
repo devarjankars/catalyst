@@ -12,6 +12,7 @@ import {
   List,
   Wallpaper,
   SeparatorHorizontal,
+  Code,
 } from "lucide-react";
 
 export const componentTypes = [
@@ -406,5 +407,14 @@ export const componentTypes = [
       jobCode: "02/26 GL-RMMH-2600016"
     },
   },
+  {
+    type : "raw-html",
+    label : "Raw HTML",
+    category : "basic",
+    icon : Code,
+    defaultProps: {
+      html: "<p>Enter your code in editor</p>",
+    },
+  }
 
 ];
