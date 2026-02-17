@@ -1258,10 +1258,10 @@ function generateComponentHTML(component: EmailComponent): string {
         `).join("");
 
 
-      const footerLinksHtml = (component.links || []).map((link)=>
+      const footerLinksHtml = (component.links || []).map((link,index)=>
         `
           <tr bgcolor="#0083BF">
-              <td style="text-align: right;font-size: 10px;line-height: 12px;color: #ffffff;" bgcolor="#0083BF">
+              <td style="text-align: right;font-size: 10px;line-height: 12px;color: #ffffff;${index !== 0 ? "padding: 4px 0 0 0;" : ""}" bgcolor="#0083BF">
                   <a href="${link.href}" style="text-decoration: underline;color: #ffffff;">
                       ${link.text}
                   </a>
@@ -1272,7 +1272,6 @@ function generateComponentHTML(component: EmailComponent): string {
 
       return `
         <table 
-        role="presentation"
         width="100%" 
         align="center" 
         bgcolor="#FFFFFF" 
@@ -1397,7 +1396,7 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
             mso-table-rspace: 0pt;
         }
         img {
-            -ms-interpolation-mode: bicubic;
+           
             border: 0;
             outline: none;
             text-decoration: none;

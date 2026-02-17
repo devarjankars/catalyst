@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, Code } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
+import { HtmlEditorModal } from "./html-editor-modal";
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
@@ -30,6 +31,7 @@ export function PropertiesPanel({
   onSaveAsCustom,
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
+  const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const { preheaderText, setPreheader } = useEmailBuilderStore();
   if (!component) {
     return (
@@ -476,6 +478,17 @@ export function PropertiesPanel({
                   onUpdateComponent({ lineHeight: e.target.value })
                 }
               />
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full flex items-center gap-2"
+                onClick={() => setIsHtmlEditorOpen(true)}
+              >
+                <Code className="w-4 h-4" />
+                Edit HTML
+              </Button>
             </div>
             {/* New: Link editor fields if links exist */}
             {Links.length > 0 && (
@@ -1626,6 +1639,12 @@ export function PropertiesPanel({
             </Select>
             <p className="text-sm text-muted-foreground text-orange-500 mt-2 flex"><TriangleAlert className="w-5 h-5 mr-2"/>Responssiveness is seen only in priview</p>
       </div>
+      <HtmlEditorModal
+        isOpen={isHtmlEditorOpen}
+        onClose={() => setIsHtmlEditorOpen(false)}
+        initialValue={component.content || ""}
+        onSave={(newHtml) => onUpdateComponent({ content: newHtml })}
+      />
     </div>
   );
 }
