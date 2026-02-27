@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, Trash2, Copy, MoreVertical, Calendar, Play, Sparkles } from "lucide-react"
+import { Edit, Trash2, Copy, MoreVertical, Calendar, Play, Sparkles, Image } from "lucide-react"
 import type { EmailTemplate } from "@/types/template"
 
 interface TemplateCardProps {
@@ -41,6 +41,12 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
       year: "numeric",
     }).format(date)
   }
+
+  const handleVSB = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Replace with your router/navigation logic
+    window.location.href = `/vsb?templateId=${template.id}`;
+  };
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-110" onClick={onUse}>
@@ -103,6 +109,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
              
               {template.isUserCreated && (
                 <DropdownMenuItem
+                className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation()
                     onEdit()
@@ -119,17 +126,26 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
                     e.stopPropagation()
                     onDelete()
                   }}
-                  className="text-red-600"
+                  className="text-red-600 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
+                </DropdownMenuItem>
+              )}
+
+              {template.isUserCreated && (
+                <DropdownMenuItem
+                 onClick={handleVSB}
+                 className="cursor-pointer"
+                >
+                  <Image  className="w-4 h-4 mr-2" />VSB
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>}
         </div>
 
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 gap-2">
           <Badge className={getCategoryColor(template.category)} variant="secondary">
             {template.category.toUpperCase()}
           </Badge>
@@ -137,6 +153,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
             <Calendar className="w-3 h-3 mr-1" />
             {formatDate(template.updatedAt)}
           </div>
+          
         </div>
       </CardContent>
     </Card>

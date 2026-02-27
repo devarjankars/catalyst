@@ -9,7 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: 'export',
+ 
   distDir: 'build',
   trailingSlash: true,
   webpack(config) {

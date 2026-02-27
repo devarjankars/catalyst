@@ -17,6 +17,23 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [focused, setFocused] = useState(false)
+  // Saves the selection range before toolbar interactions cause blur
+  const savedRangeRef = useRef<Range | null>(null)
+
+  const saveSelection = () => {
+    const selection = window.getSelection()
+    if (selection && selection.rangeCount > 0) {
+      savedRangeRef.current = selection.getRangeAt(0).cloneRange()
+    }
+  }
+
+  const restoreSelection = () => {
+    const selection = window.getSelection()
+    if (selection && savedRangeRef.current) {
+      selection.removeAllRanges()
+      selection.addRange(savedRangeRef.current)
+    }
+  }
   
 
   useEffect(() => {
@@ -167,47 +184,44 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
 }
 
   const applyColor = (color: string) => {
+  // Restore the selection that was saved before the color picker stole focus
+  restoreSelection()
+
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0) return
 
   const range = selection.getRangeAt(0)
   if (range.collapsed) return
 
-  console.log(range)
   const commonAncestor = range.commonAncestorContainer
-  console.log(commonAncestor, commonAncestor.parentElement)
 
   // Get the parent element (handle both text nodes and element nodes)
   let targetElement: HTMLElement | null = null
   
   if (commonAncestor.nodeType === Node.TEXT_NODE) {
-    // If common ancestor is a text node, check its parent
     targetElement = commonAncestor.parentElement
   } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
-    // If it's already an element, use it
     targetElement = commonAncestor as HTMLElement
   }
 
-  // Check if the target is a span and contains the entire selection
+  // If the entire selection is within an existing span, just update its color
   if (
     targetElement &&
     targetElement.nodeName === 'SPAN' &&
     targetElement.contains(range.startContainer) &&
     targetElement.contains(range.endContainer)
   ) {
-    // Check if the entire span content is selected
     const spanText = targetElement.textContent?.trim() || ''
     const selectedText = range.toString().trim()
     
     if (spanText === selectedText) {
-      // Update the existing span's color
       targetElement.style.color = color
       handleInput()
       return
     }
   }
 
-  // Otherwise, create a new span for the selected text
+  // Otherwise, wrap the selected text in a new colored span
   const span = document.createElement("span")
   span.style.color = color
   span.appendChild(range.extractContents())
@@ -283,7 +297,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
           ref={toolbarRef}
           className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 flex gap-1 z-10"
           tabIndex={-1}
-         
+          onMouseDown={() => saveSelection()}
         >
           <button
             type="button"
@@ -333,7 +347,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
             <input
               type="color"
               className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-              onChange={(e) => applyColor(e.target.value)}
+              onBlur={(e) => applyColor(e.target.value)}
               title="Text Color"
             />
           </div>
