@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { reactToHtml } from './react-to-html';
 import { PDFDocument } from 'pdf-lib';
 import React from 'react';
 
@@ -32,28 +32,6 @@ export async function generatePdfBuffer(html: string, viewMode: 'desktop' | 'mob
 
 
 
-function reactToHtml(element: React.ReactElement): string {
-    const bodyHtml = renderToStaticMarkup(element);
-    
-    // Wrap with full HTML doc so styles/fonts load correctly
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <!-- Add your global CSS / Tailwind CDN / font links here -->
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: sans-serif; }
-            </style>
-        </head>
-        <body>
-            ${bodyHtml}
-        </body>
-        </html>
-    `;
-}
 
 export async function generatePdfFromReact(
     element: React.ReactElement,
@@ -76,35 +54,35 @@ export async function mergePdfBuffers(pdfBuffers: Buffer[]): Promise<Buffer> {
     return Buffer.from(mergedBytes);
 }
 
-export async function generateCombinedPdf({
-    emailHtmlDesktop,
-    emailHtmlMobile,
-    variableCopyData,
-    altNameData,
-}: {
-    emailHtmlDesktop: string;
-    emailHtmlMobile: string;
-    variableCopyData: VariableCopyProps;   // your component's props type
-    altNameData: AltNameProps;
-}): Promise<Buffer> {
+// export async function generateCombinedPdf({
+//     emailHtmlDesktop,
+//     emailHtmlMobile,
+//     variableCopyData,
+//     altNameData,
+// }: {
+//     emailHtmlDesktop: string;
+//     emailHtmlMobile: string;
+//     variableCopyData: VariableCopyProps;   // your component's props type
+//     altNameData: AltNameProps;
+// }): Promise<Buffer> {
 
-    const emailDesktopPdf = await generatePdfBuffer(emailHtmlDesktop, 'desktop');
-    const emailMobilePdf  = await generatePdfBuffer(emailHtmlMobile, 'mobile');
+//     const emailDesktopPdf = await generatePdfBuffer(emailHtmlDesktop, 'desktop');
+//     const emailMobilePdf  = await generatePdfBuffer(emailHtmlMobile, 'mobile');
 
-    // React elements → PDF directly
-    const variableCopyPdf = await generatePdfFromReact(
-        <VariableCopyPage {...variableCopyData} />,
-        'desktop'
-    );
-    const altNamePdf = await generatePdfFromReact(
-        <AltNamePage {...altNameData} />,
-        'desktop'
-    );
+//     // React elements → PDF directly
+//     const variableCopyPdf = await generatePdfFromReact(
+//         <VariableCopyPage {...variableCopyData} />,
+//         'desktop'
+//     );
+//     const altNamePdf = await generatePdfFromReact(
+//         <AltNamePage {...altNameData} />,
+//         'desktop'
+//     );
 
-    return mergePdfBuffers([
-        emailDesktopPdf,
-        emailMobilePdf,
-        variableCopyPdf,
-        altNamePdf,
-    ]);
-}
+//     return mergePdfBuffers([
+//         emailDesktopPdf,
+//         emailMobilePdf,
+//         variableCopyPdf,
+//         altNamePdf,
+//     ]);
+// }

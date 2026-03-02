@@ -1,5 +1,5 @@
 "use client"
-import { generateVariableCopyPdfAction } from '@/app/actions';
+// import { generateVariableCopyPdfAction } from '@/app/actions';
 import React from 'react'
 import { useRef } from 'react';
 import { Button } from '../ui/button';
@@ -14,17 +14,17 @@ function VariablePagePdf({emailname, data} : {emailname : string, data: Pdfprops
   const items = Array.isArray(data) ? data : [];
   console.log(data, "data in pdf",items)
 
-    const handleDownload = async () =>{
-        if(!pageRef.current) return;
+    // const handleDownload = async () =>{
+    //     if(!pageRef.current) return;
 
-        const base64 = await generateVariableCopyPdfAction(data);
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${base64}`;
-        link.download = `${emailname}-variable-copy.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-    }
+    //     const base64 = await generateVariableCopyPdfAction(data);
+    //     const link = document.createElement('a');
+    //     link.href = `data:application/pdf;base64,${base64}`;
+    //     link.download = `${emailname}-variable-copy.pdf`;
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     link.remove();
+    // }
 
 
   return (
@@ -43,7 +43,7 @@ function VariablePagePdf({emailname, data} : {emailname : string, data: Pdfprops
             </div>
         ))}
     </div>
-    <Button className='mt-2' onClick={handleDownload}>Download</Button>
+    {/* <Button/ className='mt-2' onClick={handleDownload}>Download</Button> */}
     </>
   )
 }

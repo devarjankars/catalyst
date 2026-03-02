@@ -544,7 +544,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
                                                          <span class="f_bold"
@@ -571,7 +571,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
                                                          <span class="f_bold" style="font-weight: 700">Embryo-Fetal
@@ -612,7 +612,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; padding:0 0 0 5px;">
                                                          <span class="f_bold" style="font-weight: 700">Serious adverse
@@ -639,7 +639,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                       
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
@@ -680,7 +680,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                     
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px;">
@@ -716,7 +716,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                       
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
@@ -741,7 +741,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
                                                      
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px;padding:0 0 0 5px; ">
