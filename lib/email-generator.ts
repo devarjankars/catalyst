@@ -342,8 +342,8 @@ function generateComponentHTML(component: EmailComponent): string {
       ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
       ${index < component.links!.length - 1
               ? index == 1
-                ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
-                : `<span  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+                ? `<span class='desktop'  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+                : `<span  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
               : ""
             }
     `,
