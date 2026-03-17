@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks, FilePenLine, FileCheck   } from "lucide-react";
+import { LayoutGrid, Users, UserCircle, Menu , House , Heart , LogOut, FileMinus, ListChecks, FilePenLine, FileCheck, FileText } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
@@ -22,7 +22,8 @@ export default function SideBar() {
   const menus = [
     { name: "Home", href: "/dashboard", icon: House },
     { name: "Standard Templates", href: "/dashboard/standard-templates", icon: FileCheck },
-    { name: "All Emailers", href: "/dashboard/templates", icon: FileMinus }
+    { name: "All Emailers", href: "/dashboard/templates", icon: FileMinus },
+    { name: "VSB PDFs", href: "/dashboard/vsb-pdfs", icon: FileText }
   ];
 
   const isActive = (href: string) => {

@@ -1,30 +1,41 @@
 "use server"
 
-import { generatePdfBuffer, generatePdfFromReact, mergePdfBuffers } from '../lib/pdf-export-util2';
+import React from 'react';
+import { generatePdfBuffer, generatePdfFromReact, mergePdfBuffers, generateCombinedPdf } from '../lib/pdf-export-util2';
+import ALtnamePdfview from '@/components/vsb-sections/ALtnamePdfview';
 
 export async function handlePdfAction(html: string, viewMode: 'desktop' | 'mobile') {
     const buffer = await generatePdfBuffer(html, viewMode);
-    // Convert Buffer to base64 to send it back to the client
     return buffer.toString('base64');
 }
 
-// export async function generateVariableCopyPdfAction(
-//     data: VariableCopyProps
-// ): Promise<string> {
-//     const pdf = await generatePdfFromReact(<VariableCopyPage {...data} />, 'desktop');
-//     return pdf.toString('base64');
-// }
+export async function generateVariableCopyPdfAction(
+    html: string
+): Promise<string> {
+    const pdf = await generatePdfBuffer(html, 'desktop');
+    return pdf.toString('base64');
+}
 
-// export async function generateAltNamePdfAction(
-//     data: AltNameProps
-// ): Promise<string> {
-//     const pdf = await generatePdfFromReact(<AltNamePage {...data} />, 'desktop');
-//     return pdf.toString('base64');
-// }
+export async function generateAltNamePdfAction(
+    html: string
+): Promise<string> {
+    const pdf = await generatePdfBuffer(html, 'desktop');
+    return pdf.toString('base64');
+}
 
-// // Final merge action — accepts already-generated base64 buffers
-// export async function mergePdfsAction(base64Pdfs: string[]): Promise<string> {
-//     const buffers = base64Pdfs.map(b => Buffer.from(b, 'base64'));
-//     const merged  = await mergePdfBuffers(buffers);
-//     return merged.toString('base64');
-// }
+export async function mergePdfsAction(base64Pdfs: string[]): Promise<string> {
+    const buffers = base64Pdfs.map(b => Buffer.from(b, 'base64'));
+    const merged = await mergePdfBuffers(buffers);
+    return merged.toString('base64');
+}
+
+export async function generateCombinedPdfAction(params: {
+    emailHtmlDesktop?: string;
+    emailHtmlMobile?: string;
+    variableCopyHtml?: string;
+    altNameHtml?: string;
+    emailName: string;
+}) {
+    const buffer = await generateCombinedPdf(params);
+    return buffer.toString('base64');
+}

@@ -67,6 +67,9 @@ class FirebaseService {
   private imagesPath = "template-images";
   private isFirebaseAvailable = false;
   private customComponentsCollection = "custom-components";
+  private vsbsCollection = "vsbs";
+  private vsbImagesPath = "vsb-images";
+  private vsbPdfsPath = "vsb-pdfs";
 
   constructor() {
     this.isFirebaseAvailable = !!(db && storage);
@@ -647,6 +650,121 @@ class FirebaseService {
         isUserCreated: false,
       },
     ];
+  }
+  // VSB Operations
+  async getVSBs(templateId: string): Promise<any[]> {
+    if (!this.isFirebaseAvailable) return [];
+    try {
+      const q = query(collection(db, this.vsbsCollection));
+      const querySnapshot = await getDocs(q);
+      const vsbs: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.templateId === templateId) {
+          vsbs.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.() || data.createdAt,
+            updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+          });
+        }
+      });
+      return vsbs;
+    } catch (error) {
+      console.error("Failed to fetch VSBs:", error);
+      return [];
+    }
+  }
+
+  async getAllAllVSBs(): Promise<any[]> {
+    if (!this.isFirebaseAvailable) return [];
+    try {
+      const q = query(collection(db, this.vsbsCollection));
+      const querySnapshot = await getDocs(q);
+      const vsbs: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        vsbs.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+        });
+      });
+      return vsbs;
+    } catch (error) {
+      console.error("Failed to fetch all VSBs:", error);
+      return [];
+    }
+  }
+
+  async createVSB(data: any): Promise<any> {
+    if (!this.isFirebaseAvailable) return null;
+    try {
+      const docRef = await addDoc(collection(db, this.vsbsCollection), {
+        ...removeUndefinedDeep(data),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return { id: docRef.id, ...data };
+    } catch (error) {
+      console.error("Failed to create VSB:", error);
+      return null;
+    }
+  }
+
+  async updateVSB(id: string, updates: any): Promise<boolean> {
+    if (!this.isFirebaseAvailable) return false;
+    try {
+      const docRef = doc(db, this.vsbsCollection, id);
+      await updateDoc(docRef, {
+        ...removeUndefinedDeep(updates),
+        updatedAt: new Date(),
+      });
+      return true;
+    } catch (error) {
+      console.error("Failed to update VSB:", error);
+      return false;
+    }
+  }
+
+  async deleteVSB(id: string): Promise<boolean> {
+    if (!this.isFirebaseAvailable) return false;
+    try {
+      await deleteDoc(doc(db, this.vsbsCollection, id));
+      return true;
+    } catch (error) {
+      console.error("Failed to delete VSB:", error);
+      return false;
+    }
+  }
+
+  async uploadVSBImage(file: File, templateId: string): Promise<string> {
+    if (!this.isFirebaseAvailable || !storage) return "";
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      const imagePath = `${this.vsbImagesPath}/${templateId}/${fileName}`;
+      const imageRef = ref(storage, imagePath);
+      const snapshot = await uploadBytes(imageRef, file);
+      return await getDownloadURL(snapshot.ref);
+    } catch (error) {
+      console.error("Failed to upload VSB image:", error);
+      return "";
+    }
+  }
+
+  async uploadVSBPDF(blob: Blob, templateId: string, vsbId: string): Promise<string> {
+    if (!this.isFirebaseAvailable || !storage) return "";
+    try {
+      const fileName = `vsb_${Date.now()}.pdf`;
+      const pdfPath = `${this.vsbPdfsPath}/${templateId}/${vsbId}/${fileName}`;
+      const pdfRef = ref(storage, pdfPath);
+      const snapshot = await uploadBytes(pdfRef, blob);
+      return await getDownloadURL(snapshot.ref);
+    } catch (error) {
+      console.error("Failed to upload VSB PDF:", error);
+      return "";
+    }
   }
 }
 

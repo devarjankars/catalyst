@@ -96,6 +96,7 @@
   border-radius: 5px;
 }
 
+
 /* Target the scrollbar thumb (the draggable part) */
 ::-webkit-scrollbar-thumb {
   background-color: #353535; /* Example color */

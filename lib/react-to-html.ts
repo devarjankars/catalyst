@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 export function reactToHtml(element: React.ReactElement): string {
     const bodyHtml = renderToStaticMarkup(element);
-    
+
     // Wrap with full HTML doc so styles/fonts load correctly
     return `
         <!DOCTYPE html>
@@ -13,9 +13,10 @@ export function reactToHtml(element: React.ReactElement): string {
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <!-- Add your global CSS / Tailwind CDN / font links here -->
+              <script src="https://cdn.tailwindcss.com"></script>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: sans-serif; }
+                body { font-family:Arial, Helvetica, sans-serif; }
             </style>
         </head>
         <body>

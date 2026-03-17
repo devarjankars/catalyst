@@ -409,7 +409,7 @@ export const componentTypes = [
   },
   {
     type : "raw-html",
-    label : "Raw HTML",
+    label : "HTML Block",
     category : "basic",
     icon : Code,
     defaultProps: {

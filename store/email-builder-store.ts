@@ -84,6 +84,7 @@ interface EmailBuilderState {
   setPreheader: (preheaderTest: string) => void
   setTemplateImages: (images: string[]) => void
   loadTemplateImages: (templateId: string) => Promise<void>
+  loadTemplate: (templateId: string) => Promise<void>
   addTemplateImage: (imageUrl: string) => void
   removeTemplateImage: (imageUrl: string) => void
 
@@ -328,6 +329,24 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           if (!templateId) return
           const images = await firebaseService.getTemplateImages(templateId)
           set({ templateImages: images })
+        },
+
+        loadTemplate: async (templateId: string) => {
+          if (!templateId) return
+          set({ loading: true })
+          try {
+            const template = await firebaseService.getTemplate(templateId)
+            if (template) {
+              set({
+                currentTemplate: template,
+                components: template.components || [],
+                originalComponents: template.components || [],
+                preheaderText: template.preheaderText || ''
+              })
+            }
+          } finally {
+            set({ loading: false })
+          }
         },
 
         addTemplateImage: (imageUrl) => {

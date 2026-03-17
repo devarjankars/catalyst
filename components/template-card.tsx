@@ -45,7 +45,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
   const handleVSB = (e: React.MouseEvent) => {
     e.stopPropagation();
     // TODO: Replace with your router/navigation logic
-    window.location.href = `/vsb?templateId=${template.id}`;
+    window.location.href = `/vsb/${template.id}`;
   };
 
   return (

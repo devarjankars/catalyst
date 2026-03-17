@@ -301,15 +301,15 @@ function generateComponentHTML(component: EmailComponent): string {
           <td bgcolor="${component.backgroundColor || "#ffffff"}" width="100%" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-cell"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} align="center" style="text-align:center;padding: ${component.padding || "0 20px 20px 20px"};${innerStyle ? innerStyle : ""}; mso-line-height-rule: exactly;">
             <table width="${(component.width || "470").toString().replace("px", "")}" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} align="center" cellpadding="0" cellspacing="0" border="0"  ${innerStyle ? `style="${innerStyle}"` : ""}>
               <tr>
-                <td width="${(component.width || "470").toString().replace("px", "")}" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-cell"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} align="center"  ${innerStyle ? `style="${innerStyle}"` : ""} style="mso-line-height-rule: exactly;">
+                <td width="100%" ${ctaDisplay && ctaDisplay === "mobile-only" ? 'class="mbl-show-cell"' : ctaDisplay && ctaDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} align="center"  ${innerStyle ? `style="${innerStyle}"` : ""} style="mso-line-height-rule: exactly;">
                       <a href="${component.href || "#"}"  target="_blank">
                         <img
-                          width="${(component.width || "470").toString().replace("px", "")}"
+                          width="100%"
                           src="${component.imageSrc || "/cta-placeholder.png"}"
                           alt="${component.imageAlt || "CTA Image"}"
                           border="0"
                           style="
-                            width: ${component.width || "470px"};
+                            width:100%;
                             height: ${component.height || "auto"}; 
                             max-width: 100%; 
                             display: block;
@@ -342,8 +342,8 @@ function generateComponentHTML(component: EmailComponent): string {
       ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
       ${index < component.links!.length - 1
               ? index == 1
-                ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
-                : `<span  style="color:grey; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+                ? `<span class='desktop'  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+                : `<span  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
               : ""
             }
     `,
