@@ -6,6 +6,15 @@ import { Download, Loader2, History } from 'lucide-react'
 import { VSBData, useVSBStore } from '@/store/vsb-store'
 import { firebaseService } from '@/services/firebase-service'
 import { useParams } from 'next/navigation'
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import ALtnamePdfview from './ALtnamePdfview'
 import VariablePagePdfView from './VariablePagePdfView'
 import DesktopViewSection from './DesktopViewSection'
@@ -43,10 +52,17 @@ const VSBPageWrapper: React.FC<{ title: string; number: number; children: React.
 const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
   const { currentTemplate } = useEmailBuilderStore();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [selectedPages, setSelectedPages] = useState({
+    variableCopy: true,
+    desktopView: true,
+    mobileView: true,
+    altNamePage: true
+  });
 
   useImperativeHandle(ref, () => ({
     handleDownloadPDF: () => {
-      handleDownloadPDF();
+      setDownloadDialogOpen(true);
     },
     handleUpVersion: () => {
       handleUpVersion();
@@ -57,12 +73,22 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
   const { templateId } = useParams() as { templateId: string };
   const [isUpVersioning, setIsUpVersioning] = useState(false);
 
-  const generatePDFBlob = async () => {
+  const generatePDFBlob = async (options?: {
+    variableCopy: boolean;
+    desktopView: boolean;
+    mobileView: boolean;
+    altNamePage: boolean;
+  }) => {
     const headerDetails = data?.headerDetails || [];
     const htmlContent = generateEmailHTML(currentTemplate?.components || [], currentTemplate?.preheaderText || '');
 
-    const variableCopyHtml = reactToHtml(<VariablePagePdfView data={data.variableCopy} emailname={emailName} />);
-    const altNameHtml = reactToHtml(<ALtnamePdfview data={data.altNamePage} emailName={emailName} />);
+    const includeVC = options ? options.variableCopy : true;
+    const includeDV = options ? options.desktopView : true;
+    const includeMV = options ? options.mobileView : true;
+    const includeANP = options ? options.altNamePage : true;
+
+    const variableCopyHtml = includeVC ? reactToHtml(<VariablePagePdfView data={data.variableCopy} emailname={emailName} headingColor={data.variableCopyHeadingColor} />) : undefined;
+    const altNameHtml = includeANP ? reactToHtml(<ALtnamePdfview data={data.altNamePage} emailName={emailName} />) : undefined;
 
     const desktopHeaderHtml = `
       <div >
@@ -114,8 +140,8 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
     }
 
     const base64Merged = await generateCombinedPdfAction({
-      emailHtmlDesktop: desktopFinalHtml,
-      emailHtmlMobile: mobileFinalHtml,
+      emailHtmlDesktop: includeDV ? desktopFinalHtml : undefined,
+      emailHtmlMobile: includeMV ? mobileFinalHtml : undefined,
       variableCopyHtml: variableCopyHtml,
       altNameHtml: altNameHtml,
       emailName: emailName
@@ -131,12 +157,18 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
     return new Blob([byteArray], { type: 'application/pdf' });
   };
 
-  const handleDownloadPDF = async () => {
+  const executeDownloadPDF = async (options?: {
+    variableCopy: boolean;
+    desktopView: boolean;
+    mobileView: boolean;
+    altNamePage: boolean;
+  }) => {
     setIsGenerating(true);
+    setDownloadDialogOpen(false);
     try {
-      const pdfBlob = await generatePDFBlob();
+      const pdfBlob = await generatePDFBlob(options);
       const url = URL.createObjectURL(pdfBlob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `${emailName}-VSB-Combined.pdf`;
@@ -154,23 +186,23 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
 
   const handleUpVersion = async () => {
     if (!confirm('Are you sure you want to create a new version? This will archive the current version in history.')) return;
-    
+
     setIsUpVersioning(true);
     try {
       const pdfBlob = await generatePDFBlob();
       const newPdfUrl = await firebaseService.uploadVSBPDF(pdfBlob, templateId, data.id);
-      
+
       if (newPdfUrl) {
         const versions = data.versions || [];
         const currentVersion = data.currentVersion;
-        
+
         const newVersions = currentVersion ? [...versions, currentVersion] : versions;
-        
+
         await updateVSB(data.id, {
           currentVersion: newPdfUrl,
           versions: newVersions
         });
-        
+
         alert('VSB successfully up-versioned!');
       }
     } catch (error) {
@@ -199,12 +231,12 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
             {isUpVersioning ? 'Archiving...' : 'Up-version'}
           </Button>
           <Button
-            onClick={handleDownloadPDF}
+            onClick={() => setDownloadDialogOpen(true)}
             disabled={isGenerating || isUpVersioning}
             className="bg-[#006937] hover:bg-[#00522b] shadow-lg shadow-green-900/10 px-6 h-12 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {isGenerating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Download className="mr-2 h-5 w-5" />}
-            {isGenerating ? 'Generating PDF...' : 'Download Combined PDF'}
+            {isGenerating ? 'Generating PDF...' : 'Download PDF'}
           </Button>
         </div>
       </div>
@@ -212,7 +244,7 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
       <div className="space-y-0 text-black">
         {/* Page 1: Variable Copy */}
         <VSBPageWrapper title="Variable Copy" number={1}>
-          <VariablePagePdfView emailname={emailName} data={data.variableCopy} />
+          <VariablePagePdfView emailname={emailName} data={data.variableCopy} headingColor={data.variableCopyHeadingColor} />
         </VSBPageWrapper>
 
         {/* Page 2: Desktop View */}
@@ -230,6 +262,69 @@ const CombinedVSBView = forwardRef(({ data, emailName }: Props, ref) => {
           <ALtnamePdfview data={data.altNamePage} emailName={emailName} />
         </VSBPageWrapper>
       </div>
+
+      <Dialog open={downloadDialogOpen} onOpenChange={setDownloadDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Download Selective Pages</DialogTitle>
+            <DialogDescription>
+              Select the pages you want to include in the combined PDF.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 cursor-default">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="variableCopy"
+                checked={selectedPages.variableCopy}
+                onCheckedChange={(checked) => setSelectedPages(s => ({ ...s, variableCopy: checked === true }))}
+              />
+              <label htmlFor="variableCopy" className="text-sm font-medium leading-none cursor-pointer">
+                1. Variable Copy
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="desktopView"
+                checked={selectedPages.desktopView}
+                onCheckedChange={(checked) => setSelectedPages(s => ({ ...s, desktopView: checked === true }))}
+              />
+              <label htmlFor="desktopView" className="text-sm font-medium leading-none cursor-pointer">
+                2. Desktop View
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="mobileView"
+                checked={selectedPages.mobileView}
+                onCheckedChange={(checked) => setSelectedPages(s => ({ ...s, mobileView: checked === true }))}
+              />
+              <label htmlFor="mobileView" className="text-sm font-medium leading-none cursor-pointer">
+                3. Mobile View
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="altNamePage"
+                checked={selectedPages.altNamePage}
+                onCheckedChange={(checked) => setSelectedPages(s => ({ ...s, altNamePage: checked === true }))}
+              />
+              <label htmlFor="altNamePage" className="text-sm font-medium leading-none cursor-pointer">
+                4. Alt-Text Configuration
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => executeDownloadPDF(selectedPages)}
+              disabled={!selectedPages.variableCopy && !selectedPages.desktopView && !selectedPages.mobileView && !selectedPages.altNamePage}
+              className="bg-[#006937] hover:bg-[#00522b] text-white"
+            >
+              Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 });

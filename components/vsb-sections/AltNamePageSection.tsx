@@ -165,7 +165,19 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
       </div>
 
       <div>
-        <h2 className='text-xl font-bold mb-4'>Selected Images & Alt Text</h2>
+        <div className='flex items-center justify-between mb-4'>
+          <h2 className='text-xl font-bold'>Selected Images & Alt Text</h2>
+          <div className='flex items-center gap-2'>
+            <label className='text-sm text-gray-500 font-medium'>Heading Color:</label>
+            <input 
+              type="color" 
+              value={data.headingColor || '#006836'} 
+              onChange={(e) => onChange({ ...data, headingColor: e.target.value })}
+              className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+              title="Change heading color"
+            />
+          </div>
+        </div>
         <div className='space-y-4'>
           {images.length === 0 ? (
             <div className="border border-dashed rounded-xl p-12 text-center text-gray-400 bg-gray-50">

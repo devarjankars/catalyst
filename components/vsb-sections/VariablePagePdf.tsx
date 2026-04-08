@@ -14,24 +14,11 @@ interface Pdfprops {
 
 
 
-function VariablePagePdf({ emailname, data }: { emailname: string, data: Pdfprops[] }) {
+function VariablePagePdf({ emailname, data, headingColor }: { emailname: string, data: Pdfprops[], headingColor?: string }) {
   const pageRef = useRef(null)
   const items = Array.isArray(data) ? data : [];
 
-  const handleDownload = async () => {
-    if (!pageRef.current) return;
-    console.log(pageRef.current);
-    const pageHTML = await reactToHtml(<VariablePagePdfView emailname={emailname} data={data} />)
-    // const pageHTML = pageRef.current.outerHTML;
-    console.log(pageHTML);
-    const base64 = await generateVariableCopyPdfAction(pageHTML);
-    const link = document.createElement('a');
-    link.href = `data:application/pdf;base64,${base64}`;
-    link.download = `${emailname}-variable-copy.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }
+
 
 
   return (
@@ -51,9 +38,9 @@ function VariablePagePdf({ emailname, data }: { emailname: string, data: Pdfprop
         ))}
     </div> */}
       <div ref={pageRef}>
-        <VariablePagePdfView emailname={emailname} data={data} />
+        <VariablePagePdfView emailname={emailname} data={data} headingColor={headingColor} />
       </div>
-      <Button className='mt-2' onClick={handleDownload}>Download</Button>
+      {/* <Button className='mt-2' onClick={handleDownload}>Download</Button> */}
     </>
   )
 }

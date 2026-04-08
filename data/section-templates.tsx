@@ -105,5 +105,67 @@ export const sectionTemplates = [
       gap : "0px"
     },
   },
-  
+  {
+    type: "section",
+    label: "4 Column Section",
+    icon: Columns,
+    defaultProps: {
+      children: [
+        { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "25%" },
+        { id: "col2", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "25%" },
+        { id: "col3", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "25%" },
+        { id: "col4", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "25%" },
+      ],
+      backgroundColor: "#ffffff",
+      borderRadius: "0px",
+      direction: "row",
+      maxWidth: "100%",
+      columns: 4,
+      columnType : "equal",
+      gap : "0px"
+    },
+  },
+  {
+    type: "section",
+    label: "5 Column Section",
+    icon: Columns,
+    defaultProps: {
+      children: [
+        { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
+        { id: "col2", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
+        { id: "col3", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
+        { id: "col4", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
+        { id: "col5", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
+      ],
+      backgroundColor: "#ffffff",
+      borderRadius: "0px",
+      direction: "row",
+      maxWidth: "100%",
+      columns: 5,
+      columnType : "equal",
+      gap : "0px"
+    },
+  },
+  {
+    type: "section",
+    label: "6 Column Section",
+    icon: Columns,
+    defaultProps: {
+      children: [
+        { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+        { id: "col2", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+        { id: "col3", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+        { id: "col4", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+        { id: "col5", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+        { id: "col6", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
+      ],
+      backgroundColor: "#ffffff",
+      borderRadius: "0px",
+      direction: "row",
+      maxWidth: "100%",
+      columns: 6,
+      columnType : "equal",
+      gap : "0px"
+    },
+  },
 ]

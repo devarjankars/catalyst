@@ -404,7 +404,8 @@ export const componentTypes = [
         { iconSrc: "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Finstagram_icon.png?alt=media&token=4fbddb4b-d7ff-4830-b01d-0fc11eb76340", href: "#", altText: "Instagram Icon" },
         { iconSrc: "https://firebasestorage.googleapis.com/v0/b/med-email-builder.firebasestorage.app/o/component-images%2Flinkedin_icon.png?alt=media&token=ba56b0ea-bdc6-410e-bf6c-bbfcd581c731", href: "#", altText: "LinkedIn Icon" },
       ], 
-      jobCode: "02/26 GL-RMMH-2600016"
+      jobCode: "02/26 GL-RMMH-2600016",
+      address: "[countries to add appropriate address]"
     },
   },
   {

@@ -13,6 +13,9 @@ import SingleColumnSection from "./section-components/single-column-section";
 import { secondsInDay } from "date-fns/constants";
 import DoubleColumnSection from "./section-components/double-column-section";
 import ThreeColumnSection from "./section-components/three-column-section";
+import FourColumnSection from "./section-components/four-column-section";
+import FiveColumnSection from "./section-components/five-column-section";
+import SixColumnSection from "./section-components/six-column-section";
 import { se } from "date-fns/locale";
 
 interface EmailComponentRendererProps {
@@ -248,7 +251,48 @@ export function EmailComponentRenderer({
                 direction={component.direction || "column"}
               />
             );
-
+          case 4:
+            return (
+              <FourColumnSection
+                onSelectSection={onSelectChild}
+                selectedComponent={selectedComponent}
+                onAddToSection={onAddToSection}
+                renderSectionChild={renderSectionChild}
+                onMoveWithinSection={onMoveWithinSection}
+                onUpdateChild={onUpdateChild}
+                component={component}
+                sectionId={component.id}
+                direction={component.direction || "column"}
+              />
+            );
+          case 5:
+            return (
+              <FiveColumnSection
+                onSelectSection={onSelectChild}
+                selectedComponent={selectedComponent}
+                onAddToSection={onAddToSection}
+                renderSectionChild={renderSectionChild}
+                onMoveWithinSection={onMoveWithinSection}
+                onUpdateChild={onUpdateChild}
+                component={component}
+                sectionId={component.id}
+                direction={component.direction || "column"}
+              />
+            );
+          case 6:
+            return (
+              <SixColumnSection
+                onSelectSection={onSelectChild}
+                selectedComponent={selectedComponent}
+                onAddToSection={onAddToSection}
+                renderSectionChild={renderSectionChild}
+                onMoveWithinSection={onMoveWithinSection}
+                onUpdateChild={onUpdateChild}
+                component={component}
+                sectionId={component.id}
+                direction={component.direction || "column"}
+              />
+            );
           default:
             break;
         }

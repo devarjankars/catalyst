@@ -1,18 +1,20 @@
 "use client"
 
 import React, { useRef } from 'react';
-import {Input} from "../ui/input";
-import {Button} from "../ui/button";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { PlusCircle, Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface Props {
   data: any;
+  color?: string;
+  onColorChange?: (color: string) => void;
   onChange: (data: any) => void;
 }
 
-const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
+const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onChange }) => {
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
-  
+
   // Ensure variableCopy is always an array
   const variableCopy = Array.isArray(data) ? data : [];
 
@@ -50,7 +52,7 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
       if (i !== sectionIdx) return section;
       return { ...section, options: section.options.filter((_, j) => j !== optIdx) };
     });
-    onChange(updated );
+    onChange(updated);
   };
 
   // Update option value
@@ -77,14 +79,26 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
 
   return (
     <div>
-      <h2 className='text-xl font-bold mb-4'>Variable Copy</h2>
+      <div className='flex items-center justify-between mb-4'>
+        <h2 className='text-xl font-bold'>Variable Copy</h2>
+        <div className='flex items-center gap-2'>
+          <label className='text-sm text-gray-500 font-medium'>Theme Color:</label>
+          <input 
+            type="color" 
+            value={color || '#FF66CC'} 
+            onChange={(e) => onColorChange?.(e.target.value)}
+            className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+            title="Change theme color"
+          />
+        </div>
+      </div>
       {variableCopy.length === 0 ? (
         <p className='text-gray-500 mb-4'>No variable copy added yet.</p>
       ) : (
         <div className='space-y-6'>
           {variableCopy.map((section, idx) => {
             const isImageSection = section.heading.toLowerCase().includes('image');
-            
+
             return (
               <div key={idx} className='border rounded p-4 relative bg-gray-50'>
                 <div className='flex items-center mb-4'>
@@ -99,7 +113,7 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
                     ✕
                   </Button>
                 </div>
-                
+
                 <div className='space-y-3 ml-4'>
                   {/* <div className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-2'>Options</div> */}
                   {section.options.map((opt, optIdx) => {
@@ -115,7 +129,7 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
                             className='flex-1 bg-white'
                             placeholder={isImageSection ? 'Image URL or Upload' : `Option ${optIdx + 1}`}
                           />
-                          
+
                           {isImageSection && (
                             <>
                               <input
@@ -130,9 +144,9 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
                                   if (file) handleImageUpload(idx, optIdx, file);
                                 }}
                               />
-                              <Button 
-                                variant='outline' 
-                                size='icon' 
+                              <Button
+                                variant='outline'
+                                size='icon'
                                 className='shrink-0 h-10 w-10 bg-white'
                                 onClick={() => fileInputRefs.current[`${idx}-${optIdx}`]?.click()}
                                 title='Upload Image'
@@ -141,28 +155,28 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
                               </Button>
                             </>
                           )}
-                          
+
                           <Button variant='ghost' size='icon' onClick={() => removeOption(idx, optIdx)} title='Remove option' className='shrink-0'>
                             ✕
                           </Button>
                         </div>
-                        
+
                         {hasPreview && (
                           <div className='ml-16 mb-2'>
-                             <img 
-                                src={opt} 
-                                alt="Preview" 
-                                className='h-16 w-auto rounded border border-gray-200'
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                              />
+                            <img
+                              src={opt}
+                              alt="Preview"
+                              className='h-16 w-auto rounded border border-gray-200'
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
                           </div>
                         )}
                       </div>
                     );
                   })}
-                  
+
                   <Button variant='ghost' size='sm' onClick={() => addOption(idx)} className='mt-2 ml-16'>
-                    <PlusCircle className='mr-1' size={16}/> Add option
+                    <PlusCircle className='mr-1' size={16} /> Add option
                   </Button>
                 </div>
               </div>
@@ -170,11 +184,11 @@ const VariableCopySection: React.FC<Props> = ({ data, onChange }) => {
           })}
         </div>
       )}
-     
+
       <div className='flex justify-center'>
-         <Button variant='outline' className='mt-4' onClick={addSection}>
-        <PlusCircle className='mr-1' size={20}/> Add section
-      </Button>
+        <Button variant='outline' className='mt-4' onClick={addSection}>
+          <PlusCircle className='mr-1' size={20} /> Add section
+        </Button>
       </div>
     </div>
   );

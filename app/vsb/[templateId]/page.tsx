@@ -14,6 +14,16 @@ import AltNamePageSection from '@/components/vsb-sections/AltNamePageSection';
 import PreviewSection from '@/components/vsb-sections/PreviewSection';
 import CombinedVSBView from '@/components/vsb-sections/CombinedVSBView';
 import HeaderDetailsEditor from '@/components/vsb-sections/HeaderDetailsEditor';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type SectionType = 'Variable Copy' | 'Desktop view' | 'Mobile view' | 'alt name page' | 'Combined Preview';
 
@@ -21,11 +31,24 @@ export default function VSBPage() {
   const router = useRouter();
   const params = useParams();
   const templateId = params.templateId as string;
-  const { vsbs, currentVsb, fetchVSBs, createVSB, updateVSB, deleteVSB, duplicateVSB, setCurrentVsb, loading, error } = useVSBStore();
+  const { vsbs, currentVsb, fetchVSBs, createVSB, updateVSB, deleteVSB, duplicateVSB, setCurrentVsb, loading, error, hasUnsavedChanges, saveVSB } = useVSBStore();
   const { currentTemplate, loadTemplateImages } = useEmailBuilderStore();
 
   const [activeSection, setActiveSection] = useState<SectionType>('Variable Copy');
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const combinedViewRef = useRef<{ handleDownloadPDF: () => void }>(null);
+
+  // Handle unsaved changes warning on page close/refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Fetch VSBs and template data on mount
   useEffect(() => {
@@ -49,8 +72,7 @@ export default function VSBPage() {
         { name: 'Subject Line', value: '[Variable subject line]' },
         { name: 'Preheader', value: '[Variable preheader]' },
       ],
-      desktopView: {},
-      mobileView: {},
+      
     });
     setActiveSection('Variable Copy');
   };
@@ -74,11 +96,9 @@ export default function VSBPage() {
 
   const handleUpdateData = (section: string, data: any) => {
     if (!currentVsb) return;
-    
+
     let updates: Partial<VSBData> = {};
     if (section === 'Variable Copy') updates.variableCopy = data;
-    if (section === 'Desktop view') updates.desktopView = data;
-    if (section === 'Mobile view') updates.mobileView = data;
     if (section === 'alt name page') updates.altNamePage = data;
     if (section === 'headerDetails') updates.headerDetails = data;
 
@@ -97,13 +117,18 @@ export default function VSBPage() {
     const renderActiveSection = () => {
       switch (activeSection) {
         case 'Variable Copy':
-          return <VariableCopySection data={currentVsb.variableCopy}  onChange={(data) => handleUpdateData('Variable Copy', data)} />;
+          return <VariableCopySection 
+            data={currentVsb.variableCopy} 
+            color={currentVsb.variableCopyHeadingColor}
+            onColorChange={(color) => updateVSB(currentVsb.id, { variableCopyHeadingColor: color })}
+            onChange={(data) => handleUpdateData('Variable Copy', data)} 
+          />;
         case 'Desktop view':
           return (
             <div className="space-y-6 ">
-              <HeaderDetailsEditor 
-                data={currentVsb.headerDetails} 
-                onChange={(data) => handleUpdateData('headerDetails', data)} 
+              <HeaderDetailsEditor
+                data={currentVsb.headerDetails}
+                onChange={(data) => handleUpdateData('headerDetails', data)}
               />
               <DesktopViewSection data={currentVsb.desktopView} onChange={(data) => handleUpdateData('Desktop view', data)} />
             </div>
@@ -127,13 +152,35 @@ export default function VSBPage() {
       <div className="flex flex-col h-screen bg-gray-50">
         <header className="h-16 border-b bg-white flex items-center justify-between px-8 shrink-0">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setCurrentVsb(null)}>
+            <Button variant="ghost" size="icon" onClick={() => {
+              if (hasUnsavedChanges) {
+                setShowExitDialog(true);
+              } else {
+                setCurrentVsb(null);
+              }
+            }}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setCurrentVsb(null)}>Back to List</Button>
+            <Button variant="outline" onClick={() => {
+              if (hasUnsavedChanges) {
+                setShowExitDialog(true);
+              } else {
+                setCurrentVsb(null);
+              }
+            }}>Back to List</Button>
+
+            <Button 
+              onClick={() => saveVSB(currentVsb.id)} 
+              disabled={!hasUnsavedChanges || loading}
+              className={hasUnsavedChanges ? "bg-amber-600 hover:bg-amber-700 text-white font-medium" : "bg-gray-100 text-gray-500"}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {hasUnsavedChanges ? "Save Changes" : "Saved"}
+            </Button>
+
             {activeSection === 'Combined Preview' && (
               <Button onClick={() => combinedViewRef.current?.handleDownloadPDF()} className="bg-green-600 hover:bg-green-700 text-white">
                 <Download className="mr-2 h-4 w-4" /> Download PDF
@@ -166,18 +213,36 @@ export default function VSBPage() {
 
           <aside className="w-80 border-l bg-white p-4 overflow-y-auto shrink-0 hidden lg:block">
             <h3 className="font-semibold mb-4 text-gray-500 uppercase text-xs">Preview</h3>
-            <PreviewSection 
-              section={activeSection as any} 
+            <PreviewSection
+              section={activeSection as any}
               data={
                 activeSection === 'Variable Copy' ? currentVsb.variableCopy :
-                activeSection === 'alt name page' ? currentVsb.altNamePage :
-                activeSection === 'Desktop view' ? currentVsb.desktopView :
-                currentVsb.mobileView
-              } 
+                  activeSection === 'alt name page' ? currentVsb.altNamePage :
+                    activeSection === 'Desktop view' ? currentVsb.desktopView :
+                      currentVsb.mobileView
+              }
               headerDetails={currentVsb.headerDetails}
+              variableCopyHeadingColor={currentVsb.variableCopyHeadingColor}
             />
           </aside>
         </main>
+
+        <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes. Are you sure you want to go back? Any unsaved edits will be lost permanently.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => setCurrentVsb(null)} className="bg-red-600 hover:bg-red-700">
+                Discard Changes
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -208,7 +273,7 @@ export default function VSBPage() {
         </Card>
       )}
 
-    { !loading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {!loading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {vsbs.filter(v => v.templateId === templateId).length === 0 && !loading && (
           <div className="col-span-full border-2 border-dashed rounded-xl p-12 text-center text-gray-500">
             No VSBs found for this template. Click "Create New VSB" to get started.
@@ -217,12 +282,12 @@ export default function VSBPage() {
         {vsbs.filter(v => v.templateId === templateId).map(vsb => (
           <Card key={vsb.id} className="hover:shadow-lg transition-shadow cursor-pointer relative group" onClick={() => handleEditVSB(vsb)}>
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-               <Button variant="ghost" size="icon" className="h-8 w-8 bg-white shadow-sm border" onClick={(e) => handleDuplicateVSB(e, vsb.id)} title="Duplicate">
-                  <Copy className="h-4 w-4 text-blue-600" />
-               </Button>
-               <Button variant="ghost" size="icon" className="h-8 w-8 bg-white shadow-sm border" onClick={(e) => handleDeleteVSB(e, vsb.id)} title="Delete">
-                  <Trash2 className="h-4 w-4 text-red-600" />
-               </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 bg-white shadow-sm border" onClick={(e) => handleDuplicateVSB(e, vsb.id)} title="Duplicate">
+                <Copy className="h-4 w-4 text-blue-600" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 bg-white shadow-sm border" onClick={(e) => handleDeleteVSB(e, vsb.id)} title="Delete">
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </Button>
             </div>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-500">

@@ -1248,10 +1248,33 @@ function generateComponentHTML(component: EmailComponent): string {
         `).join("");
 
 
+        const mobileSocialMediaLinksHtml = (component.socialMediaLinks || []).map(
+        (link,index) => `
+          <td bgcolor="#0083BF" ${index === 1 ? 'style="padding: 0 10px 0 10px;"' : ""}>
+            <a style="cursor: pointer; text-decoration: none;"
+                href="${link.href}" target="_blank">
+                <img width="33" src="${link.iconSrc}" alt="${link.altText}">
+            </a>
+          </td>
+        `).join("");
+
+
       const footerLinksHtml = (component.links || []).map((link, index) =>
         `
           <tr bgcolor="#0083BF">
-              <td style="text-align: right;font-size: 10px;line-height: 12px;color: #ffffff;${index !== 0 ? "padding: 4px 0 0 0;" : ""}" bgcolor="#0083BF">
+              <td style="text-align: right;font-size: 10px;line-height: 12px;color: #ffffff;${index !== 0 ? "padding: 2px 0 0 0;" : ""}" bgcolor="#0083BF">
+                  <a href="${link.href}" style="text-decoration: underline;color: #ffffff;">
+                      ${link.text}
+                  </a>
+              </td>
+          </tr>
+      `
+      ).join("");
+
+      const mobileFooterLinksHtml = (component.links || []).map((link, index) =>
+        `
+          <tr bgcolor="#0083BF">
+              <td align="center" style="text-align: center;font-size: 10px;line-height: 12px;color: #ffffff;padding: 10px 0  10px 0; " bgcolor="#0083BF">
                   <a href="${link.href}" style="text-decoration: underline;color: #ffffff;">
                       ${link.text}
                   </a>
@@ -1272,7 +1295,7 @@ function generateComponentHTML(component: EmailComponent): string {
         >
             <tr>
                 <td width="100%" style="padding: 20px 0 0px 0;">
-                    <table bgcolor="#0083BF" width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <table class="desk-show-table" bgcolor="#0083BF" width="100%" border="0" cellspacing="0" cellpadding="0">
                         <tr bgcolor="#0083BF">
                             <td bgcolor="#0083BF">
                                 <table width="100%" bgcolor="#0083BF">
@@ -1280,7 +1303,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                         <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altTex}" >
                                     </td>
         
-                                    <td align="right" bgcolor="#0083BF" width="50%" style="padding: 30px 20px 20px 0;">
+                                    <td valign="top" align="right" bgcolor="#0083BF" width="50%" style="padding: 30px 20px 20px 0;">
                                         <table bgcolor="#0083BF">
                                             <tr bgcolor="#0083BF">
                                                 ${socialMediaLinksHtml}
@@ -1291,24 +1314,26 @@ function generateComponentHTML(component: EmailComponent): string {
                             </td>
                         </tr>
                         <tr bgcolor="#0083BF">
+                          <td style="color: #ffffff;font-size: 10px;line-height: 12px;padding: 0 0 10px 30px;" bgcolor="#0083BF">
+                              Ferring Pharmaceuticals,<br/><span style="color:#FF00C7">${component.address}</span><br />&zwj;${component.jobCode}&zwj;
+                          </td>
+                        </tr>
+                        <tr bgcolor="#0083BF">
                             <td width="100%" bgcolor="#0083BF">
                                 <table width="100%" bgcolor="#0083BF">
                                     <tr bgcolor="#0083BF">
-                                        <td width="70%" align="left" style="padding: 0 0 30px 30px;" bgcolor="#0083BF">
+                                        <td valign="top" width="70%" align="left" style="padding: 0 0 30px 30px;" bgcolor="#0083BF">
                                             <table bgcolor="#0083BF">
-                                                <tr bgcolor="#0083BF">
-                                                    <td style="color: #ffffff;font-size: 9.5px;line-height: 12px;" bgcolor="#0083BF">
-                                                        Ferring Pharmaceuticals, 100 Interpace Parkway, Parsippany, NJ
-                                                        07054<br />&zwj;${component.jobCode}&zwj;
-                                                    </td>
-                                                </tr>
+                                               
                                                 <tr bgcolor="#0083BF"> 
                                                     <td
-                                                        style="color: #ffffff;font-size: 9.5px;line-height: 12px;padding: 15px 0 0 0;" bgcolor="#0083BF">
+                                                        style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
                                                         © 2026 Ferring<br />
                                                         FERRING and the Ferring Pharmaceuticals logo are trademarks of the
                                                         Ferring.<br />
-                                                        This is intended for healthcare professionals only.
+                                                        For healthcare professionals only.<br/>
+                                                        This material is intended for medical and/or commercial use in<br/>
+                                                        accordance with local laws and regulations.
                                                     </td>
                                                 </tr>
                                             </table>
@@ -1322,7 +1347,62 @@ function generateComponentHTML(component: EmailComponent): string {
                                 </table>
                             </td>
                         </tr>
+                  </table>
+                  <!--[if !mso]><!-->
+                    <table class="mbl-show-table" bgcolor="#0083BF" width="100%" border="0" cellspacing="0" cellpadding="0" style="display:none;">
+                        <tr bgcolor="#0083BF" align="center">
+                          <td bgcolor="#0083BF" align="center" width="100%" style="padding: 20px;">
+                            <table align="center" bgcolor="#0083BF">
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="padding: 10px 0px 20px 0px;">
+                                  <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altTex}" >
+                                </td>
+                              </tr>
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="padding: 0px 0px 10px 0px;">
+                                  <table bgcolor="#0083BF">
+                                    <tr bgcolor="#0083BF">
+                                        ${mobileSocialMediaLinksHtml}
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              ${mobileFooterLinksHtml}
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;padding: 10px 0 0 0;" bgcolor="#0083BF">
+                                  Ferring Pharmaceuticals,<br/><span style="color:#FF00C7">${component.address}</span>
+                                 </td>
+                              </tr>
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;padding: 10px 0 0px 0;" bgcolor="#0083BF">
+                                    ${component.jobCode}
+                                </td>
+                              </tr>
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
+                                    © 2026 Ferring
+                                </td>
+                              </tr> 
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
+                                    FERRING and the Ferring Pharmaceuticals logo are<br/>trademarks of the Ferring.
+                                </td>
+                              </tr> 
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
+                                    For healthcare professionals only.
+                                </td>
+                              </tr> 
+                              <tr bgcolor="#0083BF" align="center">
+                                <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;padding:0 0 10px 0" bgcolor="#0083BF">
+                                    This material is intended for medical and/or commercial use in<br/>accordance with local laws and regulations.
+                                </td>
+                              </tr> 
+                            </table> 
+                          </td>
+                        </tr>
                     </table>
+                  <!--[endif]-->
                 </td>
             </tr>
         </table>

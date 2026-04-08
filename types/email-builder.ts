@@ -64,6 +64,7 @@ export interface EmailComponent {
   jobCode?: string
   socialMediaLinks?: { altText: string; href: string, iconSrc: string }[]
   logo?: { altTex: string, href: string, logoSrc: string }
+  address?: string
 
   //isi properties
   importantSafetyInformation?: {

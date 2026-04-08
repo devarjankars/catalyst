@@ -9,6 +9,7 @@ interface Props {
   section: string;
   data: any;
   headerDetails?: any[];
+  variableCopyHeadingColor?: string;
 }
 
 const HeaderDetailsPreview = ({ details }: { details?: any[] }) => {
@@ -25,8 +26,8 @@ const HeaderDetailsPreview = ({ details }: { details?: any[] }) => {
   );
 };
 
-const PreviewSection: React.FC<Props> = ({ section, data, headerDetails }) => {
-  const currentTemplate = useEmailBuilderStore(state=>state.currentTemplate);
+const PreviewSection: React.FC<Props> = ({ section, data, headerDetails, variableCopyHeadingColor }) => {
+  const currentTemplate = useEmailBuilderStore(state => state.currentTemplate);
   if (!data) return <div className="text-gray-400 italic">No data to preview</div>;
 
 
@@ -34,7 +35,7 @@ const PreviewSection: React.FC<Props> = ({ section, data, headerDetails }) => {
     case 'Variable Copy':
       return (
         <div className="border rounded bg-white shadow-sm overflow-hidden">
-          <VariablePagePdf emailname={currentTemplate?.name || ''} data={data}/>
+          <VariablePagePdf emailname={currentTemplate?.name || ''} data={data} headingColor={variableCopyHeadingColor} />
         </div>
       );
     // case 'Desktop view':
@@ -67,7 +68,7 @@ const PreviewSection: React.FC<Props> = ({ section, data, headerDetails }) => {
     //   );
     case 'alt name page':
       return (
-         <ALtnamePdfview data={data}  />
+        <ALtnamePdfview data={data} />
       );
     default:
       return <div className="text-gray-400 italic">Select a section to preview.</div>;
