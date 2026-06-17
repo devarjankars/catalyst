@@ -18,13 +18,22 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 
-export function ImageGallery() {
-  const { templateImages, selectedComponent, components, updateComponent, removeTemplateImage } = useEmailBuilderStore()
+type ImageGalleryProps = {
+  getSelectionInfo?: () => { components: any[]; selectedComponent: string | null } | undefined
+  applyUpdates?: (updates: any, parentId?: string | null) => void
+}
+
+export function ImageGallery({ getSelectionInfo, applyUpdates }: ImageGalleryProps) {
+  const { templateImages, selectedComponent: storeSelectedComponent, components: storeComponents, updateComponent, removeTemplateImage } = useEmailBuilderStore()
   const [imageToDelete, setImageToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Helper to find the selected component
+  // Helper to get currently selected component data, using provided selection info when available
+  const selectionInfo = getSelectionInfo ? getSelectionInfo() : { components: storeComponents, selectedComponent: storeSelectedComponent }
+
   const getSelectedComponentData = () => {
+    const selectedComponent = selectionInfo?.selectedComponent
+    const components = selectionInfo?.components || []
     if (!selectedComponent) return null
     const findSelected = (items: any[]): any | null => {
       for (const item of items) {
@@ -64,15 +73,25 @@ export function ImageGallery() {
       return null
     }
 
-    const parentId = findParentId(components, selectedComponent!)
+    const parentId = findParentId(selectionInfo.components, selectionInfo.selectedComponent!)
 
-    // Update based on component type
+    // Create update payload based on component type
+    let updates: any = {}
     if (component.type === "cta-button") {
-      updateComponent(selectedComponent!, { imageSrc: imageUrl }, parentId)
+      updates = { imageSrc: imageUrl }
     } else if (component.type === "footer-link-2") {
-      updateComponent(selectedComponent!, { logoA: { ...component.logoA, imgSrc: imageUrl } }, parentId)
+      updates = { logoA: { ...component.logoA, imgSrc: imageUrl } }
+    } else if (component.type === "image-with-link") {
+      updates = { src: imageUrl }
     } else {
-      updateComponent(selectedComponent!, { src: imageUrl }, parentId)
+      updates = { src: imageUrl }
+    }
+
+    // Apply updates via provided callback when available (builder handles three-canvas), else fallback to store
+    if (applyUpdates) {
+      applyUpdates(updates, parentId)
+    } else {
+      updateComponent(selectionInfo.selectedComponent!, updates, parentId)
     }
 
     toast.success("Image applied to component")

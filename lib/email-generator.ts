@@ -1433,8 +1433,8 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
           <meta name="x-apple-disable-message-reformatting">
 
           <!--target dark mode-->
-          <meta name="color-scheme" content="light dark">
-          <meta name="supported-color-schemes" content="light dark only">
+          <meta name="color-scheme" content="light">
+          <meta name="supported-color-schemes" content="light">
 
     <title>Email Template</title>
     <!--[if mso]>
@@ -1539,6 +1539,76 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
         .desktop {
           display: inline-block !important;
         }
+
+         @media (prefers-color-scheme: dark) {
+      .dark-img {
+        display: block !important;
+        width: auto !important;
+        overflow: visible !important;
+        float: none !important;
+        max-height: inherit !important;
+        max-width: inherit !important;
+        line-height: auto !important;
+        margin-top: 0 !important;
+        visibility: inherit !important;
+      }
+ 
+      .light-img {
+        display: none !important;
+      }
+   .darkmode {
+            background-color: #ffffff !important;
+            background-image: linear-gradient(#ffffff, #ffffff) !important;
+         }
+ 
+               .dm_text {
+            color: #000000 !important;
+         }
+ 
+      .linkLightBlue {
+        color: #00acdf !important;
+      }
+ 
+      #initial-table {
+        background-color: #eee !important;
+      }
+ 
+      .dark_td {
+        background-color: #545252 !important;
+      }
+ 
+ 
+           /* Force white bg on all content tables */
+         .darkmode, .darkmode td, .darkmode table {
+            background-color: #ffffff !important;
+            background-image: linear-gradient(#ffffff, #ffffff) !important;
+         }
+ 
+         /* Dark body text */
+         .dm-text {
+            color: #000000 !important;
+         }
+ 
+         /* Green headings */
+         .dm-green {
+            color: #006937 !important;
+         }
+ 
+         /* Navy text */
+         .dm-navy {
+            color: #183559 !important;
+         }
+ 
+         /* Blue links */
+         .dm-link, .dm-link a {
+            color: #0563C1 !important;
+         }
+ 
+         /* Footer grey bg */
+         .dm-footer {
+            background-color: #F1F1F1 !important;
+         }
+    }
 
         @media only screen and (max-width: 480px) {
 

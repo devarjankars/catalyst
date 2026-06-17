@@ -1,108 +1,110 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
-import dbUsers from "@/data/dummy-users.json"
+import dbUsers from "@/data/dummy-users.json";
 import { useRouter } from "next/navigation";
-import { ro } from "date-fns/locale";
-
 
 export default function LoginPage() {
-
-  const [userCreds, setUserCreds] = useState({email: "", password: ""});
+  const [userCreds, setUserCreds] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const router = useRouter()
-
-  const {loginUser} = useLoggedInUserStore()
+  const router = useRouter();
+  const { loginUser } = useLoggedInUserStore();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setUserCreds((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e : any) =>{
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     setLoading(true);
-    if(!userCreds.email || !userCreds.password){
+    if (!userCreds.email || !userCreds.password) {
       toast.error("Please fill in all fields");
       return setLoading(false);
     }
-    // Simulate login delay
-    setTimeout(() => {
-      // For demo purposes, we just log in with any credentials
-      const user = dbUsers.users.find(u => u.userEmail === userCreds.email && u.userpassword === userCreds.password);
-      if(!user){
-        toast.error("Invalid email or password");
-        setUserCreds({email: "", password: ""});
-        setLoading(false);
-        return;
-      }
-
-      sessionStorage.setItem(
-      "auth",
-      JSON.stringify({
-        userEmail: user.userEmail,
-        userpassword: user.userpassword,
-      })
-      );
-
-      loginUser(user.userEmail,user.userpassword, user.userId, user.userRole, user.userPermissions);
-      
-      toast.success("Logged in successfully");
+    const user = dbUsers.users.find(
+      (u) => u.userEmail === userCreds.email && u.userpassword === userCreds.password
+    );
+    if (!user) {
+      toast.error("Invalid email or password");
+      setUserCreds({ email: "", password: "" });
       setLoading(false);
-      setUserCreds({email: "", password: ""});
-      router.push("/dashboard");
-    }, 1500);
-  }
-
+      return;
+    }
+    sessionStorage.setItem(
+      "auth",
+      JSON.stringify({ userEmail: user.userEmail, userpassword: user.userpassword })
+    );
+    loginUser(user.userEmail, user.userpassword, user.userId, user.userRole, user.userPermissions);
+    toast.success("Logged in successfully");
+    router.push("/dashboard");
+  };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Form */}
-      <div className="flex flex-1 items-center justify-center p-6">
-        <form onSubmit={handleSubmit}>
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">Login</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input onChange={handleInputChange} id="email" name="email" value={userCreds.email} type="email" placeholder="you@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" onChange={handleInputChange} name="password" value={userCreds.password} type="password" placeholder="••••••••" />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full bg-[#BC2030]" type="submit" >
-              {loading ? "Logging in..." : "Login"}
-              </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              Don’t have an account?{" "}
-              please contact your admin
-            </p>
-          </CardFooter>
-        </Card>
-        </form>
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/banner.jpg')" }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/50" />
 
-      {/* Right side - Image */}
-      <div className="hidden lg:flex flex-1 relative bg-black">
-        <Image
-          src="/favicon.svg" // Place your image in public folder
-          alt="Login side image"
-          fill
-          className="object-contained w-full h-full"
-        />
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-sm mx-4">
+        {/* Logo/Branding */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="h-14 w-14 rounded-2xl bg-[#BC2030] grid place-items-center shadow-lg mb-3">
+            <span className="text-white text-2xl font-bold">E</span>
+          </div>
+          <h1 className="text-white text-2xl font-bold tracking-wide">Email Builder</h1>
+          <p className="text-white/70 text-sm mt-1">Sign in to your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-8 space-y-5">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-white/90 text-sm font-medium">
+                Email Address
+              </Label>
+              <Input
+                onChange={handleInputChange}
+                id="email"
+                name="email"
+                value={userCreds.email}
+                type="email"
+                placeholder="you@example.com"
+                className="bg-white/15 border-white/30 text-white placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 transition-all"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-white/90 text-sm font-medium">
+                Password
+              </Label>
+              <Input
+                id="password"
+                onChange={handleInputChange}
+                name="password"
+                value={userCreds.password}
+                type="password"
+                placeholder="••••••••"
+                className="bg-white/15 border-white/30 text-white placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 transition-all"
+              />
+            </div>
+            <Button
+              className="w-full bg-[#BC2030] hover:bg-[#9e1a28] text-white font-semibold py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg mt-2"
+              type="submit"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+            <p className="text-white/50 text-xs text-center">
+              Don&apos;t have an account? Please contact your admin.
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );

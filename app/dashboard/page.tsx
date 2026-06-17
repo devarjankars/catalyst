@@ -120,18 +120,22 @@ export default function Dashboard() {
   }
 
   const handleCreateBlank = () => {
-    router.push("/builder")
+    router.push("/builder?selectMode=true")
   }
 
   const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}`)
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+  }
+
+  const handleOpenThreeCanvas = (template: EmailTemplate) => {
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&mode=three`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true`)
+      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)
@@ -183,10 +187,7 @@ export default function Dashboard() {
   }
   return (
     <div className="max-h-screen bg-gray-50 grid grid-rows-[auto 1fr]">
-      {/* Header */}
-      <div className="sticky top-0 right-0 z-10 py-4 bg-white border-b border-gray-200 text-gray-800 shadow-sm">
-        <h5 className="text-end px-3 font-mono">Hi {userName} </h5>
-      </div>
+
       {/* <div className="sticky top-4 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border rounded-lg bg-[linear-gradient(168deg,rgba(255,160,162,1)_0%,rgba(255,239,239,1)_100%)]" >
           <div className="flex flex-col items-start">
@@ -265,6 +266,7 @@ export default function Dashboard() {
               <StandardTemplates temps={templates} 
                                   handleUseTemplate={handleUseTemplate} 
                                   handleEditTemplate={handleEditTemplate} 
+                                  handleOpenThreeCanvas={handleOpenThreeCanvas}
                                   setDeleteDialog={setDeleteDialog} 
                                   handleDuplicateTemplate={handleDuplicateTemplate}
                                   handleCreateBlank={handleCreateBlank}
@@ -281,6 +283,7 @@ export default function Dashboard() {
             </div>          <div className="templates">
           <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
            <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
+                                  handleOpenThreeCanvas={handleOpenThreeCanvas}
                                   setDeleteDialog={setDeleteDialog} 
                                   handleDuplicateTemplate={handleDuplicateTemplate}
                                   handleCreateBlank={handleCreateBlank}

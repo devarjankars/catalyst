@@ -7,8 +7,9 @@ export interface EmailTemplate {
   category: "rte" | "sfmc" | "unbranded" | "other"
   components: EmailComponent[]
   thumbnail?: string
-  createdAt: Date
-  updatedAt: Date
+  html?: string
+  createdAt: Date | null
+  updatedAt: Date | null
   isUserCreated?: boolean
   preheaderText?: string
 }

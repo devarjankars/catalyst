@@ -64,6 +64,16 @@
                 "id": "task6",
                 "title": "Test Features"
             }
+        },
+        {
+            "userId": "admin2",
+            "userEmail": "admin@gmail.com",
+            "userRole": "admin",
+            "userpassword": "admin123",
+            "userPermissions": ["write", "read", "modify", "manage_users", "manage_projects"],
+            "team": "tech",
+            "tasksAssigned": [],
+            "recentTask": null
         }
     ]
 }

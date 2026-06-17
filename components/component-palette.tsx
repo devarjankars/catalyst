@@ -20,6 +20,9 @@ import { ImageGallery } from "./image-gallery"
 interface ComponentPaletteProps {
   onAddComponent: (component: EmailComponent, index?: number) => void
   customComponents: EmailComponent[]
+  // Optional callbacks to support external selection/update contexts (e.g., three-canvas)
+  getSelectionInfo?: () => { components: any[]; selectedComponent: string | null } | undefined
+  applyUpdates?: (updates: any, parentId?: string | null) => void
 }
 
 function DraggableComponent({
@@ -101,7 +104,7 @@ function DraggableComponent({
   )
 }
 
-export function ComponentPalette({ onAddComponent, customComponents }: ComponentPaletteProps) {
+export function ComponentPalette({ onAddComponent, customComponents, getSelectionInfo, applyUpdates }: ComponentPaletteProps) {
 
 
   return (
@@ -116,7 +119,7 @@ export function ComponentPalette({ onAddComponent, customComponents }: Component
         <AccordionItem value="item-gallery">
           <AccordionTrigger>Images</AccordionTrigger>
           <AccordionContent className="p-0">
-            <ImageGallery />
+            <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-1">

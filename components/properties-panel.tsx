@@ -21,6 +21,44 @@ import { HtmlEditorModal } from "./html-editor-modal";
 import { verifyHtml } from "@/lib/verify-html";
 import { toast } from "sonner";
 
+// Ensures value is always a valid 7-char hex string for <input type="color">
+function toHex(value: string): string {
+  const cleaned = value?.trim() ?? "";
+  if (/^#[0-9a-fA-F]{6}$/.test(cleaned)) return cleaned;
+  return "#000000";
+}
+
+function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [text, setText] = useState(value || "#000000");
+
+  useEffect(() => { setText(value || "#000000"); }, [value]);
+
+  const commit = (raw: string) => {
+    const val = raw.startsWith("#") ? raw : `#${raw}`;
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) onChange(val);
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <input
+        type="color"
+        value={toHex(text)}
+        onChange={(e) => { setText(e.target.value); onChange(e.target.value); }}
+        className="h-9 w-10 cursor-pointer rounded border p-0.5"
+      />
+      <Input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && commit(text)}
+        className="font-mono uppercase"
+        placeholder="#000000"
+        maxLength={7}
+      />
+    </div>
+  );
+}
+
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   onUpdateComponent: (updates: Partial<EmailComponent>) => void;
@@ -119,14 +157,7 @@ export function PropertiesPanel({
           <div className="space-y-4">
             <div>
               <Label htmlFor="backgroundColor">Background Color</Label>
-              <Input
-                id="backgroundColor"
-                type="color"
-                value={component.backgroundColor || "#ffffff"}
-                onChange={(e) =>
-                  onUpdateComponent({ backgroundColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label htmlFor="borderRadius">Border Radius</Label>
@@ -427,12 +458,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#000000"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />
+              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
               <Label>Font weight</Label>
@@ -454,14 +480,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background color</Label>
-              <Input
-                id="backgroundColor"
-                type="color"
-                value={component.backgroundColor || "#ffffff"}
-                onChange={(e) =>
-                  onUpdateComponent({ backgroundColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label htmlFor="textAlign">Text Align</Label>
@@ -529,17 +548,7 @@ export function PropertiesPanel({
                     </div>
                     <div>
                       <Label>Link Color</Label>
-                      <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            value={link.color}
-                            onChange={(e) =>
-                              updateLink(index, link.href, link.text, e.target.value)
-                            }
-                            className="w-12 h-8 p-1 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-500">{link.color}</span>
-                      </div>
+                      <ColorInput value={link.color} onChange={(v) => updateLink(index, link.href, link.text, v)} />
                     </div>
                   </div>
                 ))}
@@ -640,23 +649,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background Color</Label>
-              <Input
-                id="backgroundColor"
-                type="color"
-                value={component.backgroundColor || "#007bff"}
-                onChange={(e) =>
-                  onUpdateComponent({ backgroundColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.backgroundColor || "#007bff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#ffffff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />
+              <ColorInput value={component.color || "#ffffff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
               <Label htmlFor="borderRadius">Border Radius</Label>
@@ -686,14 +683,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="backgroundColor">Color</Label>
-              <Input
-                id="backgroundColor"
-                type="color"
-                value={component.backgroundColor || "#e0e0e0"}
-                onChange={(e) =>
-                  onUpdateComponent({ backgroundColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.backgroundColor || "#e0e0e0"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
           </div>
         );
@@ -773,12 +763,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#007bff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />  
+              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             
             
@@ -900,12 +885,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#007bff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />
+              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
 
             <div className="mt-3">
@@ -977,12 +957,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#007bff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />  
+              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             
             
@@ -1104,12 +1079,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#007bff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />
+              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
 
             <div className="mt-3">
@@ -1154,14 +1124,7 @@ export function PropertiesPanel({
           <div className="space-y-4">
             <div>
               <Label htmlFor="bulletColor">Disc Color</Label>
-              <Input
-                id="bulletColor"
-                type="color"
-                value={component.markerColor || "#000000"}
-                onChange={(e) =>
-                  onUpdateComponent({ markerColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.markerColor || "#000000"} onChange={(v) => onUpdateComponent({ markerColor: v })} />
             </div>
             <div>
               <Label htmlFor="discSize">Disc Size</Label>
@@ -1187,12 +1150,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="text-color">Text Color</Label>
-              <Input
-                id="text-color"
-                type="color"
-                value={component.color || "#000000"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />
+              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
               <Label htmlFor="fontSize">Font Size</Label>
@@ -1207,14 +1165,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background color</Label>
-              <Input
-                id="backgroundColor"
-                type="color"
-                value={component.backgroundColor || "#ffffff"}
-                onChange={(e) =>
-                  onUpdateComponent({ backgroundColor: e.target.value })
-                }
-              />
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label htmlFor="lineHeight">Line Height</Label>
@@ -1344,12 +1295,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={component.color || "#007bff"}
-                onChange={(e) => onUpdateComponent({ color: e.target.value })}
-              />  
+              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             
             
@@ -1409,12 +1355,7 @@ export function PropertiesPanel({
               </div>
               <div>
                 <Label htmlFor="color">Text Color</Label>
-                <Input
-                  id="color"
-                  type="color"
-                  value={component.color || "#646464"}
-                  onChange={(e) => onUpdateComponent({ color: e.target.value })}
-                />
+                <ColorInput value={component.color || "#646464"} onChange={(v) => onUpdateComponent({ color: v })} />
               </div>
               <div>
                 <Label>Link</Label>

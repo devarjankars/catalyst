@@ -41,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { ShimmerTable } from "@/components/shimmer"
 import { format } from "date-fns"
 
 interface PDFVersion {
@@ -137,8 +137,30 @@ export default function VSBPDFsPage() {
 
   if (loading || vsbLoading) {
     return (
-      <div className="flex h-full items-center justify-center p-8">
-        <LoadingSpinner message="Loading VSB PDF history..." />
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-7 bg-gray-200 rounded w-48" />
+            <div className="h-4 bg-gray-200 rounded w-72" />
+          </div>
+          <div className="h-10 bg-gray-200 rounded-full w-80" />
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr className="animate-pulse">
+                {[40, 200, 160, 120, 100].map((w, i) => (
+                  <th key={i} className="px-4 py-3">
+                    <div className="h-3.5 bg-gray-200 rounded" style={{ width: w }} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <ShimmerTable rows={6} />
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }

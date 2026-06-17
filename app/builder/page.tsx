@@ -17,6 +17,7 @@ import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import EmailPreviewModal from "@/components/email-previw-dalog";
+import { EditorModeDialog } from "@/components/editor-mode-dialog";
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -66,31 +67,60 @@ export default function EmailBuilder() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(
     null
   );
+  const [modeDialogOpen, setModeDialogOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"single" | "three">("single");
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
+  // When in three-canvas mode we maintain separate component lists per canvas
+  const [threeCanvasComponents, setThreeCanvasComponents] = useState<EmailComponent[][] | null>(null);
+  const [selectedPerCanvas, setSelectedPerCanvas] = useState<(string | null)[] | null>(null);
 
   useEffect(() => {
+    const mode = searchParams.get("mode");
+    const selectMode = searchParams.get("selectMode") === "true";
+
+    if (mode === "three") {
+      setEditorMode("three");
+    }
+
+    if (selectMode && mode !== "three") {
+      setModeDialogOpen(true);
+    }
+
     if (templateId) {
       loadTemplate(templateId);
-      
     } else {
       markAsNewTemplate();
     }
-    
-    // Load custom components from store
+
     const getCustomComponents = async () => {
-      const customComponents = await firebaseService.getCustomComponents()
-       loadCustomComponents(customComponents)
-    }
+      const customComponents = await firebaseService.getCustomComponents();
+      loadCustomComponents(customComponents);
+    };
 
     if (templateId) {
-        loadTemplateImages(templateId)
+      loadTemplateImages(templateId);
     }
 
     getCustomComponents();
+  }, [templateId, searchParams]);
 
-
-  }, [templateId]);
+  // Initialize three-canvas components when entering three mode
+  useEffect(() => {
+    if (editorMode === "three") {
+      if (!threeCanvasComponents) {
+        // initialize three canvases from current store components (deep clone to decouple)
+        const base = components || [];
+        const clone = (arr: EmailComponent[]) => JSON.parse(JSON.stringify(arr));
+        setThreeCanvasComponents([clone(base), clone(base), clone(base)]);
+        setSelectedPerCanvas([null, null, null]);
+      }
+    } else {
+      // leaving three mode, clear local per-canvas state
+      setThreeCanvasComponents(null);
+      setSelectedPerCanvas(null);
+    }
+  }, [editorMode]);
 
   // console.log(selectedComponent, "selected component in builder");
   
@@ -187,6 +217,114 @@ function replaceImagesInComponents(components: any[]): any[] {
       clearAll();
       router.push("/dashboard");
     }
+  };
+
+  const openModeDialog = () => {
+    setModeDialogOpen(true);
+  };
+
+  const handleModeSelect = (mode: "single" | "three") => {
+    setEditorMode(mode);
+    setModeDialogOpen(false);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("selectMode");
+    if (mode === "three") {
+      params.set("mode", "three");
+    } else {
+      params.delete("mode");
+    }
+    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+  };
+
+  // Helpers to operate on per-canvas component sets when in three mode
+  const ensureThree = () => {
+    if (!threeCanvasComponents) {
+      const base = components || [];
+      const clone = (arr: EmailComponent[]) => JSON.parse(JSON.stringify(arr));
+      setThreeCanvasComponents([clone(base), clone(base), clone(base)]);
+      setSelectedPerCanvas([null, null, null]);
+    }
+  };
+
+  const updateInTree = (items: EmailComponent[], id: string, updates: Partial<EmailComponent>, parentId?: string | null): EmailComponent[] => {
+    return items.map((comp) => {
+      if (parentId && comp.id === parentId && Array.isArray(comp.children)) {
+        return { ...comp, children: comp.children.map((child) => (child.id === id ? { ...child, ...updates } : child)) };
+      }
+      if (!parentId && comp.id === id) return { ...comp, ...updates };
+      if (Array.isArray(comp.children)) return { ...comp, children: updateInTree(comp.children, id, updates, parentId) };
+      return comp;
+    });
+  };
+
+  const addComponentToCanvas = (canvasIndex: number, component: EmailComponent, index?: number) => {
+    ensureThree();
+    setThreeCanvasComponents((prev) => {
+      if (!prev) return prev;
+      const copy = prev.map((c) => JSON.parse(JSON.stringify(c)));
+      const newComponent = { ...component, id: component.id || `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2,9)}` };
+      if (index !== undefined) copy[canvasIndex].splice(index, 0, newComponent);
+      else copy[canvasIndex].push(newComponent);
+      return copy;
+    });
+  };
+
+  const updateComponentInCanvas = (canvasIndex: number, id: string, updates: Partial<EmailComponent>, parentId?: string | null) => {
+    ensureThree();
+    setThreeCanvasComponents((prev) => {
+      if (!prev) return prev;
+      const copy = prev.map((c) => JSON.parse(JSON.stringify(c)));
+      copy[canvasIndex] = updateInTree(copy[canvasIndex], id, updates, parentId);
+      return copy;
+    });
+  };
+
+  const deleteComponentInCanvas = (canvasIndex: number, id: string) => {
+    ensureThree();
+    const deleteById = (items: EmailComponent[], targetId: string): EmailComponent[] => {
+      return items
+        .map((comp) => {
+          if (comp.id === targetId) return null as any;
+          if (Array.isArray(comp.children)) return { ...comp, children: deleteById(comp.children, targetId) };
+          return comp;
+        })
+        .filter(Boolean) as EmailComponent[];
+    };
+    setThreeCanvasComponents((prev) => {
+      if (!prev) return prev;
+      const copy = prev.map((c) => JSON.parse(JSON.stringify(c)));
+      copy[canvasIndex] = deleteById(copy[canvasIndex], id);
+      return copy;
+    });
+  };
+
+  const moveWithinCanvas = (canvasIndex: number, dragIndex: number, hoverIndex: number) => {
+    ensureThree();
+    setThreeCanvasComponents((prev) => {
+      if (!prev) return prev;
+      const copy = prev.map((c) => JSON.parse(JSON.stringify(c)));
+      const arr = copy[canvasIndex];
+      const item = arr[dragIndex];
+      arr.splice(dragIndex, 1);
+      arr.splice(hoverIndex, 0, item);
+      copy[canvasIndex] = arr;
+      return copy;
+    });
+  };
+
+  const duplicateInCanvas = (canvasIndex: number, id: string) => {
+    ensureThree();
+    setThreeCanvasComponents((prev) => {
+      if (!prev) return prev;
+      const copy = prev.map((c) => JSON.parse(JSON.stringify(c)));
+      const idx = copy[canvasIndex].findIndex((comp) => comp.id === id);
+      if (idx === -1) return copy;
+      const dup = JSON.parse(JSON.stringify(copy[canvasIndex][idx]));
+      dup.id = `${dup.type}-${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
+      copy[canvasIndex].splice(idx + 1, 0, dup);
+      return copy;
+    });
   };
 
   const handleUnsavedChangesAction = async (
@@ -337,9 +475,37 @@ function replaceImagesInComponents(components: any[]): any[] {
 }
 
 
-const result = findComponentWithParentById(components, selectedComponent!);
-const selectedComponentData = result?.component || null;
-const parentId = result?.parentId || null;
+// Determine the currently active selected component and its parent (supports three-canvas mode)
+let activeSelectedId: string | null = selectedComponent;
+let selectedComponentData: any = null;
+let parentId: string | null = null;
+let activeCanvasIndex: number | null = null;
+
+if (editorMode === "three" && selectedPerCanvas) {
+  // prefer first non-null selection among canvases
+  for (let i = 0; i < selectedPerCanvas.length; i++) {
+    if (selectedPerCanvas[i]) {
+      activeSelectedId = selectedPerCanvas[i];
+      activeCanvasIndex = i;
+      break;
+    }
+  }
+}
+
+if (activeSelectedId) {
+  if (editorMode === "three" && threeCanvasComponents && activeCanvasIndex !== null) {
+    const found = findComponentWithParentById(threeCanvasComponents[activeCanvasIndex], activeSelectedId);
+    selectedComponentData = found?.component || null;
+    parentId = found?.parentId || null;
+  } else {
+    const found = findComponentWithParentById(components, activeSelectedId);
+    selectedComponentData = found?.component || null;
+    parentId = found?.parentId || null;
+  }
+} else {
+  selectedComponentData = null;
+  parentId = null;
+}
 
 
   
@@ -483,6 +649,20 @@ const parentId = result?.parentId || null;
               <ComponentPalette
                 onAddComponent={addComponent}
                 customComponents={customComponents}
+                getSelectionInfo={() => {
+                  if (editorMode === "three" && threeCanvasComponents && activeCanvasIndex !== null) {
+                    return { components: threeCanvasComponents[activeCanvasIndex], selectedComponent: activeSelectedId }
+                  }
+                  return { components, selectedComponent: activeSelectedId || selectedComponent }
+                }}
+                applyUpdates={(updates, parentId) => {
+                  if (!activeSelectedId) return
+                  if (editorMode === "three" && activeCanvasIndex !== null) {
+                    updateComponentInCanvas(activeCanvasIndex, activeSelectedId, updates, parentId)
+                  } else {
+                    updateComponent(activeSelectedId, updates, parentId)
+                  }
+                }}
               />
             </div>
           )}
@@ -493,18 +673,89 @@ const parentId = result?.parentId || null;
               e.stopPropagation()
               setSelectedComponent(null)
             }}>
-            <EmailCanvas
-              ref={canvasRef}
-              components={components}
-              selectedComponent={selectedComponent}
-              onSelectComponent={setSelectedComponent}
-              onUpdateComponent={updateComponent}
-              onDeleteComponent={deleteComponent}
-              onMoveComponent={moveComponent}
-              previewMode={previewMode}
-              duplicateComponent={duplicateComponent}
-              addComponent={addComponent}
-            />
+            {editorMode === "single" ? (
+              <EmailCanvas
+                ref={canvasRef}
+                components={components}
+                selectedComponent={selectedComponent}
+                onSelectComponent={setSelectedComponent}
+                onUpdateComponent={updateComponent}
+                onDeleteComponent={deleteComponent}
+                onMoveComponent={moveComponent}
+                previewMode={previewMode}
+                duplicateComponent={duplicateComponent}
+                addComponent={addComponent}
+              />
+            ) : (
+              <div className="grid gap-4 xl:grid-cols-3 lg:grid-cols-1 xl:auto-rows-fr">
+                {[1, 2, 3].map((index) => {
+                  const canvasIdx = index - 1;
+                  const canvasComponents = editorMode === "three" && threeCanvasComponents ? threeCanvasComponents[canvasIdx] : components;
+                  const canvasSelected = editorMode === "three" && selectedPerCanvas ? selectedPerCanvas[canvasIdx] : selectedComponent;
+
+                  const handleSelectForCanvas = (id: string | null) => {
+                    if (editorMode === "three") {
+                      setSelectedPerCanvas((prev) => {
+                        if (!prev) return [id, id, id];
+                        const copy = [...prev];
+                        copy[canvasIdx] = id;
+                        return copy;
+                      });
+                      // also update global store selection for compatibility
+                      setSelectedComponent(id);
+                    } else {
+                      setSelectedComponent(id);
+                    }
+                  };
+
+                  const handleUpdateForCanvas = (id: string, updates: Partial<EmailComponent>, parentId?: string | null) => {
+                    if (editorMode === "three") updateComponentInCanvas(canvasIdx, id, updates, parentId);
+                    else updateComponent(id, updates, parentId);
+                  };
+
+                  const handleDeleteForCanvas = (id: string) => {
+                    if (editorMode === "three") deleteComponentInCanvas(canvasIdx, id);
+                    else deleteComponent(id);
+                  };
+
+                  const handleMoveForCanvas = (dragIndex: number, hoverIndex: number) => {
+                    if (editorMode === "three") moveWithinCanvas(canvasIdx, dragIndex, hoverIndex);
+                    else moveComponent(dragIndex, hoverIndex);
+                  };
+
+                  const handleDuplicateForCanvas = (id: string) => {
+                    if (editorMode === "three") duplicateInCanvas(canvasIdx, id);
+                    else duplicateComponent(id);
+                  };
+
+                  const handleAddForCanvas = (component: EmailComponent, idx?: number) => {
+                    if (editorMode === "three") addComponentToCanvas(canvasIdx, component, idx);
+                    else addComponent(component, idx);
+                  };
+
+                  return (
+                    <div key={index} className="bg-white rounded-2xl shadow relative overflow-hidden">
+                      <div className="border-b px-4 py-3 text-sm font-semibold text-slate-900">
+                        Canvas {index}
+                      </div>
+                      <EmailCanvas
+                        ref={index === 1 ? canvasRef : null}
+                        components={canvasComponents}
+                        selectedComponent={canvasSelected}
+                        onSelectComponent={handleSelectForCanvas}
+                        onUpdateComponent={handleUpdateForCanvas}
+                        onDeleteComponent={handleDeleteForCanvas}
+                        onMoveComponent={handleMoveForCanvas}
+                        previewMode={previewMode}
+                        duplicateComponent={handleDuplicateForCanvas}
+                        addComponent={handleAddForCanvas}
+                        canvasWidth={480}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right Panel: Properties */}
@@ -513,9 +764,14 @@ const parentId = result?.parentId || null;
               <h4 className="font-bold text-lg text-gray-700 mb-3">Properties</h4>
               <PropertiesPanel
                 component={selectedComponentData}
-                onUpdateComponent={(updates) =>
-                  selectedComponent && updateComponent(selectedComponent, updates,parentId)
-                }
+                onUpdateComponent={(updates) => {
+                  if (!activeSelectedId) return;
+                  if (editorMode === "three" && activeCanvasIndex !== null) {
+                    updateComponentInCanvas(activeCanvasIndex, activeSelectedId, updates, parentId);
+                  } else {
+                    updateComponent(activeSelectedId, updates, parentId);
+                  }
+                }}
                 onSaveAsCustom={() =>
                   selectedComponentData && saveAsCustomComponent(selectedComponentData)
                 }
@@ -553,6 +809,11 @@ const parentId = result?.parentId || null;
         hasUnsavedTemplate={hasUnsavedTemplate}
       />
 
+      <EditorModeDialog
+        open={modeDialogOpen}
+        onOpenChange={setModeDialogOpen}
+        onSelectMode={handleModeSelect}
+      />
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Plus, Search } from "lucide-react"
 import { useEffect, useState } from "react"
 import { EmailTemplate } from "@/types/template"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { ShimmerCardGrid } from "@/components/shimmer"
 import { firebaseService } from "@/services/firebase-service"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -52,17 +52,21 @@ export default function ManageTemplates() {
        }
     }
     const handleCreateBlank = () => {
-    router.push("/builder")
+    router.push("/builder?selectMode=true")
   }
     const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}`)
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+  }
+
+  const handleOpenThreeCanvas = (template: EmailTemplate) => {
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&mode=three`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true`)
+      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)
@@ -128,9 +132,7 @@ export default function ManageTemplates() {
             </div>
             <div className="templates">
                   <div className="templates">
-                            {loading ? (<div className="h-[30vh] flex items-center justify-center bg-gray-50">
-                                            <LoadingSpinner message="Loading your email templates..." />
-                                        </div>) : templates.length === 0 ? (
+                            {loading ? <ShimmerCardGrid count={8} /> : templates.length === 0 ? (
                             <div className="text-center py-12">
                               {/* <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                                 <Plus className="w-8 h-8 text-gray-400" />
@@ -158,6 +160,7 @@ export default function ManageTemplates() {
                                   template={template}
                                   onUse={() => handleUseTemplate(template)}
                                   onEdit={() => handleEditTemplate(template)}
+                                  onOpenThreeMode={() => handleOpenThreeCanvas(template)}
                                   onDelete={() => setDeleteDialog({ open: true, template })}
                                   onDuplicate={() => handleDuplicateTemplate(template)}
                                 />

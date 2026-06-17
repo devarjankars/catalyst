@@ -2,10 +2,10 @@
 import { Input } from "@/components/ui/input"
 import {Button} from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, Mail, Send, Globe } from "lucide-react"
 import { useEffect, useState } from "react"
 import { EmailTemplate } from "@/types/template"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { ShimmerCardGrid } from "@/components/shimmer"
 import { firebaseService } from "@/services/firebase-service"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -31,9 +31,12 @@ export default function ManageTemplates() {
       }, [])
   useEffect(() => {
         handleSearch();
-  }, [templates,searchQuery])
+  }, [templates, searchQuery, selectedCategory])
     const handleSearch = () => {
-      let temps = templates;
+      let temps = [...templates].sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+      if (selectedCategory !== "all") {
+        temps = temps.filter(t => t.category === selectedCategory)
+      }
       if(searchQuery.trim()){
         temps = temps.filter(tem => tem.name.toLocaleLowerCase().includes(searchQuery.toLowerCase()) || tem.description.toLowerCase().includes(searchQuery.toLowerCase()))
       }
@@ -43,7 +46,11 @@ export default function ManageTemplates() {
        setLoading(true);
        try{
           const loadedTemplates = await firebaseService.getAllTemplates();
-          setTemplates(loadedTemplates.filter(t => t.isUserCreated));
+          setTemplates(
+            loadedTemplates
+              .filter(t => t.isUserCreated)
+              .sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0))
+          );
        }catch(error){
         console.error("Failed to load templates:", error)
        }finally{
@@ -52,17 +59,21 @@ export default function ManageTemplates() {
        }
     }
     const handleCreateBlank = () => {
-    router.push("/builder")
+    router.push("/builder?selectMode=true")
   }
     const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}`)
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+  }
+
+  const handleOpenThreeCanvas = (template: EmailTemplate) => {
+    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&mode=three`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true`)
+      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)
@@ -123,14 +134,34 @@ export default function ManageTemplates() {
            <div className="overflow-y-auto p-4 h-full overflow-hidden">
           
           <div className="Templates mt-6">
-            <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">All Emailers</h1>
+            <div className="header flex items-center justify-between mb-4">
+              <h1 className="font-bold">All Emailers</h1>
+              <div className="flex items-center gap-2">
+                {([
+                  { id: "all",       label: "All",       icon: null },
+                  { id: "rte",       label: "RTE",       icon: Mail },
+                  { id: "sfmc",      label: "SFMC",      icon: Send },
+                  { id: "unbranded", label: "Unbranded", icon: Globe },
+                  { id: "other",     label: "Other",     icon: null },
+                ] as const).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedCategory(id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      selectedCategory === id
+                        ? "bg-[#4A5565] text-white border-[#4A5565]"
+                        : "bg-white text-gray-600 border-gray-300 hover:border-[#4A5565] hover:text-[#4A5565]"
+                    }`}
+                  >
+                    {Icon && <Icon className="w-3 h-3" />}
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="templates">
                   <div className="templates">
-                            {loading ? (<div className="h-[30vh] flex items-center justify-center bg-gray-50">
-                                            <LoadingSpinner message="Loading your email templates..." />
-                                        </div>) : templates.length === 0 ? (
+                            {loading ? <ShimmerCardGrid count={8} /> : templates.length === 0 ? (
                             <div className="text-center py-12">
                               {/* <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                                 <Plus className="w-8 h-8 text-gray-400" />
@@ -160,6 +191,7 @@ export default function ManageTemplates() {
                                   onEdit={() => handleEditTemplate(template)}
                                   onDelete={() => setDeleteDialog({ open: true, template })}
                                   onDuplicate={() => handleDuplicateTemplate(template)}
+                                  onOpenThreeMode={() => handleOpenThreeCanvas(template)}
                                 />
                               ))) }
                              

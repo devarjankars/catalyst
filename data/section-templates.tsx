@@ -1,4 +1,4 @@
-import { Layout, Columns, LayoutGrid } from "lucide-react"
+import { Layout, Columns2, Columns3, Columns4, Grid2X2, Grid3X3, LayoutGrid } from "lucide-react"
 
 export const sectionTemplates = [
   {
@@ -19,7 +19,7 @@ export const sectionTemplates = [
   {
     type: "section",
     label: "2 Column Section",
-    icon: Columns,
+    icon: Columns2,
     defaultProps: {
       children: [
         {
@@ -58,7 +58,7 @@ export const sectionTemplates = [
   {
     type: "section",
     label: "3 Column Section",
-    icon: Columns,
+    icon: Columns3,
     defaultProps: {
       children: [
         {
@@ -108,7 +108,7 @@ export const sectionTemplates = [
   {
     type: "section",
     label: "4 Column Section",
-    icon: Columns,
+    icon: Columns4,
     defaultProps: {
       children: [
         { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "25%" },
@@ -128,7 +128,7 @@ export const sectionTemplates = [
   {
     type: "section",
     label: "5 Column Section",
-    icon: Columns,
+    icon: Grid2X2,
     defaultProps: {
       children: [
         { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "20%" },
@@ -149,7 +149,7 @@ export const sectionTemplates = [
   {
     type: "section",
     label: "6 Column Section",
-    icon: Columns,
+    icon: Grid3X3,
     defaultProps: {
       children: [
         { id: "col1", type: "section", backgroundColor: "#ffffff", borderRadius: "4px", children: [], direction: "column", isColumn: true, columnWidth: "16.66%" },
