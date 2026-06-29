@@ -16,10 +16,9 @@ interface TemplateCardProps {
   onEdit: () => void
   onDelete: () => void
   onDuplicate: () => void
-  onOpenThreeMode?: () => void
 }
 
-export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, onOpenThreeMode }: TemplateCardProps) {
+export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }: TemplateCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
@@ -121,14 +120,20 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, o
               Use Template
             </Button>
           </div>
-          {!template.isUserCreated && (
-            <div className="absolute top-2 left-2">
-              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+          <div className="absolute top-2 left-2 flex gap-2">
+            {!template.isUserCreated && (
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Standard
               </Badge>
-            </div>
-          )}
+            )}
+            {template.optionMode === "three" && (
+              <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-sm">
+                <Grid className="w-3 h-3 mr-1" />
+                3 Options
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 flex flex-col flex-1">
@@ -160,19 +165,6 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, o
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit 
-                </DropdownMenuItem>
-              )}
-
-              {onOpenThreeMode && (
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onOpenThreeMode()
-                  }}
-                >
-                  <Grid className="w-4 h-4 mr-2" />
-                  Open in 3 Canvas Mode
                 </DropdownMenuItem>
               )}
              

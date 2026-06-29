@@ -59,14 +59,10 @@ export default function ManageTemplates() {
     router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
   }
 
-  const handleOpenThreeCanvas = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&mode=three`)
-  }
-
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
+      router.push(`/builder?template=${template.id}&edit=true`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)
@@ -160,7 +156,6 @@ export default function ManageTemplates() {
                                   template={template}
                                   onUse={() => handleUseTemplate(template)}
                                   onEdit={() => handleEditTemplate(template)}
-                                  onOpenThreeMode={() => handleOpenThreeCanvas(template)}
                                   onDelete={() => setDeleteDialog({ open: true, template })}
                                   onDuplicate={() => handleDuplicateTemplate(template)}
                                 />
@@ -176,3 +171,4 @@ export default function ManageTemplates() {
     </div>
   )
 }
+

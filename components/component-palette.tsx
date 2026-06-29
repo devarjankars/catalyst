@@ -20,6 +20,7 @@ import { ImageGallery } from "./image-gallery"
 interface ComponentPaletteProps {
   onAddComponent: (component: EmailComponent, index?: number) => void
   customComponents: EmailComponent[]
+  disabled?: boolean
   // Optional callbacks to support external selection/update contexts (e.g., three-canvas)
   getSelectionInfo?: () => { components: any[]; selectedComponent: string | null } | undefined
   applyUpdates?: (updates: any, parentId?: string | null) => void
@@ -30,14 +31,17 @@ function DraggableComponent({
   onAddComponent,
   isCustom = false,
   isTemplate = false,
+  disabled = false,
 }: {
   componentType: (typeof componentTypes)[0] | (typeof sectionTemplates)[0] | EmailComponent
   onAddComponent: (component: EmailComponent, index?: number) => void
   isCustom?: boolean
   isTemplate?: boolean
+  disabled?: boolean
 }) {
   const [{ isDragging }, drag] = useDrag({
     type: "component",
+    canDrag: () => !disabled,
     item: {
       type: componentType.type,
       fromPalette: true,
@@ -87,6 +91,7 @@ function DraggableComponent({
         hover:border-blue-500 hover:bg-blue-50 transition-colors
         flex flex-col items-center gap-1
         ${isDragging ? "opacity-50" : ""}
+        ${disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}
         ${isCustom ? "bg-purple-50 border-purple-300" : ""}
         ${isTemplate ? "bg-green-50 border-green-300" : ""}
         relative
@@ -104,11 +109,16 @@ function DraggableComponent({
   )
 }
 
-export function ComponentPalette({ onAddComponent, customComponents, getSelectionInfo, applyUpdates }: ComponentPaletteProps) {
+export function ComponentPalette({ onAddComponent, customComponents, disabled = false, getSelectionInfo, applyUpdates }: ComponentPaletteProps) {
 
 
   return (
     <div className="space-y-4 overflow-y-auto h-full relative overflow-x-hidden">
+      {disabled && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          Components are locked in header-only mode for Options 2 and 3.
+        </p>
+      )}
 
       <Accordion
         type="single"
@@ -129,7 +139,7 @@ export function ComponentPalette({ onAddComponent, customComponents, getSelectio
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "basic")
                 .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
                 ))}
 
             </div>
@@ -142,7 +152,7 @@ export function ComponentPalette({ onAddComponent, customComponents, getSelectio
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "custom")
                 .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} />
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
                 ))}
 
             </div>
@@ -158,6 +168,7 @@ export function ComponentPalette({ onAddComponent, customComponents, getSelectio
                   componentType={template}
                   onAddComponent={onAddComponent}
                   isTemplate={true}
+                  disabled={disabled}
                 />
               ))}
             </div>

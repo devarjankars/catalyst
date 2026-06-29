@@ -12,7 +12,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   return await response.blob()
 }
 
-export async function exportToZip(components: EmailComponent[], canvasElement: HTMLElement, templateName: string = "email-template", preHeaderText?: string) {
+export async function exportToZip(options: { name: string, components: EmailComponent[] }[], templateName: string = "email-template", preHeaderText?: string) {
   const zip = new JSZip()
 
   // Create root folder with template name (remove .zip if present)
@@ -20,52 +20,48 @@ export async function exportToZip(components: EmailComponent[], canvasElement: H
   const rootFolder = zip.folder(folderName)
   const imageFolder = rootFolder!.folder("images")
 
-  // Step 1: Generate HTML
-  let html = generateEmailHTML(components, preHeaderText)
-
-  // Step 2: Find all image srcs (firebase links or any external)
-  const imageRegex = /<img[^>]+src="([^">]+)"/g
-  const srcMatches = [...html.matchAll(imageRegex)]
-
-  // Track downloaded image URLs to avoid duplicate fetch
+  // Track downloaded image URLs to avoid duplicate fetch across options
   const downloadedImages = new Map<string, string>()
+  let imageCounter = 0;
 
-  for (let i = 0; i < srcMatches.length; i++) {
-    const fullMatch = srcMatches[i][0]
-    const srcUrl = srcMatches[i][1]
+  for (const option of options) {
+    // Step 1: Generate HTML
+    let html = generateEmailHTML(option.components, preHeaderText)
 
-    try {
-      if (!downloadedImages.has(srcUrl)) {
-        const imageBlob = await fetchImageAsBlob(srcUrl)
-        const imageExt = srcUrl.split(".").pop()?.split(/\#|\?/)[0] || "png"
-        const imageFileName = `image-${i}.${imageExt}`
+    // Step 2: Find all image srcs (firebase links or any external)
+    const imageRegex = /<img[^>]+src="([^">]+)"/g
+    const srcMatches = [...html.matchAll(imageRegex)]
 
-        imageFolder!.file(imageFileName, imageBlob)
+    for (let i = 0; i < srcMatches.length; i++) {
+      const srcUrl = srcMatches[i][1]
 
-        downloadedImages.set(srcUrl, `./images/${imageFileName}`)
+      try {
+        if (!downloadedImages.has(srcUrl)) {
+          const imageBlob = await fetchImageAsBlob(srcUrl)
+          const imageExt = srcUrl.split(".").pop()?.split(/\#|\?/)[0] || "png"
+          const imageFileName = `image-${imageCounter++}.${imageExt}`
+
+          imageFolder!.file(imageFileName, imageBlob)
+          downloadedImages.set(srcUrl, `./images/${imageFileName}`)
+        }
+
+        // Replace src in HTML with local relative path
+        const localPath = downloadedImages.get(srcUrl)!
+        html = html.replace(srcUrl, localPath)
+        html = cleanHtmlString(html)
+      } catch (err) {
+        console.warn(`Skipping image ${srcUrl}`, err)
       }
-
-      // Replace src in HTML with local relative path
-      const localPath = downloadedImages.get(srcUrl)!
-      html = html.replace(srcUrl, localPath)
-      html = cleanHtmlString(html)
-    } catch (err) {
-      console.warn(`Skipping image ${srcUrl}`, err)
     }
+
+    // Step 3: Add modified HTML to root folder
+    const htmlFileName = options.length > 1 ? `${option.name}.html` : "index.html";
+    rootFolder!.file(htmlFileName, html)
   }
 
-  // Step 3: Add modified HTML to root folder
-  rootFolder!.file("index.html", html)
-
-  // Step 4: Generate preview image
-
-
-  // Step 5: Generate ZIP and trigger download
+  // Step 4: Generate ZIP and trigger download
   const zipBlob = await zip.generateAsync({ type: "blob" })
   const url = URL.createObjectURL(zipBlob)
-
-  // console.log("ZIP Blob created:", zipBlob);
-  // console.log("Blob URL:", url);
 
   // Ensure the filename has .zip extension
   let fileName = templateName || "email-template"
@@ -81,6 +77,4 @@ export async function exportToZip(components: EmailComponent[], canvasElement: H
   document.body.removeChild(link)
 
   URL.revokeObjectURL(url)
-
-  // console.log("Download triggered for:", fileName)
 }

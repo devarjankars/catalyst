@@ -9,7 +9,6 @@ type RecentTemplatesProps = {
   temps: EmailTemplate[];
   handleUseTemplate: (template: EmailTemplate) => void;
   handleEditTemplate: (template: EmailTemplate) => void;
-  handleOpenThreeCanvas: (template: EmailTemplate) => void;
    setDeleteDialog: (
     value: { open: boolean; template: EmailTemplate | null }
   ) => void;
@@ -17,7 +16,7 @@ type RecentTemplatesProps = {
   handleCreateBlank: () => void;
   loading : boolean;
 };
-export default function StandardTemplates({ temps, handleUseTemplate, handleEditTemplate, handleOpenThreeCanvas, setDeleteDialog, handleDuplicateTemplate, handleCreateBlank , loading }: RecentTemplatesProps) {
+export default function StandardTemplates({ temps, handleUseTemplate, handleEditTemplate, setDeleteDialog, handleDuplicateTemplate, handleCreateBlank , loading }: RecentTemplatesProps) {
     const standardTemps = useMemo(() => {
     if (!temps || temps.length === 0) return [];
 
@@ -49,7 +48,6 @@ export default function StandardTemplates({ temps, handleUseTemplate, handleEdit
                 template={template}
                 onUse={() => handleUseTemplate(template)}
                 onEdit={() => handleEditTemplate(template)}
-                onOpenThreeMode={() => handleOpenThreeCanvas(template)}
                 onDelete={() => setDeleteDialog({ open: true, template })}
                 onDuplicate={() => handleDuplicateTemplate(template)}
               />

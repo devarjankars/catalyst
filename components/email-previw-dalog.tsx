@@ -9,6 +9,8 @@ import { Monitor, Smartphone, Upload, Sun, Moon } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { handlePdfAction } from "@/app/actions";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 type EmailPreviewModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,8 +35,17 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   const [screen, setScreen] = useState<"600px" | "375px">("600px");
   const [dark, setDark] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [activeTab, setActiveTab] = useState<"1" | "2" | "3">("1");
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { currentTemplate, preheaderText } = useEmailBuilderStore();
+  const { currentTemplate, preheaderText, optionMode, option2Components, option3Components } = useEmailBuilderStore();
+  const isThreeMode = optionMode === "three";
+
+  const getActiveComponents = () => {
+    if (!isThreeMode) return components;
+    if (activeTab === "2") return option2Components;
+    if (activeTab === "3") return option3Components;
+    return components;
+  };
 
   const writeHtml = (html: string) => {
     const iframe = iframeRef.current;
@@ -51,16 +62,16 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   useEffect(() => {
     if (!open) return;
     const timer = setTimeout(() => {
-      writeHtml(buildHtml(components, preheaderText, dark));
+      writeHtml(buildHtml(getActiveComponents(), preheaderText, dark));
     }, 30);
     return () => clearTimeout(timer);
-  }, [open]);
+  }, [open, activeTab]);
 
   // Write on mode or component change
   useEffect(() => {
     if (!open) return;
-    writeHtml(buildHtml(components, preheaderText, dark));
-  }, [dark, components, preheaderText]);
+    writeHtml(buildHtml(getActiveComponents(), preheaderText, dark));
+  }, [dark, components, option2Components, option3Components, preheaderText, activeTab]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -142,6 +153,18 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
           </div>
         </DialogHeader>
 
+        {isThreeMode && (
+          <div className="w-full flex justify-center border-b bg-gray-50 p-2">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-[400px]">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="1">Option 1</TabsTrigger>
+                <TabsTrigger value="2">Option 2</TabsTrigger>
+                <TabsTrigger value="3">Option 3</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
         <div className={`w-full flex-1 flex items-start justify-center overflow-auto p-6 ${dark ? "bg-[#1e1e1e]" : "bg-gray-100"}`}>
           <iframe
             ref={iframeRef}
@@ -159,3 +182,6 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
     </Dialog>
   );
 }
+
+
+

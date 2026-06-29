@@ -15,6 +15,7 @@ interface EmailCanvasProps {
   duplicateComponent: (id: string) => void
   addComponent: (component: EmailComponent, index?: number) => void
   canvasWidth?: number
+  isLockedMode?: boolean
 }
 
 export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
@@ -30,6 +31,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       duplicateComponent,
       addComponent,
       canvasWidth,
+      isLockedMode = false,
     },
     ref,
   ) => {
@@ -38,7 +40,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const [{ isOver }, drop] = useDrop({
       accept: "component",
       drop: (item: any, monitor) => {
-        if (monitor.didDrop()) return
+        if (monitor.didDrop() || isLockedMode) return
 
         if (item.fromPalette) {
           const dropIndex = dropIndicator?.index ?? components.length
@@ -58,7 +60,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         return { dropZone: "canvas", dropElement: ref?.current }
       },
       hover: (item: any, monitor) => {
-        if (!item.fromPalette) return
+        if (!item.fromPalette || isLockedMode) return
 
         const clientOffset = monitor.getClientOffset()
         if (clientOffset && ref?.current) {
@@ -95,7 +97,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         }
       },
       collect: (monitor) => ({
-        isOver: monitor.isOver({ shallow: true }),
+        isOver: monitor.isOver({ shallow: true }) && !isLockedMode,
       }),
     })
 
@@ -196,6 +198,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                   previewMode={previewMode}
                   totalComponents={components.length}
                   onDuplicate={() => duplicateComponent(component.id)}
+                  isLockedMode={isLockedMode && component.type !== "header-image"}
                 />
               </div>
             )
@@ -213,3 +216,5 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 )
 
 EmailCanvas.displayName = "EmailCanvas"
+
+

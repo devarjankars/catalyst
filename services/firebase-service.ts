@@ -348,6 +348,11 @@ class FirebaseService {
       description: template.description,
       category: template.category,
       components: this.deepCloneComponents(template.components),
+      optionMode: template.optionMode || "single",
+      optionSubMode: template.optionSubMode,
+      option2Components: template.option2Components ? this.deepCloneComponents(template.option2Components) : undefined,
+      option3Components: template.option3Components ? this.deepCloneComponents(template.option3Components) : undefined,
+      preheaderText: template.preheaderText,
       isUserCreated: true,
     });
   }
@@ -410,23 +415,8 @@ class FirebaseService {
     }
 
     try {
-      // Check storage limit (e.g., 100MB = 100 * 1024 * 1024 bytes)
-      const MAX_STORAGE_SIZE = 1 * 1024 * 1024; // 100MB
-      const currentUsage = await this.getStorageUsage(templateId);
-
-      console.log("toytal size", currentUsage, MAX_STORAGE_SIZE, file.size);
-
       if (!templateId) {
         return "PATH_NOT_FOUND"
-      }
-
-      if (currentUsage + file.size > MAX_STORAGE_SIZE) {
-        console.log(
-          `Storage limit exceeded. Current usage: ${(currentUsage / 1024 / 1024).toFixed(2)}MB, ` +
-          `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` +
-          `Limit: ${(MAX_STORAGE_SIZE / 1024 / 1024).toFixed(2)}MB`
-        );
-        return "MAX_LIMIT"
       }
 
       const fileName = `${Date.now()}-${file.name}`;
@@ -966,3 +956,5 @@ class FirebaseService {
 }
 
 export const firebaseService = new FirebaseService();
+
+

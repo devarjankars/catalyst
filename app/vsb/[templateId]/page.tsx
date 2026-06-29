@@ -12,7 +12,7 @@ import DesktopViewSection from '@/components/vsb-sections/DesktopViewSection';
 import MobileViewSection from '@/components/vsb-sections/MobileViewSection';
 import AltNamePageSection from '@/components/vsb-sections/AltNamePageSection';
 import PreviewSection from '@/components/vsb-sections/PreviewSection';
-import CombinedVSBView from '@/components/vsb-sections/CombinedVSBView';
+import CombinedVSBView, { VSBPageWrapper } from '@/components/vsb-sections/CombinedVSBView';
 import HeaderDetailsEditor from '@/components/vsb-sections/HeaderDetailsEditor';
 import {
   AlertDialog,
@@ -130,13 +130,17 @@ export default function VSBPage() {
                 data={currentVsb.headerDetails}
                 onChange={(data) => handleUpdateData('headerDetails', data)}
               />
-              <DesktopViewSection data={currentVsb.desktopView} onChange={(data) => handleUpdateData('Desktop view', data)} />
+              <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>
+                <DesktopViewSection data={currentVsb.desktopView} onChange={(data) => handleUpdateData('Desktop view', data)} isPreview={true} />
+              </VSBPageWrapper>
             </div>
           );
         case 'Mobile view':
           return (
             <div className="space-y-6">
-              <MobileViewSection data={currentVsb.mobileView} onChange={(data) => handleUpdateData('Mobile view', data)} />
+              <VSBPageWrapper title="Mobile View" number={3} wide={currentTemplate?.optionMode === 'three'}>
+                <MobileViewSection data={currentVsb.mobileView} onChange={(data) => handleUpdateData('Mobile view', data)} isPreview={true} />
+              </VSBPageWrapper>
             </div>
           );
         case 'alt name page':
@@ -205,12 +209,12 @@ export default function VSBPage() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8">
-            <div className="max-w-4xl mx-auto">
+          <div className="flex-1 overflow-y-auto  p-8">
+            <div className={`${currentTemplate?.optionMode === 'three' && (activeSection === 'Desktop view' || activeSection === 'Mobile view') ? 'w-full' : 'max-w-4xl mx-auto'}`}>
               {renderActiveSection()}
             </div>
           </div>
-
+{/* 
           <aside className="w-80 border-l bg-white p-4 overflow-y-auto shrink-0 hidden lg:block">
             <h3 className="font-semibold mb-4 text-gray-500 uppercase text-xs">Preview</h3>
             <PreviewSection
@@ -224,7 +228,7 @@ export default function VSBPage() {
               headerDetails={currentVsb.headerDetails}
               variableCopyHeadingColor={currentVsb.variableCopyHeadingColor}
             />
-          </aside>
+          </aside> */}
         </main>
 
         <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>

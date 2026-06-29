@@ -19,6 +19,12 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   const { currentVsb } = useVSBStore();
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  const isThreeMode = currentTemplate?.optionMode === "three"
+
+  const preheader = currentTemplate?.preheaderText || "";
+
+  
+
   const headerDetails = currentVsb?.headerDetails || [];
   const htmlContent = generateEmailHTML(currentTemplate?.components || [], currentTemplate?.preheaderText || '')
 

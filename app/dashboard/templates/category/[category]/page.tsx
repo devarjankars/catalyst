@@ -67,13 +67,9 @@ export default function CategoryTemplatesPage() {
     router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
   }
 
-  const handleOpenThreeCanvas = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
-  }
-
   const handleEditTemplate = (template: EmailTemplate) => {
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
+      router.push(`/builder?template=${template.id}&edit=true`)
     } else {
       handleUseTemplate(template)
     }
@@ -165,7 +161,6 @@ export default function CategoryTemplatesPage() {
                   template={template}
                   onUse={() => handleUseTemplate(template)}
                   onEdit={() => handleEditTemplate(template)}
-                  onOpenThreeMode={() => handleOpenThreeCanvas(template)}
                   onDelete={() => setDeleteDialog({ open: true, template })}
                   onDuplicate={() => handleDuplicateTemplate(template)}
                 />
@@ -184,3 +179,4 @@ export default function CategoryTemplatesPage() {
     </div>
   )
 }
+

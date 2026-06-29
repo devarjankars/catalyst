@@ -128,14 +128,10 @@ export default function Dashboard() {
     router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
   }
 
-  const handleOpenThreeCanvas = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&mode=three`)
-  }
-
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true&selectMode=true`)
+      router.push(`/builder?template=${template.id}&edit=true`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)
@@ -266,7 +262,6 @@ export default function Dashboard() {
               <StandardTemplates temps={templates} 
                                   handleUseTemplate={handleUseTemplate} 
                                   handleEditTemplate={handleEditTemplate} 
-                                  handleOpenThreeCanvas={handleOpenThreeCanvas}
                                   setDeleteDialog={setDeleteDialog} 
                                   handleDuplicateTemplate={handleDuplicateTemplate}
                                   handleCreateBlank={handleCreateBlank}
@@ -281,9 +276,8 @@ export default function Dashboard() {
               <h1 className="font-bold mb-4">Recent Emailers</h1>
               <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>view all</span>
             </div>          <div className="templates">
-          <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
+           <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
            <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
-                                  handleOpenThreeCanvas={handleOpenThreeCanvas}
                                   setDeleteDialog={setDeleteDialog} 
                                   handleDuplicateTemplate={handleDuplicateTemplate}
                                   handleCreateBlank={handleCreateBlank}
@@ -307,3 +301,4 @@ export default function Dashboard() {
     </div>
   )
 }
+

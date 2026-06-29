@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, X, Loader2, Trash } from "lucide-react"
+import { Upload, Loader2, Trash } from "lucide-react"
 import { firebaseService } from "@/services/firebase-service"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
 import { toast } from "sonner"
@@ -20,12 +20,10 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   const { currentTemplate, addTemplateImage } = useEmailBuilderStore()
 
   const acceptedFileTypes = ["image/jpeg", "image/png"]
- 
 
   useEffect(() => {
     setUploadedImage(currentImage || "")
-    
-    // Reset the file input when the current image changes
+
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -40,43 +38,27 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
       return
     }
 
-    // Check file size (max 1MB)
-    if (file.size > 50 * 1024 * 1024) {
-      alert("File size must be less than 1MB")
-      return
-    }
-
     setIsUploading(true)
 
     try {
-      // Upload to Firebase Storage
       const imageUrl = await firebaseService.uploadImage(file, currentTemplate?.id)
 
-      if(imageUrl === "PATH_NOT_FOUND"){
+      if (imageUrl === "PATH_NOT_FOUND") {
         toast.warning("Please save the email!")
         return
       }
 
-      if (imageUrl === "MAX_LIMIT") {
-        toast.error("Max limit of 1MB is reached")
-        return
-      }
-
-
-
       setUploadedImage(imageUrl)
       onImageUpload(imageUrl)
       addTemplateImage(imageUrl)
-      
-      // Reset the file input so the same file can be selected again
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
     } catch (error) {
       console.error("Failed to upload image:", error)
       alert("Failed to upload image. Please try again.")
-      
-      // Reset the file input on error too
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -86,18 +68,11 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
   }
 
   const handleRemoveImage = async () => {
-    // Strategy: Only unlink from the component property.
-    // We do NOT delete from Firebase here because other components might be using the same image.
     setUploadedImage("")
     onImageUpload("")
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
-  }
-
-  const handleUrlInput = (url: string) => {
-    setUploadedImage(url)
-    onImageUpload(url)
   }
 
   return (
@@ -144,12 +119,10 @@ export function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
             <>
               <Upload className="w-6 h-6 text-gray-400" />
               <span className="text-sm text-gray-500">Click to upload image</span>
-              <span className="text-xs text-gray-400">Max 1MB</span>
             </>
           )}
         </Button>
       )}
-
     </div>
   )
 }

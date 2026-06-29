@@ -48,6 +48,7 @@ interface EmailComponentRendererProps {
   totalComponents?: number;
   onDuplicate?: () => void;
   parentId?: string; // New prop for container isolation
+  isLockedMode?: boolean; // New prop for header-only lock
 }
 
 export function EmailComponentRenderer({
@@ -68,6 +69,7 @@ export function EmailComponentRenderer({
   totalComponents = 0,
   onDuplicate,
   parentId = "root", // Default to root
+  isLockedMode = false,
 }: EmailComponentRendererProps) {
   const ref = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,7 @@ export function EmailComponentRenderer({
       };
     },
     hover(item: any, monitor) {
-      if (!ref.current) return;
+      if (!ref.current || isLockedMode) return;
       if (item.fromPalette) return;
 
       const dragIndex = item.index;
@@ -108,6 +110,7 @@ export function EmailComponentRenderer({
   const [{ isDragging }, drag, preview] = useDrag({
     type: "component",
     item: () => ({ id: component.id, index, parentId }), // Include parentId in drag item
+    canDrag: () => !isLockedMode,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -161,6 +164,7 @@ export function EmailComponentRenderer({
           previewMode={previewMode}
           totalComponents={component.children?.length || 0}
           parentId={sectionId} // Pass sectionId as parentId for children
+          isLockedMode={isLockedMode}
         />
       </div>
     );
@@ -339,7 +343,7 @@ export function EmailComponentRenderer({
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                !previewMode && onSelect()
+                !previewMode && !isLockedMode && onSelect()
               }}
             />
           </div>
@@ -383,7 +387,7 @@ export function EmailComponentRenderer({
               onClick={(e) => {
                 if (!previewMode) {
                   e.preventDefault();
-                  onSelect();
+                  if (!isLockedMode) onSelect();
                 }
               }}
             >
@@ -434,7 +438,7 @@ export function EmailComponentRenderer({
               onClick={(e) => {
                 if (!previewMode) {
                   e.preventDefault();
-                  onSelect();
+                  if (!isLockedMode) onSelect();
                 }
               }}
             >
@@ -467,7 +471,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -511,7 +515,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -539,7 +543,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -583,7 +587,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -666,7 +670,7 @@ export function EmailComponentRenderer({
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                !previewMode && onSelect()
+                !previewMode && !isLockedMode && onSelect()
               }}
             />
           </div>
@@ -685,7 +689,7 @@ export function EmailComponentRenderer({
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                !previewMode && onSelect()
+                !previewMode && !isLockedMode && onSelect()
               }}
             />
           </div>
@@ -721,7 +725,7 @@ export function EmailComponentRenderer({
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                !previewMode && onSelect()
+                !previewMode && !isLockedMode && onSelect()
               }}
             />
             <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
@@ -762,7 +766,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -779,7 +783,7 @@ export function EmailComponentRenderer({
                     onClick={(e) => {
                       if (!previewMode) {
                         e.preventDefault();
-                        onSelect();
+                        if (!isLockedMode) onSelect();
                       }
                     }}
                   >
@@ -842,7 +846,7 @@ export function EmailComponentRenderer({
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                !previewMode && onSelect()
+                !previewMode && !isLockedMode && onSelect()
               }}
             />
           </div>
@@ -927,13 +931,13 @@ export function EmailComponentRenderer({
       `}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect();
+        if (!isLockedMode) onSelect();
       }}
     >
       {!previewMode && (
         <>
           {/* Drag Handle */}
-          { !isColumn && 
+          { !isColumn && !isLockedMode && 
             <div
               ref={dragHandleRef}
               className="absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
@@ -947,7 +951,7 @@ export function EmailComponentRenderer({
           }
 
           {/* Rearrange Controls */}
-          {isSelected && (
+          {isSelected && !isLockedMode && (
             <RearrangeControls
               componentId={component.id}
               index={index}
@@ -969,6 +973,15 @@ export function EmailComponentRenderer({
       )}
 
       {renderComponent()}
+      {isLockedMode && (
+        <div className="absolute inset-0 bg-gray-100 bg-opacity-40 pointer-events-none flex items-center justify-center cursor-not-allowed z-20">
+          <div className="bg-white px-2 py-1 rounded text-xs font-semibold text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+            Header-Only Mode (Synced)
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+
