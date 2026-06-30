@@ -109,6 +109,7 @@ export function SaveTemplateDialog({
                 <SelectItem value="rte">RTE</SelectItem>
                 <SelectItem value="sfmc">SFMC</SelectItem>
                 <SelectItem value="unbranded">Unbranded</SelectItem>
+                <SelectItem value="tpe">Third-party</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>

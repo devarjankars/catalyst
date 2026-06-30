@@ -35,7 +35,7 @@ export const VSBPageWrapper: React.FC<{
   children: React.ReactNode;
   wide?: boolean;
 }> = ({ title, number, children, wide = false }) => (
-  <div className={`bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] border overflow-y-auto border-gray-100 rounded-lg mb-10 p-12 min-h-[1050px] relative flex flex-col ${wide ? 'min-w-full w-[1900px]' : 'w-full'}`}>
+  <div className={`bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] border overflow-y-auto border-gray-100 rounded-lg mb-10 p-12 min-h-[1050px] relative flex flex-col `}>
     <div className="mb-8 border-b-2 border-[#006937] pb-3 flex justify-between items-end">
       <div>
         <h3 className="text-xl font-bold text-[#FF66CC] uppercase tracking-tight">{number}. {title}</h3>

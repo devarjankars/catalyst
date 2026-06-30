@@ -4,7 +4,7 @@ export interface EmailTemplate {
   id: string
   name: string
   description: string
-  category: "rte" | "sfmc" | "unbranded" | "other"
+  category: "rte" | "sfmc" | "unbranded" | "other" | "tpe"
   components: EmailComponent[]
   
   // Multi-option support

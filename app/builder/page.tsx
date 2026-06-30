@@ -185,7 +185,7 @@ function replaceImagesInComponents(components: any[]): any[] {
       optionMode: "single" | "three";
       optionSubMode?: "header-only" | "completely-different";
     },
-  ) => {
+  ): Promise<void> => {
     setLoading(true);
     try {
       const template = await firebaseService.getTemplate(id);
@@ -243,7 +243,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     setModeDialogOpen(true);
   };
 
-  const handleModeSelect = (
+  const handleModeSelect = async (
     mode: "single" | "three",
     subMode?: "header-only" | "completely-different",
   ) => {
@@ -260,8 +260,8 @@ function replaceImagesInComponents(components: any[]): any[] {
         : { optionMode: "single" as const };
 
     if (shouldLoadTemplateFirst && templateId) {
-      loadTemplate(templateId, optionOverrides);
-      loadTemplateImages(templateId);
+      await loadTemplate(templateId, optionOverrides);
+      await loadTemplateImages(templateId);
     } else {
       applyOptionConfiguration({ mode, subMode });
     }
@@ -281,6 +281,9 @@ function replaceImagesInComponents(components: any[]): any[] {
     }
 
     window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+
+    // Force save template after mode selection
+    setSaveTemplateDialog(true);
   };
 
 
@@ -364,6 +367,8 @@ function replaceImagesInComponents(components: any[]): any[] {
         savedTemplate = await firebaseService.updateTemplate(
           currentTemplate.id,
           {
+            name,
+            description,
             category: category as any,
             components,
             optionMode,

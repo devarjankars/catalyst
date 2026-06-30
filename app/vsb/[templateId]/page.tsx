@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
 type SectionType = 'Variable Copy' | 'Desktop view' | 'Mobile view' | 'alt name page' | 'Combined Preview';
 
@@ -63,7 +64,7 @@ export default function VSBPage() {
     if (!templateId) return;
     await createVSB({
       templateId,
-      variableCopy: [{ heading: '', options: [''] }],
+      variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
         { name: 'To', value: '[HCP’s email address]' },

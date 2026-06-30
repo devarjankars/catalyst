@@ -422,10 +422,7 @@ class FirebaseService {
       const fileName = `${Date.now()}-${file.name}`;
       const imagePath = `${this.imagesPath}/${templateId}/${fileName}`
 
-
       const imageRef = ref(storage, imagePath);
-
-
 
       const snapshot = await uploadBytes(imageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
