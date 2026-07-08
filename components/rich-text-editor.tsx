@@ -236,11 +236,38 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   handleInput()
 }
 
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const text = e.clipboardData.getData("text/plain")
-    document.execCommand("insertText", false, text)
+  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
+  e.preventDefault();
+
+  let text = e.clipboardData.getData("text/plain");
+
+  if (!text && navigator.clipboard) {
+    try {
+      text = await navigator.clipboard.readText();
+    } catch {}
   }
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+
+  const fragment = document.createDocumentFragment();
+
+  text.split("\n").forEach((line, index) => {
+    if (index > 0) fragment.appendChild(document.createElement("br"));
+    fragment.appendChild(document.createTextNode(line));
+  });
+
+  range.insertNode(fragment);
+  range.collapse(false);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  handleInput();
+};
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {

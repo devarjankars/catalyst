@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -20,7 +19,14 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState<Record<1 | 2 | 3, boolean>>({ 1: true, 2: true, 3: true })
-  const { currentTemplate, preheaderText, optionMode, option2Components, option3Components } = useEmailBuilderStore()
+  const {
+    currentTemplate,
+    preheaderText,
+    optionMode,
+    optionSubMode,           // ← pull this from store
+    option2Components,
+    option3Components,
+  } = useEmailBuilderStore()
 
   const handleExport = async () => {
     if (!canvasRef.current) return
@@ -40,7 +46,12 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
 
       if (optionsToExport.length === 0) return
 
-      await exportToZip(optionsToExport, currentTemplate?.name, preheaderText)
+      await exportToZip(
+        optionsToExport,
+        currentTemplate?.name,
+        preheaderText,
+        isThreeMode && optionSubMode === "completely-different", // ← new flag
+      )
       setIsOpen(false)
     } catch (error) {
       console.error("Export failed:", error)
@@ -92,7 +103,9 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
           </Button>
 
           <p className="text-sm text-gray-600">
-            The ZIP file will contain separate HTML files for each selected email option and a shared images folder.
+            {optionMode === "three" && optionSubMode === "completely-different"
+              ? "The ZIP will contain a separate folder per option, each with its own HTML file and images folder."
+              : "The ZIP file will contain separate HTML files for each selected email option and a shared images folder."}
           </p>
         </div>
       </DialogContent>

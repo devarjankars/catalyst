@@ -135,13 +135,13 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
                   onClick={() => setDark(false)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!dark ? "bg-white shadow text-gray-900" : "text-gray-400 hover:text-gray-700"}`}
                 >
-                  <Sun className="h-3.5 w-3.5" /> Light
+                  <Sun className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => setDark(true)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${dark ? "bg-[#1e1e1e] shadow text-white" : "text-gray-400 hover:text-gray-700"}`}
                 >
-                  <Moon className="h-3.5 w-3.5" /> Dark
+                  <Moon className="h-3.5 w-3.5" />
                 </button>
               </div>
 

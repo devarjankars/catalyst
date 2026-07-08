@@ -367,6 +367,7 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onCh
               case 'table':
                 return (
                   <SenderTable
+                  key={idx}
   data={section.options}
   onChange={(updated) => updateSection(idx, { ...section, options: updated })}
 />

@@ -12,58 +12,101 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   return await response.blob()
 }
 
-export async function exportToZip(options: { name: string, components: EmailComponent[] }[], templateName: string = "email-template", preHeaderText?: string) {
+export async function exportToZip(
+  options: { name: string; components: EmailComponent[] }[],
+  templateName: string = "email-template",
+  preHeaderText?: string,
+  separateFolders = false, // true when optionSubMode === "completely-different"
+) {
   const zip = new JSZip()
 
-  // Create root folder with template name (remove .zip if present)
   const folderName = templateName.replace(/\.zip$/i, "")
-  const rootFolder = zip.folder(folderName)
-  const imageFolder = rootFolder!.folder("images")
+  const rootFolder = zip.folder(folderName)!
 
-  // Track downloaded image URLs to avoid duplicate fetch across options
-  const downloadedImages = new Map<string, string>()
-  let imageCounter = 0;
+  let imageCounter = 0
 
-  for (const option of options) {
-    // Step 1: Generate HTML
-    let html = generateEmailHTML(option.components, preHeaderText)
+  if (separateFolders) {
+    // Each option gets its own subfolder with its own images/ inside it
+    // Structure: folderName/Option1/index.html
+    //            folderName/Option1/images/
+    //            folderName/Option2/index.html
+    //            folderName/Option2/images/
+    for (const option of options) {
+      const optionFolder = rootFolder.folder(option.name)!
+      const imageFolder = optionFolder.folder("images")!
 
-    // Step 2: Find all image srcs (firebase links or any external)
-    const imageRegex = /<img[^>]+src="([^">]+)"/g
-    const srcMatches = [...html.matchAll(imageRegex)]
+      // Images are scoped per-option — no cross-option deduplication
+      const downloadedImages = new Map<string, string>()
 
-    for (let i = 0; i < srcMatches.length; i++) {
-      const srcUrl = srcMatches[i][1]
+      let html = generateEmailHTML(option.components, preHeaderText)
 
-      try {
-        if (!downloadedImages.has(srcUrl)) {
-          const imageBlob = await fetchImageAsBlob(srcUrl)
-          const imageExt = srcUrl.split(".").pop()?.split(/\#|\?/)[0] || "png"
-          const imageFileName = `image-${imageCounter++}.${imageExt}`
+      const imageRegex = /<img[^>]+src="([^">]+)"/g
+      const srcMatches = [...html.matchAll(imageRegex)]
 
-          imageFolder!.file(imageFileName, imageBlob)
-          downloadedImages.set(srcUrl, `./images/${imageFileName}`)
+      for (const match of srcMatches) {
+        const srcUrl = match[1]
+        try {
+          if (!downloadedImages.has(srcUrl)) {
+            const imageBlob = await fetchImageAsBlob(srcUrl)
+            const imageExt = srcUrl.split(".").pop()?.split(/[#?]/)[0] || "png"
+            const imageFileName = `image-${imageCounter++}.${imageExt}`
+
+            imageFolder.file(imageFileName, imageBlob)
+            downloadedImages.set(srcUrl, `./images/${imageFileName}`)
+          }
+
+          const localPath = downloadedImages.get(srcUrl)!
+          html = html.replaceAll(srcUrl, localPath)
+          html = cleanHtmlString(html)
+        } catch (err) {
+          console.warn(`Skipping image ${srcUrl}`, err)
         }
-
-        // Replace src in HTML with local relative path
-        const localPath = downloadedImages.get(srcUrl)!
-        html = html.replace(srcUrl, localPath)
-        html = cleanHtmlString(html)
-      } catch (err) {
-        console.warn(`Skipping image ${srcUrl}`, err)
       }
-    }
 
-    // Step 3: Add modified HTML to root folder
-    const htmlFileName = options.length > 1 ? `${option.name}.html` : "index.html";
-    rootFolder!.file(htmlFileName, html)
+      optionFolder.file("index.html", html)
+    }
+  } else {
+    // Original behaviour: shared images/ at root level
+    // Structure: folderName/Option1.html (or index.html)
+    //            folderName/images/  ← shared
+    const imageFolder = rootFolder.folder("images")!
+    const downloadedImages = new Map<string, string>()
+
+    for (const option of options) {
+      let html = generateEmailHTML(option.components, preHeaderText)
+
+      const imageRegex = /<img[^>]+src="([^">]+)"/g
+      const srcMatches = [...html.matchAll(imageRegex)]
+
+      for (const match of srcMatches) {
+        const srcUrl = match[1]
+        try {
+          if (!downloadedImages.has(srcUrl)) {
+            const imageBlob = await fetchImageAsBlob(srcUrl)
+            const imageExt = srcUrl.split(".").pop()?.split(/[#?]/)[0] || "png"
+            const imageFileName = `image-${imageCounter++}.${imageExt}`
+
+            imageFolder.file(imageFileName, imageBlob)
+            downloadedImages.set(srcUrl, `./images/${imageFileName}`)
+          }
+
+          const localPath = downloadedImages.get(srcUrl)!
+          html = html.replaceAll(srcUrl, localPath)
+          html = cleanHtmlString(html)
+        } catch (err) {
+          console.warn(`Skipping image ${srcUrl}`, err)
+        }
+      }
+
+      const htmlFileName = options.length > 1 ? `${option.name}.html` : "index.html"
+      rootFolder.file(htmlFileName, html)
+    }
   }
 
-  // Step 4: Generate ZIP and trigger download
+  // Generate ZIP and trigger download
   const zipBlob = await zip.generateAsync({ type: "blob" })
   const url = URL.createObjectURL(zipBlob)
 
-  // Ensure the filename has .zip extension
   let fileName = templateName || "email-template"
   if (!fileName.endsWith(".zip")) {
     fileName = `${fileName}.zip`

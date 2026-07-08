@@ -1,5 +1,7 @@
 "use client"
 
+
+
 interface NormalSection {
   heading: string;
   options: string[];
@@ -38,15 +40,15 @@ const NormalView = ({ section }: { section: NormalSection }) => {
         const isImage = isString && (opt.startsWith('data:image') || opt.startsWith('http'));
 
         return (
-          <div key={i} className="text-[10px] text-black mb-2">
+          <div key={i} className="text-[10px] text-black mb-[2px] w-[100%]">
             <span className="font-bold mr-2">{listLabel} {i + 1}:</span>
             {isString ? (
               isImage ? (
                 <img
                   src={opt}
                   alt={`${listLabel} {i + 1}`}
-                  className="mt-1 border border-gray-100 w-[600px]"
-                  style={{  maxWidth: '600px', display: 'inline-block' }}
+                  className="mt-2 border border-gray-100 w-[80%] max-h-[150px] inline-block max-w-[400px]"
+                  
                 />
               ) : (
                 <span>{opt}</span>
@@ -121,14 +123,14 @@ const ThirdPartyView = ({ section }: { section: ThirdPartySection }) => {
           key={idx}
           style={{
             display: "grid",
-            gridTemplateColumns: "10px 1fr 10px",
+            gridTemplateColumns: "25px 1fr 25px",
             gap: "2px",
             alignItems : "center",
           }}
         >
-          <p style={{color : "#FF66CC",fontSize : "50px"}}>[</p>
-          <p style={{flex : 1,textAlign:"center"}}>{op}</p>
-          <p style={{color : "#FF66CC",fontSize : "50px"}}>]</p>
+          <img src={"/sqr_bracket_left.png"} width={"100%"}/>
+          <p style={{flex : 1,textAlign:"center",color : "#FF66CC"}}>{op}</p>
+          <img src={"/sqr_bracket_right.png"} width={"100%"}/>
         </div>
       ))}
     </div>

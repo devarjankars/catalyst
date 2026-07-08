@@ -39,7 +39,7 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
     const headerHtml = `
       <div>
         <div style="margin-left : 20px; width:fit-content; border:1px solid #000; padding:5px;margin-bottom:10px;margin-top:10px;font-size:13px; font-weight: bold;">
-          Desktop View - ${opt.title}
+          Desktop View 
         </div>
         <div style="border-top:1px solid #000;">
           <div style="margin-bottom: 20px; margin-left: 20px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.5; padding-top: 20px;">

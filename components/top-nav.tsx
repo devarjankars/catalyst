@@ -10,6 +10,7 @@ const menus = [
   { name: "Standard Templates", href: "/dashboard/standard-templates", icon: FileCheck },
   { name: "All Emailers", href: "/dashboard/templates", icon: FileMinus },
   { name: "VSB PDFs", href: "/dashboard/vsb-pdfs", icon: FileText },
+  { name: "WSB creator", href: "/wsb", icon: FileText },
 ];
 
 export default function TopNav() {

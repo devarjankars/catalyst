@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useVSBStore, VSBData } from '@/store/vsb-store';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Plus, Edit2, Loader2, Download, Eye, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Edit2, Loader2, Download, Eye, Copy, Trash2, History } from 'lucide-react';
 import VariableCopySection from '@/components/vsb-sections/VariableCopySection';
 import DesktopViewSection from '@/components/vsb-sections/DesktopViewSection';
 import MobileViewSection from '@/components/vsb-sections/MobileViewSection';
@@ -14,6 +14,7 @@ import AltNamePageSection from '@/components/vsb-sections/AltNamePageSection';
 import PreviewSection from '@/components/vsb-sections/PreviewSection';
 import CombinedVSBView, { VSBPageWrapper } from '@/components/vsb-sections/CombinedVSBView';
 import HeaderDetailsEditor from '@/components/vsb-sections/HeaderDetailsEditor';
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { generateEmailHTML } from '@/lib/email-generator';
+import { generateCombinedPdfAction } from '@/app/actions';
+import { reactToHtml } from '@/lib/react-to-html';
+import VariablePagePdfView from '@/components/vsb-sections/VariablePagePdfView';
+import ALtnamePdfview from '@/components/vsb-sections/ALtnamePdfview';
+import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
 type SectionType = 'Variable Copy' | 'Desktop view' | 'Mobile view' | 'alt name page' | 'Combined Preview';
@@ -37,7 +52,173 @@ export default function VSBPage() {
 
   const [activeSection, setActiveSection] = useState<SectionType>('Variable Copy');
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const combinedViewRef = useRef<{ handleDownloadPDF: () => void }>(null);
+  const [isConnectingToMRL , seisConnectingToMRL] = useState(false)
+  const [mlrDialogOpen, setMlrDialogOpen] = useState(false);
+  const [mlrDialogStep, setMlrDialogStep] = useState<'idle' | 'downloading' | 'connecting' | 'redirecting' | 'success' | 'error'>('idle');
+  const [mlrDialogMessage, setMlrDialogMessage] = useState('Preparing the MLR connection...');
+
+  // Download dialog state
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isUpVersioning, setIsUpVersioning] = useState(false);
+  const [selectedPages, setSelectedPages] = useState({
+    variableCopy: true,
+    desktopView:  true,
+    mobileView:   true,
+    altNamePage:  true,
+  });
+
+  const generatePDFBlob = async (options?: {
+    variableCopy: boolean;
+    desktopView:  boolean;
+    mobileView:   boolean;
+    altNamePage:  boolean;
+  }) => {
+    if (!currentVsb) return;
+    
+    const headerDetails = currentVsb?.headerDetails || [];
+    const emailName = currentTemplate?.name || 'Template';
+
+    const includeVC  = options ? options.variableCopy : true;
+    const includeDV  = options ? options.desktopView  : true;
+    const includeMV  = options ? options.mobileView   : true;
+    const includeANP = options ? options.altNamePage  : true;
+
+    const variableCopyHtml = includeVC
+      ? reactToHtml(<VariablePagePdfView data={currentVsb.variableCopy} emailname={emailName} headingColor={currentVsb.variableCopyHeadingColor} />)
+      : undefined;
+    const altNameHtml = includeANP
+      ? reactToHtml(<ALtnamePdfview data={currentVsb.altNamePage} emailName={emailName} />)
+      : undefined;
+
+    const isThreeMode = currentTemplate?.optionMode === 'three';
+
+    const optArray = isThreeMode
+      ? [
+          { title: 'Option 1', components: currentTemplate?.components        || [] },
+          { title: 'Option 2', components: currentTemplate?.option2Components || [] },
+          { title: 'Option 3', components: currentTemplate?.option3Components || [] },
+        ]
+      : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
+
+    const makeHeaderHtml = (label: string) => `
+      <div style="background-color:#fff; padding-top:10px; padding-bottom:20px;">
+        <div style="margin-left:20px; width:fit-content; border:1px solid #000; padding:5px;
+                    margin-bottom:10px; font-size:13px; color:black; font-weight:bold;">
+          ${label}
+        </div>
+        <div style="border-top:1px solid #000;">
+          <div style="margin-left:20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px;">
+            ${headerDetails.map(detail => `
+              <div style="margin-bottom:2px;">
+                <span style="font-weight:bold; color:black;">${detail.name}: </span>
+                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
+                  ${detail.value}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>`;
+
+    const injectHeader = (rawHtml: string, headerHtml: string) => {
+      const idx = rawHtml.indexOf('</div>');
+      return idx !== -1
+        ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6)
+        : rawHtml;
+    };
+
+    const desktopHtmls = optArray.map(opt => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      return injectHeader(raw, makeHeaderHtml(`Desktop View - ${opt.title}`));
+    });
+
+    const desktopFinalHtml = isThreeMode
+      ? `<div style="display:flex; gap:20px; align-items:flex-start; justify-content:center;
+                     width:100%; min-width:1900px; background-color:#f3f4f6; padding:20px;">
+          ${desktopHtmls.map(html =>
+            `<div style="flex:1; min-width:600px; max-width:600px; background-color:#fff;
+                         box-shadow:0 4px 6px -1px rgb(0 0 0/0.1);">${html}</div>`
+          ).join('')}
+         </div>`
+      : desktopHtmls[0];
+
+    const mobileHtmls = optArray.map(opt => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      return injectHeader(raw, makeHeaderHtml(`Mobile View - ${opt.title}`));
+    });
+
+    const base64Merged = await generateCombinedPdfAction({
+      emailHtmlDesktop:  includeDV ? desktopFinalHtml         : undefined,
+      emailHtmlsMobile:  includeMV && isThreeMode ? mobileHtmls : undefined,
+      emailHtmlMobile:   includeMV && !isThreeMode ? mobileHtmls[0] : undefined,
+      variableCopyHtml,
+      altNameHtml,
+      emailName,
+      desktopWidthOverride: isThreeMode ? '1900px' : undefined,
+    });
+
+    const byteCharacters = atob(base64Merged);
+    const byteNumbers    = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    return new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+  };
+
+  const executeDownloadPDF = async (options?: {
+    variableCopy: boolean;
+    desktopView:  boolean;
+    mobileView:   boolean;
+    altNamePage:  boolean;
+  }) => {
+    if (!currentVsb) return;
+    
+    setIsGeneratingPdf(true);
+    setDownloadDialogOpen(false);
+    try {
+      const pdfBlob = await generatePDFBlob(options);
+      const url  = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `${currentTemplate?.name || 'Template'}-VSB-Combined.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      alert('Failed to download PDF.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleUpVersion = async () => {
+    if (!currentVsb) return;
+    if (!confirm('Are you sure you want to create a new version? This will archive the current version in history.')) return;
+
+    setIsUpVersioning(true);
+    try {
+      const pdfBlob = await generatePDFBlob();
+      const newPdfUrl = await firebaseService.uploadVSBPDF(pdfBlob, templateId, currentVsb.id);
+
+      if (newPdfUrl) {
+        const versions = currentVsb.versions || [];
+        const currentVersion = currentVsb.currentVersion;
+        await updateVSB(currentVsb.id, {
+          currentVersion: newPdfUrl,
+          versions: currentVersion ? [...versions, currentVersion] : versions,
+        });
+        alert('VSB successfully up-versioned!');
+      }
+    } catch (error) {
+      console.error('Failed to up-version VSB:', error);
+      alert('Failed to up-version VSB.');
+    } finally {
+      setIsUpVersioning(false);
+    }
+  };
 
   // Handle unsaved changes warning on page close/refresh
   useEffect(() => {
@@ -95,6 +276,63 @@ export default function VSBPage() {
     }
   };
 
+  const handleBackNavigation = ()=>{
+    router.back()
+  }
+
+
+ const handleMLRconnection = async () => {
+  const mlrUrl = encodeURI(
+    `http://tuned.mlrcatalyst.com/MLRCatalyst/VerifyOTP?emailAddress=stalin.br@medtrixhealthcare.com`
+  );
+
+  setMlrDialogOpen(true);
+  setMlrDialogStep('downloading');
+  setMlrDialogMessage('Preparing the PDF download...');
+  seisConnectingToMRL(true);
+
+  try {
+    await executeDownloadPDF();
+
+    setMlrDialogStep('connecting');
+    setMlrDialogMessage('The PDF download is complete. Connecting to MLR...');
+
+    const response = await fetch('http://34.55.227.107:8000/auth/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'stalin.br@medtrixhealthcare.com' }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Failed to connect to MLR:', response.statusText);
+      setMlrDialogStep('error');
+      setMlrDialogMessage('The MLR connection could not be completed. Please try again.');
+      return;
+    }
+
+    // 3. Open the MLR link only after both steps succeed
+   const anchor = document.createElement('a');
+    anchor.href = mlrUrl;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    setMlrDialogStep('success');
+    setMlrDialogMessage('The MLR page is opening. You can close this dialog once the new tab appears.');
+  } catch (error) {
+    console.error('Error during MLR connection:', error);
+    setMlrDialogStep('error');
+    setMlrDialogMessage('Something went wrong while connecting to MLR. Please try again.');
+  } finally {
+    seisConnectingToMRL(false);
+    setMlrDialogOpen(true);
+  }
+};
+
   const handleUpdateData = (section: string, data: any) => {
     if (!currentVsb) return;
 
@@ -147,7 +385,7 @@ export default function VSBPage() {
         case 'alt name page':
           return <AltNamePageSection data={currentVsb.altNamePage} onChange={(data) => handleUpdateData('alt name page', data)} />;
         case 'Combined Preview':
-          return <CombinedVSBView ref={combinedViewRef} data={currentVsb} emailName={currentTemplate?.name || 'Template'} />;
+          return <CombinedVSBView data={currentVsb} emailName={currentTemplate?.name || 'Template'} />;
         default:
           return null;
       }
@@ -169,6 +407,11 @@ export default function VSBPage() {
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
+            
+            {activeSection === 'Combined Preview' && 
+            (<Button className='bg-red-500' onClick={handleMLRconnection}>
+              {isConnectingToMRL && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Connect to MLR
+            </Button>)}
             <Button variant="outline" onClick={() => {
               if (hasUnsavedChanges) {
                 setShowExitDialog(true);
@@ -187,9 +430,20 @@ export default function VSBPage() {
             </Button>
 
             {activeSection === 'Combined Preview' && (
-              <Button onClick={() => combinedViewRef.current?.handleDownloadPDF()} className="bg-green-600 hover:bg-green-700 text-white">
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </Button>
+              <>
+                <Button
+                  onClick={handleUpVersion}
+                  disabled={isUpVersioning || isGeneratingPdf}
+                  variant="outline"
+                  className="border-[#006937] text-[#006937] hover:bg-green-50"
+                >
+                  {isUpVersioning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <History className="mr-2 h-4 w-4" />}
+                  {isUpVersioning ? 'Archiving...' : 'Up-version'}
+                </Button>
+                <Button onClick={() => setDownloadDialogOpen(true)} className="bg-green-600 hover:bg-green-700 text-white">
+                  {isGeneratingPdf ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Download PDF
+                </Button>
+              </>
             )}
           </div>
         </header>
@@ -248,6 +502,82 @@ export default function VSBPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={downloadDialogOpen} onOpenChange={setDownloadDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Download Selective Pages</DialogTitle>
+              <DialogDescription>
+                Select the pages you want to include in the combined PDF.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 cursor-default">
+              {[
+                { id: 'variableCopy', label: '1. Variable Copy' },
+                { id: 'desktopView',  label: '2. Desktop View'  },
+                { id: 'mobileView',   label: '3. Mobile View'   },
+                { id: 'altNamePage',  label: '4. Alt-Text Configuration' },
+              ].map(({ id, label }) => (
+                <div key={id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={id}
+                    checked={selectedPages[id as keyof typeof selectedPages]}
+                    onCheckedChange={(checked) =>
+                      setSelectedPages(s => ({ ...s, [id]: checked === true }))
+                    }
+                  />
+                  <label htmlFor={id} className="text-sm font-medium leading-none cursor-pointer">
+                    {label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => executeDownloadPDF(selectedPages)}
+                disabled={!Object.values(selectedPages).some(Boolean) || isGeneratingPdf}
+                className="bg-[#006937] hover:bg-[#00522b] text-white"
+              >
+                {'Download PDF'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={mlrDialogOpen} onOpenChange={(open) => {
+          if (!isConnectingToMRL) {
+            setMlrDialogOpen(open);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle>Connecting to MLR</DialogTitle>
+              <DialogDescription>{mlrDialogMessage}</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-start gap-3 rounded-lg border bg-slate-50 p-4">
+              {(mlrDialogStep === 'downloading' || mlrDialogStep === 'connecting' || mlrDialogStep === 'redirecting') && (
+                <Loader2 className="mt-0.5 h-5 w-5 animate-spin text-blue-600" />
+              )}
+              <div className="text-sm text-slate-700">
+                {mlrDialogStep === 'downloading' && 'Downloading the combined PDF...'}
+                {mlrDialogStep === 'connecting' && 'Preparing the MLR connection request...'}
+                {mlrDialogStep === 'redirecting' && 'Opening the MLR portal in a new tab...'}
+                {mlrDialogStep === 'success' && 'The MLR page is opening. You can close this dialog once the new tab appears.'}
+                {mlrDialogStep === 'error' && 'The connection could not be completed. Please try again.'}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setMlrDialogOpen(false)}
+                disabled={mlrDialogStep === 'downloading' || mlrDialogStep === 'connecting' || mlrDialogStep === 'redirecting'}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -256,7 +586,7 @@ export default function VSBPage() {
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Visual Story Boards</h1>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3"><span><ArrowLeft onClick={handleBackNavigation} className='hover:translate-x-1 cursor-pointer'/></span>Visual Story Boards</h1>
           <p className="text-gray-500 mt-1">Manage VSBs for {currentTemplate?.name || 'this template'}</p>
         </div>
         <Button onClick={handleCreateVSB} className="bg-blue-600 hover:bg-blue-700">

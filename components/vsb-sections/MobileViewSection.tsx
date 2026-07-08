@@ -39,7 +39,7 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false 
     const headerHtml = `
       <div style="background-color: #fff;padding-top:10px;padding-bottom:20px;">
         <div style="margin-left : 20px; width:fit-content; border:1px solid #000; padding:5px;margin-bottom:10px;font-size:13px;background-color: #fff;color:black; font-weight: bold;">
-          Mobile View - ${opt.title}
+          Mobile View 
         </div>
         <div style="border-top:1px solid #000;">
           <div style="margin-left: 20px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.5; padding-top: 20px;">

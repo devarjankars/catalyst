@@ -16,7 +16,7 @@ export function reactToHtml(element: React.ReactElement): string {
               <script src="https://cdn.tailwindcss.com"></script>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family:Arial, Helvetica, sans-serif; }
+                body { font-family:Arial, Helvetica, sans-serif;width:100%;padding:15px; }
             </style>
         </head>
         <body>

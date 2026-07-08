@@ -62,7 +62,21 @@ const config: Config = {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				paper: "#FAF9F6",
+        ink: "#181B20",
+        slate: {
+          muted: "#5B6270",
+        },
+        signal: {
+          DEFAULT: "#3454D1",
+          soft: "#EBEFFC",
+        },
+        trace: {
+          DEFAULT: "#C98A3E",
+          soft: "#FBF0E0",
+        },
+        line: "#E4E2DB",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -89,6 +103,14 @@ const config: Config = {
 				"grow-x": {
           "0%": { transform: "scaleX(0)" },
           "100%": { transform: "scaleX(1)" },
+		   blink: {
+          "0%, 49%": { opacity: "1" },
+          "50%, 100%": { opacity: "0" },
+        },
+        rise: {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
         },
 			},
 			animation: {

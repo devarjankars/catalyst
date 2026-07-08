@@ -78,7 +78,13 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           let dropIndex = components.length
           let position: "top" | "bottom" = "top"
 
-          const componentElements = (ref as React.RefObject<HTMLDivElement>).current!.querySelectorAll("[data-component-id]")
+          // IMPORTANT: scope to direct children only (":scope >") so nested
+          // section children with the same data-component-id attribute don't
+          // get counted and throw off the index math.
+          const componentElements = (ref as React.RefObject<HTMLDivElement>).current!.querySelectorAll(
+            ":scope > [data-component-id]",
+          )
+
           if (componentElements.length > 0) {
             for (let i = 0; i < componentElements.length; i++) {
               const element = componentElements[i] as HTMLElement
@@ -88,6 +94,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                 dropIndex = i
                 position = "top"
                 break
+              } else {
+                // cursor is past this element's midpoint; tentatively place
+                // after it (covers the "drop into the last gap" case and
+                // keeps the index correct as we keep scanning forward)
+                dropIndex = i + 1
+                position = "bottom"
               }
             }
           }
@@ -177,7 +189,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           {components.map((component, index) => {
             if (!component) return null
             return (
-              <div key={component.id || index} className="relative">
+              <div key={component.id || index} className="relative" data-component-id={component.id}>
                 {dropIndicator?.index === index && isOver && !previewMode && (
                   <div className="h-1 bg-blue-600 mx-2 rounded-sm opacity-75 my-2 shadow-lg animate-grow-x origin-center" />
                 )}
@@ -216,5 +228,3 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 )
 
 EmailCanvas.displayName = "EmailCanvas"
-
-

@@ -343,9 +343,9 @@ export const componentTypes = [
     icon : PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "Privacy and Terms of Use ", href: "#" },
         { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
+        { text: "Cookie Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },
         { text: "[Email Preferences]", href: "#link" },
       ],

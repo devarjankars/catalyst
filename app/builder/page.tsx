@@ -624,14 +624,14 @@ if (activeSelectedId) {
           )}
 
           {/* Canvas */}
-          <div className="flex-1 overflow-auto bg-gray-100 p-8 flex flex-col items-center" 
+          <div className={`flex-1 overflow-auto bg-gray-100 ${optionMode === "three" ?" pt-0" : ""} p-8 flex flex-col items-center`} 
             onClick={(e)=>{
               e.stopPropagation()
               setSelectedComponent(null)
             }}>
             
             {optionMode === "three" && (
-              <div className="mb-6 w-full max-w-[600px] space-y-3">
+              <div className="mb-6 w-full max-w-[600px] space-y-3 sticky top-0 z-10 bg-gray-100 py-4">
                 <div className="flex items-center justify-between px-1">
                   <p className="text-sm font-semibold text-gray-700">Email Options</p>
                   <span className="text-xs text-gray-500 capitalize">
