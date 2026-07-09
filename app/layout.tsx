@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
-import AuthGuard from '@/components/auth-guard'
+import AppShell from '@/components/app-shell'
 
 export const metadata: Metadata = {
   title: 'Email Builder',
@@ -19,8 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body suppressHydrationWarning>
-        <AuthGuard>{children}</AuthGuard>
+      <body suppressHydrationWarning className="h-screen overflow-hidden">
+        <AppShell>{children}</AppShell>
         <Toaster richColors={true} position='top-center' />
       </body>
     </html>

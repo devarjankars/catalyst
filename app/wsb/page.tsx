@@ -11,6 +11,8 @@ import { detectSlots } from "@/lib/wsb/slotDetection";
 import { matchDocument } from "@/lib/wsb/documentMatcher";
 import { buildMockWsbDraft } from "@/lib/wsb/wsbGenerator";
 import { PRODUCTS, TYPES, DOCUMENTS } from "@/data/config";
+import { LoadingSpinner } from "@/components/loading-spinner";
+
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -32,6 +34,7 @@ export default function Wsb() {
   const [modelReady, setModelReady] = useState(false);
   const [draftPhases, setDraftPhases] = useState([]);
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [preparing, setPreparing] = useState(false);
 
   // When not null: { slot: "product"|"type"|"topic" } — renders either
   // the option picker or a freeform topic prompt.
@@ -41,13 +44,34 @@ export default function Wsb() {
   const resolvedRef = useRef({ product: null, type: null, topic: null });
   const bottomRef = useRef(null);
 
+  const isSupportedSelection = (product, type) => {
+    return product?.id === "orserdu" && type?.id === "sfmc";
+  };
+
+  const showUnsupportedMessage = () => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        from: "ai",
+        text: "I’m sorry — right now this system only supports Orserdu SFMC emailers. we will be expanding to other products and email types in the future.",
+      },
+    ]);
+    setBusy(false);
+    setPendingClarification(null);
+  };
+
+  const isUnsupportedSelection = (product, type) => {
+    if (!product || !type) return false;
+    return !isSupportedSelection(product, type);
+  };
+
   useEffect(() => {
     import("@/lib/wsb/embeddingEngine.ts")
       .then(({ warmUp }) => {
         const allPhrases = [
           ...PRODUCTS.flatMap((p) => p.referencePhrases),
           ...TYPES.flatMap((t) => t.referencePhrases),
-          ...DOCUMENTS.flatMap((d) => d.description),
+          ...DOCUMENTS.flatMap((d) => d.referencePrompts),
         ];
         return warmUp(allPhrases);
       })
@@ -78,7 +102,7 @@ export default function Wsb() {
       resolvedProduct.id,
       resolvedType.id
     );
-    await sleep(600);
+    await sleep(1000);
 
     const draft = buildMockWsbDraft({
       product: resolvedProduct,
@@ -106,11 +130,17 @@ export default function Wsb() {
     ]);
 
     for (let i = 0; i < (draft.phases || []).length; i += 1) {
-      await sleep(1100);
+      await sleep(i*1100);
       setPhaseIndex(i + 1);
     }
 
-    await pushTrace(`draft ready: ${draft.title}`, "match", 180);
+    setPreparing(true);
+
+    await pushTrace("preparing WSB…", "neutral", 180);
+    await sleep(10000);
+
+    setPreparing(false);
+    await pushTrace(`draft ready: ${draft.title}`, "match", 120);
     setResult({ document: resolvedDocument, confidence });
     setBusy(false);
   }
@@ -126,7 +156,18 @@ export default function Wsb() {
     contextRef.current.push(option.label);
 
     // Store in resolved ref
-    resolvedRef.current[slot] = { ...option, confidence: 1.0 };
+    const selected = { ...option, confidence: 1.0 };
+    resolvedRef.current[slot] = selected;
+
+    if (slot === "product" && selected.id !== "orserdu") {
+      showUnsupportedMessage();
+      return;
+    }
+
+    if (slot === "type" && selected.id !== "sfmc") {
+      showUnsupportedMessage();
+      return;
+    }
 
     // Check if the other slot is still missing
     const otherSlot = slot === "product" ? "type" : "product";
@@ -135,6 +176,8 @@ export default function Wsb() {
     if (!resolvedRef.current[otherSlot]) {
       // Ask for the other slot via option picker
       setPendingClarification({ slot: otherSlot, options: otherOptions });
+    } else if (isUnsupportedSelection(resolvedRef.current.product, resolvedRef.current.type)) {
+      showUnsupportedMessage();
     } else if (!resolvedRef.current.topic) {
       setPendingClarification({ slot: "topic" });
     } else {
@@ -144,12 +187,12 @@ export default function Wsb() {
       await pushTrace(
         `product: ${resolvedRef.current.product.label} (confirmed)`,
         "match",
-        100
+        1000
       );
       await pushTrace(
         `type: ${resolvedRef.current.type.label} (confirmed)`,
         "match",
-        100
+        1000
       );
       await resolveDocument();
     }
@@ -180,6 +223,16 @@ export default function Wsb() {
 
     const resolvedProduct = resolvedRef.current.product;
     const resolvedType = resolvedRef.current.type;
+
+    if (resolvedProduct?.id && resolvedProduct.id !== "orserdu") {
+      showUnsupportedMessage();
+      return;
+    }
+
+    if (resolvedType?.id && resolvedType.id !== "sfmc") {
+      showUnsupportedMessage();
+      return;
+    }
 
     await pushTrace(
       resolvedProduct
@@ -271,8 +324,8 @@ export default function Wsb() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper">
-      <Header />
+    <div className="flex min-h-screen flex-col bg-paper pt-10">
+      {/* <Header /> */}
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-8">
         <div className="flex-1 space-y-3 pb-24">
           {messages.map((m, i) => (
@@ -316,7 +369,13 @@ export default function Wsb() {
             </div>
           )}
 
-          {result && (
+          {preparing && (
+            <div className="rounded-xl border border-line bg-white p-6">
+              <LoadingSpinner message="Preparing WSB…" size="lg" />
+            </div>
+          )}
+
+          {result && !preparing && (
             <ResultCard
               document={result.document}
               confidence={result.confidence}

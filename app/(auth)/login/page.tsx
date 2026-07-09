@@ -8,12 +8,17 @@ import { toast } from "sonner";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
 import dbUsers from "@/data/dummy-users.json";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function LoginPage() {
   const [userCreds, setUserCreds] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { loginUser } = useLoggedInUserStore();
+    const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -42,70 +47,152 @@ export default function LoginPage() {
     );
     loginUser(user.userEmail, user.userpassword, user.userId, user.userRole, user.userPermissions);
     toast.success("Logged in successfully");
-    router.push("/dashboard");
+    router.push("/");
   };
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
-      style={{ backgroundImage: "url('/banner.jpg')" }}
-    >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+ return (
+    <div className="min-h-screen flex">
+      <div className="w-full h-full overflow-hidden flex flex-col lg:flex-row">
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-sm mx-4">
-        {/* Logo/Branding */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="h-14 w-14 rounded-2xl bg-[#BC2030] grid place-items-center shadow-lg mb-3">
-            <span className="text-white text-2xl font-bold">E</span>
+        {/* ── LEFT PANEL ── */}
+        <div className="w-full lg:w-1/2 min-h-screen bg-[#f0f0f2] flex flex-col justify-center p-9 px-12 max-md:px-6 max-md:p-7">
+
+          {/* Logo */}
+          <div className="flex mx-auto w-[65%] items-center gap-2.5 mb-14 max-md:mb-8">
+            <img src="/catalyst_logo.png" className="w-[45%]"/>
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-wide">Email Builder</h1>
-          <p className="text-white/70 text-sm mt-1">Sign in to your account</p>
+
+          {/* Form Card */}
+          <Card className=" mx-auto w-[65%] min-h-[60vh] max-w-[634px] pt-8 px-4 max-h-[641px] flex flex-col   shadow-[0_2px_16px_rgba(0,0,0,0.07)] rounded-2xl border-0">
+            <CardContent className="p-8 flex flex-col gap-5">
+
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                <h1 className="text-xl font-bold text-[#111] tracking-tight">
+                  Sign in to your account
+                </h1>
+
+                {/* Email */}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="email" className="text-[13px] font-medium text-[#374151]">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    value={userCreds.email}
+                    onChange={handleInputChange}
+                    type="email"
+                    placeholder="sellostore@company.com"
+                    className="border-[#e0e0e0] text-sm placeholder:text-[#aaa] focus-visible:ring-0 focus-visible:border-[#E12A29] rounded-lg h-10"
+                  />
+                </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="password" className="text-[13px] font-medium text-[#374151]">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    onChange={handleInputChange}
+                    placeholder="5ellostore."
+                    className="border-[#e0e0e0] text-sm placeholder:text-[#aaa] focus-visible:ring-0 focus-visible:border-[#E12A29] rounded-lg h-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#aaa] hover:text-[#555] transition-colors"
+                  >
+                    {showPassword ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember / Forgot */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(val) => setRememberMe(!!val)}
+                    className="border-[#ccc] data-[state=checked]:bg-[#E12A29] data-[state=checked]:border-[#E12A29] rounded-[3px] w-4 h-4"
+                  />
+                  <Label
+                    htmlFor="remember"
+                    className="text-[13px] text-[#555] font-normal cursor-pointer"
+                  >
+                    Remember Me
+                  </Label>
+                </div>
+               
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                className="w-full bg-[#E12A29] hover:bg-[#c82120] text-white font-semibold text-[15px] h-11 rounded-lg"
+              >
+                {loading ? "Signing in..." : "Log In"}
+              </Button>
+
+              {/* Contact */}
+              <p className="text-center text-[13px] text-[#888]">
+                Don&apos;t Have An Account?{" "}
+                <a href="#" className="text-[#E12A29] font-medium hover:underline">
+                  Please Contact Your Admin
+                </a>
+              </p>
+            </form>
+            </CardContent>
+          </Card>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-8 space-y-5">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-white/90 text-sm font-medium">
-                Email Address
-              </Label>
-              <Input
-                onChange={handleInputChange}
-                id="email"
-                name="email"
-                value={userCreds.email}
-                type="email"
-                placeholder="you@example.com"
-                className="bg-white/15 border-white/30 text-white placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 transition-all"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password" className="text-white/90 text-sm font-medium">
-                Password
-              </Label>
-              <Input
-                id="password"
-                onChange={handleInputChange}
-                name="password"
-                value={userCreds.password}
-                type="password"
-                placeholder="••••••••"
-                className="bg-white/15 border-white/30 text-white placeholder:text-white/40 focus:border-white/60 focus:bg-white/20 transition-all"
-              />
-            </div>
-            <Button
-              className="w-full bg-[#BC2030] hover:bg-[#9e1a28] text-white font-semibold py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg mt-2"
-              type="submit"
+        {/* ── RIGHT PANEL: VIDEO ── */}
+        <div className="hidden lg:flex w-1/2 bg-[#000000] relative overflow-hidden items-center justify-center ">
+
+          
+            {/* Replace the orb below with your video: */}
+            <video
+              autoPlay loop muted playsInline
+              className="absolute inset-0 w-full h-full object-[100% 100%] "
             >
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-            <p className="text-white/50 text-xs text-center">
-              Don&apos;t have an account? Please contact your admin.
-            </p>
-          </div>
-        </form>
-      </div>
+              <source src="/Orb1.mp4" type="video/mp4" />
+            </video>
+         
+
+          {/* Placeholder orb — remove when adding video */}
+          {/* <div className="w-[300px] h-[300px] rounded-full bg-[radial-gradient(ellipse_at_35%_35%,#E12A29_0%,#8b0000_45%,#1a0000_80%,transparent_100%)] shadow-[0_0_80px_rgba(225,42,41,0.25)] animate-pulse max-md:w-[180px] max-md:h-[180px]" /> */}
+
+          {/* Tagline */}
+          {/* <div className="absolute bottom-16 left-0 right-0 text-center text-[26px] font-black tracking-tight max-md:text-[18px] max-md:bottom-12">
+            <span className="text-white">A TO Z. </span>
+            <span className="text-[#555]">WE DO IN AI.</span>
+          </div> */}
+
+          {/* Medtrix branding */}
+          {/* <div className="absolute bottom-5 right-5 flex items-center gap-2">
+            <svg className="w-7 h-7" viewBox="0 0 28 28" fill="none">
+              <rect x="10" y="2" width="8" height="24" rx="2" fill="#E12A29" />
+              <rect x="2" y="10" width="24" height="8" rx="2" fill="#E12A29" />
+              <rect x="10" y="10" width="8" height="8" rx="1" fill="#c82120" />
+            </svg>
+            <div className="flex flex-col leading-tight">
+              <span className="text-base font-bold text-white tracking-tight">
+                medtrix
+              </span>
+              <span className="text-[8px] font-medium text-[#555] tracking-widest uppercase">
+                Catalyzing Healthcare
+              </span>
+            </div>
+          </div> */}
+
+        </div>
     </div>
+  </div>
   );
 }

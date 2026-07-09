@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Filter, Calendar, ChevronRight } from "lucide-react"
+import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon } from "lucide-react"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LoadingSpinner } from "@/components/loading-spinner"
@@ -254,8 +254,8 @@ export default function Dashboard() {
           
           <div className="StandardTemps">
           <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">Standard Templates</h1>
-              <span role="button" className="text-sm text-[#155DFC]" onClick={handlestandardTemps}>view all</span>
+              <div className="flex gap-3 items-center mb-4"><h1 className="font-bold ">Standard Templates</h1><PlusIcon onClick={handleCreateBlank} className="w-5 h-5 bg-[#BC2030] text-white font-bold text-md p-1 rounded-full cursor-pointer hover:bg-[#000000]"/></div>
+              <span role="button" className="text-sm text-[#155DFC]" onClick={handlestandardTemps}>View all</span>
             </div>
           <div className="templates">
             <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
@@ -274,7 +274,7 @@ export default function Dashboard() {
           <div className="recentTemps">
           <div className="header flex justify-between">
               <h1 className="font-bold mb-4">Recent Emailers</h1>
-              <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>view all</span>
+              <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>View all</span>
             </div>          <div className="templates">
            <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
            <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
