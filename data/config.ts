@@ -89,7 +89,7 @@ export const DOCUMENTS = [
     id: "doc-elzonris-rte",
     label: "Orserdu — SFMC Work Statement Brief",
     file: "/wsb/MAT-US-ELA-00597-v2_SFMC_email_Treatment-Algorithm.docx",
-    product: "elzonris",
+    product: "orserdu",
     type: "sfmc",
     description : "This emailer focuses on the treatment algorithm for ORSERDU and the NCCN Guidelines' recommendations on treatment options for patients with ESR1-mutated, ER+/HER2- mBC following progression on ET + CDK4/6i.",
     referencePrompts: [
