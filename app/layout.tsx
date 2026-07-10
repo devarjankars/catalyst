@@ -4,7 +4,7 @@ import { Toaster } from 'sonner'
 import AppShell from '@/components/app-shell'
 
 export const metadata: Metadata = {
-  title: 'Email Builder',
+  title: 'Omnichannel Catalyst',
   description: 'Build responsive email templates with ease using our intuitive drag-and-drop interface.',
   icons: {
     icon: '/favicon.svg',

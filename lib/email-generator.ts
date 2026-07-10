@@ -24,12 +24,13 @@ function generateComponentHTML(component: EmailComponent): string {
 
         return `
       text-align: ${alignment};
-      vertical-align: ${verticalAlignment === "top"
-            ? "top"
-            : verticalAlignment === "middle"
-              ? "middle"
-              : "bottom"
-          };
+      vertical-align: ${
+        verticalAlignment === "top"
+          ? "top"
+          : verticalAlignment === "middle"
+            ? "middle"
+            : "bottom"
+      };
       min-height: ${child.columnMinHeight || "120px"};
     `;
       };
@@ -70,14 +71,15 @@ function generateComponentHTML(component: EmailComponent): string {
               background-color:${component.backgroundColor};
             "
           >
-            ${component.columns && component.columns > 1
-          ? generateColumnHtml({ component, generateComponentHTML })
-          : generateColumnHtml({
-            component,
-            generateComponentHTML,
-            childHtml: childrenHTML,
-          })
-        }
+            ${
+              component.columns && component.columns > 1
+                ? generateColumnHtml({ component, generateComponentHTML })
+                : generateColumnHtml({
+                    component,
+                    generateComponentHTML,
+                    childHtml: childrenHTML,
+                  })
+            }
           </table>
         </td>
       </tr>
@@ -115,9 +117,11 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "0 20px 10px 20px"
-        }; background-color:${component.backgroundColor || "transparent"
-        };${innerStyle ? innerStyle : ""}" bgcolor="${component.backgroundColor || "transferent"}"   ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}> 
+              <td style="padding: ${
+                component.padding || "0 20px 10px 20px"
+              }; background-color:${
+                component.backgroundColor || "transparent"
+              };${innerStyle ? innerStyle : ""}" bgcolor="${component.backgroundColor || "transferent"}"   ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}> 
                 <div style="${divStyle}">
                   ${component.content || ""}
                 </div>
@@ -154,8 +158,9 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td width="${(component.width || "100%").toString().replace("px", "")}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
+              <td width="${(component.width || "100%").toString().replace("px", "")}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
                  <img 
                     width="${(component.width || "100%").toString().replace("px", "")}"
                     src="${component.src || ""}" 
@@ -195,13 +200,15 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td style="padding: ${component.padding || "0 20px 20px 20px"}; text-align: ${component.textAlign || "center"
-        };${innerStyle ? innerStyle : ""}">
+              <td style="padding: ${component.padding || "0 20px 20px 20px"}; text-align: ${
+                component.textAlign || "center"
+              };${innerStyle ? innerStyle : ""}">
                 <table ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0"  ${innerStyle ? `style="${innerStyle}"` : ""}>
                   <tr>
                     <td ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="
-                      background-color: ${component.backgroundColor || "#007bff"
-        };
+                      background-color: ${
+                        component.backgroundColor || "#007bff"
+                      };
                       border-radius: ${component.borderRadius || "4px"};
                       padding: ${component.buttonPadding || "12px 24px"};
                       ${innerStyle ? innerStyle : ""}
@@ -333,19 +340,22 @@ function generateComponentHTML(component: EmailComponent): string {
       const linksHTML = (component.links || [])
         .map(
           (link, index) => `
-      <a target="_blank" href="${link.href || "#"}" style="color: ${component.color || "#0463c1"
-            }; text-decoration: underline; font-size: ${component.fontSize || "12px"
-            }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
+      <a target="_blank" href="${link.href || "#"}" style="color: ${
+        component.color || "#0463c1"
+      }; text-decoration: underline; font-size: ${
+        component.fontSize || "12px"
+      }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
         ${link.text || "Link"}
       </a>
       ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
       ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
-      ${index < component.links!.length - 1
-              ? index == 1
-                ? `<span class='desktop'  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
-                : `<span  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
-              : ""
-            }
+      ${
+        index < component.links!.length - 1
+          ? index == 1
+            ? `<span class='desktop'  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+            : `<span  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+          : ""
+      }
     `,
         )
         .join("");
@@ -362,10 +372,12 @@ function generateComponentHTML(component: EmailComponent): string {
     >
       <tbody>
         <tr>
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${component.textAlign || "left"
-        }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
-            <div style="color: ${component.color || "#0463c1"}; font-size: ${component.fontSize || "14px"
-        }; line-height: ${component.lineHeight};">
+          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${
+            component.textAlign || "left"
+          }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
+            <div style="color: ${component.color || "#0463c1"}; font-size: ${
+              component.fontSize || "14px"
+            }; line-height: ${component.lineHeight};">
               ${linksHTML}
             </div>
           </td>
@@ -382,18 +394,21 @@ function generateComponentHTML(component: EmailComponent): string {
       const linksHTML = (component.links || [])
         .map(
           (link, index) => `
-      <a href="${link.href || "#"}" target="_blank" style="color: ${component.color || "#0000EE"
-            }; text-decoration: underline; font-size: ${component.fontSize || "14px"
-            }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
+      <a href="${link.href || "#"}" target="_blank" style="color: ${
+        component.color || "#0000EE"
+      }; text-decoration: underline; font-size: ${
+        component.fontSize || "14px"
+      }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
         ${link.text || "Link"}
       </a>
       ${index === 1 ? "<br class='mobile' style='display: none;'/>" : ""}
-      ${index < component.links!.length - 1
-              ? index == 1
-                ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
-                : `<span  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
-              : ""
-            }
+      ${
+        index < component.links!.length - 1
+          ? index == 1
+            ? `<span class='desktop'  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
+            : `<span  style="color:grey; font-size:14px; margin-right:5px;">|&nbsp;&nbsp;</span>`
+          : ""
+      }
     `,
         )
         .join("");
@@ -410,10 +425,12 @@ function generateComponentHTML(component: EmailComponent): string {
     >
       <tbody>
         <tr>
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "0 20px 0 20px"}; text-align: ${component.textAlign || "left"
-        }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
-            <div style="color: ${component.color || "#000000"}; font-size: ${component.fontSize || "14px"
-        }; line-height: 1.5;">
+          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "0 20px 0 20px"}; text-align: ${
+            component.textAlign || "left"
+          }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
+            <div style="color: ${component.color || "#000000"}; font-size: ${
+              component.fontSize || "14px"
+            }; line-height: 1.5;">
               ${linksHTML}
             </div>
           </td>
@@ -952,8 +969,9 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
+              <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
                  ${component.content || ""}
               </td>
             </tr>
@@ -988,32 +1006,37 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.regards || ""}
               </td>
             </tr>
             <tr>
-              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userName || ""}
               </td>
             </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.company || ""}
               </td>
             </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userEmailAddress || ""}
               </td>
             </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userPhone || ""}
               </td>
             </tr>
@@ -1076,26 +1099,30 @@ function generateComponentHTML(component: EmailComponent): string {
             <td width="100%" height="15" style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">&nbsp; </td>
         </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 8px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 8px 20px"}; ${itemStyle}">
                  ${component.footerText?.reg || ""}
               </td>
             </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 2px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 2px 20px"}; ${itemStyle}">
                  ${component.footerText?.year || ""}
               </td>
             </tr>
              <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 2px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 2px 20px"}; ${itemStyle}">
                  ${component.footerText?.address || ""}
               </td>
             </tr>
             <tr>
-              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 20px 0px 20px"}; ${itemStyle}">
+              <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 20px 0px 20px"}; ${itemStyle}">
                  ${component.footerText?.rights || ""} ${component.footerText?.jobcode || ""}
               </td>
             </tr>
@@ -1113,14 +1140,15 @@ function generateComponentHTML(component: EmailComponent): string {
       const linksHTML = (component.links || [])
         .map(
           (link, index) => `
-      <a target="_blank" href="${link.href || "#links"}" style="color: ${index === component!.links.length - 1 ? "#FF66CC" : component.color || "#0563C1"}; font-size: ${component.fontSize || "12px"}; font-family: Arial, sans-serif; text-decoration: underline;${innerStyle ? " " + innerStyle : ""}">${(link.text || "Link").trim()}</a>${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${index < component.links!.length - 1
-              ? index == 1
-                ? `<span class='desktop' style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
-                : index === component.links!.length - 2
-                  ? `<span class="desktop" style="color:#FF66CC; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span><span class="mobile" style="color:#FF66CC; font-size:12px; display:none; mso-hide:all;">|&nbsp;</span>`
-                  : `<span style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
-              : ""
-            }`,
+      <a target="_blank" href="${link.href || "#links"}" style="color: ${index === component!.links.length - 1 ? "#FF66CC" : component.color || "#0563C1"}; font-size: ${component.fontSize || "12px"}; font-family: Arial, sans-serif; text-decoration: underline;${innerStyle ? " " + innerStyle : ""}">${(link.text || "Link").trim()}</a>${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${
+        index < component.links!.length - 1
+          ? index == 1
+            ? `<span class='desktop' style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
+            : index === component.links!.length - 2
+              ? `<span class="desktop" style="color:#FF66CC; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span><span class="mobile" style="color:#FF66CC; font-size:12px; display:none; mso-hide:all;">|&nbsp;</span>`
+              : `<span style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
+          : ""
+      }`,
         )
         .join("");
 
@@ -1215,8 +1243,9 @@ function generateComponentHTML(component: EmailComponent): string {
         >
           <tbody>
             <tr>
-              <td width="${(component.width || "100%").toString().replace("px", "")}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${component.textAlign || "center"
-        }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
+              <td width="${(component.width || "100%").toString().replace("px", "")}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
+                component.textAlign || "center"
+              }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
                 <a href="${component.href || "#"}" target="_blank" style="text-decoration: none;">
                  <img 
                     width="${(component.width || "100%").toString().replace("px", "")}"
@@ -1237,30 +1266,36 @@ function generateComponentHTML(component: EmailComponent): string {
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
-      const socialMediaLinksHtml = (component.socialMediaLinks || []).map(
-        (link) => `
+      const socialMediaLinksHtml = (component.socialMediaLinks || [])
+        .map(
+          (link) => `
           <td bgcolor="#0083BF" style="padding: 0 10px 0 10px;">
             <a style="cursor: pointer; text-decoration: none;"
                 href="${link.href}" target="_blank">
                 <img width="33" src="${link.iconSrc}" alt="${link.altText}">
             </a>
           </td>
-        `).join("");
+        `,
+        )
+        .join("");
 
-
-        const mobileSocialMediaLinksHtml = (component.socialMediaLinks || []).map(
-        (link,index) => `
+      const mobileSocialMediaLinksHtml = (component.socialMediaLinks || [])
+        .map(
+          (link, index) => `
           <td bgcolor="#0083BF" ${index === 1 ? 'style="padding: 0 10px 0 10px;"' : ""}>
             <a style="cursor: pointer; text-decoration: none;"
                 href="${link.href}" target="_blank">
                 <img width="33" src="${link.iconSrc}" alt="${link.altText}">
             </a>
           </td>
-        `).join("");
+        `,
+        )
+        .join("");
 
-
-      const footerLinksHtml = (component.links || []).map((link, index) =>
-        `
+      const footerLinksHtml = (component.links || [])
+        .map(
+          (link, index) =>
+            `
           <tr bgcolor="#0083BF">
               <td style="text-align: right;font-size: 10px;line-height: 12px;color: #ffffff;${index !== 0 ? "padding: 2px 0 0 0;" : ""}" bgcolor="#0083BF">
                   <a href="${link.href}" style="text-decoration: underline;color: #ffffff;">
@@ -1268,11 +1303,14 @@ function generateComponentHTML(component: EmailComponent): string {
                   </a>
               </td>
           </tr>
-      `
-      ).join("");
+      `,
+        )
+        .join("");
 
-      const mobileFooterLinksHtml = (component.links || []).map((link, index) =>
-        `
+      const mobileFooterLinksHtml = (component.links || [])
+        .map(
+          (link, index) =>
+            `
           <tr bgcolor="#0083BF">
               <td align="center" style="text-align: center;font-size: 10px;line-height: 12px;color: #ffffff;padding: 10px 0  10px 0; " bgcolor="#0083BF">
                   <a href="${link.href}" style="text-decoration: underline;color: #ffffff;">
@@ -1280,8 +1318,9 @@ function generateComponentHTML(component: EmailComponent): string {
                   </a>
               </td>
           </tr>
-      `
-      ).join("");
+      `,
+        )
+        .join("");
 
       return `
         <table 
@@ -1406,14 +1445,17 @@ function generateComponentHTML(component: EmailComponent): string {
                 </td>
             </tr>
         </table>
-      `
+      `;
     }
     default:
       return "";
   }
 }
 
-export function generateEmailHTML(components: EmailComponent[], preHeaderText?: string): string {
+export function generateEmailHTML(
+  components: EmailComponent[],
+  preHeaderText?: string,
+): string {
   const componentHTML = components
     .map((component) => generateComponentHTML(component))
     .join("");
@@ -1540,7 +1582,7 @@ export function generateEmailHTML(components: EmailComponent[], preHeaderText?: 
           display: inline-block !important;
         }
 
-         @media (prefers-color-scheme: dark) {
+        @media (prefers-color-scheme: dark) {
       .dark-img {
         display: block !important;
         width: auto !important;
