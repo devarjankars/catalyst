@@ -159,7 +159,7 @@ export default function LoginPage() {
             {/* Replace the orb below with your video: */}
             <video
               autoPlay loop muted playsInline
-              className="absolute inset-0 w-full h-full object-[100% 100%] "
+              className="absolute inset-0 w-full h-full object-[100% 100%]"
             >
               <source src="/Orb2.mp4" type="video/mp4" />
             </video>

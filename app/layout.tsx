@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Omnichannel Catalyst',
   description: 'Build responsive email templates with ease using our intuitive drag-and-drop interface.',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/Medtrixlogo.png',
   },
 }
 
