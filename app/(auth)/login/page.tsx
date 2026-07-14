@@ -52,28 +52,28 @@ export default function LoginPage() {
 
  return (
     <div className="min-h-screen flex">
-      <div className="w-full h-full overflow-hidden flex flex-col lg:flex-row">
+      <div className="w-full bg-[url('/bg-login.png')] bg-cover bg-no-repeat  h-full overflow-hidden flex flex-col lg:flex-row">
 
         {/* ── LEFT PANEL ── */}
-        <div className="w-full lg:w-1/2 min-h-screen bg-[#f0f0f2] flex flex-col justify-center p-9 px-12 max-md:px-6 max-md:p-7">
+        <div className="w-full lg:w-1/2 min-h-screen  flex flex-col justify-center p-9 px-12 max-md:px-6 max-md:p-7">
 
           {/* Logo */}
           <div className="flex mx-auto w-[65%] items-center gap-2.5 mb-14 max-md:mb-8">
-            <img src="/catalyst_logo.png" className="w-[45%]"/>
+            <img src="/catalyst_logo.png" className="w-[50%]"/>
           </div>
 
           {/* Form Card */}
-          <Card className=" mx-auto w-[65%] min-h-[60vh] max-w-[634px] pt-8 px-4 max-h-[641px] flex flex-col   shadow-[0_2px_16px_rgba(0,0,0,0.07)] rounded-2xl border-0">
+          <Card className=" mx-auto w-[65%] min-h-[60vh] max-w-[634px] pt-8 px-4 max-h-[641px] flex flex-col bg-transparent  bg-clip-padding  rounded-2xl backdrop-filter backdrop-blur-md bg-opacity-10 border border-[#4a4a4add]">
             <CardContent className="p-8 flex flex-col gap-5">
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                <h1 className="text-xl font-bold text-[#111] tracking-tight">
+                <h1 className="text-2xl font-semibold text-white tracking-tight">
                   Sign in to your account
                 </h1>
 
                 {/* Email */}
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="email" className="text-[13px] font-medium text-[#374151]">
+                  <Label htmlFor="email" className="text-[13px] font-medium text-white">
                     Email
                   </Label>
                   <Input
@@ -82,13 +82,13 @@ export default function LoginPage() {
                     onChange={handleInputChange}
                     type="email"
                     placeholder="sellostore@company.com"
-                    className="border-[#e0e0e0] text-sm placeholder:text-[#aaa] focus-visible:ring-0 focus-visible:border-[#E12A29] rounded-lg h-10"
+                    className="border-[#5e5e5e] text-white bg-transparent text-sm placeholder:text-[#aaa]  focus-visible:border-white rounded-lg h-10 "
                   />
                 </div>
 
               {/* Password */}
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password" className="text-[13px] font-medium text-[#374151]">
+                <Label htmlFor="password" className="text-[13px] font-medium text-white">
                   Password
                 </Label>
                 <div className="relative">
@@ -97,7 +97,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     onChange={handleInputChange}
                     placeholder="5ellostore."
-                    className="border-[#e0e0e0] text-sm placeholder:text-[#aaa] focus-visible:ring-0 focus-visible:border-[#E12A29] rounded-lg h-10 pr-10"
+                    className="border-[#5e5e5e] text-white bg-transparent text-sm placeholder:text-[#aaa]  focus-visible:border-white rounded-lg h-10 pr-10"
                   />
                   <button
                     type="button"
@@ -141,7 +141,7 @@ export default function LoginPage() {
               </Button>
 
               {/* Contact */}
-              <p className="text-center text-[13px] text-[#888]">
+              <p className="text-center text-[13px] text-[#888] mt-5">
                 Don&apos;t Have An Account?{" "}
                 <a href="#" className="text-[#E12A29] font-medium hover:underline">
                   Please Contact Your Admin
@@ -153,7 +153,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── RIGHT PANEL: VIDEO ── */}
-        <div className="hidden lg:flex w-1/2 bg-[#000000] relative overflow-hidden items-center justify-center ">
+        <div className="hidden lg:flex w-1/2 relative overflow-hidden items-center justify-center ">
 
           
             {/* Replace the orb below with your video: */}
@@ -161,7 +161,7 @@ export default function LoginPage() {
               autoPlay loop muted playsInline
               className="absolute inset-0 w-full h-full object-[100% 100%] "
             >
-              <source src="/Orb1.mp4" type="video/mp4" />
+              <source src="/Orb2.mp4" type="video/mp4" />
             </video>
          
 

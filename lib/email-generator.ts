@@ -1116,7 +1116,9 @@ function generateComponentHTML(component: EmailComponent): string {
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
               }' style="padding: ${component.padding || "0 20px 2px 20px"}; ${itemStyle}">
-                 ${component.footerText?.address || ""}
+                 750&nbsp;Lex<span style="display:inline-block;width:0;height:0;overflow:hidden;">&nbsp;</span>ington&nbsp;Ave<span
+                style="display:inline-block;width:0;height:0;overflow:hidden;">&nbsp;</span>nue,&nbsp;4<span
+                style="display:inline-block;width:0;height:0;overflow:hidden;">&nbsp;</span>th&nbsp;Floor,&nbsp;New&nbsp;York,&nbsp;NY&nbsp;10022.
               </td>
             </tr>
             <tr>
