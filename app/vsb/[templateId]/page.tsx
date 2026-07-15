@@ -299,7 +299,7 @@ export default function VSBPage() {
 
     const response = await fetch('http://34.55.227.107:8000/auth/send-otp', {
       method: 'POST',
-      body: JSON.stringify({ email: 'stalin.br@medtrixhealthcare.com' }),
+      body: JSON.stringify({ email: 'shijin.p@medtrixhealthcare.com' }),
       headers: {
         'Content-Type': 'application/json',
       },
