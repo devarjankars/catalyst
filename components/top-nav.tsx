@@ -38,7 +38,7 @@ export default function TopNav() {
   const initials = userEmail ? userEmail[0].toUpperCase() : "U";
 
   async function handleMLRConnect() {
-    const email = 'shijin.p@medtrixhealthcare.com';
+    const email = 'kumar@medtrixhealthcare.com';
     const mlrUrl = encodeURI(`http://tuned.mlrcatalyst.com/MLRCatalyst/VerifyOTP?emailAddress=${email}`);
   
 
