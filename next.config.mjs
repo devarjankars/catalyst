@@ -12,7 +12,12 @@ const nextConfig = {
  
   distDir: 'build',
   trailingSlash: true,
-  webpack(config) {
+  webpack(config, { isServer }) {
+    // sharp uses native binaries that don't exist in Vercel's build environment
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'sharp']
+    }
+
     config.watchOptions = {
       ignored: [
         '**/build/**',   // ignore Next.js output
