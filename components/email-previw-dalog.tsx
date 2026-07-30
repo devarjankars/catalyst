@@ -7,7 +7,6 @@ import { EmailComponent } from "@/types/email-builder";
 import { generateEmailHTML } from "@/lib/email-generator";
 import { Monitor, Smartphone, Upload, Sun, Moon } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
-import { handlePdfAction } from "@/app/actions";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -50,7 +49,6 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   const writeHtml = (html: string) => {
     const iframe = iframeRef.current;
     if (!iframe) return;
-    // Use contentWindow.document for reliability
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     doc.open();
@@ -80,21 +78,40 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   };
 
   const handlePDFExport = async () => {
-    if (!iframeRef.current) return;
     setIsExportingPDF(true);
     try {
       const viewMode = screen === "600px" ? "desktop" : "mobile";
-      const fileName = currentTemplate?.name ? `${currentTemplate.name}-${viewMode}` : `email-preview-${viewMode}`;
-      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
-      if (!iframeDoc) throw new Error("Iframe content inaccessible");
-      const htmlString = iframeDoc.documentElement.outerHTML;
-      const base64 = await handlePdfAction(htmlString, viewMode);
-      const link = document.createElement("a");
-      link.href = `data:application/pdf;base64,${base64}`;
-      link.download = `${fileName}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const width = screen === "600px" ? 600 : 375;
+      const fileName = currentTemplate?.name
+        ? `${currentTemplate.name}-${viewMode}`
+        : `email-preview-${viewMode}`;
+
+      // Build a fresh HTML string — no iframe DOM access needed
+      const htmlString = buildHtml(getActiveComponents(), preheaderText, dark);
+
+      // Use html2pdf.js (client-side, no server/Playwright needed)
+      const html2pdf = (await import("html2pdf.js")).default;
+
+      // Wrap HTML in a sized container so html2pdf renders at the right width
+      const container = document.createElement("div");
+      container.style.width = `${width}px`;
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.innerHTML = htmlString;
+      document.body.appendChild(container);
+
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: `${fileName}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, width },
+          jsPDF: { unit: "px", format: [width, 1200], orientation: "portrait" },
+        })
+        .from(container)
+        .save();
+
+      document.body.removeChild(container);
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("Failed to export PDF. Please try again.");
@@ -147,7 +164,7 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
 
               <Button variant="default" onClick={handlePDFExport} disabled={isExportingPDF}>
                 <Upload className={`h-4 w-4 mr-1.5 ${isExportingPDF ? "animate-pulse" : ""}`} />
-                Export PDF
+                {isExportingPDF ? "Exporting..." : "Export PDF"}
               </Button>
             </div>
           </div>
@@ -182,6 +199,3 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
     </Dialog>
   );
 }
-
-
-
