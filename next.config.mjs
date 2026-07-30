@@ -9,8 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
- 
-  distDir: 'build',
   trailingSlash: true,
   webpack(config, { isServer }) {
     // sharp uses native binaries that don't exist in Vercel's build environment
@@ -20,9 +18,9 @@ const nextConfig = {
 
     config.watchOptions = {
       ignored: [
-        '**/build/**',   // ignore Next.js output
-        '**/*.log',      // ignore log files
-        '**/tmp/**',     // ignore tmp files
+        '**/build/**',
+        '**/*.log',
+        '**/tmp/**',
       ],
     }
     return config
