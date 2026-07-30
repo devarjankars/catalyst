@@ -528,121 +528,110 @@ export function EmailComponentRenderer({
             </div>
           </div>
         )  
-        case "footer-links(3)":
+
+      case "elzonris-pi":
+        return (
+          <div style={{ ...baseStyle, fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
+            <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
+              Please see Full <a href={component.piHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>Prescribing Information</a>, including Boxed WARNING.
+            </p>
+            <p style={{ fontWeight: "bold" }}>
+              Please click <a href={component.isiHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
+            </p>
+          </div>
+        );
+
+      case "elzonris-brand-logo":
+        return (
+          <div className="flex flex-row sm:flex-row sm:gap-2 flex-wrap items-center justify-between w-full" style={baseStyle}>
+            <div className="w-full sm:w-[45%]" style={{ minWidth: 0 }}>
+              <a href={component?.logoA?.href || "#"} onClick={(e) => !previewMode && e.preventDefault()}>
+                <img width="100%" src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex} style={{ display: "block" }} />
+              </a>
+            </div>
+            <div className="w-full sm:w-[35%]" style={{ minWidth: 0 }}>
+              <a href={component?.logoB?.href || "#"} onClick={(e) => !previewMode && e.preventDefault()}>
+                <img width="100%" src={component?.logoB?.imgSrc} alt={component?.logoB?.altTex} style={{ display: "block" }} />
+              </a>
+            </div>
+          </div>
+        );
+
+      case "footer-link-3":
+        return (
+          <div className="flex justify-between w-full" style={baseStyle}>
+            {component.links?.map((link, linkIndex) => (
+              <a
+                key={linkIndex}
+                href={link.href || "#"}
+                className="flex-1 text-center"
+                style={{ color: component.color || "#009877", textDecoration: "underline", fontSize: component.fontSize || "12px" }}
+                onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
+              >
+                {link.text}
+              </a>
+            ))}
+          </div>
+        );
+
+      case "footer-with-Preferences":
         return (
           <div style={baseStyle} className="flex flex-col gap-2 mt-2">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {component.links?.map((link, linkIndex) => (
                 <React.Fragment key={linkIndex}>
                   <a
                     href={link.href || "#"}
                     style={{
-                      color: component.color || "#007bff",
+                      color: linkIndex === component.links!.length - 1 ? "#FF66CC" : component.color || "#0563C1",
                       textDecoration: "underline",
+                      fontSize: component.fontSize || "12px",
                     }}
-                    onClick={(e) => {
-                      if (!previewMode) {
-                        e.preventDefault();
-                        if (!isLockedMode) onSelect();
-                      }
-                    }}
+                    onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
                   >
                     {link.text}
                   </a>
-
-                  {linkIndex < component.links!.length - 1 && (
-                    <span className="text-gray-500">
-                      |
-                    </span>
-                  )}
+                  {linkIndex < component.links!.length - 2 && <span className="text-gray-500 text-[12px]">|</span>}
+                  {linkIndex === component.links!.length - 2 && <span className="text-[#FF66CC] text-[12px]">|</span>}
                 </React.Fragment>
               ))}
             </div>
           </div>
         );
-      case "footer-link-2" :
-        return (
-          <div className="flex flex-col gap-3 " style={baseStyle}>
-            <div className="flex items-center justify-between w-full mb-2">
-              <div className="w-[45%]">
-               
-                  <img width={"100%"} src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex}/>
-          
-              </div>
-              <div className="w-[35%]">
-               
-                  <img width={"100%"} src={component?.logoB.imgSrc} alt={component.logoB.altTex}/>
-           
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-evenly gap-10">
-              {component.links?.map((link, linkIndex) => (
-                <React.Fragment key={linkIndex}>
-                  <a
-                    href={link.href || "#"}
-                    style={{
-                      color: component.color || "#007bff",
-                      textDecoration: "underline",
-                    }}
-                    onClick={(e) => {
-                      if (!previewMode) {
-                        e.preventDefault();
-                        if (!isLockedMode) onSelect();
-                      }
-                    }}
-                  >
-                    {link.text}
-                  </a>
 
-                 
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        )  
-
+    
       case "isi":
         return (
-          <div style={baseStyle} className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold text-green-800 ">
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff' }} className="flex flex-col gap-2">
+            <h2 style={{ color: '#006937', fontSize: '16px', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
               IMPORTANT SAFETY INFORMATION
             </h2>
-            {component.importantSafetyInformation?.sections?.map(
-              (section, sectionIndex) =>
-                section.title ? (
-                  <div key={sectionIndex} className="mb-4">
-                    <h3 className="text-md font-semibold ">{section.title}</h3>
-                    {/* <p className="text-sm text-gray-700">{section.content}</p> */}
-                    {section.items && section.items.length > 0 && (
-                      <ul className="list-disc pl-5 mt-2 ml-3 marker:text-[#69D6B5]">
+            {component.importantSafetyInformation?.sections?.map((section, sectionIndex) =>
+              section.title ? (
+                <div key={sectionIndex} className="mb-4">
+                  <h3 style={{ color: '#2B2E34', fontSize: '14px', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>{section.title}</h3>
+                  {section.items && section.items.length > 0 && (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
+                      <tbody>
                         {section.items.map((subsection, subIndex) => (
-                          <li
-                            key={subIndex}
-                            className="text-sm text-gray-700 mt-2"
-                            dangerouslySetInnerHTML={{__html :subsection.content}} 
-                          >
-                            
-                          </li>
+                          <tr key={subIndex}>
+                            <td style={{ color: '#69D6B5', fontSize: '16px', lineHeight: '16px', verticalAlign: 'top', width: '12px', paddingTop: '2px' }}>&#8226;</td>
+                            <td style={{ color: '#2B2E34', fontSize: '14px', lineHeight: '18px', fontFamily: 'Arial, sans-serif', paddingLeft: '5px' }}
+                              dangerouslySetInnerHTML={{ __html: subsection.content }} />
+                          </tr>
                         ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <div key={sectionIndex}>
-                    {/* <p className="text-sm text-gray-700">{section.content}</p> */}
-                    {section.items &&
-                      section.items?.length > 0 &&
-                      section.items.map((subsection, subIndex) => (
-                        <div
-                          key={subIndex}
-                          className="text-sm text-gray-700 mt-2"
-                           dangerouslySetInnerHTML={{__html :subsection.content}} 
-                        >
-                         
-                        </div>
-                      ))}
-                  </div>
-                )
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ) : (
+                <div key={sectionIndex}>
+                  {section.items?.map((subsection, subIndex) => (
+                    <div key={subIndex} style={{ color: '#2B2E34', fontSize: '14px', fontFamily: 'Arial, sans-serif', marginTop: '8px' }}
+                      dangerouslySetInnerHTML={{ __html: subsection.content }} />
+                  ))}
+                </div>
+              )
             )}
           </div>
         );
@@ -748,81 +737,113 @@ export function EmailComponentRenderer({
             
           </div>
         );
-        case "footer-with-Preferences":
-          return (
-            <div style={baseStyle} className="flex flex-col gap-2 mt-2">
-            <div className="flex flex-wrap gap-3">
-              {component.links?.map((link, linkIndex) => (
-                <React.Fragment key={linkIndex}>
-                  {linkIndex === component.links!.length - 1 ? 
-
-                   <a
-                    href={link.href || "#"}
-                    style={{
-                      color: "#FF66CC",
-                      textDecoration: "underline",
-                      fontSize: component.fontSize || "12px",
-                    }}
-                    onClick={(e) => {
-                      if (!previewMode) {
-                        e.preventDefault();
-                        if (!isLockedMode) onSelect();
-                      }
-                    }}
-                  >
-                    {link.text}
-                  </a>
-                  
-                  :<a
-                    href={link.href || "#"}
-                    style={{
-                      color: component.color || "#0563C1",
-                      textDecoration: "underline",
-                      fontSize: component.fontSize || "12px",
-                    }}
-                    onClick={(e) => {
-                      if (!previewMode) {
-                        e.preventDefault();
-                        if (!isLockedMode) onSelect();
-                      }
-                    }}
-                  >
-                    {link.text}
-                  </a>}
-
-                  {linkIndex < component.links!.length - 2 && (
-                    <span className="text-gray-500 text-[12px]">
-                      |
-                    </span>
-                  )}
-                  {linkIndex === component.links!.length - 2 && (
-                    <span className="text-[#FF66CC] text-[12px]">
-                      |
-                    </span>
-                  )}
-                </React.Fragment>
-              ))}
+        case "elzonris-isi":
+        return (
+          <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: component.html || "" }} />
+        );
+            case "elzonris-divider":
+        return (
+          <div style={{ width: "100%", paddingBottom: "10px" }}>
+            <img src={component.src || "./footer-line.png"} alt="" style={{ display: "block", width: "100%", height: "3px" }} />
+            <div style={{ color: component.color || "#646464", fontSize: component.fontSize || "15px", fontWeight: component.fontWeight || "bold", padding: "10px 20px", textAlign: "center", fontFamily: "Arial, sans-serif" }}>
+              VISIT <a href={component.href || "#"} style={{ color: "#F15625", textDecoration: "none" }}>ELZONRIS.COM/HCP</a> FOR MORE INFORMATION.
             </div>
+            <img src={component.src || "./footer-line.png"} alt="" style={{ display: "block", width: "100%", height: "3px" }} />
           </div>
-          )
+        );
 
-         case "elzonris-divider" : 
+        case "elzonris-references":
           return (
-            <div style={baseStyle} className="flex flex-col gap-2 justify-center items-center mt-2">
-              <img
-                src={component.src || "/footer-line.png"}
-                alt={component.alt || "Divider Image"}/>
-                <p style={{
-                   color : component.color || "#646464",
-                   fontSize : component.fontSize || "15px",
-                   fontWeight : "bold"
-                }}>VISIT <span className="text-[#F15625]"><a href={component.href}>ELZONRIS.COM/HCP</a></span> FOR MORE INFORMATION.</p>
-              <img
-                src={component.src || "/footer-line.png"}
-                alt={component.alt || "Divider Image"}/>
+            <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start" }}>
+                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>References:&nbsp;</span>
+                <RichTextEditor
+                  isSelected={isSelected}
+                  value={component.references || ""}
+                  onChange={(val) => onUpdate({ references: val })}
+                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                />
+              </div>
             </div>
+          );
 
-          ) ;
+        case "elzonris-abbreviations":
+          return (
+            <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start" }}>
+                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>Abbreviations:&nbsp;</span>
+                <RichTextEditor
+                  isSelected={isSelected}
+                  value={component.abbreviations || ""}
+                  onChange={(val) => onUpdate({ abbreviations: val })}
+                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                />
+              </div>
+            </div>
+          );
+
+        case "elzonris-ref-abbr":
+          return (
+            <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "6px" }}>
+                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>References:&nbsp;</span>
+                <RichTextEditor
+                  isSelected={isSelected}
+                  value={component.references || ""}
+                  onChange={(val) => onUpdate({ references: val })}
+                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start" }}>
+                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>Abbreviations:&nbsp;</span>
+                <RichTextEditor
+                  isSelected={isSelected}
+                  value={component.abbreviations || ""}
+                  onChange={(val) => onUpdate({ abbreviations: val })}
+                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                />
+              </div>
+            </div>
+          );
+
+        case "elzonris-yellow-cta":
+        return (
+          <div style={{ padding: component.padding || "0", textAlign: "center", colorScheme: "light" }}>
+            <a
+              href={component.href || "#"}
+              style={{
+                display: "inline-flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: component.backgroundColor || "#f55a1f",
+                padding: component.height ? "0 30px" : "18px 30px",
+                height: component.height || undefined,
+                textDecoration: "none",
+                cursor: "pointer",
+                width: component.width || "300px",
+                boxSizing: "border-box",
+                colorScheme: "light",
+              }}
+              onClick={(e) => {
+                if (!previewMode) {
+                  e.preventDefault();
+                  if (!isLockedMode) onSelect();
+                }
+              }}
+            >
+              <span style={{
+                color: component.color || "#ffffff",
+                fontSize: component.fontSize || "28px",
+                fontWeight: component.fontWeight || "bold",
+                lineHeight: "1.2",
+                fontFamily: "Arial, Helvetica, sans-serif",
+              }}>
+                {component.text || "Know more about durable responses with ELZONRIS"}
+              </span>
+              <span style={{ color: component.color || "#ffffff", fontSize: "34px", marginLeft: "20px", flexShrink: 0 }}>&#8250;</span>
+            </a>
+          </div>
+        );
           case "image-with-link" :
              return (
           <div

@@ -203,7 +203,7 @@ function generateComponentHTML(component: EmailComponent): string {
               <td style="padding: ${component.padding || "0 20px 20px 20px"}; text-align: ${
                 component.textAlign || "center"
               };${innerStyle ? innerStyle : ""}">
-                <table ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0"  ${innerStyle ? `style="${innerStyle}"` : ""}>
+                <table ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0" align="center" ${innerStyle ? `style="${innerStyle}"` : ""}>
                   <tr>
                     <td ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="
                       background-color: ${
@@ -211,6 +211,8 @@ function generateComponentHTML(component: EmailComponent): string {
                       };
                       border-radius: ${component.borderRadius || "4px"};
                       padding: ${component.buttonPadding || "12px 24px"};
+                      ${component.width ? `width: ${component.width};` : ""}
+                      ${component.height ? `height: ${component.height};` : ""}
                       ${innerStyle ? innerStyle : ""}
                     ">
                       <a href="${component.href || "#"}" style="${linkStyle}">
@@ -440,94 +442,83 @@ function generateComponentHTML(component: EmailComponent): string {
   `;
     }
 
-    case "footer-link-2":
-      const linkHtml = component.links
-        ?.map((link, index) => {
-          return `
-          <td class="footer-link-col" align=${index == 0 ? "left" : index === 3 ? "right" : "center"} valign="top" width=${index == 0 ? "30%" : "25%"} style="padding: 5px 0 5px 0;">
-            <a href="${link.href}" target="_blank"
-              style="color: ${component.color}; text-decoration: underline; font-family: Arial, sans-serif; font-size: 12px;">
-              ${link.text}
-            </a>
-          </td>
-         `.trim();
-        })
-        .join("");
-
+    case "elzonris-pi": {
       return `
-              <table 
-              role="presentation"
-              width="100%" 
-              cellpadding="0" 
-              cellspacing="0" 
-              border="0" 
-              bgcolor="${component.backgroundColor || "#ffffff"}"
-              align="center"
-              style="max-width:600px;"
-              >
+      <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+        <tbody>
+          <tr>
+            <td width="30" height="1" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;"></td>
+            <td>
+              <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                 <tbody>
-                      <tr>
-                        <td align="center" style="padding: 10px 20px;">
-                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                            <tbody>
-                              <tr >
-                                <td style="padding: 5px 0;" >
-                                  <table width="100%" border="0" cellspacing="0" cellpadding="0" class="mbl-center">
-                                    <tbody>
-                                      <tr >
-                                        <td class="footer-link-col"  valign="top" width="50%"
-                                          style="padding: 5px 0 5px 0;" >
-                                          <table role="presentation"  cellpadding="0" cellspacing="0" border="0"
-                                            width="200" align="center" class="mbl-pR0 " style="padding:0 60px 0 0px">
-                                            <tr>
-                                              <td align="center" >
-                                                <a href="${component.logoA.href}" target="_blank">
-                                                  <img src="${component.logoA.imgSrc}" width="200"
-                                                    style="display: block; border: 0;" alt="${component.logoA.altTex}" />
-                                                </a>
-                                              </td>
-                                            </tr>
-                                          </table>
-                                        </td>
-                                        <td class="footer-link-col" align="right" valign="top" width="50%"
-                                          style="padding: 5px 0 5px 0;">
-                                          <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-                                             width="150" align="center" class="mbl-pL0 mbl-pT10" style="padding:0 0 0 107px">
-                                            <tr>
-                                              <td align="center" >
-                                                <a href="${component.logoB.href}" target="_blank">
-                                                  <img src="${component.logoB.imgSrc}" width="150"
-                                                    style="display: block; border: 0;" alt="${component.logoB.altTex}" />
-                                                </a>
-                                              </td>
-                                            </tr>
-                                          </table>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                              <tr align="center">
-                                <td valign="middle" style="padding:0 0 0 0;">
-                                  <table width="100%" valign="middle" border="0" cellspacing="0" cellpadding="0">
-                                    <tbody>
-                                      <tr>
-                                        ${linkHtml}
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                  <tr>
+                    <td align="left" valign="middle" style="color:${component.color || '#000000'};font-family:Arial,sans-serif;font-weight:bold;font-size:${component.fontSize || '12px'};line-height:14px;">
+                      Please see Full <a href="${component.piHref || 'http://pi.elzonris.com/'}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${component.linkColor || '#009877'};line-height:16px;">Prescribing Information</a>, including Boxed WARNING.
+                    </td>
+                  </tr>
+                  <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                  <tr>
+                    <td align="left" valign="top" style="color:${component.color || '#000000'};font-weight:bold;font-family:Arial,sans-serif;font-size:${component.fontSize || '12px'};line-height:14px;">
+                      Please click <a href="${component.isiHref || '#'}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${component.linkColor || '#009877'};">here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
+                    </td>
+                  </tr>
+                  <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                </tbody>
+              </table>
+            </td>
+            <td width="30" height="1" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;"></td>
+          </tr>
+        </tbody>
+      </table>
       `.trim();
+    }
 
-    case "isi": {
+    case "elzonris-brand-logo": {
+      const display = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle } = getDisplayAttributes(display);
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">
+        <tbody>
+          <tr>
+            <td style="padding: ${component.padding || "10px 20px"};">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td class="brand-logo-col" width="50%" align="left" valign="middle" style="width:50%; padding: 5px 0;">
+                    <a href="${component.logoA?.href || "#"}" target="_blank">
+                      <img src="${component.logoA?.imgSrc || ""}" width="200" style="display:block; border:0; max-width:100%;" alt="${component.logoA?.altTex || ""}" />
+                    </a>
+                  </td>
+                  <td class="brand-logo-col" width="50%" align="right" valign="middle" style="width:50%; padding: 5px 0;">
+                    <a href="${component.logoB?.href || "#"}" target="_blank">
+                      <img src="${component.logoB?.imgSrc || ""}" width="150" style="display:block; border:0; max-width:100%; margin-left:auto;" alt="${component.logoB?.altTex || ""}" />
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      `;
+    }
+
+    case "footer-link-3": {
+      const fl3LinksHtml = (component.links || []).map((link, index) => `
+        <td class="footer-link-col" align="${index === 0 ? 'left' : index === (component.links!.length - 1) ? 'right' : 'center'}" valign="top" style="padding: 5px 0;">
+          <a href="${link.href}" target="_blank" style="color: ${component.color || '#009877'}; text-decoration: underline; font-family: Arial, sans-serif; font-size: ${component.fontSize || '12px'};">${link.text}</a>
+        </td>
+      `.trim()).join("");
+      return `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${component.backgroundColor || '#ffffff'}" align="center">
+        <tbody><tr><td align="center" style="padding: ${component.padding || '5px 20px'};">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tbody><tr>${fl3LinksHtml}</tr></tbody>
+          </table></td></tr></tbody></table>
+      `.trim();
+    }
+
+case "isi": {
       return `
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
@@ -561,7 +552,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
                                                          <span class="f_bold"
@@ -588,7 +579,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
                                                          <span class="f_bold" style="font-weight: 700">Embryo-Fetal
@@ -629,7 +620,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; padding:0 0 0 5px;">
                                                          <span class="f_bold" style="font-weight: 700">Serious adverse
@@ -656,12 +647,12 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                       
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
                                                          <span class="f_bold" style="font-weight: 700">The most common
-                                                            adverse reactions&nbsp;</span>(≥10%), including laboratory
+                                                            adverse reactions&nbsp;</span>(&#8805;10%), including laboratory
                                                          abnormalities, of ORSERDU were musculoskeletal pain (41%),
                                                          nausea (35%), increased cholesterol (30%), increased AST (29%),
                                                          increased triglycerides (27%), fatigue (26%), decreased
@@ -697,7 +688,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                     
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px;">
@@ -733,7 +724,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                       
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
@@ -758,7 +749,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 cellspacing="0" cellpadding="0">
                                                 <tbody>
                                                    <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">•</td>
+                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
                                                      
                                                       <td class="f_14 black f_normal" align="left" valign="top"
                                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px;padding:0 0 0 5px; ">
@@ -1219,6 +1210,7 @@ function generateComponentHTML(component: EmailComponent): string {
       </tbody>
       </table>`;
     }
+   
     case "image-with-link": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -1369,7 +1361,7 @@ function generateComponentHTML(component: EmailComponent): string {
                                                 <tr bgcolor="#0083BF"> 
                                                     <td
                                                         style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
-                                                        © 2026 Ferring<br />
+                                                        &#169; 2026 Ferring<br />
                                                         FERRING and the Ferring Pharmaceuticals logo are trademarks of the
                                                         Ferring.<br />
                                                         For healthcare professionals only.<br/>
@@ -1421,7 +1413,7 @@ function generateComponentHTML(component: EmailComponent): string {
                               </tr>
                               <tr bgcolor="#0083BF" align="center">
                                 <td bgcolor="#0083BF" style="color: #ffffff;font-size: 10px;line-height: 12px;" bgcolor="#0083BF">
-                                    © 2026 Ferring
+                                    &#169; 2026 Ferring
                                 </td>
                               </tr> 
                               <tr bgcolor="#0083BF" align="center">
@@ -1449,6 +1441,137 @@ function generateComponentHTML(component: EmailComponent): string {
         </table>
       `;
     }
+    case "elzonris-isi":
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">
+        <tbody>
+          <tr>
+            <td style="padding: ${component.padding || "0 20px 0 20px"}; font-family: ${component.fontFamily || "Arial, sans-serif"};">
+              <div style="font-family: ${component.fontFamily || "Arial, sans-serif"};">
+                ${component.html || ""}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      `;
+
+    case "elzonris-references": {
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tbody><tr>
+          <td style="padding: ${component.padding || "0 20px 10px 20px"};">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                  <strong>References:&nbsp;</strong>${component.references || ""}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr></tbody>
+      </table>
+      `.trim();
+    }
+
+    case "elzonris-abbreviations": {
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tbody><tr>
+          <td style="padding: ${component.padding || "0 20px 10px 20px"};">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                  <b>Abbreviations:</b> ${component.abbreviations || ""}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr></tbody>
+      </table>
+      `.trim();
+    }
+
+    case "elzonris-ref-abbr": {
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tbody>
+          <tr>
+            <td style="padding: ${component.padding || "0 20px 10px 20px"};">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                ${component.references ? `
+                <tr>
+                  <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                    <strong>References:&nbsp;</strong>${component.references}
+                  </td>
+                </tr>` : ""}
+                ${component.abbreviations ? `
+                <tr>
+                  <td height="6" style="font-size:0; line-height:6px; mso-line-height-rule:exactly;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                    <b>Abbreviations:</b> ${component.abbreviations}
+                  </td>
+                </tr>` : ""}
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      `.trim();
+    }
+
+    case "elzonris-yellow-cta": {
+      const ctaDisplay = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle: ctaInnerStyle } = getDisplayAttributes(ctaDisplay);
+      const ctaWidth = component.width || "300px";
+      const ctaBg = component.backgroundColor || "#f55a1f";
+      const ctaColor = component.color || "#ffffff";
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
+        <tbody>
+          <tr>
+            <td align="center" style="padding: ${component.padding || "0"};">
+              <table role="presentation" width="${ctaWidth.replace("px","")}" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td bgcolor="${ctaBg}" data-ogsc="${ctaBg}" class="elzonris-cta-bg" style="
+                    background-color: ${ctaBg} !important;
+                    ${component.height ? `height: ${component.height};` : "padding: 18px 0;"}
+                    padding-left: 30px;
+                    padding-right: 30px;
+                    width: ${ctaWidth};
+                  ">
+                    <a href="${component.href || "#"}" target="_blank" style="text-decoration: none; display: block; width: ${ctaWidth};">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td data-ogsc="${ctaColor}" class="elzonris-cta-text" style="
+                            color: ${ctaColor} !important;
+                            font-family: Arial, Helvetica, sans-serif;
+                            font-size: ${component.fontSize || "28px"};
+                            font-weight: ${component.fontWeight || "bold"};
+                            line-height: 1.2;
+                          ">${component.text || "Know more about durable responses with ELZONRIS"}</td>
+                          <td width="40" align="right" data-ogsc="${ctaColor}" class="elzonris-cta-text" style="
+                            color: ${ctaColor} !important;
+                            font-family: Arial, Helvetica, sans-serif;
+                            font-size: 34px;
+                            font-weight: bold;
+                            white-space: nowrap;
+                          ">&#8250;</td>
+                        </tr>
+                      </table>
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      `;
+    }
+
     default:
       return "";
   }
@@ -1652,6 +1775,14 @@ export function generateEmailHTML(
          .dm-footer {
             background-color: #F1F1F1 !important;
          }
+
+         /* Elzonris CTA - keep brand colors in dark mode */
+         .elzonris-cta-bg {
+            background-color: #f55a1f !important;
+         }
+         .elzonris-cta-text {
+            color: #ffffff !important;
+         }
     }
 
         @media only screen and (max-width: 480px) {
@@ -1710,6 +1841,17 @@ export function generateEmailHTML(
 
             .mbl-pT10 {
               padding-top : 10px !important;
+            }
+
+            .brand-logo-col {
+              display: block !important;
+              width: 100% !important;
+              text-align: center !important;
+              padding: 8px 0 !important;
+            }
+
+            .brand-logo-col img {
+              margin: 0 auto !important;
             }
 
         }

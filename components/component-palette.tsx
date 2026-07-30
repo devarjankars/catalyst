@@ -146,7 +146,7 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-2">
-          <AccordionTrigger>Custom components</AccordionTrigger>
+          <AccordionTrigger>Orserdu Components</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
             <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
               {componentTypes
@@ -155,6 +155,30 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
                   <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
                 ))}
 
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-ferring">
+          <AccordionTrigger>Ferring Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+              {componentTypes
+                .filter((type) => type.category === "ferring")
+                .map((componentType) => (
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-elzonris">
+          <AccordionTrigger>Elzonris Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+              {componentTypes
+                .filter((type) => type.category === "elzonris")
+                .map((componentType) => (
+                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                ))}
             </div>
           </AccordionContent>
         </AccordionItem>

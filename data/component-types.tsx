@@ -13,6 +13,7 @@ import {
   Wallpaper,
   SeparatorHorizontal,
   Code,
+  AlignCenter,
 } from "lucide-react";
 
 export const componentTypes = [
@@ -113,22 +114,7 @@ export const componentTypes = [
     fontSize: "14px",
     color: "#007bff",
   },
-  {
-    type: "footer-links(3)",
-    label: "Footer Links(3)",
-    category : "custom",
-    icon: PanelBottom,
-    defaultProps: {
-      links: [
-        { text: "Privacy and Term of Use ", href: "#" },
-        { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
-      ],
-    },
-    textAlign: "left",
-    fontSize: "14px",
-    color: "#007bff",
-  },
+
   {
     type: "isi",
     label: "ISI Block",
@@ -226,7 +212,7 @@ export const componentTypes = [
 {
   type: "header-image",
   label: "Header Image",
-  category : "custom",
+  category : "basic",
   icon : Wallpaper,
   defaultProps: {
     src: "/header-placeholder.png",
@@ -239,7 +225,7 @@ export const componentTypes = [
 {
   type: "chevron-divider",
   label: "Chevron Divider",
-  category : "custom",
+  category : "elzonris",
   icon : Wallpaper,
   defaultProps: {
     src: "/chevron.png",
@@ -309,63 +295,377 @@ export const componentTypes = [
   
 },
 
-{
-    type: "footer-link-2",
-    label: "Elzonris Footer Links",
-    category : "custom",
+
+  {
+    type: "elzonris-pi",
+    label: "Elzonris PI",
+    category: "elzonris",
+    icon: NotepadText,
+    defaultProps: {
+      piHref: "http://pi.elzonris.com/",
+      isiHref: "https://www.elzonris.com/hcp/#isi",
+      fontSize: "12px",
+      color: "#000000",
+      linkColor: "#009877",
+
+    },
+  },
+  {
+    type: "elzonris-brand-logo",
+    label: "Brand Logo",
+    category: "elzonris",
+    icon: ImageIcon,
+    defaultProps: {
+      logoA: {
+        altText: "Menarini Group Logo and Stemline Logo",
+        href: "#",
+        imgSrc: "/footer-logo-a.png",
+      },
+      logoB: {
+        altText: "ELZONRIS Logo",
+        href: "#",
+        imgSrc: "/footer-logo-b.png",
+      },
+    },
+  },
+  {
+    type: "footer-link-3",
+    label: "Elzonris Footer Links (3)",
+    category: "elzonris",
     icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "Privacy and Term of Use", href: "#" },
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
-        { text: "Unsubscribe", href: "#" },
       ],
-      logoA : {
-        altText : "Menarini Group Logo and Stemline Logo",
-        href : '#',
-        imgSrc : "/footer-logo-a.png"
-      },
-      logoB :{
-        altText : "ELZONRIS Logo",
-        href : '#',
-        imgSrc : "/footer-logo-b.png"
-      },
+      textAlign: "left",
+      fontSize: "12px",
+      color: "#009877",
     },
-    textAlign: "left",
-    fontSize: "14px",
-    color: "#007bff",
   },
   {
     type: "footer-with-Preferences",
     label: "Footer with Email Preference",
-    category : "custom",
-    icon : PanelBottom,
+    category: "custom",
+    icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Terms of Use ", href: "#" },
+        { text: "Privacy and Term of Use", href: "#" },
         { text: "CCPA Policy", href: "#" },
-        { text: "Cookie Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },
         { text: "[Email Preferences]", href: "#link" },
       ],
+      fontSize: "12px",
+      color: "#009877",
     },
-    textAlign: "left",
-    fontSize: "12px",
-    lineheight: "12px",
-    color: "#0563C1",
   },
-
-  {
+   {
     type: "elzonris-divider",
     label: "Elzonris Divider",
-    category : "custom",
+    category : "elzonris",
     icon : SeparatorHorizontal,
     
     defaultProps: {
       src: "/footer-line.png",
       alt: "footer-line",
       href: "https://elzonris.com/HCP/",
+    },
+  },
+  {
+    type: "elzonris-isi",
+    label: "Elzonris ISI",
+    category: "elzonris",
+    icon: NotepadText,
+    defaultProps: {
+      html: ` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        INDICATION</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        ELZONRIS is a CD123-directed cytotoxin indicated for the treatment of blastic
+                                        plasmacytoid dendritic cell neoplasm (BPDCN) in adults and in pediatric patients 2 years
+                                        and older</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        IMPORTANT SAFETY INFORMATION</td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#000000;font-family:Arial,sans-serif;font-weight:400;font-size:14px;line-height:18px;">
+                        <strong>Boxed WARNING: CAPILLARY LEAK SYNDROME</strong></td>
+                </tr>
+                <tr>
+                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#000000;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#000000;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        <strong>Capillary Leak Syndrome (CLS), which may be life-threatening or fatal, can occur
+                                            in patients receiving ELZONRIS. Monitor for signs and symptoms of CLS and take
+                                            actions as recommended.</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        WARNINGS AND PRECAUTIONS</td>
+                </tr>
+                <tr>
+                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        Capillary Leak Syndrome</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        Capillary leak syndrome (CLS), including life-threatening and fatal cases, has been
+                                        reported among patients treated with ELZONRIS. In patients receiving ELZONRIS in
+                                        clinical trials, the overall incidence of CLS was 53% (65/122), including Grade 1 or 2
+                                        in 43% (52/122) of patients, Grade 3 in 7% (8/122) of patients, Grade 4 in 1% (1/122) of
+                                        patients, and four fatalities (3%). The median time to onset was 4 days (range-1 to 46
+                                        days), and all but 5 patients experienced an event in Cycle 1.</td>
+                                </tr>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        Before initiating therapy with ELZONRIS, ensure that the patient has adequate cardiac
+                                        function and serum albumin is greater than or equal to 3.2 g/dL. During treatment with
+                                        ELZONRIS, monitor serum albumin levels prior to the initiation of each dose of ELZONRIS
+                                        and as indicated clinically thereafter, and assess patients for other signs or symptoms
+                                        of CLS, including weight gain, new onset or worsening edema, including pulmonary edema,
+                                        hypotension or hemodynamic instability.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        Hypersensitivity Reactions</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        ELZONRIS can cause severe hypersensitivity reactions. In patients receiving ELZONRIS in
+                                        clinical trials, hypersensitivity reactions were reported in 43% (53/122) of patients
+                                        treated with ELZONRIS and were Grade ≥ 3 in 7% (9/122). Manifestations of
+                                        hypersensitivity reported in ≥ 5% of patients include rash, pruritus, and stomatitis.
+                                        Monitor patients for hypersensitivity reactions during treatment with ELZONRIS.
+                                        Interrupt ELZONRIS infusion and provide supportive care as needed if a hypersensitivity
+                                        reaction should occur.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        Hepatotoxicity</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        Treatment with ELZONRIS was associated with elevations in liver enzymes. In patients
+                                        receiving ELZONRIS in clinical trials, elevations in ALT occurred in 79% (96/122) and
+                                        elevations in AST occurred in 76% (93/122). Grade 3 ALT elevations were reported in 26%
+                                        (32/122) of patients. Grade 3 AST elevations were reported in 30% (36/122) and Grade 4
+                                        AST elevations were reported in 3% (4/122) of patients. Elevated liver enzymes occurred
+                                        in the majority of patients in Cycle 1 and were reversible following dose interruption.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" valign="top" width="2%"
+                                        style="font-size:12px;line-height:16px;color:#4d4d4f;">•</td>
+                                    <td width="5" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;
+                                    </td>
+                                    <td align="left" valign="middle"
+                                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                                        Monitor alanine aminotransferase (ALT) and aspartate aminotransferase (AST) prior to
+                                        each infusion with ELZONRIS. Withhold ELZONRIS temporarily if the transaminases rise to
+                                        greater than 5 times the upper limit of normal and resume treatment upon normalization
+                                        or when resolved.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        ADVERSE REACTIONS:</td>
+                </tr>
+                <tr>
+                    <td height="1" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">Most
+                        common adverse reactions (incidence ≥ 30%) are capillary leak syndrome, nausea, fatigue, pyrexia,
+                        peripheral edema, and weight increase. Most common laboratory abnormalities (incidence ≥ 50%) are
+                        decreases in albumin, platelets, hemoglobin, calcium, and sodium, and increases in glucose, ALT and AST.
+                    </td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
+                        <strong>Please see Full <a
+                                href="https://rxmenarinistemline.com/ELZONRIS_US_Full_Prescribing_Information.pdf"
+                                target="_blank" style="text-decoration:underline;color:#009877;line-height:18px;">Prescribing
+                                Information</a>, including Boxed WARNING.</strong></td>
+                </tr>
+                <tr>
+                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left" valign="middle"
+                        style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">To
+                        report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. <br>at <span
+                            style="color:#646464">1-877-332-7961</span> or contact the FDA at <span
+                            style="color:#646464">1-800-FDA-1088</span> or <a
+                            href="https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program"
+                            target="_blank"
+                            style="text-decoration:underline;color:#009877;line-height:18px;">www.fda.gov/medwatch</a>.</td>
+                </tr>
+                <tr>
+                    <td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;
+                    </td>
+                </tr>
+            </tbody>
+        </table>`,
+    },
+  },
+  {
+    type: "elzonris-yellow-cta",
+    label: "Elzonris Yellow CTA",
+    category: "elzonris",
+    icon: RectangleHorizontal,
+    defaultProps: {
+      href: "#",
+      text: "Know more about durable responses with ELZONRIS",
+      backgroundColor: "#f55a1f",
+      color: "#ffffff",
+      fontSize: "28px",
+      fontWeight: "bold",
+      width: "300px",
+    
     },
   },
    {
@@ -385,7 +685,7 @@ export const componentTypes = [
   {
     type: "ferring-footer",
     label: "Ferring Footer",
-    category : "custom",
+    category : "ferring",
     icon : PanelBottom,
     defaultProps: {
       links: [
@@ -416,6 +716,26 @@ export const componentTypes = [
     defaultProps: {
       html: "<p>Enter your code in editor</p>",
     },
-  }
+  },
 
+  {
+    type: "elzonris-references",
+    label: "Elzonris References",
+    category: "elzonris",
+    icon: NotepadText,
+    defaultProps: {
+      references: "1. Pemmaraju N, et al. <i>N Engl J Med.</i> 2019;380(17):1628-1637.",
+      padding: "0 20px 10px 20px",
+    },
+  },
+  {
+    type: "elzonris-abbreviations",
+    label: "Elzonris Abbreviations",
+    category: "elzonris",
+    icon: NotepadText,
+    defaultProps: {
+      abbreviations: "BPDCN: blastic plasmacytoid dendritic cell neoplasm; CD123: cluster of differentiation 123.",
+      padding: "0 20px 10px 20px",
+    },
+  },
 ];

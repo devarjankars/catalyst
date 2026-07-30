@@ -45,6 +45,7 @@ export async function exportToZip(
 
       for (const match of srcMatches) {
         const srcUrl = match[1]
+        if (srcUrl.startsWith("data:")) continue
         try {
           if (!downloadedImages.has(srcUrl)) {
             const imageBlob = await fetchImageAsBlob(srcUrl)
@@ -80,6 +81,7 @@ export async function exportToZip(
 
       for (const match of srcMatches) {
         const srcUrl = match[1]
+        if (srcUrl.startsWith("data:")) continue
         try {
           if (!downloadedImages.has(srcUrl)) {
             const imageBlob = await fetchImageAsBlob(srcUrl)

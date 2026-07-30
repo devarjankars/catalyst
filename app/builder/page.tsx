@@ -13,7 +13,8 @@ import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw, Lock } from "lucide-react";
+import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import EmailPreviewModal from "@/components/email-previw-dalog";
@@ -74,11 +75,11 @@ export default function EmailBuilder() {
 
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
   const [unsavedDialog, setUnsavedDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
-    null
-  );
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [awaitingModeSelection, setAwaitingModeSelection] = useState(false);
+  const [vsbPromptOpen, setVsbPromptOpen] = useState(false);
+  const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
@@ -398,6 +399,7 @@ function replaceImagesInComponents(components: any[]): any[] {
         setCurrentTemplate(savedTemplate);
         setOriginalTemplate(savedTemplate);
         markComponentsSaved();
+        setSavedTemplateId(savedTemplate.id);
 
         // Update URL to reflect saved template
         const newUrl = `/builder?template=${savedTemplate.id}&edit=true`;
@@ -411,6 +413,9 @@ function replaceImagesInComponents(components: any[]): any[] {
         clearAll();
         router.push(pendingNavigation);
         setPendingNavigation(null);
+      } else {
+        // Show VSB creation prompt
+        setVsbPromptOpen(true);
       }
     } catch (error) {
       console.error("Failed to save template:", error);
@@ -503,8 +508,8 @@ if (activeSelectedId) {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="h-screen flex flex-col bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        {/* Header - sticky */}
+        <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -539,6 +544,17 @@ if (activeSelectedId) {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              onClick={() => {
+                const id = currentTemplate?.id || savedTemplateId;
+                if (id) router.push(`/vsb/${id}`);
+              }}
+            >
+              <LayoutTemplate className="w-4 h-4" />
+              Create VSB
+            </Button>
+
             {canSaveComponentChanges && (
               <Button
                 variant="outline"
@@ -584,14 +600,11 @@ if (activeSelectedId) {
 
             <Button
               variant={previewMode ? "default" : "outline"}
-              // onClick={() => setPreviewMode(!previewMode)}
               onClick={() => setOpenPreview(true)}
               className="flex items-center gap-2"
             >
-             
-                <Eye className="w-4 h-4" />
-             
-               Preview
+              <Eye className="w-4 h-4" />
+              Preview
             </Button>
 
             <ExportPanel components={components} canvasRef={canvasRef} />
@@ -741,6 +754,34 @@ if (activeSelectedId) {
         onOpenChange={setModeDialogOpen}
         onSelectMode={handleModeSelect}
       />
+
+      {/* VSB Creation Prompt */}
+      <Dialog open={vsbPromptOpen} onOpenChange={setVsbPromptOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Email Saved!</DialogTitle>
+            <DialogDescription>
+              Your email template has been saved successfully. Would you like to create a Visual Story Board (VSB) for this template?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-between">
+            <Button variant="outline" onClick={() => setVsbPromptOpen(false)}>
+              Stay in Builder
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              onClick={() => {
+                setVsbPromptOpen(false);
+                const id = savedTemplateId || currentTemplate?.id;
+                if (id) router.push(`/vsb/${id}`);
+              }}
+            >
+              <LayoutTemplate className="w-4 h-4" />
+              Create VSB
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />

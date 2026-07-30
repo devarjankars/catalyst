@@ -1263,6 +1263,120 @@ export function PropertiesPanel({
             </div>
             </div>);
             
+      case "elzonris-pi":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Font Size</Label>
+              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+            </div>
+            <div>
+              <Label>Text Color</Label>
+              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Link Color</Label>
+              <ColorInput value={component.linkColor || "#009877"} onChange={(v) => onUpdateComponent({ linkColor: v })} />
+            </div>
+            <div className="border rounded-md p-3 space-y-2">
+              <h4 className="font-semibold text-sm">Prescribing Information Link</h4>
+              <Input value={component.piHref || ""} onChange={(e) => onUpdateComponent({ piHref: e.target.value })} placeholder="http://pi.elzonris.com/" />
+            </div>
+            <div className="border rounded-md p-3 space-y-2">
+              <h4 className="font-semibold text-sm">ISI Link (here)</h4>
+              <Input value={component.isiHref || ""} onChange={(e) => onUpdateComponent({ isiHref: e.target.value })} placeholder="https://www.elzonris.com/hcp/#isi" />
+            </div>
+          </div>
+        );
+
+      case "elzonris-brand-logo":
+        return (
+          <div className="space-y-4">
+            <div className="border rounded-md p-3 space-y-3">
+              <h4 className="font-semibold text-sm">Stemline Logo (Left)</h4>
+              <ImageUpload
+                currentImage={component.logoA?.imgSrc}
+                onImageUpload={(url) => onUpdateComponent({ logoA: { ...component.logoA, imgSrc: url } })}
+              />
+              <div>
+                <Label>Alt Text</Label>
+                <Input
+                  value={component.logoA?.altTex || ""}
+                  onChange={(e) => onUpdateComponent({ logoA: { ...component.logoA, altTex: e.target.value } })}
+                  placeholder="Alt text"
+                />
+              </div>
+              <div>
+                <Label>Link URL</Label>
+                <Input
+                  value={component.logoA?.href || ""}
+                  onChange={(e) => onUpdateComponent({ logoA: { ...component.logoA, href: e.target.value } })}
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+            <div className="border rounded-md p-3 space-y-3">
+              <h4 className="font-semibold text-sm">Elzonris Logo (Right)</h4>
+              <ImageUpload
+                currentImage={component.logoB?.imgSrc}
+                onImageUpload={(url) => onUpdateComponent({ logoB: { ...component.logoB, imgSrc: url } })}
+              />
+              <div>
+                <Label>Alt Text</Label>
+                <Input
+                  value={component.logoB?.altTex || ""}
+                  onChange={(e) => onUpdateComponent({ logoB: { ...component.logoB, altTex: e.target.value } })}
+                  placeholder="Alt text"
+                />
+              </div>
+              <div>
+                <Label>Link URL</Label>
+                <Input
+                  value={component.logoB?.href || ""}
+                  onChange={(e) => onUpdateComponent({ logoB: { ...component.logoB, href: e.target.value } })}
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case "footer-link-3":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Link Color</Label>
+              <ColorInput value={component.color || "#009877"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Font Size</Label>
+              <Input
+                value={component.fontSize || "12px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="12px"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-semibold">Links</Label>
+              {component.links?.map((link, index) => (
+                <div key={index} className="border rounded-md p-2 space-y-2">
+                  <Label className="text-xs text-gray-500">Link {index + 1}</Label>
+                  <Input
+                    value={link.text}
+                    onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l) })}
+                    placeholder="Link text"
+                  />
+                  <Input
+                    value={link.href}
+                    onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, href: e.target.value } : l) })}
+                    placeholder="Link URL"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
           case "footer-with-Preferences" :
                  return (
           <div className="space-y-4">
@@ -1338,7 +1452,8 @@ export function PropertiesPanel({
           return (
             <div className="space-y-4">
               <div>
-                <Label >Line image</Label>
+                <Label>Divider Line Image</Label>
+                <p className="text-xs text-gray-500 mb-1">Upload the footer-line.png image. The URL will be used in both the canvas preview and the exported HTML.</p>
                 <ImageUpload
                   currentImage={component.src}
                   onImageUpload={(imageUrl) => onUpdateComponent({ src: imageUrl })}
@@ -1502,6 +1617,89 @@ export function PropertiesPanel({
                 <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Add or Edit HTML</Button>
               </div>
             )
+          case "elzonris-isi":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Font Family</Label>
+                  <Select
+                    value={component.fontFamily || "Arial, sans-serif"}
+                    onValueChange={(value) => onUpdateComponent({ fontFamily: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select font" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Arial, sans-serif">Arial</SelectItem>
+                      <SelectItem value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</SelectItem>
+                      <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                      <SelectItem value="'Times New Roman', Times, serif">Times New Roman</SelectItem>
+                      <SelectItem value="'Trebuchet MS', sans-serif">Trebuchet MS</SelectItem>
+                      <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
+                      <SelectItem value="'Courier New', Courier, monospace">Courier New</SelectItem>
+                      <SelectItem value="'Lato', sans-serif">Lato</SelectItem>
+                      <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-center">
+                  <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Edit Elzonris ISI</Button>
+                </div>
+              </div>
+            )
+          case "elzonris-yellow-cta":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Banner Text</Label>
+                  <Input
+                    value={component.text || ""}
+                    onChange={(e) => onUpdateComponent({ text: e.target.value })}
+                    placeholder="Know more about durable responses with ELZONRIS"
+                  />
+                </div>
+                <div>
+                  <Label>Link URL</Label>
+                  <Input
+                    value={component.href || ""}
+                    onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <div>
+                  <Label>Height</Label>
+                  <Input
+                    value={component.height || ""}
+                    onChange={(e) => onUpdateComponent({ height: e.target.value })}
+                    placeholder="e.g. 80px"
+                  />
+                </div>
+                <div>
+                  <Label>Width</Label>
+                  <Input
+                    value={component.width || "300px"}
+                    onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                    placeholder="300px or 100%"
+                  />
+                </div>
+                <div>
+                  <Label>Background Color</Label>
+                  <ColorInput value={component.backgroundColor || "#f55a1f"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+                </div>
+                <div>
+                  <Label>Text Color</Label>
+                  <ColorInput value={component.color || "#ffffff"} onChange={(v) => onUpdateComponent({ color: v })} />
+                </div>
+                <div>
+                  <Label>Font Size</Label>
+                  <Input
+                    value={component.fontSize || "28px"}
+                    onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                    placeholder="28px"
+                  />
+                </div>
+              </div>
+            )
       default:
         return <div>No properties available</div>;
     }
@@ -1513,8 +1711,8 @@ export function PropertiesPanel({
         <h3 className="font-semibold text-gray-900">
           {isColumn
             ? "Column"
-            : component.type.charAt(0).toUpperCase() +
-              component.type.slice(1)}{" "}
+            : (component.type?.charAt(0).toUpperCase() ?? "") +
+              component.type?.slice(1)}{" "}
           Properties
         </h3>
         

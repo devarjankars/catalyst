@@ -1,8 +1,8 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-links(3)" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "footer-with-Preferences" | "elzonris-divider" | "image-with-link" | "ferring-footer" | "raw-html"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "elzonris-yellow-cta" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations"
 
-  category: "basic" | "custom" | "user-created"
+  category: "basic" | "custom" | "ferring" | "user-created"
 
   // Custom component properties
   isCustom?: boolean
@@ -40,6 +40,7 @@ export interface EmailComponent {
   textAlign?: "left" | "center" | "right"
   fontWeight?: "normal" | "bold" | "lighter"
   lineHeight?: string
+  fontFamily?: string
 
   // Image properties
   src?: string
@@ -56,6 +57,11 @@ export interface EmailComponent {
   //cta-button properties
   imageSrc?: string
   imageAlt?: string
+
+  //elzonris-pi properties
+  piHref?: string
+  isiHref?: string
+  linkColor?: string
 
   //footer-links properties
   links?: { text: string; href: string }[]
@@ -100,5 +106,9 @@ export interface EmailComponent {
     rights?: string
     jobcode?: string
   },
+
+  // elzonris-ref-abbr properties
+  references?: string
+  abbreviations?: string
 
 }
