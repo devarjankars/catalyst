@@ -826,13 +826,17 @@ export function EmailComponentRenderer({
             <a
               href={component.href || "#"}
               style={{
-                display: "inline-block",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 backgroundColor: component.backgroundColor || "#f55a1f",
                 textDecoration: "none",
                 cursor: "pointer",
                 width: component.width || "300px",
                 boxSizing: "border-box",
                 colorScheme: "light",
+                padding: `18px 30px`,
+                minHeight: component.height || "80px",
               }}
               onClick={(e) => {
                 if (!previewMode) {
@@ -841,34 +845,26 @@ export function EmailComponentRenderer({
                 }
               }}
             >
-              <table style={{ width: "100%", borderCollapse: "collapse", height: component.height || "80px" }} cellPadding={0} cellSpacing={0}>
-                <tbody>
-                  <tr style={{ height: component.height || "80px" }}>
-                    <td style={{
-                      color: component.color || "#ffffff",
-                      fontSize: component.fontSize || "28px",
-                      fontWeight: component.fontWeight || "bold",
-                      lineHeight: "1.2",
-                      fontFamily: "Arial, Helvetica, sans-serif",
-                      verticalAlign: "middle",
-                      padding: "18px 0 18px 30px",
-                    }}>
-                      {component.text || "Know more about durable responses with ELZONRIS"}
-                    </td>
-                    <td style={{
-                      color: component.color || "#ffffff",
-                      fontSize: "34px",
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      verticalAlign: "middle",
-                      padding: "18px 30px 18px 10px",
-                      width: "30px",
-                      textAlign: "right",
-                      lineHeight: "1",
-                    }}>&#8250;</td>
-                  </tr>
-                </tbody>
-              </table>
+              <span style={{
+                color: component.color || "#ffffff",
+                fontSize: component.fontSize || "28px",
+                fontWeight: component.fontWeight || "bold",
+                lineHeight: "1.2",
+                fontFamily: "Arial, Helvetica, sans-serif",
+                flex: "1",
+              }}>
+                {component.text || "Know more about durable responses with ELZONRIS"}
+              </span>
+              <span style={{
+                color: component.color || "#ffffff",
+                fontSize: "34px",
+                fontWeight: "bold",
+                lineHeight: "1",
+                marginLeft: "10px",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+              }}>&#8250;</span>
             </a>
           </div>
         );
