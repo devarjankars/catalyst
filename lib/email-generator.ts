@@ -1529,7 +1529,6 @@ case "isi": {
       const ctaWidthNum = parseInt(ctaWidth) || 300;
       const ctaBg = component.backgroundColor || "#f55a1f";
       const ctaColor = component.color || "#ffffff";
-      const ctaPaddingV = component.height ? "0" : "18px";
       return `
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
   ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
@@ -1551,21 +1550,21 @@ case "isi": {
         style="width:${ctaWidth}; border-collapse:collapse;">
         <tr>
           <td bgcolor="${ctaBg}" class="elzonris-cta-bg"
-            style="background-color:${ctaBg} !important; padding:${ctaPaddingV} 30px; ${component.height ? `height:${component.height};` : ""}">
+            style="background-color:${ctaBg} !important; padding:0 30px; height:${component.height || "80px"};">
             <a href="${component.href || "#"}" target="_blank"
               style="text-decoration:none; display:block; width:100%;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="height:${component.height || "80px"};">
                 <tr>
                   <td class="elzonris-cta-text"
                     style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
                            font-size:${component.fontSize || "28px"}; font-weight:${component.fontWeight || "bold"};
-                           line-height:1.3; vertical-align:middle;">
+                           line-height:1; vertical-align:middle; padding:0;">
                     ${component.text || "Know more about durable responses with ELZONRIS"}
                   </td>
                   <td width="30" align="right" class="elzonris-cta-text"
                     style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
                            font-size:34px; font-weight:bold; white-space:nowrap; vertical-align:middle;
-                           padding-left:10px;">
+                           padding:0 0 0 10px; line-height:1;">
                     &#8250;
                   </td>
                 </tr>

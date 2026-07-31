@@ -816,14 +816,14 @@ export function EmailComponentRenderer({
               style={{
                 display: "inline-block",
                 backgroundColor: component.backgroundColor || "#f55a1f",
-                padding: component.height ? `0 30px` : "18px 30px",
-                height: component.height || undefined,
+                padding: "0 30px",
+                height: component.height || "80px",
+                lineHeight: component.height || "80px",
                 textDecoration: "none",
                 cursor: "pointer",
                 width: component.width || "300px",
                 boxSizing: "border-box",
                 colorScheme: "light",
-                verticalAlign: "middle",
               }}
               onClick={(e) => {
                 if (!previewMode) {
@@ -832,16 +832,17 @@ export function EmailComponentRenderer({
                 }
               }}
             >
-              <table style={{ width: "100%", borderCollapse: "collapse" }} cellPadding={0} cellSpacing={0}>
+              <table style={{ width: "100%", height: "100%", borderCollapse: "collapse" }} cellPadding={0} cellSpacing={0}>
                 <tbody>
                   <tr>
                     <td style={{
                       color: component.color || "#ffffff",
                       fontSize: component.fontSize || "28px",
                       fontWeight: component.fontWeight || "bold",
-                      lineHeight: "1.3",
+                      lineHeight: "1",
                       fontFamily: "Arial, Helvetica, sans-serif",
                       verticalAlign: "middle",
+                      padding: "0",
                     }}>
                       {component.text || "Know more about durable responses with ELZONRIS"}
                     </td>
@@ -854,6 +855,8 @@ export function EmailComponentRenderer({
                       paddingLeft: "10px",
                       width: "30px",
                       textAlign: "right",
+                      lineHeight: "1",
+                      padding: "0 0 0 10px",
                     }}>&#8250;</td>
                   </tr>
                 </tbody>
