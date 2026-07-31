@@ -1130,20 +1130,24 @@ case "isi": {
       const footerDisplay = (component.displayType ||
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(footerDisplay);
-      const linksHTML = (component.links || [])
-        .map(
-          (link, index) => `
-      <a target="_blank" href="${link.href || "#links"}" style="color: ${index === component!.links.length - 1 ? "#FF66CC" : component.color || "#0563C1"}; font-size: ${component.fontSize || "12px"}; font-family: Arial, sans-serif; text-decoration: underline;${innerStyle ? " " + innerStyle : ""}">${(link.text || "Link").trim()}</a>${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${index === 1 || index === 3 ? "<br class='mobile' style='display: none;'/>" : ""}${
-        index < component.links!.length - 1
-          ? index == 1
-            ? `<span class='desktop' style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
-            : index === component.links!.length - 2
-              ? `<span class="desktop" style="color:#FF66CC; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span><span class="mobile" style="color:#FF66CC; font-size:12px; display:none; mso-hide:all;">|&nbsp;</span>`
-              : `<span style="color:#000000; font-size:12px;">&nbsp;&nbsp;|&nbsp;</span>`
-          : ""
-      }`,
-        )
-        .join("");
+      const links = component.links || [];
+      // Desktop: all on one line with | separators
+      // Mobile: break after index 1 (Privacy | CCPA <br> Cookies | Unsubscribe | [Email Preferences])
+      const linksHTML = links.map((link, index) => {
+        const isLast = index === links.length - 1;
+        const isPreferences = isLast; // last link is [Email Preferences] — pink
+        const linkColor = isPreferences ? "#FF66CC" : (component.color || "#0563C1");
+        const separatorColor = index === links.length - 2 ? "#FF66CC" : "#000000";
+
+        const linkTag = `<a target="_blank" href="${link.href || "#"}" style="color:${linkColor}; font-size:${component.fontSize || "12px"}; font-family:Arial,sans-serif; text-decoration:underline;">${(link.text || "Link").trim()}</a>`;
+
+        // After index 1 (CCPA): line break on mobile, pipe on desktop
+        const afterLink = isLast ? "" : index === 1
+          ? `<span class="desktop" style="color:#000000; font-size:12px;">&nbsp;|&nbsp;</span><br class="mobile" style="display:none; mso-hide:all;" />`
+          : `<span style="color:${separatorColor}; font-size:12px;">&nbsp;|&nbsp;</span>`;
+
+        return linkTag + afterLink;
+      }).join("");
 
       return `
     <table
@@ -1154,14 +1158,16 @@ case "isi": {
       border="0"
       bgcolor="${component.backgroundColor || "#ffffff"}"
       ${innerStyle ? `style="${innerStyle}"` : ""}
-      ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
+      ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
     >
       <tbody>
         <tr>
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${component.textAlign || "left"}; background-color: ${component.backgroundColor || "#ffffff"};${innerStyle ? " " + innerStyle : ""}">
+          <td bgcolor="${component.backgroundColor || "#ffffff"}"
+            ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
+            style="padding:${component.padding || "20px"}; text-align:${component.textAlign || "left"}; background-color:${component.backgroundColor || "#ffffff"};">
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
-                <td align="${component.textAlign || "left"}" style="color: #FF66CC; font-size: ${component.fontSize || "12px"}; line-height: ${component.lineHeight || "12px"};">
+                <td align="${component.textAlign || "left"}" style="font-size:${component.fontSize || "12px"}; line-height:1.8;">
                   ${linksHTML}
                 </td>
               </tr>

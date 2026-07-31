@@ -574,30 +574,42 @@ export function EmailComponentRenderer({
           </div>
         );
 
-      case "footer-with-Preferences":
+      case "footer-with-Preferences": {
+        const links = component.links || [];
+        // Line 1: indices 0,1 (Privacy | CCPA)
+        const line1 = links.slice(0, 2);
+        // Line 2: indices 2+ (Cookies | Unsubscribe | [Email Preferences])
+        const line2 = links.slice(2);
+        const renderLink = (link: { text: string; href: string }, index: number, arr: typeof links, globalIndex: number) => {
+          const isLast = globalIndex === links.length - 1;
+          const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
+          const sepColor = globalIndex === links.length - 2 ? "#FF66CC" : "#000000";
+          return (
+            <React.Fragment key={globalIndex}>
+              <a
+                href={link.href || "#"}
+                style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif" }}
+                onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
+              >
+                {link.text}
+              </a>
+              {index < arr.length - 1 && (
+                <span style={{ color: sepColor, fontSize: component.fontSize || "12px" }}>&nbsp;|&nbsp;</span>
+              )}
+            </React.Fragment>
+          );
+        };
         return (
-          <div style={baseStyle} className="flex flex-col gap-2 mt-2">
-            <div className="flex flex-wrap gap-3">
-              {component.links?.map((link, linkIndex) => (
-                <React.Fragment key={linkIndex}>
-                  <a
-                    href={link.href || "#"}
-                    style={{
-                      color: linkIndex === component.links!.length - 1 ? "#FF66CC" : component.color || "#0563C1",
-                      textDecoration: "underline",
-                      fontSize: component.fontSize || "12px",
-                    }}
-                    onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
-                  >
-                    {link.text}
-                  </a>
-                  {linkIndex < component.links!.length - 2 && <span className="text-gray-500 text-[12px]">|</span>}
-                  {linkIndex === component.links!.length - 3 && <span className="text-[#FF66CC] text-[12px]">|</span>}
-                </React.Fragment>
-              ))}
+          <div style={{ ...baseStyle, textAlign: (component.textAlign as any) || "left" }}>
+            <div style={{ lineHeight: "1.8" }}>
+              {line1.map((link, i) => renderLink(link, i, line1, i))}
+            </div>
+            <div style={{ lineHeight: "1.8" }}>
+              {line2.map((link, i) => renderLink(link, i, line2, i + 2))}
             </div>
           </div>
         );
+      }
 
     
       case "isi":
@@ -816,9 +828,6 @@ export function EmailComponentRenderer({
               style={{
                 display: "inline-block",
                 backgroundColor: component.backgroundColor || "#f55a1f",
-                padding: "0 30px",
-                height: component.height || "80px",
-                lineHeight: component.height || "80px",
                 textDecoration: "none",
                 cursor: "pointer",
                 width: component.width || "300px",
@@ -832,17 +841,17 @@ export function EmailComponentRenderer({
                 }
               }}
             >
-              <table style={{ width: "100%", height: "100%", borderCollapse: "collapse" }} cellPadding={0} cellSpacing={0}>
+              <table style={{ width: "100%", borderCollapse: "collapse", height: component.height || "80px" }} cellPadding={0} cellSpacing={0}>
                 <tbody>
-                  <tr>
+                  <tr style={{ height: component.height || "80px" }}>
                     <td style={{
                       color: component.color || "#ffffff",
                       fontSize: component.fontSize || "28px",
                       fontWeight: component.fontWeight || "bold",
-                      lineHeight: "1",
+                      lineHeight: "1.2",
                       fontFamily: "Arial, Helvetica, sans-serif",
                       verticalAlign: "middle",
-                      padding: "0",
+                      padding: "18px 0 18px 30px",
                     }}>
                       {component.text || "Know more about durable responses with ELZONRIS"}
                     </td>
@@ -852,11 +861,10 @@ export function EmailComponentRenderer({
                       fontWeight: "bold",
                       whiteSpace: "nowrap",
                       verticalAlign: "middle",
-                      paddingLeft: "10px",
+                      padding: "18px 30px 18px 10px",
                       width: "30px",
                       textAlign: "right",
                       lineHeight: "1",
-                      padding: "0 0 0 10px",
                     }}>&#8250;</td>
                   </tr>
                 </tbody>
