@@ -86,32 +86,68 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
         ? `${currentTemplate.name}-${viewMode}`
         : `email-preview-${viewMode}`;
 
-      // Build a fresh HTML string — no iframe DOM access needed
-      const htmlString = buildHtml(getActiveComponents(), preheaderText, dark);
+      // Read from the live iframe — it's already fully rendered with all styles
+      const iframeDoc = iframeRef.current?.contentDocument
+        || iframeRef.current?.contentWindow?.document;
+      if (!iframeDoc) throw new Error("Iframe not accessible");
 
-      // Use html2pdf.js (client-side, no server/Playwright needed)
+      // Clone the full iframe document into a fresh off-screen iframe
+      // so html2pdf can render it at the correct width without affecting the UI
+      const printFrame = document.createElement("iframe");
+      printFrame.style.cssText = `position:absolute; left:-9999px; top:0; width:${width}px; border:0; visibility:hidden;`;
+      document.body.appendChild(printFrame);
+
+      const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
+      if (!printDoc) throw new Error("Print frame not accessible");
+
+      // Write the full HTML (including <head> styles) into the print frame
+      const fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
+      printDoc.open();
+      printDoc.write(fullHtml);
+      printDoc.close();
+
+      // Wait for images to load in the print frame
+      await new Promise<void>((resolve) => {
+        const images = Array.from(printDoc.images);
+        if (images.length === 0) { resolve(); return; }
+        let loaded = 0;
+        images.forEach((img) => {
+          if (img.complete) { loaded++; if (loaded === images.length) resolve(); return; }
+          img.onload = img.onerror = () => { loaded++; if (loaded === images.length) resolve(); };
+        });
+        // Fallback timeout
+        setTimeout(resolve, 3000);
+      });
+
       const html2pdf = (await import("html2pdf.js")).default;
 
-      // Wrap HTML in a sized container so html2pdf renders at the right width
-      const container = document.createElement("div");
-      container.style.width = `${width}px`;
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-      container.innerHTML = htmlString;
-      document.body.appendChild(container);
+      // Measure the actual rendered height
+      const bodyHeight = printDoc.body.scrollHeight || 1200;
 
       await html2pdf()
         .set({
           margin: 0,
           filename: `${fileName}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, width },
-          jsPDF: { unit: "px", format: [width, 1200], orientation: "portrait" },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            width,
+            windowWidth: width,
+            scrollY: 0,
+          },
+          jsPDF: {
+            unit: "px",
+            format: [width, bodyHeight],
+            orientation: "portrait",
+            hotfixes: ["px_scaling"],
+          },
         })
-        .from(container)
+        .from(printDoc.body)
         .save();
 
-      document.body.removeChild(container);
+      document.body.removeChild(printFrame);
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("Failed to export PDF. Please try again.");
