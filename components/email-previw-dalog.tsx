@@ -82,16 +82,22 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
     try {
       const viewMode = screen === "600px" ? "desktop" : "mobile";
       const isMobile = viewMode === "mobile";
-      // Email is always rendered at 600px internally; on mobile we scale it down
-      const renderWidth = 600;
-      const pdfWidth = isMobile ? 375 : 600;
+      const renderWidth = isMobile ? 375 : 600;
       const fileName = currentTemplate?.name
         ? `${currentTemplate.name}-${viewMode}`
         : `email-preview-${viewMode}`;
 
-      const fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
+      let fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
 
-      // Hidden iframe — must be on-screen (opacity:0) for html2canvas to work correctly
+      // For mobile: force the email-container to 375px so mobile media queries
+      // fire and layout renders as a real mobile email
+      if (isMobile) {
+        fullHtml = fullHtml.replace("</head>", `<style>
+          .email-container { width: 375px !important; max-width: 375px !important; }
+        </style></head>`);
+      }
+
+      // Hidden iframe — on-screen (opacity:0) so html2canvas works correctly
       const printFrame = document.createElement("iframe");
       printFrame.style.cssText = [
         `position:fixed`,
@@ -126,14 +132,12 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
       await new Promise(r => setTimeout(r, 150));
 
       const bodyHeight = Math.max(printDoc.body.scrollHeight, printDoc.documentElement.scrollHeight);
-      // Update iframe height so the full content is visible to html2canvas
       printFrame.style.height = `${bodyHeight}px`;
       await new Promise(r => setTimeout(r, 50));
 
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      // Capture the full 600px email at 2x scale
       const canvas = await html2canvas(printDoc.body, {
         scale: 2,
         useCORS: true,
@@ -154,25 +158,20 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
 
       document.body.removeChild(printFrame);
 
-      // Scale factor: if mobile, shrink 600px → 375px
-      const scale = pdfWidth / renderWidth;
-      const scaledHeight = Math.round(bodyHeight * scale);
-
       const pdf = new jsPDF({
         unit: "px",
-        format: [pdfWidth, scaledHeight],
+        format: [renderWidth, bodyHeight],
         orientation: "portrait",
         hotfixes: ["px_scaling"],
       });
 
-      // Draw the canvas image scaled to fit pdfWidth × scaledHeight
       pdf.addImage(
         canvas.toDataURL("image/jpeg", 0.98),
         "JPEG",
         0,
         0,
-        pdfWidth,
-        scaledHeight,
+        renderWidth,
+        bodyHeight,
       );
 
       pdf.save(`${fileName}.pdf`);
