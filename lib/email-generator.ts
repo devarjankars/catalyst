@@ -1532,7 +1532,7 @@ case "isi": {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
         <tbody>
           <tr>
-            <td align="center" style="padding: ${component.padding || "0"};">
+            <td align="${component.textAlign || "center"}" style="padding: ${component.padding || "0"};">
               <table role="presentation" width="${ctaWidth.replace("px","")}" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td bgcolor="${ctaBg}" data-ogsc="${ctaBg}" class="elzonris-cta-bg" style="

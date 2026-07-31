@@ -1667,6 +1667,20 @@ export function PropertiesPanel({
                   />
                 </div>
                 <div>
+                  <Label>Alignment</Label>
+                  <Select
+                    value={component.textAlign || "center"}
+                    onValueChange={(value) => onUpdateComponent({ textAlign: value as any })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>Height</Label>
                   <Input
                     value={component.height || ""}

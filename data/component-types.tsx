@@ -361,6 +361,23 @@ export const componentTypes = [
       color: "#009877",
     },
   },
+  {
+    type: "footer-with-Preferences",
+    label: "Footer with Email Preference",
+    category: "elzonris",
+    icon: PanelBottom,
+    defaultProps: {
+      links: [
+        { text: "Privacy and Term of Use", href: "#" },
+        { text: "CCPA Policy", href: "#" },
+        { text: "Cookies Policy", href: "#" },
+        { text: "Unsubscribe", href: "#" },
+        { text: "[Email Preferences]", href: "#link" },
+      ],
+      fontSize: "12px",
+      color: "#009877",
+    },
+  },
    {
     type: "elzonris-divider",
     label: "Elzonris Divider",
@@ -654,7 +671,7 @@ export const componentTypes = [
   },
   {
     type: "elzonris-yellow-cta",
-    label: "Elzonris Yellow CTA",
+    label: "Elzonris CTA",
     category: "elzonris",
     icon: RectangleHorizontal,
     defaultProps: {
@@ -665,7 +682,7 @@ export const componentTypes = [
       fontSize: "28px",
       fontWeight: "bold",
       width: "300px",
-    
+      textAlign: "center",
     },
   },
    {

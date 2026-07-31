@@ -106,6 +106,11 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
       printDoc.write(fullHtml);
       printDoc.close();
 
+      // Force the print frame body to the exact target width so nothing overflows
+      printDoc.body.style.width = `${width}px`;
+      printDoc.body.style.maxWidth = `${width}px`;
+      printDoc.body.style.overflow = "hidden";
+
       // Wait for images to load in the print frame
       await new Promise<void>((resolve) => {
         const images = Array.from(printDoc.images);
@@ -115,14 +120,13 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
           if (img.complete) { loaded++; if (loaded === images.length) resolve(); return; }
           img.onload = img.onerror = () => { loaded++; if (loaded === images.length) resolve(); };
         });
-        // Fallback timeout
         setTimeout(resolve, 3000);
       });
 
       const html2pdf = (await import("html2pdf.js")).default;
 
-      // Measure the actual rendered height
-      const bodyHeight = printDoc.body.scrollHeight || 1200;
+      // Measure height after constraining width
+      const bodyHeight = printDoc.documentElement.scrollHeight || 1200;
 
       await html2pdf()
         .set({
@@ -135,7 +139,10 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
             allowTaint: true,
             width,
             windowWidth: width,
+            scrollX: 0,
             scrollY: 0,
+            x: 0,
+            y: 0,
           },
           jsPDF: {
             unit: "px",
