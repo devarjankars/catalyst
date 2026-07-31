@@ -1543,7 +1543,7 @@ case "isi": {
     <td align="${component.textAlign || "center"}" style="padding:${component.padding || "0"};" class="elzonris-cta-outer">
       <!--[if mso]>
       <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
-        href="${component.href || "#"}" style="height:${component.height || "auto"};v-text-anchor:middle;width:${ctaWidthNum}px;"
+        href="${component.href || "#"}" style="height:${component.height || "80px"};v-text-anchor:middle;width:${ctaWidthNum}px;"
         arcsize="0%" stroke="f" fillcolor="${ctaBg}">
         <w:anchorlock/>
         <center style="color:${ctaColor};font-family:Arial,sans-serif;font-size:${component.fontSize || "28px"};font-weight:bold;">

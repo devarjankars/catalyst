@@ -153,6 +153,20 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
         onclone: (clonedDoc: Document) => {
           clonedDoc.body.style.margin = "0";
           clonedDoc.body.style.padding = "0";
+          // Re-apply the mobile container constraint inside the cloned doc
+          if (isMobile) {
+            const containers = clonedDoc.querySelectorAll<HTMLElement>(".email-container");
+            containers.forEach((el) => {
+              el.style.width = "375px";
+              el.style.maxWidth = "375px";
+            });
+            // Also constrain any fixed-width tables at root level
+            const outerTable = clonedDoc.querySelector<HTMLElement>("body > table");
+            if (outerTable) {
+              outerTable.style.width = "375px";
+              outerTable.style.maxWidth = "375px";
+            }
+          }
         },
       });
 
