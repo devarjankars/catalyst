@@ -827,7 +827,7 @@ export function EmailComponentRenderer({
               href={component.href || "#"}
               style={{
                 display: "inline-flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "space-between",
                 backgroundColor: component.backgroundColor || "#f55a1f",
                 textDecoration: "none",
@@ -835,7 +835,6 @@ export function EmailComponentRenderer({
                 width: component.width || "300px",
                 boxSizing: "border-box",
                 colorScheme: "light",
-                padding: `18px 30px`,
                 minHeight: component.height || "80px",
               }}
               onClick={(e) => {
@@ -852,6 +851,9 @@ export function EmailComponentRenderer({
                 lineHeight: "1.2",
                 fontFamily: "Arial, Helvetica, sans-serif",
                 flex: "1",
+                padding: "18px 0 18px 30px",
+                display: "flex",
+                alignItems: "center",
               }}>
                 {component.text || "Know more about durable responses with ELZONRIS"}
               </span>
@@ -860,10 +862,11 @@ export function EmailComponentRenderer({
                 fontSize: "34px",
                 fontWeight: "bold",
                 lineHeight: "1",
-                marginLeft: "10px",
+                padding: "18px 30px 18px 10px",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
+                alignSelf: "stretch",
               }}>&#8250;</span>
             </a>
           </div>
