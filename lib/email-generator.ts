@@ -1532,17 +1532,16 @@ case "isi": {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
         <tbody>
           <tr>
-            <td align="${component.textAlign || "center"}" style="padding: ${component.padding || "0"};">
-              <table role="presentation" width="${ctaWidth.replace("px","")}" cellspacing="0" cellpadding="0" border="0">
+            <td align="${component.textAlign || "center"}" style="padding: ${component.padding || "0"};" class="elzonris-cta-outer">
+              <table class="elzonris-cta-table" role="presentation" width="${ctaWidth.replace("px", "")}" cellspacing="0" cellpadding="0" border="0" style="width:${ctaWidth};">
                 <tr>
                   <td bgcolor="${ctaBg}" data-ogsc="${ctaBg}" class="elzonris-cta-bg" style="
                     background-color: ${ctaBg} !important;
                     ${component.height ? `height: ${component.height};` : "padding: 18px 0;"}
                     padding-left: 30px;
                     padding-right: 30px;
-                    width: ${ctaWidth};
                   ">
-                    <a href="${component.href || "#"}" target="_blank" style="text-decoration: none; display: block; width: ${ctaWidth};">
+                    <a href="${component.href || "#"}" target="_blank" style="text-decoration: none; display: block;">
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                         <tr>
                           <td data-ogsc="${ctaColor}" class="elzonris-cta-text" style="
@@ -1852,6 +1851,16 @@ export function generateEmailHTML(
 
             .brand-logo-col img {
               margin: 0 auto !important;
+            }
+
+            /* Elzonris CTA: full width with 20px side padding on mobile */
+            .elzonris-cta-outer {
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+
+            .elzonris-cta-table {
+              width: 100% !important;
             }
 
         }

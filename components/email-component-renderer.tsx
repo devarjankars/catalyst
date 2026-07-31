@@ -808,11 +808,12 @@ export function EmailComponentRenderer({
 
         case "elzonris-yellow-cta":
         return (
-          <div style={{ padding: component.padding || "0", textAlign: (component.textAlign as any) || "center", colorScheme: "light" }}>
+          <div style={{ padding: component.padding || "0", colorScheme: "light" }}
+               className={`w-full flex ${(component.textAlign === "left") ? "justify-start" : (component.textAlign === "right") ? "justify-end" : "justify-center"}`}>
             <a
               href={component.href || "#"}
               style={{
-                display: "inline-flex",
+                display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 backgroundColor: component.backgroundColor || "#f55a1f",
@@ -820,10 +821,12 @@ export function EmailComponentRenderer({
                 height: component.height || undefined,
                 textDecoration: "none",
                 cursor: "pointer",
+                // On mobile canvas (<375px) stretch to full width minus 40px side padding
                 width: component.width || "300px",
                 boxSizing: "border-box",
                 colorScheme: "light",
               }}
+              className="w-full sm:w-auto"
               onClick={(e) => {
                 if (!previewMode) {
                   e.preventDefault();

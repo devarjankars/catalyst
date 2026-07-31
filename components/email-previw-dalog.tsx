@@ -86,47 +86,51 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
         ? `${currentTemplate.name}-${viewMode}`
         : `email-preview-${viewMode}`;
 
-      // Read from the live iframe — it's already fully rendered with all styles
-      const iframeDoc = iframeRef.current?.contentDocument
-        || iframeRef.current?.contentWindow?.document;
-      if (!iframeDoc) throw new Error("Iframe not accessible");
+      const fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
 
-      // Clone the full iframe document into a fresh off-screen iframe
-      // so html2pdf can render it at the correct width without affecting the UI
+      // Use a hidden iframe at 0,0 — NOT left:-9999px
+      // html2canvas coordinates are relative to the iframe document origin,
+      // so the iframe must be at a predictable on-screen position
       const printFrame = document.createElement("iframe");
-      printFrame.style.cssText = `position:absolute; left:-9999px; top:0; width:${width}px; border:0; visibility:hidden;`;
+      printFrame.style.cssText = [
+        `position:fixed`,
+        `top:0`,
+        `left:0`,
+        `width:${width}px`,
+        `height:1px`,           // minimal height — grows with content
+        `border:0`,
+        `opacity:0`,            // invisible but not visibility:hidden (avoids layout issues)
+        `pointer-events:none`,
+        `z-index:-1`,
+      ].join(";");
       document.body.appendChild(printFrame);
 
       const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
       if (!printDoc) throw new Error("Print frame not accessible");
 
-      // Write the full HTML (including <head> styles) into the print frame
-      const fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
       printDoc.open();
       printDoc.write(fullHtml);
       printDoc.close();
 
-      // Force the print frame body to the exact target width so nothing overflows
-      printDoc.body.style.width = `${width}px`;
-      printDoc.body.style.maxWidth = `${width}px`;
-      printDoc.body.style.overflow = "hidden";
+      // Constrain the root element and body to exact width — prevents overflow
+      printDoc.documentElement.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important;`;
+      printDoc.body.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important; margin:0 !important; padding:0 !important;`;
 
-      // Wait for images to load in the print frame
+      // Wait for images
       await new Promise<void>((resolve) => {
         const images = Array.from(printDoc.images);
         if (images.length === 0) { resolve(); return; }
         let loaded = 0;
-        images.forEach((img) => {
-          if (img.complete) { loaded++; if (loaded === images.length) resolve(); return; }
-          img.onload = img.onerror = () => { loaded++; if (loaded === images.length) resolve(); };
-        });
-        setTimeout(resolve, 3000);
+        const done = () => { loaded++; if (loaded >= images.length) resolve(); };
+        images.forEach((img) => { if (img.complete) done(); else { img.onload = done; img.onerror = done; } });
+        setTimeout(resolve, 4000);
       });
 
-      const html2pdf = (await import("html2pdf.js")).default;
+      // Let the browser finish any reflow after style changes
+      await new Promise(r => setTimeout(r, 100));
 
-      // Measure height after constraining width
-      const bodyHeight = printDoc.documentElement.scrollHeight || 1200;
+      const html2pdf = (await import("html2pdf.js")).default;
+      const bodyHeight = Math.max(printDoc.body.scrollHeight, printDoc.documentElement.scrollHeight);
 
       await html2pdf()
         .set({
@@ -139,10 +143,17 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
             allowTaint: true,
             width,
             windowWidth: width,
+            height: bodyHeight,
+            windowHeight: bodyHeight,
             scrollX: 0,
             scrollY: 0,
             x: 0,
             y: 0,
+            // Override the source element's bounding rect to prevent clipping
+            onclone: (clonedDoc: Document) => {
+              clonedDoc.documentElement.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important;`;
+              clonedDoc.body.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important; margin:0 !important; padding:0 !important;`;
+            },
           },
           jsPDF: {
             unit: "px",
