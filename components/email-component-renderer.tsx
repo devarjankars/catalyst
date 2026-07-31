@@ -592,7 +592,7 @@ export function EmailComponentRenderer({
                     {link.text}
                   </a>
                   {linkIndex < component.links!.length - 2 && <span className="text-gray-500 text-[12px]">|</span>}
-                  {linkIndex === component.links!.length - 2 && <span className="text-[#FF66CC] text-[12px]">|</span>}
+                  {linkIndex === component.links!.length - 3 && <span className="text-[#FF66CC] text-[12px]">|</span>}
                 </React.Fragment>
               ))}
             </div>
@@ -808,25 +808,23 @@ export function EmailComponentRenderer({
 
         case "elzonris-yellow-cta":
         return (
-          <div style={{ padding: component.padding || "0", colorScheme: "light" }}
-               className={`w-full flex ${(component.textAlign === "left") ? "justify-start" : (component.textAlign === "right") ? "justify-end" : "justify-center"}`}>
+          <div
+            style={{ padding: component.padding || "0", colorScheme: "light", textAlign: (component.textAlign as any) || "center" }}
+          >
             <a
               href={component.href || "#"}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                display: "inline-block",
                 backgroundColor: component.backgroundColor || "#f55a1f",
-                padding: component.height ? "0 30px" : "18px 30px",
+                padding: component.height ? `0 30px` : "18px 30px",
                 height: component.height || undefined,
                 textDecoration: "none",
                 cursor: "pointer",
-                // On mobile canvas (<375px) stretch to full width minus 40px side padding
                 width: component.width || "300px",
                 boxSizing: "border-box",
                 colorScheme: "light",
+                verticalAlign: "middle",
               }}
-              className="w-full sm:w-auto"
               onClick={(e) => {
                 if (!previewMode) {
                   e.preventDefault();
@@ -834,16 +832,32 @@ export function EmailComponentRenderer({
                 }
               }}
             >
-              <span style={{
-                color: component.color || "#ffffff",
-                fontSize: component.fontSize || "28px",
-                fontWeight: component.fontWeight || "bold",
-                lineHeight: "1.2",
-                fontFamily: "Arial, Helvetica, sans-serif",
-              }}>
-                {component.text || "Know more about durable responses with ELZONRIS"}
-              </span>
-              <span style={{ color: component.color || "#ffffff", fontSize: "34px", marginLeft: "20px", flexShrink: 0 }}>&#8250;</span>
+              <table style={{ width: "100%", borderCollapse: "collapse" }} cellPadding={0} cellSpacing={0}>
+                <tbody>
+                  <tr>
+                    <td style={{
+                      color: component.color || "#ffffff",
+                      fontSize: component.fontSize || "28px",
+                      fontWeight: component.fontWeight || "bold",
+                      lineHeight: "1.3",
+                      fontFamily: "Arial, Helvetica, sans-serif",
+                      verticalAlign: "middle",
+                    }}>
+                      {component.text || "Know more about durable responses with ELZONRIS"}
+                    </td>
+                    <td style={{
+                      color: component.color || "#ffffff",
+                      fontSize: "34px",
+                      fontWeight: "bold",
+                      whiteSpace: "nowrap",
+                      verticalAlign: "middle",
+                      paddingLeft: "10px",
+                      width: "30px",
+                      textAlign: "right",
+                    }}>&#8250;</td>
+                  </tr>
+                </tbody>
+              </table>
             </a>
           </div>
         );

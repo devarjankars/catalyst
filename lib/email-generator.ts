@@ -1526,49 +1526,58 @@ case "isi": {
       const ctaDisplay = (component.displayType || "all") as EmailComponent["displayType"];
       const { innerStyle: ctaInnerStyle } = getDisplayAttributes(ctaDisplay);
       const ctaWidth = component.width || "300px";
+      const ctaWidthNum = parseInt(ctaWidth) || 300;
       const ctaBg = component.backgroundColor || "#f55a1f";
       const ctaColor = component.color || "#ffffff";
+      const ctaPaddingV = component.height ? "0" : "18px";
       return `
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""} ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
-        <tbody>
-          <tr>
-            <td align="${component.textAlign || "center"}" style="padding: ${component.padding || "0"};" class="elzonris-cta-outer">
-              <table class="elzonris-cta-table" role="presentation" width="${ctaWidth.replace("px", "")}" cellspacing="0" cellpadding="0" border="0" style="width:${ctaWidth};">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+  ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
+  ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
+  <tbody><tr>
+    <td align="${component.textAlign || "center"}" style="padding:${component.padding || "0"};" class="elzonris-cta-outer">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+        href="${component.href || "#"}" style="height:${component.height || "auto"};v-text-anchor:middle;width:${ctaWidthNum}px;"
+        arcsize="0%" stroke="f" fillcolor="${ctaBg}">
+        <w:anchorlock/>
+        <center style="color:${ctaColor};font-family:Arial,sans-serif;font-size:${component.fontSize || "28px"};font-weight:bold;">
+          ${component.text || "Know more about durable responses with ELZONRIS"} &#8250;
+        </center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <table class="elzonris-cta-table" role="presentation" cellspacing="0" cellpadding="0" border="0"
+        style="width:${ctaWidth}; border-collapse:collapse;">
+        <tr>
+          <td bgcolor="${ctaBg}" class="elzonris-cta-bg"
+            style="background-color:${ctaBg} !important; padding:${ctaPaddingV} 30px; ${component.height ? `height:${component.height};` : ""}">
+            <a href="${component.href || "#"}" target="_blank"
+              style="text-decoration:none; display:block; width:100%;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td bgcolor="${ctaBg}" data-ogsc="${ctaBg}" class="elzonris-cta-bg" style="
-                    background-color: ${ctaBg} !important;
-                    ${component.height ? `height: ${component.height};` : "padding: 18px 0;"}
-                    padding-left: 30px;
-                    padding-right: 30px;
-                  ">
-                    <a href="${component.href || "#"}" target="_blank" style="text-decoration: none; display: block;">
-                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                        <tr>
-                          <td data-ogsc="${ctaColor}" class="elzonris-cta-text" style="
-                            color: ${ctaColor} !important;
-                            font-family: Arial, Helvetica, sans-serif;
-                            font-size: ${component.fontSize || "28px"};
-                            font-weight: ${component.fontWeight || "bold"};
-                            line-height: 1.2;
-                          ">${component.text || "Know more about durable responses with ELZONRIS"}</td>
-                          <td width="40" align="right" data-ogsc="${ctaColor}" class="elzonris-cta-text" style="
-                            color: ${ctaColor} !important;
-                            font-family: Arial, Helvetica, sans-serif;
-                            font-size: 34px;
-                            font-weight: bold;
-                            white-space: nowrap;
-                          ">&#8250;</td>
-                        </tr>
-                      </table>
-                    </a>
+                  <td class="elzonris-cta-text"
+                    style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
+                           font-size:${component.fontSize || "28px"}; font-weight:${component.fontWeight || "bold"};
+                           line-height:1.3; vertical-align:middle;">
+                    ${component.text || "Know more about durable responses with ELZONRIS"}
+                  </td>
+                  <td width="30" align="right" class="elzonris-cta-text"
+                    style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
+                           font-size:34px; font-weight:bold; white-space:nowrap; vertical-align:middle;
+                           padding-left:10px;">
+                    &#8250;
                   </td>
                 </tr>
               </table>
-            </td>
-          </tr>
-        </tbody>
+            </a>
+          </td>
+        </tr>
       </table>
-      `;
+      <!--<![endif]-->
+    </td>
+  </tr></tbody>
+</table>`.trim();
     }
 
     default:
