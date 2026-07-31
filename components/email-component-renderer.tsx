@@ -576,36 +576,47 @@ export function EmailComponentRenderer({
 
       case "footer-with-Preferences": {
         const links = component.links || [];
-        // Line 1: indices 0,1 (Privacy | CCPA)
-        const line1 = links.slice(0, 2);
-        // Line 2: indices 2+ (Cookies | Unsubscribe | [Email Preferences])
-        const line2 = links.slice(2);
-        const renderLink = (link: { text: string; href: string }, index: number, arr: typeof links, globalIndex: number) => {
-          const isLast = globalIndex === links.length - 1;
-          const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
-          const sepColor = globalIndex === links.length - 2 ? "#FF66CC" : "#000000";
-          return (
-            <React.Fragment key={globalIndex}>
-              <a
-                href={link.href || "#"}
-                style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif" }}
-                onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
-              >
-                {link.text}
-              </a>
-              {index < arr.length - 1 && (
-                <span style={{ color: sepColor, fontSize: component.fontSize || "12px" }}>&nbsp;|&nbsp;</span>
-              )}
-            </React.Fragment>
-          );
-        };
         return (
-          <div style={{ ...baseStyle, textAlign: (component.textAlign as any) || "left" }}>
-            <div style={{ lineHeight: "1.8" }}>
-              {line1.map((link, i) => renderLink(link, i, line1, i))}
+          <div style={{ ...baseStyle }}>
+            {/* Desktop view: one line with spaced | separators */}
+            <div className="hidden sm:block" style={{ textAlign: (component.textAlign as any) || "left", lineHeight: "2" }}>
+              {links.map((link, index) => {
+                const isLast = index === links.length - 1;
+                const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
+                const sepColor = index === links.length - 2 ? "#FF66CC" : "#000000";
+                return (
+                  <React.Fragment key={index}>
+                    <a
+                      href={link.href || "#"}
+                      style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
+                      onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
+                    >
+                      {link.text}
+                    </a>
+                    {!isLast && (
+                      <span style={{ color: sepColor, fontSize: component.fontSize || "12px" }}>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
-            <div style={{ lineHeight: "1.8" }}>
-              {line2.map((link, i) => renderLink(link, i, line2, i + 2))}
+            {/* Mobile view: each link on its own line, centered */}
+            <div className="block sm:hidden" style={{ textAlign: "center", lineHeight: "2" }}>
+              {links.map((link, index) => {
+                const isLast = index === links.length - 1;
+                const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
+                return (
+                  <div key={index}>
+                    <a
+                      href={link.href || "#"}
+                      style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif" }}
+                      onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
+                    >
+                      {link.text}
+                    </a>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

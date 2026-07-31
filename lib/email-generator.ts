@@ -1131,28 +1131,21 @@ case "isi": {
       const { innerStyle } = getDisplayAttributes(footerDisplay);
       const links = component.links || [];
 
-      // Build links HTML:
-      // Desktop: Privacy | CCPA | Cookies | Unsubscribe | [Email Preferences]  (all one line)
-      // Mobile:  Privacy | CCPA
-      //          Cookies | Unsubscribe | [Email Preferences]
-      // Strategy: after index 1, insert a desktop-only pipe AND a mobile-only <br>
+      // Desktop: all on one line with spaced | separators
+      // Mobile:  each link on its own line, centered
       const linksHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
         const linkColor = isLast ? "#FF66CC" : (component.color || "#0563C1");
         const sepColor  = index === links.length - 2 ? "#FF66CC" : "#000000";
 
-        const linkTag = `<a target="_blank" href="${link.href || "#"}" style="color:${linkColor}; font-size:${component.fontSize || "12px"}; font-family:Arial,sans-serif; text-decoration:underline;">${(link.text || "Link").trim()}</a>`;
+        const linkTag = `<a target="_blank" href="${link.href || "#"}" style="color:${linkColor}; font-size:${component.fontSize || "12px"}; font-family:Arial,sans-serif; text-decoration:underline; white-space:nowrap;">${(link.text || "Link").trim()}</a>`;
 
         let afterLink = "";
         if (!isLast) {
-          if (index === 1) {
-            // After CCPA: show pipe on desktop, line-break on mobile
-            afterLink =
-              `<span class="desktop" style="color:#000000; font-size:12px; display:inline;">&nbsp;|&nbsp;</span>` +
-              `<br class="mobile" style="display:none; mso-hide:all;" />`;
-          } else {
-            afterLink = `<span style="color:${sepColor}; font-size:${component.fontSize || "12px"};">&nbsp;|&nbsp;</span>`;
-          }
+          // Desktop: spaced pipe separator | Mobile: line break (each link on own row)
+          afterLink =
+            `<span class="desktop" style="color:${sepColor}; font-size:${component.fontSize || "12px"}; display:inline;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>` +
+            `<br class="mobile" style="display:none; mso-hide:all;" />`;
         }
         return linkTag + afterLink;
       }).join("");
@@ -1165,10 +1158,11 @@ case "isi": {
       <tbody><tr>
         <td bgcolor="${component.backgroundColor || "#ffffff"}"
           ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
-          style="padding:${component.padding || "20px"}; text-align:${component.textAlign || "left"}; background-color:${component.backgroundColor || "#ffffff"};">
+          style="padding:${component.padding || "20px"}; background-color:${component.backgroundColor || "#ffffff"};">
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
-              <td align="${component.textAlign || "left"}" style="font-size:${component.fontSize || "12px"}; line-height:1.8;">
+              <td align="${component.textAlign || "left"}" class="mbl-text-center"
+                style="font-size:${component.fontSize || "12px"}; line-height:2; text-align:${component.textAlign || "left"};">
                 ${linksHTML}
               </td>
             </tr>
