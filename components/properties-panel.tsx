@@ -1651,7 +1651,7 @@ export function PropertiesPanel({
             return (
               <div className="space-y-4">
                 <div>
-                  <Label>Banner Text</Label>
+                  <Label>CTA Text</Label>
                   <Input
                     value={component.text || ""}
                     onChange={(e) => onUpdateComponent({ text: e.target.value })}
