@@ -81,25 +81,26 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
     setIsExportingPDF(true);
     try {
       const viewMode = screen === "600px" ? "desktop" : "mobile";
-      const width = screen === "600px" ? 600 : 375;
+      const isMobile = viewMode === "mobile";
+      // Email is always rendered at 600px internally; on mobile we scale it down
+      const renderWidth = 600;
+      const pdfWidth = isMobile ? 375 : 600;
       const fileName = currentTemplate?.name
         ? `${currentTemplate.name}-${viewMode}`
         : `email-preview-${viewMode}`;
 
       const fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
 
-      // Use a hidden iframe at 0,0 — NOT left:-9999px
-      // html2canvas coordinates are relative to the iframe document origin,
-      // so the iframe must be at a predictable on-screen position
+      // Hidden iframe — must be on-screen (opacity:0) for html2canvas to work correctly
       const printFrame = document.createElement("iframe");
       printFrame.style.cssText = [
         `position:fixed`,
         `top:0`,
         `left:0`,
-        `width:${width}px`,
-        `height:1px`,           // minimal height — grows with content
+        `width:${renderWidth}px`,
+        `height:1px`,
         `border:0`,
-        `opacity:0`,            // invisible but not visibility:hidden (avoids layout issues)
+        `opacity:0`,
         `pointer-events:none`,
         `z-index:-1`,
       ].join(";");
@@ -112,10 +113,6 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
       printDoc.write(fullHtml);
       printDoc.close();
 
-      // Constrain the root element and body to exact width — prevents overflow
-      printDoc.documentElement.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important;`;
-      printDoc.body.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important; margin:0 !important; padding:0 !important;`;
-
       // Wait for images
       await new Promise<void>((resolve) => {
         const images = Array.from(printDoc.images);
@@ -126,46 +123,59 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
         setTimeout(resolve, 4000);
       });
 
-      // Let the browser finish any reflow after style changes
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 150));
 
-      const html2pdf = (await import("html2pdf.js")).default;
       const bodyHeight = Math.max(printDoc.body.scrollHeight, printDoc.documentElement.scrollHeight);
+      // Update iframe height so the full content is visible to html2canvas
+      printFrame.style.height = `${bodyHeight}px`;
+      await new Promise(r => setTimeout(r, 50));
 
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename: `${fileName}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            width,
-            windowWidth: width,
-            height: bodyHeight,
-            windowHeight: bodyHeight,
-            scrollX: 0,
-            scrollY: 0,
-            x: 0,
-            y: 0,
-            // Override the source element's bounding rect to prevent clipping
-            onclone: (clonedDoc: Document) => {
-              clonedDoc.documentElement.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important;`;
-              clonedDoc.body.style.cssText = `width:${width}px !important; max-width:${width}px !important; overflow:hidden !important; margin:0 !important; padding:0 !important;`;
-            },
-          },
-          jsPDF: {
-            unit: "px",
-            format: [width, bodyHeight],
-            orientation: "portrait",
-            hotfixes: ["px_scaling"],
-          },
-        })
-        .from(printDoc.body)
-        .save();
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      // Capture the full 600px email at 2x scale
+      const canvas = await html2canvas(printDoc.body, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        width: renderWidth,
+        windowWidth: renderWidth,
+        height: bodyHeight,
+        windowHeight: bodyHeight,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        onclone: (clonedDoc: Document) => {
+          clonedDoc.body.style.margin = "0";
+          clonedDoc.body.style.padding = "0";
+        },
+      });
 
       document.body.removeChild(printFrame);
+
+      // Scale factor: if mobile, shrink 600px → 375px
+      const scale = pdfWidth / renderWidth;
+      const scaledHeight = Math.round(bodyHeight * scale);
+
+      const pdf = new jsPDF({
+        unit: "px",
+        format: [pdfWidth, scaledHeight],
+        orientation: "portrait",
+        hotfixes: ["px_scaling"],
+      });
+
+      // Draw the canvas image scaled to fit pdfWidth × scaledHeight
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 0.98),
+        "JPEG",
+        0,
+        0,
+        pdfWidth,
+        scaledHeight,
+      );
+
+      pdf.save(`${fileName}.pdf`);
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("Failed to export PDF. Please try again.");
