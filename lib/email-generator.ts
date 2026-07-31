@@ -1127,56 +1127,55 @@ case "isi": {
       `;
     }
     case "footer-with-Preferences": {
-      const footerDisplay = (component.displayType ||
-        "all") as EmailComponent["displayType"];
-      const { classAttr, innerStyle } = getDisplayAttributes(footerDisplay);
+      const footerDisplay = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle } = getDisplayAttributes(footerDisplay);
       const links = component.links || [];
-      // Desktop: all on one line with | separators
-      // Mobile: break after index 1 (Privacy | CCPA <br> Cookies | Unsubscribe | [Email Preferences])
+
+      // Build links HTML:
+      // Desktop: Privacy | CCPA | Cookies | Unsubscribe | [Email Preferences]  (all one line)
+      // Mobile:  Privacy | CCPA
+      //          Cookies | Unsubscribe | [Email Preferences]
+      // Strategy: after index 1, insert a desktop-only pipe AND a mobile-only <br>
       const linksHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
-        const isPreferences = isLast; // last link is [Email Preferences] — pink
-        const linkColor = isPreferences ? "#FF66CC" : (component.color || "#0563C1");
-        const separatorColor = index === links.length - 2 ? "#FF66CC" : "#000000";
+        const linkColor = isLast ? "#FF66CC" : (component.color || "#0563C1");
+        const sepColor  = index === links.length - 2 ? "#FF66CC" : "#000000";
 
         const linkTag = `<a target="_blank" href="${link.href || "#"}" style="color:${linkColor}; font-size:${component.fontSize || "12px"}; font-family:Arial,sans-serif; text-decoration:underline;">${(link.text || "Link").trim()}</a>`;
 
-        // After index 1 (CCPA): line break on mobile, pipe on desktop
-        const afterLink = isLast ? "" : index === 1
-          ? `<span class="desktop" style="color:#000000; font-size:12px;">&nbsp;|&nbsp;</span><br class="mobile" style="display:none; mso-hide:all;" />`
-          : `<span style="color:${separatorColor}; font-size:12px;">&nbsp;|&nbsp;</span>`;
-
+        let afterLink = "";
+        if (!isLast) {
+          if (index === 1) {
+            // After CCPA: show pipe on desktop, line-break on mobile
+            afterLink =
+              `<span class="desktop" style="color:#000000; font-size:12px; display:inline;">&nbsp;|&nbsp;</span>` +
+              `<br class="mobile" style="display:none; mso-hide:all;" />`;
+          } else {
+            afterLink = `<span style="color:${sepColor}; font-size:${component.fontSize || "12px"};">&nbsp;|&nbsp;</span>`;
+          }
+        }
         return linkTag + afterLink;
       }).join("");
 
       return `
-    <table
-      role="presentation"
-      width="100%"
-      cellspacing="0"
-      cellpadding="0"
-      border="0"
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
       bgcolor="${component.backgroundColor || "#ffffff"}"
       ${innerStyle ? `style="${innerStyle}"` : ""}
-      ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
-    >
-      <tbody>
-        <tr>
-          <td bgcolor="${component.backgroundColor || "#ffffff"}"
-            ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
-            style="padding:${component.padding || "20px"}; text-align:${component.textAlign || "left"}; background-color:${component.backgroundColor || "#ffffff"};">
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-              <tr>
-                <td align="${component.textAlign || "left"}" style="font-size:${component.fontSize || "12px"}; line-height:1.8;">
-                  ${linksHTML}
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `.trim();
+      ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}>
+      <tbody><tr>
+        <td bgcolor="${component.backgroundColor || "#ffffff"}"
+          ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
+          style="padding:${component.padding || "20px"}; text-align:${component.textAlign || "left"}; background-color:${component.backgroundColor || "#ffffff"};">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td align="${component.textAlign || "left"}" style="font-size:${component.fontSize || "12px"}; line-height:1.8;">
+                ${linksHTML}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr></tbody>
+    </table>`.trim();
     }
     case "elzonris-divider": {
       const display = (component.displayType ||
@@ -1540,7 +1539,7 @@ case "isi": {
   ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
   ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
   <tbody><tr>
-    <td align="${component.textAlign || "center"}" style="padding:${component.padding || "0"};" class="elzonris-cta-outer">
+    <td align="${component.textAlign || "center"}" style="padding:${component.padding || "15px 0 0 0"};" class="elzonris-cta-outer">
       <!--[if mso]>
       <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
         href="${component.href || "#"}" style="height:${component.height || "80px"};v-text-anchor:middle;width:${ctaWidthNum}px;"

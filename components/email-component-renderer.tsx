@@ -821,7 +821,7 @@ export function EmailComponentRenderer({
         case "elzonris-yellow-cta":
         return (
           <div
-            style={{ padding: component.padding || "0", colorScheme: "light", textAlign: (component.textAlign as any) || "center" }}
+            style={{ padding: component.padding || "15px 0 0 0", colorScheme: "light", textAlign: (component.textAlign as any) || "center" }}
           >
             <a
               href={component.href || "#"}

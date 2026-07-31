@@ -683,6 +683,7 @@ export const componentTypes = [
       fontWeight: "bold",
       width: "300px",
       textAlign: "center",
+      padding: "15px 0 0 0",
     },
   },
    {
