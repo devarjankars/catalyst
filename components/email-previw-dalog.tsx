@@ -239,10 +239,12 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
                 </button>
               </div>
 
-              <Button variant="default" onClick={handlePDFExport} disabled={isExportingPDF}>
-                <Upload className={`h-4 w-4 mr-1.5 ${isExportingPDF ? "animate-pulse" : ""}`} />
-                {isExportingPDF ? "Exporting..." : "Export PDF"}
-              </Button>
+              {!dark && (
+                <Button variant="default" onClick={handlePDFExport} disabled={isExportingPDF}>
+                  <Upload className={`h-4 w-4 mr-1.5 ${isExportingPDF ? "animate-pulse" : ""}`} />
+                  {isExportingPDF ? "Exporting..." : "Export PDF"}
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>

@@ -383,11 +383,24 @@ export const componentTypes = [
     label: "Elzonris Divider",
     category : "elzonris",
     icon : SeparatorHorizontal,
-    
     defaultProps: {
       src: "/footer-line.png",
       alt: "footer-line",
       href: "https://elzonris.com/HCP/",
+    },
+  },
+  {
+    type: "elzonris-view-in-browser",
+    label: "View in Browser",
+    category: "elzonris",
+    icon: AlignCenter,
+    defaultProps: {
+      href: "#",
+      color: "#2360d9",
+      fontSize: "12px",
+      lineHeight: "16px",
+      textAlign: "center",
+      padding: "10px 20px",
     },
   },
   {

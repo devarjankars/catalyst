@@ -474,8 +474,30 @@ function generateComponentHTML(component: EmailComponent): string {
       `.trim();
     }
 
-    case "elzonris-brand-logo": {
-      const display = (component.displayType || "all") as EmailComponent["displayType"];
+    case "elzonris-view-in-browser": {
+      const align = component.textAlign || "center";
+      const padding = component.padding || "10px 20px";
+      return `
+      <table class="mobile-table darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+        <tbody>
+          <tr>
+            <td style="padding:${padding};">
+              <table class="darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                  <tr>
+                    <td align="${align}" valign="top" style="color:#ffffff;font-family:Arial,sans-serif;font-weight:400;font-size:${component.fontSize || "12px"};line-height:${component.lineHeight || "16px"};text-align:${align};">
+                      <a href="${component.href || "#"}" style="text-decoration:underline;color:${component.color || "#2360d9"};text-align:${align};">View in Browser</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>`.trim();
+    }
+
+    case "elzonris-brand-logo": {      const display = (component.displayType || "all") as EmailComponent["displayType"];
       const { innerStyle } = getDisplayAttributes(display);
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">

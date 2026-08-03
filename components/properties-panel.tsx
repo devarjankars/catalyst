@@ -1263,6 +1263,46 @@ export function PropertiesPanel({
             </div>
             </div>);
             
+      case "elzonris-view-in-browser":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Link URL</Label>
+              <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />
+            </div>
+            <div>
+              <Label>Link Color</Label>
+              <ColorInput value={component.color || "#2360d9"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Text Align</Label>
+              <Select
+                value={component.textAlign || "center"}
+                onValueChange={(value) => onUpdateComponent({ textAlign: value as any })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Font Size</Label>
+              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <Input value={component.lineHeight || "16px"} onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })} placeholder="16px" />
+            </div>
+            <div>
+              <Label>Padding (top/bottom sides)</Label>
+              <Input value={component.padding || "10px 20px"} onChange={(e) => onUpdateComponent({ padding: e.target.value })} placeholder="10px 20px" />
+            </div>
+          </div>
+        );
+
       case "elzonris-pi":
         return (
           <div className="space-y-4">

@@ -529,9 +529,34 @@ export function EmailComponentRenderer({
           </div>
         )  
 
+      case "elzonris-view-in-browser":
+        return (
+          <div style={{
+            textAlign: (component.textAlign as any) || "center",
+            padding: component.padding || "10px 20px",
+            backgroundColor: "#FFFFFF",
+            lineHeight: component.lineHeight || "16px",
+          }}>
+            <a
+              href={component.href || "#"}
+              style={{
+                color: component.color || "#2360d9",
+                textDecoration: "underline",
+                fontSize: component.fontSize || "12px",
+                lineHeight: component.lineHeight || "16px",
+                fontFamily: "Arial, sans-serif",
+                fontWeight: 400,
+              }}
+              onClick={(e) => !previewMode && e.preventDefault()}
+            >
+              View in Browser
+            </a>
+          </div>
+        );
+
       case "elzonris-pi":
         return (
-          <div style={{ ...baseStyle, fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
+          <div style={{ ...baseStyle, padding: component.padding || "0 20px", textAlign: "left", fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
             <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
               Please see Full <a href={component.piHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>Prescribing Information</a>, including Boxed WARNING.
             </p>
