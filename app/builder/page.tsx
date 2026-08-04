@@ -78,7 +78,6 @@ export default function EmailBuilder() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [awaitingModeSelection, setAwaitingModeSelection] = useState(false);
-  const [vsbPromptOpen, setVsbPromptOpen] = useState(false);
   const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
@@ -413,10 +412,12 @@ function replaceImagesInComponents(components: any[]): any[] {
         clearAll();
         router.push(pendingNavigation);
         setPendingNavigation(null);
-      } else {
-        // Show VSB creation prompt
-        setVsbPromptOpen(true);
+      } else if (searchParams.get("createVsb") === "true") {
+        // Auto-navigate to VSB if user chose "Create VSB" at the start
+        const id = savedTemplate?.id;
+        if (id) router.push(`/vsb/${id}`);
       }
+      // Otherwise just stay in builder — no extra prompt
     } catch (error) {
       console.error("Failed to save template:", error);
       alert("Failed to save template. Please try again.");
@@ -754,34 +755,6 @@ if (activeSelectedId) {
         onOpenChange={setModeDialogOpen}
         onSelectMode={handleModeSelect}
       />
-
-      {/* VSB Creation Prompt */}
-      <Dialog open={vsbPromptOpen} onOpenChange={setVsbPromptOpen}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>Email Saved!</DialogTitle>
-            <DialogDescription>
-              Your email template has been saved successfully. Would you like to create a Visual Story Board (VSB) for this template?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:justify-between">
-            <Button variant="outline" onClick={() => setVsbPromptOpen(false)}>
-              Stay in Builder
-            </Button>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-              onClick={() => {
-                setVsbPromptOpen(false);
-                const id = savedTemplateId || currentTemplate?.id;
-                if (id) router.push(`/vsb/${id}`);
-              }}
-            >
-              <LayoutTemplate className="w-4 h-4" />
-              Create VSB
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />

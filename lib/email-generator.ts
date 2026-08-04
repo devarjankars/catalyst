@@ -443,31 +443,36 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "elzonris-pi": {
+      const display = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle } = getDisplayAttributes(display);
+      const padding = component.padding || "0 20px 10px 20px";
+      const fontSize = component.fontSize || "12px";
+      const color = component.color || "#000000";
+      const linkColor = component.linkColor || "#009877";
+
       return `
-      <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        ${innerStyle ? `style="${innerStyle}"` : ""}
+        ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
+      >
         <tbody>
           <tr>
-            <td width="30" height="1" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;"></td>
-            <td>
-              <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
-                <tbody>
-                  <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
-                  <tr>
-                    <td align="left" valign="middle" style="color:${component.color || '#000000'};font-family:Arial,sans-serif;font-weight:bold;font-size:${component.fontSize || '12px'};line-height:14px;">
-                      Please see Full <a href="${component.piHref || 'http://pi.elzonris.com/'}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${component.linkColor || '#009877'};line-height:16px;">Prescribing Information</a>, including Boxed WARNING.
-                    </td>
-                  </tr>
-                  <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
-                  <tr>
-                    <td align="left" valign="top" style="color:${component.color || '#000000'};font-weight:bold;font-family:Arial,sans-serif;font-size:${component.fontSize || '12px'};line-height:14px;">
-                      Please click <a href="${component.isiHref || '#'}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${component.linkColor || '#009877'};">here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
-                    </td>
-                  </tr>
-                  <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
-                </tbody>
-              </table>
+            <td
+              style="padding:${padding};${innerStyle ? innerStyle : ""}"
+              ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+            >
+              <p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-weight:bold;font-size:${fontSize};line-height:16px;color:${color};">
+                Please see Full <a href="${component.piHref || "http://pi.elzonris.com/"}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${linkColor};">Prescribing Information</a>, including Boxed WARNING.
+              </p>
+              <p style="margin:0;font-family:Arial,sans-serif;font-weight:bold;font-size:${fontSize};line-height:16px;color:${color};">
+                Please click <a href="${component.isiHref || "#"}" target="_blank" style="font-weight:bold;text-decoration:underline;color:${linkColor};">here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
+              </p>
             </td>
-            <td width="30" height="1" style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;"></td>
           </tr>
         </tbody>
       </table>
@@ -508,12 +513,12 @@ function generateComponentHTML(component: EmailComponent): string {
                 <tr>
                   <td class="brand-logo-col" width="50%" align="left" valign="middle" style="width:50%; padding: 5px 0;">
                     <a href="${component.logoA?.href || "#"}" target="_blank">
-                      <img src="${component.logoA?.imgSrc || ""}" width="200" style="display:block; border:0; max-width:100%;" alt="${component.logoA?.altTex || ""}" />
+                      <img src="${component.logoA?.imgSrc || ""}" width="250" style="display:block; border:0; max-width:100%;" alt="${component.logoA?.altTex || ""}" />
                     </a>
                   </td>
                   <td class="brand-logo-col" width="50%" align="right" valign="middle" style="width:50%; padding: 5px 0;">
                     <a href="${component.logoB?.href || "#"}" target="_blank">
-                      <img src="${component.logoB?.imgSrc || ""}" width="150" style="display:block; border:0; max-width:100%; margin-left:auto;" alt="${component.logoB?.altTex || ""}" />
+                      <img src="${component.logoB?.imgSrc || ""}" width="140" style="display:block; border:0; max-width:100%; margin-left:auto;" alt="${component.logoB?.altTex || ""}" />
                     </a>
                   </td>
                 </tr>
@@ -526,18 +531,38 @@ function generateComponentHTML(component: EmailComponent): string {
     }
 
     case "footer-link-3": {
-      const fl3LinksHtml = (component.links || []).map((link, index) => `
-        <td class="footer-link-col" align="${index === 0 ? 'left' : index === (component.links!.length - 1) ? 'right' : 'center'}" valign="top" style="padding: 5px 0;">
-          <a href="${link.href}" target="_blank" style="color: ${component.color || '#009877'}; text-decoration: underline; font-family: Arial, sans-serif; font-size: ${component.fontSize || '12px'};">${link.text}</a>
-        </td>
-      `.trim()).join("");
+      const fl3Display = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle: fl3Inner } = getDisplayAttributes(fl3Display);
+      const fl3Links = component.links || [];
+      const fl3FontSize = component.fontSize || "12px";
+      const fl3Color = component.color || "#009877";
+
+      const fl3Tds = fl3Links.map((link, index) => {
+        const align = index === 0 ? "left" : index === fl3Links.length - 1 ? "right" : "center";
+        return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fl3FontSize}; line-height:1.4; white-space:nowrap;">
+          <a href="${link.href || "#"}" target="_blank" style="color:${fl3Color}; text-decoration:underline; font-size:${fl3FontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
+        </td>`;
+      }).join("\n          ");
+
       return `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${component.backgroundColor || '#ffffff'}" align="center">
-        <tbody><tr><td align="center" style="padding: ${component.padding || '5px 20px'};">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tbody><tr>${fl3LinksHtml}</tr></tbody>
-          </table></td></tr></tbody></table>
-      `.trim();
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        bgcolor="${component.backgroundColor || "#ffffff"}"
+        ${fl3Inner ? `style="background-color:${component.backgroundColor || "#ffffff"};${fl3Inner}"` : `style="background-color:${component.backgroundColor || "#ffffff"};"`}
+        ${fl3Display === "mobile-only" ? 'class="mbl-show-table"' : fl3Display === "desktop-only" ? 'class="desk-show-table"' : ""}>
+        <tbody>
+          <tr>
+            <td
+              bgcolor="${component.backgroundColor || "#ffffff"}"
+              ${fl3Display === "mobile-only" ? 'class="mbl-show-cell"' : fl3Display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+              style="padding:${component.padding || "0 20px 10px 20px"}; background-color:${component.backgroundColor || "#ffffff"};">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                style="width:100%; table-layout:fixed;">
+                <tbody><tr>${fl3Tds}</tr></tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>`.trim();
     }
 
 case "isi": {
@@ -1152,45 +1177,39 @@ case "isi": {
       const footerDisplay = (component.displayType || "all") as EmailComponent["displayType"];
       const { innerStyle } = getDisplayAttributes(footerDisplay);
       const links = component.links || [];
+      const fontSize = component.fontSize || "12px";
+      const color = component.color || "#0563C1";
+      const padding = component.padding || "20px";
 
-      // Desktop: all on one line with spaced | separators
-      // Mobile:  each link on its own line, centered
-      const linksHTML = links.map((link, index) => {
-        const isLast = index === links.length - 1;
-        const linkColor = isLast ? "#FF66CC" : (component.color || "#0563C1");
-        const sepColor  = index === links.length - 2 ? "#FF66CC" : "#000000";
-
-        const linkTag = `<a target="_blank" href="${link.href || "#"}" style="color:${linkColor}; font-size:${component.fontSize || "12px"}; font-family:Arial,sans-serif; text-decoration:underline; white-space:nowrap;">${(link.text || "Link").trim()}</a>`;
-
-        let afterLink = "";
-        if (!isLast) {
-          // Desktop: spaced pipe separator | Mobile: line break (each link on own row)
-          afterLink =
-            `<span class="desktop" style="color:${sepColor}; font-size:${component.fontSize || "12px"}; display:inline;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>` +
-            `<br class="mobile" style="display:none; mso-hide:all;" />`;
-        }
-        return linkTag + afterLink;
-      }).join("");
+      // One <td> per link, spread edge-to-edge on desktop.
+      // First td align=left, last td align=right, middle tds align=center.
+      // On mobile (<480px), .footer-link-col makes each td display:block → stacked centered rows.
+      const desktopTds = links.map((link, index) => {
+        const align = index === 0 ? "left" : index === links.length - 1 ? "right" : "center";
+        return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fontSize}; line-height:1.4; white-space:nowrap;">
+            <a href="${link.href || "#"}" target="_blank" style="color:${color}; text-decoration:underline; font-size:${fontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
+          </td>`;
+      }).join("\n          ");
 
       return `
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
       bgcolor="${component.backgroundColor || "#ffffff"}"
-      ${innerStyle ? `style="${innerStyle}"` : ""}
+      ${innerStyle ? `style="background-color:${component.backgroundColor || "#ffffff"};${innerStyle}"` : `style="background-color:${component.backgroundColor || "#ffffff"};"`}
       ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}>
-      <tbody><tr>
-        <td bgcolor="${component.backgroundColor || "#ffffff"}"
-          ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
-          style="padding:${component.padding || "20px"}; background-color:${component.backgroundColor || "#ffffff"};">
-          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-            <tr>
-              <td align="${component.textAlign || "left"}" class="mbl-text-center"
-                style="font-size:${component.fontSize || "12px"}; line-height:2; text-align:${component.textAlign || "left"};">
-                ${linksHTML}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr></tbody>
+      <tbody>
+        <tr>
+          <td bgcolor="${component.backgroundColor || "#ffffff"}"
+            ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
+            style="padding:${padding}; background-color:${component.backgroundColor || "#ffffff"};">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+              style="width:100%; table-layout:fixed;">
+              <tr>
+                ${desktopTds}
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
     </table>`.trim();
     }
     case "elzonris-divider": {
@@ -1543,63 +1562,6 @@ case "isi": {
       `.trim();
     }
 
-    case "elzonris-yellow-cta": {
-      const ctaDisplay = (component.displayType || "all") as EmailComponent["displayType"];
-      const { innerStyle: ctaInnerStyle } = getDisplayAttributes(ctaDisplay);
-      const ctaWidth = component.width || "300px";
-      const ctaWidthNum = parseInt(ctaWidth) || 300;
-      const ctaBg = component.backgroundColor || "#f55a1f";
-      const ctaColor = component.color || "#ffffff";
-      return `
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-  ${ctaDisplay === "mobile-only" ? 'class="mbl-show-table"' : ctaDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}
-  ${ctaInnerStyle ? `style="${ctaInnerStyle}"` : ""}>
-  <tbody><tr>
-    <td align="${component.textAlign || "center"}" style="padding:${component.padding || "15px 0 0 0"};" class="elzonris-cta-outer">
-      <!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
-        href="${component.href || "#"}" style="height:${component.height || "80px"};v-text-anchor:middle;width:${ctaWidthNum}px;"
-        arcsize="0%" stroke="f" fillcolor="${ctaBg}">
-        <w:anchorlock/>
-        <center style="color:${ctaColor};font-family:Arial,sans-serif;font-size:${component.fontSize || "28px"};font-weight:bold;">
-          ${component.text || "Know more about durable responses with ELZONRIS"} &#8250;
-        </center>
-      </v:roundrect>
-      <![endif]-->
-      <!--[if !mso]><!-->
-      <table class="elzonris-cta-table" role="presentation" cellspacing="0" cellpadding="0" border="0"
-        style="width:${ctaWidth}; border-collapse:collapse;">
-        <tr>
-          <td bgcolor="${ctaBg}" class="elzonris-cta-bg"
-            style="background-color:${ctaBg} !important; padding:0 30px; height:${component.height || "80px"};">
-            <a href="${component.href || "#"}" target="_blank"
-              style="text-decoration:none; display:block; width:100%;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="height:${component.height || "80px"};">
-                <tr>
-                  <td class="elzonris-cta-text"
-                    style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
-                           font-size:${component.fontSize || "28px"}; font-weight:${component.fontWeight || "bold"};
-                           line-height:1; vertical-align:middle; padding:0;">
-                    ${component.text || "Know more about durable responses with ELZONRIS"}
-                  </td>
-                  <td width="30" align="right" class="elzonris-cta-text"
-                    style="color:${ctaColor} !important; font-family:Arial,Helvetica,sans-serif;
-                           font-size:34px; font-weight:bold; white-space:nowrap; vertical-align:middle;
-                           padding:0 0 0 10px; line-height:1;">
-                    &#8250;
-                  </td>
-                </tr>
-              </table>
-            </a>
-          </td>
-        </tr>
-      </table>
-      <!--<![endif]-->
-    </td>
-  </tr></tbody>
-</table>`.trim();
-    }
-
     default:
       return "";
   }
@@ -1857,6 +1819,7 @@ export function generateEmailHTML(
                 display: block !important;
                 width: 95% !important;
                 text-align: center !important;
+                padding: 4px 0 !important;
               }
 
                .mbl-pL0 {

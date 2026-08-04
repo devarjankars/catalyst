@@ -355,7 +355,6 @@ export const componentTypes = [
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },
-        { text: "[Email Preferences]", href: "#link" },
       ],
       fontSize: "12px",
       color: "#009877",
@@ -372,7 +371,6 @@ export const componentTypes = [
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },
-        { text: "[Email Preferences]", href: "#link" },
       ],
       fontSize: "12px",
       color: "#009877",
@@ -680,23 +678,6 @@ export const componentTypes = [
                 </tr>
             </tbody>
         </table>`,
-    },
-  },
-  {
-    type: "elzonris-yellow-cta",
-    label: "Elzonris CTA",
-    category: "elzonris",
-    icon: RectangleHorizontal,
-    defaultProps: {
-      href: "#",
-      text: "Know more about durable responses with ELZONRIS",
-      backgroundColor: "#f55a1f",
-      color: "#ffffff",
-      fontSize: "28px",
-      fontWeight: "bold",
-      width: "300px",
-      textAlign: "center",
-      padding: "15px 0 0 0",
     },
   },
    {

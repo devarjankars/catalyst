@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
 import { SectionDropZone } from "./section-drop-zone";
 import { RearrangeControls } from "./rearrange-controls";
@@ -17,6 +17,9 @@ import FourColumnSection from "./section-components/four-column-section";
 import FiveColumnSection from "./section-components/five-column-section";
 import SixColumnSection from "./section-components/six-column-section";
 import { se } from "date-fns/locale";
+import { firebaseService } from "@/services/firebase-service";
+import { useEmailBuilderStore } from "@/store/email-builder-store";
+import { toast } from "sonner";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -73,6 +76,35 @@ export function EmailComponentRenderer({
 }: EmailComponentRendererProps) {
   const ref = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
+
+  // --- Image drag-and-drop state (declared at component level to satisfy Rules of Hooks) ---
+  const [imgDragOver, setImgDragOver] = useState(false);
+  const [imgUploading, setImgUploading] = useState(false);
+  const { currentTemplate, addTemplateImage } = useEmailBuilderStore();
+
+  const handleImageFileDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImgDragOver(false);
+    if (previewMode || isLockedMode) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+    setImgUploading(true);
+    try {
+      const url = await firebaseService.uploadImage(file, currentTemplate?.id);
+      if (url === "PATH_NOT_FOUND") { toast.warning("Please save the email first!"); return; }
+      onUpdate({ src: url });
+      addTemplateImage(url);
+      toast.success("Image updated");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setImgUploading(false);
+    }
+  }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
 
   const [{ handlerId }, drop] = useDrop({
     accept: "component",
@@ -320,34 +352,46 @@ export function EmailComponentRenderer({
           </div>
         );
 
-      case "image":
+      case "image": {
         return (
           <div
             style={baseStyle}
-            className={`flex flex-col items-${
-              ImageAlimentMap[component?.textAlign ] || "center"
-            } mt-2`}
+            className={`flex flex-col items-${ImageAlimentMap[component?.textAlign] || "center"} mt-2 relative`}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
+            onDragLeave={(e) => { e.stopPropagation(); setImgDragOver(false); }}
+            onDrop={handleImageFileDrop}
           >
-           
             <img
-              src={
-                component.src ||
-                "/placeholder.svg?height=200&width=400&text=Click to edit"
-              }
+              src={component.src || "/placeholder.svg?height=200&width=400&text=Click to edit"}
               alt={component.alt || "Image"}
               style={{
                 width: component.width || "100%",
                 height: component.height || "auto",
                 display: "block",
                 maxWidth: "100%",
+                opacity: imgUploading ? 0.4 : 1,
+                transition: "opacity 0.2s",
               }}
-              onClick={(e) => {
-                e.stopPropagation()
-                !previewMode && !isLockedMode && onSelect()
-              }}
+              onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
             />
+            {/* Drop overlay */}
+            {imgDragOver && !imgUploading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-50/80 border-2 border-dashed border-blue-400 rounded pointer-events-none z-10">
+                <svg className="w-8 h-8 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-xs font-medium text-blue-500">Drop to replace image</span>
+              </div>
+            )}
+            {/* Upload spinner */}
+            {imgUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded z-10">
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+              </div>
+            )}
           </div>
         );
+      }
 
       case "button":
         return (
@@ -556,7 +600,7 @@ export function EmailComponentRenderer({
 
       case "elzonris-pi":
         return (
-          <div style={{ ...baseStyle, padding: component.padding || "0 20px", textAlign: "left", fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
+          <div style={{ ...baseStyle, padding: component.padding || "0 20px 10px 20px", textAlign: "left", fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
             <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
               Please see Full <a href={component.piHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>Prescribing Information</a>, including Boxed WARNING.
             </p>
@@ -584,13 +628,12 @@ export function EmailComponentRenderer({
 
       case "footer-link-3":
         return (
-          <div className="flex justify-between w-full" style={baseStyle}>
+          <div style={{ ...baseStyle, padding: component.padding || "0 20px 10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             {component.links?.map((link, linkIndex) => (
               <a
                 key={linkIndex}
                 href={link.href || "#"}
-                className="flex-1 text-center"
-                style={{ color: component.color || "#009877", textDecoration: "underline", fontSize: component.fontSize || "12px" }}
+                style={{ color: component.color || "#009877", textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
                 onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
               >
                 {link.text}
@@ -600,53 +643,43 @@ export function EmailComponentRenderer({
         );
 
       case "footer-with-Preferences": {
-        const links = component.links || [];
-        return (
-          <div style={{ ...baseStyle }}>
-            {/* Desktop view: one line with spaced | separators */}
-            <div className="hidden sm:block" style={{ textAlign: (component.textAlign as any) || "left", lineHeight: "2" }}>
-              {links.map((link, index) => {
-                const isLast = index === links.length - 1;
-                const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
-                const sepColor = index === links.length - 2 ? "#FF66CC" : "#000000";
-                return (
-                  <React.Fragment key={index}>
-                    <a
-                      href={link.href || "#"}
-                      style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
-                      onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
-                    >
-                      {link.text}
-                    </a>
-                    {!isLast && (
-                      <span style={{ color: sepColor, fontSize: component.fontSize || "12px" }}>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-            {/* Mobile view: each link on its own line, centered */}
-            <div className="block sm:hidden" style={{ textAlign: "center", lineHeight: "2" }}>
-              {links.map((link, index) => {
-                const isLast = index === links.length - 1;
-                const color = isLast ? "#FF66CC" : (component.color || "#0563C1");
-                return (
-                  <div key={index}>
-                    <a
-                      href={link.href || "#"}
-                      style={{ color, textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif" }}
-                      onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
-                    >
-                      {link.text}
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      }
+  const links = component.links || [];
 
+  return (
+    <div
+      className="footer-preferences"
+      style={{
+        ...baseStyle,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        lineHeight: component.lineHeight || "2",
+      }}
+    >
+      {links.map((link, index) => (
+        <a
+          key={index}
+          href={link.href || "#"}
+          style={{
+            color: component.color || "#0563C1",
+            textDecoration: "underline",
+            fontSize: component.fontSize || "12px",
+            fontFamily: "Arial, sans-serif",
+            whiteSpace: "nowrap",
+          }}
+          onClick={(e) => {
+            if (!previewMode) {
+              e.preventDefault();
+              if (!isLockedMode) onSelect();
+            }
+          }}
+        >
+          {link.text}
+        </a>
+      ))}
+    </div>
+  );
+}
     
       case "isi":
         return (
@@ -695,7 +728,12 @@ export function EmailComponentRenderer({
 
       case "header-image":
         return (
-          <div className="mt-2 z-50 flex justify-center">
+          <div
+            className="mt-2 z-50 flex justify-center relative"
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
+            onDragLeave={(e) => { e.stopPropagation(); setImgDragOver(false); }}
+            onDrop={handleImageFileDrop}
+          >
             <img
               src={component.src || "/header-placeholder.png"}
               alt={component.alt || "Header Image"}
@@ -704,12 +742,24 @@ export function EmailComponentRenderer({
                 height: component.height || "auto",
                 maxWidth: component.maxWidth || "600px",
                 display: "block",
+                opacity: imgUploading ? 0.4 : 1,
+                transition: "opacity 0.2s",
               }}
-              onClick={(e) => {
-                e.stopPropagation()
-                !previewMode && !isLockedMode && onSelect()
-              }}
+              onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
             />
+            {imgDragOver && !imgUploading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-50/80 border-2 border-dashed border-blue-400 rounded pointer-events-none z-10">
+                <svg className="w-8 h-8 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-xs font-medium text-blue-500">Drop to replace image</span>
+              </div>
+            )}
+            {imgUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded z-10">
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+              </div>
+            )}
           </div>
         );
         case "chevron-divider":
@@ -854,59 +904,6 @@ export function EmailComponentRenderer({
             </div>
           );
 
-        case "elzonris-yellow-cta":
-        return (
-          <div
-            style={{ padding: component.padding || "15px 0 0 0", colorScheme: "light", textAlign: (component.textAlign as any) || "center" }}
-          >
-            <a
-              href={component.href || "#"}
-              style={{
-                display: "inline-flex",
-                alignItems: "stretch",
-                justifyContent: "space-between",
-                backgroundColor: component.backgroundColor || "#f55a1f",
-                textDecoration: "none",
-                cursor: "pointer",
-                width: component.width || "300px",
-                boxSizing: "border-box",
-                colorScheme: "light",
-                minHeight: component.height || "80px",
-              }}
-              onClick={(e) => {
-                if (!previewMode) {
-                  e.preventDefault();
-                  if (!isLockedMode) onSelect();
-                }
-              }}
-            >
-              <span style={{
-                color: component.color || "#ffffff",
-                fontSize: component.fontSize || "28px",
-                fontWeight: component.fontWeight || "bold",
-                lineHeight: "1.2",
-                fontFamily: "Arial, Helvetica, sans-serif",
-                flex: "1",
-                padding: "18px 0 18px 30px",
-                display: "flex",
-                alignItems: "center",
-              }}>
-                {component.text || "Know more about durable responses with ELZONRIS"}
-              </span>
-              <span style={{
-                color: component.color || "#ffffff",
-                fontSize: "34px",
-                fontWeight: "bold",
-                lineHeight: "1",
-                padding: "18px 30px 18px 10px",
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                alignSelf: "stretch",
-              }}>&#8250;</span>
-            </a>
-          </div>
-        );
           case "image-with-link" :
              return (
           <div

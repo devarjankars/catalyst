@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon } from "lucide-react"
+import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon, Mail, LayoutTemplate } from "lucide-react"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LoadingSpinner } from "@/components/loading-spinner"
@@ -18,6 +18,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {useClientStore} from "@/store/client-store"
 import Link from "next/link"
 import Tasktable from "@/components/task-table"
@@ -41,6 +42,11 @@ export default function Dashboard() {
   })
   const [showAll, setShowAll] = useState(false);
   const [openCreate , setCreate] = useState(false);
+  const [intentDialog, setIntentDialog] = useState<{ open: boolean; template: EmailTemplate | null; isBlank: boolean }>({
+    open: false,
+    template: null,
+    isBlank: false,
+  });
  const {clientsFolders} = useClientStore(); 
  const displayedFolders = showAll ? clientsFolders : clientsFolders.slice(0, 6);
 
@@ -120,13 +126,23 @@ export default function Dashboard() {
   }
 
   const handleCreateBlank = () => {
-    router.push("/builder?selectMode=true")
+    setIntentDialog({ open: true, template: null, isBlank: true });
   }
 
   const handleUseTemplate = async (template: EmailTemplate) => {
-    // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+    setIntentDialog({ open: true, template, isBlank: false });
   }
+
+  const handleIntentSelect = (createVsb: boolean) => {
+    const { template, isBlank } = intentDialog;
+    setIntentDialog({ open: false, template: null, isBlank: false });
+    const vsbSuffix = createVsb ? "&createVsb=true" : "";
+    if (isBlank) {
+      router.push(`/builder?selectMode=true${vsbSuffix}`);
+    } else if (template) {
+      router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true${vsbSuffix}`);
+    }
+  };
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
@@ -298,6 +314,42 @@ export default function Dashboard() {
         onCancel={() => setDeleteDialog({ open: false, template: null })}
       />
      <CreateProjectDialog onOpen={openCreate} onClose={() => setCreate(false)}/>
+
+     {/* Intent Dialog — shown before entering the builder */}
+     <Dialog open={intentDialog.open} onOpenChange={(open) => !open && setIntentDialog({ open: false, template: null, isBlank: false })}>
+       <DialogContent className="sm:max-w-[420px]">
+         <DialogHeader>
+           <DialogTitle>What would you like to do?</DialogTitle>
+           <DialogDescription>
+             {intentDialog.isBlank
+               ? "Choose how you want to start."
+               : `You're opening "${intentDialog.template?.name}". Choose what you'd like to build.`}
+           </DialogDescription>
+         </DialogHeader>
+         <div className="grid grid-cols-2 gap-3 pt-2">
+           <button
+             onClick={() => handleIntentSelect(false)}
+             className="flex flex-col items-center gap-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 p-5 transition-all text-left"
+           >
+             <Mail className="w-7 h-7 text-blue-600" />
+             <div>
+               <p className="font-semibold text-sm">Build Email</p>
+               <p className="text-xs text-gray-500 mt-0.5">Design and export an email template</p>
+             </div>
+           </button>
+           <button
+             onClick={() => handleIntentSelect(true)}
+             className="flex flex-col items-center gap-3 rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 p-5 transition-all text-left"
+           >
+             <LayoutTemplate className="w-7 h-7 text-purple-600" />
+             <div>
+               <p className="font-semibold text-sm">Create VSB</p>
+               <p className="text-xs text-gray-500 mt-0.5">Build a Visual Story Board presentation</p>
+             </div>
+           </button>
+         </div>
+       </DialogContent>
+     </Dialog>
     </div>
   )
 }
