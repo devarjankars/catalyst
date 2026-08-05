@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { EmailCanvas } from "@/components/email-canvas";
 import { ComponentPalette } from "@/components/component-palette";
 import { PropertiesPanel } from "@/components/properties-panel";
@@ -507,7 +505,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <>
       <div className="h-screen flex flex-col bg-gray-50">
         {/* Header - sticky */}
         <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-20">
@@ -758,7 +756,7 @@ if (activeSelectedId) {
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />
-    </DndProvider>
+    </>
   );
 }
 
