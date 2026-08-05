@@ -35,9 +35,6 @@ import {
 } from "@/components/ui/dialog"
 import { generateEmailHTML } from '@/lib/email-generator';
 import { generateCombinedPdfAction } from '@/app/actions';
-import { reactToHtml } from '@/lib/react-to-html';
-import VariablePagePdfView from '@/components/vsb-sections/VariablePagePdfView';
-import ALtnamePdfview from '@/components/vsb-sections/ALtnamePdfview';
 import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
@@ -84,11 +81,11 @@ export default function VSBPage() {
     const includeMV  = options ? options.mobileView   : true;
     const includeANP = options ? options.altNamePage  : true;
 
-    const variableCopyHtml = includeVC
-      ? reactToHtml(<VariablePagePdfView data={currentVsb.variableCopy} emailname={emailName} headingColor={currentVsb.variableCopyHeadingColor} />)
+    const variableCopyData = includeVC
+      ? { data: currentVsb.variableCopy, emailname: emailName, headingColor: currentVsb.variableCopyHeadingColor }
       : undefined;
-    const altNameHtml = includeANP
-      ? reactToHtml(<ALtnamePdfview data={currentVsb.altNamePage} emailName={emailName} />)
+    const altNameData = includeANP
+      ? { data: currentVsb.altNamePage, emailName }
       : undefined;
 
     const isThreeMode = currentTemplate?.optionMode === 'three';
@@ -130,7 +127,21 @@ export default function VSBPage() {
 
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      return injectHeader(raw, makeHeaderHtml(`Desktop View - ${opt.title}`));
+      // Inject body margin reset so email fills the 600px viewport edge-to-edge
+      const normalized = raw.replace(
+        /<body([^>]*)>/i,
+        '<body$1 style="margin:0;padding:0;width:600px;">'
+      );
+      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
+    });
+
+    const mobileHtmls = optArray.map(opt => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      const normalized = raw.replace(
+        /<body([^>]*)>/i,
+        '<body$1 style="margin:0;padding:0;width:375px;">'
+      );
+      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
     });
 
     const desktopFinalHtml = isThreeMode
@@ -143,17 +154,12 @@ export default function VSBPage() {
          </div>`
       : desktopHtmls[0];
 
-    const mobileHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      return injectHeader(raw, makeHeaderHtml(`Mobile View - ${opt.title}`));
-    });
-
     const base64Merged = await generateCombinedPdfAction({
       emailHtmlDesktop:  includeDV ? desktopFinalHtml         : undefined,
       emailHtmlsMobile:  includeMV && isThreeMode ? mobileHtmls : undefined,
       emailHtmlMobile:   includeMV && !isThreeMode ? mobileHtmls[0] : undefined,
-      variableCopyHtml,
-      altNameHtml,
+      variableCopyData,
+      altNameData,
       emailName,
       desktopWidthOverride: isThreeMode ? '1900px' : undefined,
     });
@@ -188,7 +194,7 @@ export default function VSBPage() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download PDF:', error);
-      alert('Failed to download PDF.');
+      alert(`Failed to download PDF.\n\n${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -206,11 +212,20 @@ export default function VSBPage() {
       if (newPdfUrl) {
         const versions = currentVsb.versions || [];
         const currentVersion = currentVsb.currentVersion;
-        await updateVSB(currentVsb.id, {
+        const versionUpdates = {
           currentVersion: newPdfUrl,
           versions: currentVersion ? [...versions, currentVersion] : versions,
-        });
-        alert('VSB successfully up-versioned!');
+        };
+
+        // Persist version data directly to Firestore (store's updateVSB is local-only)
+        const success = await firebaseService.updateVSB(currentVsb.id, versionUpdates);
+        if (success) {
+          // Sync local Zustand state to reflect the saved changes
+          await updateVSB(currentVsb.id, versionUpdates);
+          alert('VSB successfully up-versioned!');
+        } else {
+          alert('PDF uploaded but failed to save version to database. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Failed to up-version VSB:', error);

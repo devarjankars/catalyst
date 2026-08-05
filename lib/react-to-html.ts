@@ -1,5 +1,3 @@
-"use client"
-
 import { renderToStaticMarkup } from 'react-dom/server';
 
 export function reactToHtml(element: React.ReactElement): string {

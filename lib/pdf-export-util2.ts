@@ -1,7 +1,64 @@
 import { chromium } from 'playwright';
-import { reactToHtml } from './react-to-html';
 import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
-import React from 'react';
+import https from 'https';
+import http from 'http';
+
+// ── Fetch a URL and return it as a base64 data URI ────────────────────────────
+async function urlToDataUri(url: string): Promise<string | null> {
+    return new Promise((resolve) => {
+        const client = url.startsWith('https') ? https : http;
+        const req = client.get(url, { timeout: 8000 }, (res) => {
+            const chunks: Buffer[] = [];
+            res.on('data', (chunk) => chunks.push(chunk));
+            res.on('end', () => {
+                const buf = Buffer.concat(chunks);
+                const mime = res.headers['content-type'] || 'image/png';
+                resolve(`data:${mime};base64,${buf.toString('base64')}`);
+            });
+            res.on('error', () => resolve(null));
+        });
+        req.on('error', () => resolve(null));
+        req.on('timeout', () => { req.destroy(); resolve(null); });
+    });
+}
+
+// ── Replace all <img src="..."> with inline base64 data URIs ─────────────────
+// Also resolves relative /path.png against the app base URL
+async function inlineImages(html: string, appBaseUrl: string): Promise<string> {
+    const srcPattern = /(<img[^>]+src=["'])([^"']+)(["'])/gi;
+    const matches: Array<{ full: string; prefix: string; src: string; suffix: string }> = [];
+
+    let m: RegExpExecArray | null;
+    while ((m = srcPattern.exec(html)) !== null) {
+        matches.push({ full: m[0], prefix: m[1], src: m[2], suffix: m[3] });
+    }
+
+    for (const match of matches) {
+        let { src } = match;
+
+        // Skip already-inlined images
+        if (src.startsWith('data:')) continue;
+
+        // Resolve relative paths to absolute
+        if (src.startsWith('/')) {
+            src = `${appBaseUrl}${src}`;
+        } else if (!src.startsWith('http')) {
+            src = `${appBaseUrl}/${src}`;
+        }
+
+        const dataUri = await urlToDataUri(src);
+        if (dataUri) {
+            html = html.replace(match.full, `${match.prefix}${dataUri}${match.suffix}`);
+        }
+    }
+
+    return html;
+}
+
+// ── Detect the running Next.js port ──────────────────────────────────────────
+function getAppBaseUrl(): string {
+    return process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
+}
 
 export async function generatePdfBuffer(
     html: string,
@@ -9,15 +66,23 @@ export async function generatePdfBuffer(
     customWidth?: string,
 ): Promise<Buffer> {
     const isMobile = viewMode === 'mobile';
-    const browser = await chromium.launch({ args: ['--no-sandbox'] });
+
+    // Inline all images as base64 so Playwright doesn't need to fetch them
+    const appBase = getAppBaseUrl();
+    const inlinedHtml = await inlineImages(html, appBase);
+
+    const browser = await chromium.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
 
     try {
         const numericWidth = customWidth
             ? parseInt(customWidth, 10)
-            : isMobile ? 375 : 1280;
+            : isMobile ? 375 : 600;
 
         const context = await browser.newContext({
             viewport: { width: numericWidth, height: 900 },
+            ignoreHTTPSErrors: true,
             userAgent: isMobile && numericWidth <= 375
                 ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
                 : undefined,
@@ -25,7 +90,29 @@ export async function generatePdfBuffer(
 
         const page = await context.newPage();
         await page.emulateMedia({ media: 'screen' });
-        await page.setContent(html, { waitUntil: 'networkidle' });
+
+        // Use setContent — all images are already base64 so no network fetches needed
+        await page.setContent(inlinedHtml, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+        // Wait for any remaining dynamic images (e.g. CSS backgrounds loaded via JS)
+        await page.evaluate(() => {
+            return new Promise<void>((resolve) => {
+                const imgs = Array.from(document.querySelectorAll('img'));
+                if (imgs.length === 0) { resolve(); return; }
+                let pending = imgs.length;
+                const done = () => { if (--pending === 0) resolve(); };
+                imgs.forEach(img => {
+                    if (img.complete) { done(); }
+                    else {
+                        img.addEventListener('load', done);
+                        img.addEventListener('error', done);
+                    }
+                });
+                setTimeout(resolve, 3000);
+            });
+        });
+
+        await page.waitForTimeout(200);
 
         const bodyHeight = await page.evaluate(() => {
             const docHeight     = document.documentElement.scrollHeight;
@@ -50,14 +137,6 @@ export async function generatePdfBuffer(
     } finally {
         await browser.close();
     }
-}
-
-export async function generatePdfFromReact(
-    element: React.ReactElement,
-    viewMode: 'desktop' | 'mobile' = 'desktop'
-): Promise<Buffer> {
-    const html = reactToHtml(element);
-    return generatePdfBuffer(html, viewMode);
 }
 
 export async function mergePdfBuffers(pdfBuffers: Buffer[]): Promise<Buffer> {
@@ -135,7 +214,7 @@ export async function generateMobileMultiOptionPdf(
 export async function generateCombinedPdf({
     emailHtmlDesktop,
     emailHtmlMobile,
-    emailHtmlsMobile,   // NEW: array of individual mobile HTMLs for multi-option
+    emailHtmlsMobile,
     variableCopyHtml,
     altNameHtml,
     emailName,
@@ -144,7 +223,7 @@ export async function generateCombinedPdf({
 }: {
     emailHtmlDesktop?: string;
     emailHtmlMobile?: string;
-    emailHtmlsMobile?: string[];  // NEW
+    emailHtmlsMobile?: string[];
     variableCopyHtml?: string;
     altNameHtml?: string;
     emailName: string;
@@ -155,27 +234,46 @@ export async function generateCombinedPdf({
 
     // 1. Variable Copy
     if (variableCopyHtml) {
-        pdfBuffers.push(await generatePdfBuffer(variableCopyHtml, 'desktop'));
+        console.log('[PDF] Generating variable copy...');
+        try {
+            pdfBuffers.push(await generatePdfBuffer(variableCopyHtml, 'desktop'));
+            console.log('[PDF] Variable copy done.');
+        } catch (e) { throw new Error(`Variable copy page failed: ${(e as Error).message}`); }
     }
 
     // 2. Desktop View
     if (emailHtmlDesktop) {
-        pdfBuffers.push(await generatePdfBuffer(emailHtmlDesktop, 'desktop', desktopWidthOverride));
+        console.log('[PDF] Generating desktop view...');
+        try {
+            pdfBuffers.push(await generatePdfBuffer(emailHtmlDesktop, 'desktop', desktopWidthOverride));
+            console.log('[PDF] Desktop view done.');
+        } catch (e) { throw new Error(`Desktop view page failed: ${(e as Error).message}`); }
     }
 
     // 3. Mobile View
     if (emailHtmlsMobile && emailHtmlsMobile.length > 1) {
-        // Multi-option: render each at true 375px then stitch side-by-side at PDF level
-        pdfBuffers.push(await generateMobileMultiOptionPdf(emailHtmlsMobile));
+        console.log('[PDF] Generating mobile multi-option view...');
+        try {
+            pdfBuffers.push(await generateMobileMultiOptionPdf(emailHtmlsMobile));
+            console.log('[PDF] Mobile multi-option done.');
+        } catch (e) { throw new Error(`Mobile multi-option view failed: ${(e as Error).message}`); }
     } else if (emailHtmlMobile) {
-        // Single option: straightforward 375px render
-        pdfBuffers.push(await generatePdfBuffer(emailHtmlMobile, 'mobile'));
+        console.log('[PDF] Generating mobile view...');
+        try {
+            pdfBuffers.push(await generatePdfBuffer(emailHtmlMobile, 'mobile'));
+            console.log('[PDF] Mobile view done.');
+        } catch (e) { throw new Error(`Mobile view page failed: ${(e as Error).message}`); }
     }
 
     // 4. Alt Name Page
     if (altNameHtml) {
-        pdfBuffers.push(await generatePdfBuffer(altNameHtml, 'desktop'));
+        console.log('[PDF] Generating alt name page...');
+        try {
+            pdfBuffers.push(await generatePdfBuffer(altNameHtml, 'desktop'));
+            console.log('[PDF] Alt name page done.');
+        } catch (e) { throw new Error(`Alt name page failed: ${(e as Error).message}`); }
     }
 
+    console.log(`[PDF] Merging ${pdfBuffers.length} pages...`);
     return mergePdfBuffers(pdfBuffers);
 }
