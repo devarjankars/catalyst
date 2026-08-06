@@ -85,7 +85,7 @@ export const componentTypes = [
   {
     type: "cta-button",
     label: "CTA Button",
-    category : "custom",
+    category : "basic",
     icon: RectangleHorizontal,
     defaultProps: {
       href: "#",
@@ -207,6 +207,43 @@ export const componentTypes = [
   icon: List,
   defaultProps: {
     listItems: [`List Item`],   // array of strings
+  },
+},
+{
+  type: "email-footer",
+  label: "Footer Links (5)",
+  category: "basic",
+  icon: PanelBottom,
+  defaultProps: {
+    links: [
+      { text: "Privacy and Terms of Use", href: "#" },
+      { text: "CCPA Policy", href: "#" },
+      { text: "Cookies Policy", href: "#" },
+      { text: "Unsubscribe", href: "#" },
+      { text: "Email Preferences", href: "#" },
+    ],
+    fontSize: "12px",
+    color: "#0563C1",
+    backgroundColor: "#ffffff",
+    padding: "10px 20px",
+  },
+},
+{
+  type: "footer-with-Preferences",
+  label: "Footer Links (4)",
+  category: "basic",
+  icon: PanelBottom,
+  defaultProps: {
+    links: [
+      { text: "Privacy and Terms of Use", href: "#" },
+      { text: "CCPA Policy", href: "#" },
+      { text: "Cookies Policy", href: "#" },
+      { text: "Unsubscribe", href: "#" },
+    ],
+    fontSize: "12px",
+    color: "#0563C1",
+    backgroundColor: "#ffffff",
+    padding: "0 20px 10px 20px",
   },
 },
 {
@@ -340,38 +377,6 @@ export const componentTypes = [
         { text: "Cookies Policy", href: "#" },
       ],
       textAlign: "left",
-      fontSize: "12px",
-      color: "#009877",
-    },
-  },
-  {
-    type: "footer-with-Preferences",
-    label: "Footer with Email Preference",
-    category: "custom",
-    icon: PanelBottom,
-    defaultProps: {
-      links: [
-        { text: "Privacy and Term of Use", href: "#" },
-        { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
-        { text: "Unsubscribe", href: "#" },
-      ],
-      fontSize: "12px",
-      color: "#009877",
-    },
-  },
-  {
-    type: "footer-with-Preferences",
-    label: "Footer with Email Preference",
-    category: "elzonris",
-    icon: PanelBottom,
-    defaultProps: {
-      links: [
-        { text: "Privacy and Term of Use", href: "#" },
-        { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
-        { text: "Unsubscribe", href: "#" },
-      ],
       fontSize: "12px",
       color: "#009877",
     },

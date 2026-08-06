@@ -78,120 +78,21 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   };
 
   const handlePDFExport = async () => {
+    if (!iframeRef.current) {
+      alert("Preview not loaded");
+      return;
+    }
+
     setIsExportingPDF(true);
     try {
       const viewMode = screen === "600px" ? "desktop" : "mobile";
-      const isMobile = viewMode === "mobile";
-      const renderWidth = isMobile ? 375 : 600;
-      const fileName = currentTemplate?.name
-        ? `${currentTemplate.name}-${viewMode}`
-        : `email-preview-${viewMode}`;
-
-      let fullHtml = buildHtml(getActiveComponents(), preheaderText, dark);
-
-      // For mobile: force the email-container to 375px so mobile media queries
-      // fire and layout renders as a real mobile email
-      if (isMobile) {
-        fullHtml = fullHtml.replace("</head>", `<style>
-          .email-container { width: 375px !important; max-width: 375px !important; }
-        </style></head>`);
-      }
-
-      // Hidden iframe — on-screen (opacity:0) so html2canvas works correctly
-      const printFrame = document.createElement("iframe");
-      printFrame.style.cssText = [
-        `position:fixed`,
-        `top:0`,
-        `left:0`,
-        `width:${renderWidth}px`,
-        `height:1px`,
-        `border:0`,
-        `opacity:0`,
-        `pointer-events:none`,
-        `z-index:-1`,
-      ].join(";");
-      document.body.appendChild(printFrame);
-
-      const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
-      if (!printDoc) throw new Error("Print frame not accessible");
-
-      printDoc.open();
-      printDoc.write(fullHtml);
-      printDoc.close();
-
-      // Wait for images
-      await new Promise<void>((resolve) => {
-        const images = Array.from(printDoc.images);
-        if (images.length === 0) { resolve(); return; }
-        let loaded = 0;
-        const done = () => { loaded++; if (loaded >= images.length) resolve(); };
-        images.forEach((img) => { if (img.complete) done(); else { img.onload = done; img.onerror = done; } });
-        setTimeout(resolve, 4000);
-      });
-
-      await new Promise(r => setTimeout(r, 150));
-
-      const bodyHeight = Math.max(printDoc.body.scrollHeight, printDoc.documentElement.scrollHeight);
-      printFrame.style.height = `${bodyHeight}px`;
-      await new Promise(r => setTimeout(r, 50));
-
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
-
-      const canvas = await html2canvas(printDoc.body, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        width: renderWidth,
-        windowWidth: renderWidth,
-        height: bodyHeight,
-        windowHeight: bodyHeight,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        onclone: (clonedDoc: Document) => {
-          clonedDoc.body.style.margin = "0";
-          clonedDoc.body.style.padding = "0";
-          // Re-apply the mobile container constraint inside the cloned doc
-          if (isMobile) {
-            const containers = clonedDoc.querySelectorAll<HTMLElement>(".email-container");
-            containers.forEach((el) => {
-              el.style.width = "375px";
-              el.style.maxWidth = "375px";
-            });
-            // Also constrain any fixed-width tables at root level
-            const outerTable = clonedDoc.querySelector<HTMLElement>("body > table");
-            if (outerTable) {
-              outerTable.style.width = "375px";
-              outerTable.style.maxWidth = "375px";
-            }
-          }
-        },
-      });
-
-      document.body.removeChild(printFrame);
-
-      const pdf = new jsPDF({
-        unit: "px",
-        format: [renderWidth, bodyHeight],
-        orientation: "portrait",
-        hotfixes: ["px_scaling"],
-      });
-
-      pdf.addImage(
-        canvas.toDataURL("image/jpeg", 0.98),
-        "JPEG",
-        0,
-        0,
-        renderWidth,
-        bodyHeight,
-      );
-
-      pdf.save(`${fileName}.pdf`);
+      const fileName = currentTemplate?.name || "email-preview";
+      
+      const { exportToPDF } = await import("@/lib/pdf-export-utils");
+      await exportToPDF(iframeRef.current, fileName, viewMode);
     } catch (error) {
       console.error("PDF export failed:", error);
-      alert("Failed to export PDF. Please try again.");
+      alert(`Failed to export PDF: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsExportingPDF(false);
     }

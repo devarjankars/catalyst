@@ -419,6 +419,9 @@ export function EmailComponentRenderer({
             ) : null}
             <a
               href={component.href || "#"}
+              title={component.linkTitle || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-block",
                 backgroundColor: component.backgroundColor || "#007bff",
@@ -469,14 +472,15 @@ export function EmailComponentRenderer({
           >
             <a
               href={component.href || "#"}
+              title={component.linkTitle || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-block",
-
                 color: component.color || "#ffffff",
                 padding: component.buttonPadding || "12px 24px",
                 borderRadius: component.borderRadius || "4px",
                 textDecoration: "none",
-
                 fontWeight: "bold",
               }}
               onClick={(e) => {
@@ -508,6 +512,9 @@ export function EmailComponentRenderer({
                 <React.Fragment key={linkIndex}>
                   <a
                     href={link.href || "#"}
+                    title={link.title || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       color: component.color || "#007bff",
                       textDecoration: "underline",
@@ -552,6 +559,8 @@ export function EmailComponentRenderer({
                 <React.Fragment key={linkIndex}>
                   <a
                     href={link.href || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       color: component.color || "#007bff",
                       textDecoration: "underline",
@@ -583,6 +592,9 @@ export function EmailComponentRenderer({
           }}>
             <a
               href={component.href || "#"}
+              title={component.linkTitle || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 color: component.color || "#2360d9",
                 textDecoration: "underline",
@@ -602,10 +614,10 @@ export function EmailComponentRenderer({
         return (
           <div style={{ ...baseStyle, padding: component.padding || "0 20px 10px 20px", textAlign: "left", fontSize: component.fontSize || "12px", color: component.color || "#000000", fontFamily: "Arial, sans-serif" }}>
             <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
-              Please see Full <a href={component.piHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>Prescribing Information</a>, including Boxed WARNING.
+              Please see Full <a href={component.piHref || "#"} title={component.piTitle || undefined} target="_blank" rel="noopener noreferrer" style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>Prescribing Information</a>, including Boxed WARNING.
             </p>
             <p style={{ fontWeight: "bold" }}>
-              Please click <a href={component.isiHref || "#"} style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
+              Please click <a href={component.isiHref || "#"} title={component.isiTitle || undefined} target="_blank" rel="noopener noreferrer" style={{ color: component.linkColor || "#009877", textDecoration: "underline", fontWeight: "bold" }} onClick={(e) => !previewMode && e.preventDefault()}>here</a>&nbsp;for Important Safety Information, including Boxed WARNING.
             </p>
           </div>
         );
@@ -614,12 +626,12 @@ export function EmailComponentRenderer({
         return (
           <div className="flex flex-row sm:flex-row sm:gap-2 flex-wrap items-center justify-between w-full" style={baseStyle}>
             <div className="w-full sm:w-[45%]" style={{ minWidth: 0 }}>
-              <a href={component?.logoA?.href || "#"} onClick={(e) => !previewMode && e.preventDefault()}>
+              <a href={component?.logoA?.href || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !previewMode && e.preventDefault()}>
                 <img width="100%" src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex} style={{ display: "block" }} />
               </a>
             </div>
             <div className="w-full sm:w-[35%]" style={{ minWidth: 0 }}>
-              <a href={component?.logoB?.href || "#"} onClick={(e) => !previewMode && e.preventDefault()}>
+              <a href={component?.logoB?.href || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !previewMode && e.preventDefault()}>
                 <img width="100%" src={component?.logoB?.imgSrc} alt={component?.logoB?.altTex} style={{ display: "block" }} />
               </a>
             </div>
@@ -633,6 +645,9 @@ export function EmailComponentRenderer({
               <a
                 key={linkIndex}
                 href={link.href || "#"}
+                title={link.title || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{ color: component.color || "#009877", textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
                 onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
               >
@@ -642,24 +657,74 @@ export function EmailComponentRenderer({
           </div>
         );
 
+      case "email-footer": {
+        const links = component.links || [];
+        return (
+          <div
+            style={{
+              backgroundColor: component.backgroundColor || "#ffffff",
+              padding: component.padding || "0px",
+              width: "100%",
+              boxSizing: "border-box",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ fontSize: component.fontSize || "12px", lineHeight: component.fontSize || "12px" }}>
+              {links.map((link, linkIndex) => {
+                const isLast = linkIndex === links.length - 1;
+                const isEven = (linkIndex + 1) % 2 === 0;
+                return (
+                  <React.Fragment key={linkIndex}>
+                    <a
+                      href={link.href || "#"}
+                      title={link.title || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: component.color || "#0563C1",
+                        textDecoration: "underline",
+                        fontSize: component.fontSize || "12px",
+                        fontFamily: "Arial, sans-serif",
+                      }}
+                      onClick={(e) => {
+                        if (!previewMode) {
+                          e.preventDefault();
+                          if (!isLockedMode) onSelect();
+                        }
+                      }}
+                    >
+                      {link.text}
+                    </a>
+                    {!isLast && (
+                      <span style={{ color: component.color || "#0563C1", fontSize: component.fontSize || "12px" }}>
+                        &nbsp;&nbsp;|&nbsp;
+                      </span>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
       case "footer-with-Preferences": {
   const links = component.links || [];
+  const storedPadding = component.padding || "";
+  const parts = storedPadding.trim().split(/\s+/);
+  const vertTop = parts[0] || "0";
+  const vertBottom = parts[2] || parts[0] || "0";
+  const canvasPadding = `${vertTop} 0 ${vertBottom} 0`;
 
   return (
-    <div
-      className="footer-preferences"
-      style={{
-        ...baseStyle,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        lineHeight: component.lineHeight || "2",
-      }}
-    >
+    <div style={{ padding: canvasPadding, paddingLeft: "20px", paddingRight: "20px", backgroundColor: component.backgroundColor || "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "4px" }}>
       {links.map((link, index) => (
         <a
           key={index}
           href={link.href || "#"}
+          title={link.title || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
             color: component.color || "#0563C1",
             textDecoration: "underline",
@@ -723,6 +788,7 @@ export function EmailComponentRenderer({
             component={component}
             onUpdate={onUpdate}
             isSelected={isSelected}
+            previewMode={previewMode}
           />
         );
 
@@ -844,7 +910,7 @@ export function EmailComponentRenderer({
           <div style={{ width: "100%", paddingBottom: "10px" }}>
             <img src={component.src || "./footer-line.png"} alt="" style={{ display: "block", width: "100%", height: "3px" }} />
             <div style={{ color: component.color || "#646464", fontSize: component.fontSize || "15px", fontWeight: component.fontWeight || "bold", padding: "10px 20px", textAlign: "center", fontFamily: "Arial, sans-serif" }}>
-              VISIT <a href={component.href || "#"} style={{ color: "#F15625", textDecoration: "none" }}>ELZONRIS.COM/HCP</a> FOR MORE INFORMATION.
+              VISIT <a href={component.href || "#"} title={component.linkTitle || undefined} target="_blank" rel="noopener noreferrer" style={{ color: "#F15625", textDecoration: "none" }}>ELZONRIS.COM/HCP</a> FOR MORE INFORMATION.
             </div>
             <img src={component.src || "./footer-line.png"} alt="" style={{ display: "block", width: "100%", height: "3px" }} />
           </div>
@@ -944,7 +1010,7 @@ export function EmailComponentRenderer({
                 </div>
                 <div className="w-[45%] flex justify-end items-center">
                   {component.socialMediaLinks?.map((link, index) => (
-                    <a key={index} href={link.href} className="mx-2">
+                    <a key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="mx-2">
                       <img src={link.iconSrc} alt={link.altText} style={{ width: "33px", height: "33px" }} />
                     </a>
                   ))}
@@ -974,6 +1040,8 @@ export function EmailComponentRenderer({
                         <React.Fragment key={linkIndex}>
                           <a
                             href={link.href || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             style={{
                               color: "#FFFFFF",
                               textDecoration: "underline",

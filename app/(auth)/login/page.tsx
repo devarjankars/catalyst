@@ -46,7 +46,6 @@ export default function LoginPage() {
       JSON.stringify({ userEmail: user.userEmail, userpassword: user.userpassword })
     );
     loginUser(user.userEmail, user.userpassword, user.userId, user.userRole, user.userPermissions);
-    toast.success("Logged in successfully");
     router.push("/");
   };
 

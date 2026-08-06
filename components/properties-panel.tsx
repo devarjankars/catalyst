@@ -648,6 +648,15 @@ export function PropertiesPanel({
               />
             </div>
             <div>
+              <Label htmlFor="linkTitle">Link Title (HTML title attribute)</Label>
+              <Input
+                id="linkTitle"
+                value={component.linkTitle || ""}
+                onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
+                placeholder="Tooltip text on hover"
+              />
+            </div>
+            <div>
               <Label htmlFor="backgroundColor">Background Color</Label>
               <ColorInput value={component.backgroundColor || "#007bff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
@@ -717,6 +726,15 @@ export function PropertiesPanel({
                 value={component.href || ""}
                 onChange={(e) => onUpdateComponent({ href: e.target.value })}
                 placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="linkTitle">Link Title (HTML title attribute)</Label>
+              <Input
+                id="linkTitle"
+                value={component.linkTitle || ""}
+                onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
+                placeholder="Tooltip text on hover"
               />
             </div>
             <div>
@@ -794,6 +812,18 @@ export function PropertiesPanel({
                       })
                     }
                     placeholder="Link URL"
+                  />
+                  <Label>Link title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder='title="…" tooltip on hover'
                   />
                 </div>
               ))}
@@ -919,6 +949,18 @@ export function PropertiesPanel({
                     }
                     placeholder="Link URL"
                   />
+                  <Label>Link title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder='title="…" tooltip on hover'
+                  />
                 </div>
               ))}
             </div>
@@ -988,6 +1030,18 @@ export function PropertiesPanel({
                       })
                     }
                     placeholder="Link URL"
+                  />
+                  <Label>Link title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder='title="…" tooltip on hover'
                   />
                 </div>
               ))}
@@ -1112,6 +1166,18 @@ export function PropertiesPanel({
                       })
                     }
                     placeholder="Link URL"
+                  />
+                  <Label>Link title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder='title="…" tooltip on hover'
                   />
                 </div>
               ))}
@@ -1271,6 +1337,10 @@ export function PropertiesPanel({
               <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />
             </div>
             <div>
+              <Label>Link Title</Label>
+              <Input value={component.linkTitle || ""} onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })} placeholder='title="…" tooltip on hover' />
+            </div>
+            <div>
               <Label>Link Color</Label>
               <ColorInput value={component.color || "#2360d9"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
@@ -1320,11 +1390,17 @@ export function PropertiesPanel({
             </div>
             <div className="border rounded-md p-3 space-y-2">
               <h4 className="font-semibold text-sm">Prescribing Information Link</h4>
+              <Label className="text-xs text-gray-500">URL</Label>
               <Input value={component.piHref || ""} onChange={(e) => onUpdateComponent({ piHref: e.target.value })} placeholder="http://pi.elzonris.com/" />
+              <Label className="text-xs text-gray-500">Title</Label>
+              <Input value={component.piTitle || ""} onChange={(e) => onUpdateComponent({ piTitle: e.target.value })} placeholder='title="…" tooltip on hover' />
             </div>
             <div className="border rounded-md p-3 space-y-2">
               <h4 className="font-semibold text-sm">ISI Link (here)</h4>
+              <Label className="text-xs text-gray-500">URL</Label>
               <Input value={component.isiHref || ""} onChange={(e) => onUpdateComponent({ isiHref: e.target.value })} placeholder="https://www.elzonris.com/hcp/#isi" />
+              <Label className="text-xs text-gray-500">Title</Label>
+              <Input value={component.isiTitle || ""} onChange={(e) => onUpdateComponent({ isiTitle: e.target.value })} placeholder='title="…" tooltip on hover' />
             </div>
           </div>
         );
@@ -1411,6 +1487,86 @@ export function PropertiesPanel({
                     onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, href: e.target.value } : l) })}
                     placeholder="Link URL"
                   />
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, title: e.target.value } : l) })}
+                    placeholder="Link title (HTML title attribute)"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "email-footer":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Input
+                id="fontSize"
+                value={component.fontSize || "12px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="12px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="color">Link Color</Label>
+              <ColorInput value={component.color || "#0563C1"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label htmlFor="backgroundColor">Background Color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+            </div>
+            <div>
+              <Label htmlFor="padding">Padding</Label>
+              <Input
+                id="padding"
+                value={component.padding || "10px 20px"}
+                onChange={(e) => onUpdateComponent({ padding: e.target.value })}
+                placeholder="10px 20px"
+              />
+            </div>
+            <div className="mt-3">
+              <Label className="text-md mb-2">Links</Label>
+              {component.links?.map((link, index) => (
+                <div key={index} className="flex flex-col border-2 rounded-md p-1 gap-2 mb-2">
+                  <Label>Link {index + 1} text</Label>
+                  <Input
+                    value={link.text}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, text: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link text"
+                  />
+                  <Label>Link {index + 1} URL</Label>
+                  <Input
+                    value={link.href}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, href: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="Link URL"
+                  />
+                  <Label>Link {index + 1} Title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder="HTML title attribute (tooltip)"
+                  />
                 </div>
               ))}
             </div>
@@ -1481,6 +1637,18 @@ export function PropertiesPanel({
                     }
                     placeholder="Link URL"
                   />
+                  <Label>Link title</Label>
+                  <Input
+                    value={link.title || ""}
+                    onChange={(e) =>
+                      onUpdateComponent({
+                        links: component.links?.map((l, i) =>
+                          i === index ? { ...l, title: e.target.value } : l
+                        ),
+                      })
+                    }
+                    placeholder='title="…" tooltip on hover'
+                  />
                 </div>
               ))}
               
@@ -1518,6 +1686,14 @@ export function PropertiesPanel({
                   value={component.href}
                   onChange={(e) => onUpdateComponent({ href: e.target.value })}
                   placeholder="Link URL"
+                />
+              </div>
+              <div>
+                <Label>Link Title</Label>
+                <Input
+                  value={component.linkTitle || ""}
+                  onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
+                  placeholder='title="…" tooltip on hover'
                 />
               </div>
              </div>

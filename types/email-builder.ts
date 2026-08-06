@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer"
 
   category: "basic" | "custom" | "ferring" | "user-created"
 
@@ -52,6 +52,7 @@ export interface EmailComponent {
   // Button properties
   text?: string
   href?: string
+  linkTitle?: string
   buttonPadding?: string
 
   //cta-button properties
@@ -61,10 +62,13 @@ export interface EmailComponent {
   //elzonris-pi properties
   piHref?: string
   isiHref?: string
+  piTitle?: string
+  isiTitle?: string
+  linkTitle?: string
   linkColor?: string
 
   //footer-links properties
-  links?: { text: string; href: string }[]
+  links?: { text: string; href: string; title?: string }[]
   logoA: { altTex: string, href: string, imgSrc: string }
   logoB: { altTex: string, href: string, imgSrc: string }
   jobCode?: string
