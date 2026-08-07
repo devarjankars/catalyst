@@ -1305,6 +1305,93 @@ export function PropertiesPanel({
               />
             </div>
             </div>);
+      case "custom-text":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="font-semibold text-sm">Custom Text Options</Label>
+              <p className="text-xs text-gray-500 mb-2">Each option becomes one choice in the <code className="bg-gray-100 px-1 rounded">{"{{customText[…]}}"}</code> Veeva token. The rep picks one at send time.</p>
+              {(component.customTextOptions || []).map((opt: string, index: number) => (
+                <div key={index} className="flex gap-1 mb-2 items-start">
+                  <div className="flex-1">
+                    <Label className="text-xs text-gray-400">Option {index + 1}</Label>
+                    <textarea
+                      className="w-full border rounded px-2 py-1 text-sm resize-y min-h-[56px]"
+                      value={opt}
+                      onChange={(e) => {
+                        const updated = [...(component.customTextOptions || [])];
+                        updated[index] = e.target.value;
+                        onUpdateComponent({ customTextOptions: updated });
+                      }}
+                    />
+                  </div>
+                  {(component.customTextOptions?.length ?? 0) > 1 && (
+                    <button
+                      className="mt-5 text-red-400 hover:text-red-600 text-xs px-1"
+                      onClick={() => {
+                        const updated = (component.customTextOptions || []).filter((_: string, i: number) => i !== index);
+                        onUpdateComponent({ customTextOptions: updated });
+                      }}
+                    >✕</button>
+                  )}
+                </div>
+              ))}
+              <button
+                className="mt-1 w-full border border-dashed rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-50"
+                onClick={() => onUpdateComponent({ customTextOptions: [...(component.customTextOptions || []), "New option"] })}
+              >
+                + Add option
+              </button>
+            </div>
+            <div>
+              <Label>Font Size</Label>
+              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <Input value={component.lineHeight || "14px"} onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })} placeholder="14px" />
+            </div>
+            <div>
+              <Label>Font Family</Label>
+              <Input value={component.fontFamily || "Arial, sans-serif"} onChange={(e) => onUpdateComponent({ fontFamily: e.target.value })} placeholder="Arial, sans-serif" />
+            </div>
+            <div>
+              <Label>Font Weight</Label>
+              <Select value={component.fontWeight || "normal"} onValueChange={(v) => onUpdateComponent({ fontWeight: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="lighter">Lighter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Text Color</Label>
+              <ColorInput value={component.color || "#5D5D5D"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Background Color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+            </div>
+            <div>
+              <Label>Text Align</Label>
+              <Select value={component.textAlign || "left"} onValueChange={(v) => onUpdateComponent({ textAlign: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Padding</Label>
+              <Input value={component.padding || "0 20px 10px 20px"} onChange={(e) => onUpdateComponent({ padding: e.target.value })} placeholder="0 20px 10px 20px" />
+            </div>
+          </div>
+        );
+
       case "orsedu-footer":
         return (
           <div className="space-y-4">

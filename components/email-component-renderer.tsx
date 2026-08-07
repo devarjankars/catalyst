@@ -847,6 +847,51 @@ export function EmailComponentRenderer({
             />
           </div>
         );
+      case "custom-text": {
+        const opts = component.customTextOptions || [];
+        const tokenPreview = opts.length
+          ? `{{customText[${opts.join("|")}]}}`
+          : "{{customText[…]}}";
+        return (
+          <div style={{
+            ...baseStyle,
+            backgroundColor: component.backgroundColor || "#ffffff",
+          }}>
+            {/* Preview: show the token label and then each option */}
+            <div style={{
+              border: "1px dashed #aaa",
+              borderRadius: "4px",
+              padding: "6px 8px",
+              backgroundColor: "#f9f9f9",
+            }}>
+              <div style={{
+                fontSize: "10px",
+                color: "#888",
+                marginBottom: "4px",
+                fontFamily: "Arial, sans-serif",
+              }}>
+                Veeva customText token — user picks one option at send time:
+              </div>
+              {opts.map((opt, i) => (
+                <div key={i} style={{
+                  fontSize: component.fontSize || "12px",
+                  color: component.color || "#5D5D5D",
+                  fontFamily: component.fontFamily || "Arial, sans-serif",
+                  fontWeight: component.fontWeight || "normal",
+                  lineHeight: component.lineHeight || "14px",
+                  textAlign: component.textAlign || "left",
+                  padding: "2px 0",
+                  borderBottom: i < opts.length - 1 ? "1px dotted #e0e0e0" : "none",
+                }}>
+                  <span style={{ color: "#aaa", fontSize: "10px", marginRight: "6px" }}>{i + 1}.</span>
+                  {opt}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
         case "Salutation":
         return (
           <div style={baseStyle} className="mt-2 z-50 flex justify-start">

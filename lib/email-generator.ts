@@ -1035,6 +1035,37 @@ case "isi": {
     </table>
       `;
     }
+    case "custom-text": {
+      const display = (component.displayType || "all") as EmailComponent["displayType"];
+      const { innerStyle } = getDisplayAttributes(display);
+      const opts = component.customTextOptions || [];
+      const token = opts.length ? `{{customText[${opts.join("|")}]}}` : "";
+      const fontSize = component.fontSize || "12px";
+      const color = component.color || "#5D5D5D";
+      const fontFamily = component.fontFamily || "Arial, sans-serif";
+      const fontWeight = component.fontWeight || "normal";
+      const lineHeight = component.lineHeight || "14px";
+      const textAlign = component.textAlign || "left";
+      const padding = component.padding || "0 20px 10px 20px";
+      const bgColor = component.backgroundColor || "#ffffff";
+
+      return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+      bgcolor="${bgColor}"
+      style="background-color:${bgColor};${innerStyle ? innerStyle : ""}"
+      ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}>
+      <tbody>
+        <tr>
+          <td bgcolor="${bgColor}" align="${textAlign}" valign="top"
+            ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+            style="padding:${padding}; background-color:${bgColor}; font-weight:${fontWeight}; color:${color}; font-family:${fontFamily}; font-size:${fontSize}; line-height:${lineHeight};">
+            <span style="color:${color}; font-weight:${fontWeight};">${token}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>`.trim();
+    }
+
     case "Salutation": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];

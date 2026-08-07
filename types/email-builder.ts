@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text"
 
   category: "basic" | "custom" | "ferring" | "user-created"
 
@@ -111,8 +111,8 @@ export interface EmailComponent {
     jobcode?: string
   },
 
-  // elzonris-ref-abbr properties
-  references?: string
-  abbreviations?: string
+  // custom-text (Veeva token) properties
+  customTextOptions?: string[]   // array of option strings that go inside {{customText[opt1|opt2|...]}}
+
 
 }

@@ -273,6 +273,27 @@ export const componentTypes = [
   }
 },
 {
+  type: "custom-text",
+  label: "Custom Text (Token)",
+  category: "custom",
+  icon: NotepadText,
+  defaultProps: {
+    customTextOptions: [
+      "I'm glad we could follow up on our last conversation.",
+      "I have the information that you requested during our previous discussion.",
+      "I am reaching out to share some information you may find helpful.",
+    ],
+    fontSize: "12px",
+    color: "#5D5D5D",
+    textAlign: "left",
+    fontWeight: "normal",
+    lineHeight: "14px",
+    fontFamily: "Arial, sans-serif",
+    padding: "0 20px 10px 20px",
+    backgroundColor: "#ffffff",
+  },
+},
+{
   type: "Salutation",
   label: "Salutation",
   category : "custom",
