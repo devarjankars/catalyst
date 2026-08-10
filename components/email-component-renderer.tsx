@@ -587,7 +587,7 @@ export function EmailComponentRenderer({
           <div style={{
             textAlign: (component.textAlign as any) || "center",
             padding: component.padding || "10px 20px",
-            backgroundColor: "#FFFFFF",
+            backgroundColor: component.backgroundColor || "transparent",
             lineHeight: component.lineHeight || "16px",
           }}>
             <a

@@ -74,19 +74,6 @@ export function PropertiesPanel({
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
   const { preheaderText, setPreheader } = useEmailBuilderStore();
-  if (!component) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        <div className="text-lg font-medium mb-2">No component selected</div>
-        <div className="text-sm">Select a component to edit its properties</div>
-      </div>
-    );
-  }
-
-  const isColumn = component.type === "section" && component.isColumn;
-
-  
-  
 
   useEffect(() => {
     if (component && component.content?.includes("<a")) {
@@ -110,6 +97,17 @@ export function PropertiesPanel({
       setLinks([]);
     }
   }, [component]);
+
+  if (!component) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        <div className="text-lg font-medium mb-2">No component selected</div>
+        <div className="text-sm">Select a component to edit its properties</div>
+      </div>
+    );
+  }
+
+  const isColumn = component.type === "section" && component.isColumn;
 
   const updateLink = (index: number, newHref: string, newText: string, newColor: string) => {
     const parser = new DOMParser();

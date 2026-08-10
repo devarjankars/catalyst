@@ -537,20 +537,13 @@ function generateComponentHTML(component: EmailComponent): string {
     case "elzonris-view-in-browser": {
       const align = component.textAlign || "center";
       const padding = component.padding || "10px 20px";
+      const bgColor = component.backgroundColor || "transparent";
       return `
-      <table class="mobile-table darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tbody>
           <tr>
-            <td style="padding:${padding};">
-              <table class="darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
-                <tbody>
-                  <tr>
-                    <td align="${align}" valign="top" style="color:#ffffff;font-family:Arial,sans-serif;font-weight:400;font-size:${component.fontSize || "12px"};line-height:${component.lineHeight || "16px"};text-align:${align};">
-                      <a href="${component.href || "#"}"${component.linkTitle ? ` title="${component.linkTitle}"` : ""} target="_blank" style="text-decoration:underline;color:${component.color || "#2360d9"};text-align:${align};">View in Browser</a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <td style="padding:${padding}; background-color:${bgColor}; text-align:${align};">
+              <a href="${component.href || "#"}"${component.linkTitle ? ` title="${component.linkTitle}"` : ""} target="_blank" style="text-decoration:underline;color:${component.color || "#2360d9"};font-family:Arial,sans-serif;font-weight:400;font-size:${component.fontSize || "12px"};line-height:${component.lineHeight || "16px"};">View in Browser</a>
             </td>
           </tr>
         </tbody>

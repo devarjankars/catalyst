@@ -275,7 +275,7 @@ export const componentTypes = [
 {
   type: "custom-text",
   label: "Custom Text (Token)",
-  category: "custom",
+  category: "basic",
   icon: NotepadText,
   defaultProps: {
     customTextOptions: [
@@ -425,6 +425,7 @@ export const componentTypes = [
       lineHeight: "16px",
       textAlign: "center",
       padding: "10px 20px",
+      backgroundColor: "transparent",
     },
   },
   {
