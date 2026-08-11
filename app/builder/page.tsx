@@ -11,7 +11,7 @@ import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate } from "lucide-react";
+import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
@@ -72,12 +72,17 @@ export default function EmailBuilder() {
     applyOptionConfiguration,
   } = useEmailBuilderStore();
 
+  const copyOptionTo = useEmailBuilderStore((s) => s.copyOptionTo);
+  const addComponentToOption = useEmailBuilderStore((s) => s.addComponentToOption);
+
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
   const [unsavedDialog, setUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [awaitingModeSelection, setAwaitingModeSelection] = useState(false);
   const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
+  const [copyToDialogOpen, setCopyToDialogOpen] = useState(false);
+  const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
@@ -649,9 +654,25 @@ if (activeSelectedId) {
               <div className="mb-6 w-full max-w-[600px] space-y-3 sticky top-0 z-10 bg-gray-100 py-4">
                 <div className="flex items-center justify-between px-1">
                   <p className="text-sm font-semibold text-gray-700">Email Options</p>
-                  <span className="text-xs text-gray-500 capitalize">
-                    {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 capitalize">
+                      {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
+                    </span>
+                    {optionSubMode === "completely-different" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2 gap-1 border-dashed"
+                        onClick={() => {
+                          setCopyToTargets([]);
+                          setCopyToDialogOpen(true);
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                        Copy Option {activeOption} to…
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <Tabs value={`option-${activeOption}`} className="w-full" onValueChange={(val) => setActiveOption(parseInt(val.split('-')[1]) as 1|2|3)}>
                   <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-300 shadow-sm h-11 p-1">
@@ -700,6 +721,15 @@ if (activeSelectedId) {
                 duplicateComponent={duplicateComponent}
                 addComponent={addComponent}
                 isLockedMode={isHeaderOnlyLocked}
+                activeOption={optionMode === "three" && optionSubMode === "completely-different" ? activeOption : undefined}
+                onCopyToOption={
+                  optionMode === "three" && optionSubMode === "completely-different"
+                    ? (component, targetOption) => {
+                        addComponentToOption(component, targetOption);
+                        toast.success(`Component copied to Option ${targetOption}`);
+                      }
+                    : undefined
+                }
               />
             </div>
           </div>
@@ -757,6 +787,53 @@ if (activeSelectedId) {
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />
+
+      {/* Copy Option To Dialog */}
+      <Dialog open={copyToDialogOpen} onOpenChange={setCopyToDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Copy Option {activeOption} to…</DialogTitle>
+            <DialogDescription>
+              Select which option(s) should receive a copy of Option {activeOption}'s current layout. This will overwrite the target option(s).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            {([1, 2, 3] as const).filter((o) => o !== activeOption).map((opt) => (
+              <label key={opt} className="flex items-center gap-3 cursor-pointer rounded-md border p-3 hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                  checked={copyToTargets.includes(opt)}
+                  onChange={(e) =>
+                    setCopyToTargets((prev) =>
+                      e.target.checked ? [...prev, opt] : prev.filter((t) => t !== opt)
+                    )
+                  }
+                />
+                <span className="text-sm font-medium text-gray-800">Option {opt}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCopyToDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={copyToTargets.length === 0}
+              onClick={() => {
+                copyOptionTo(activeOption, copyToTargets);
+                setCopyToDialogOpen(false);
+                setCopyToTargets([]);
+                toast.success(
+                  `Option ${activeOption} copied to Option${copyToTargets.length > 1 ? "s" : ""} ${copyToTargets.join(" & ")}`
+                );
+              }}
+            >
+              Apply Copy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

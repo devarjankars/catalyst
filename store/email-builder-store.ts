@@ -85,6 +85,8 @@ interface EmailBuilderState {
     mode: "single" | "three"
     subMode?: "header-only" | "completely-different"
   }) => void
+  copyOptionTo: (fromOption: 1 | 2 | 3, toOptions: (1 | 2 | 3)[]) => void
+  addComponentToOption: (component: EmailComponent, targetOption: 1 | 2 | 3) => void
 
   // Working copy actions
   startWorkingCopy: (
@@ -345,6 +347,34 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             })
           }
 
+          get().checkForChanges()
+        },
+
+        copyOptionTo: (fromOption, toOptions) => {
+          const { components, option2Components, option3Components } = get()
+          const getOptionComponents = (opt: 1 | 2 | 3) => {
+            if (opt === 1) return components
+            if (opt === 2) return option2Components
+            return option3Components
+          }
+          const source = get().deepCloneComponents(getOptionComponents(fromOption))
+          const updates: Partial<EmailBuilderState> = {}
+          for (const to of toOptions) {
+            if (to === fromOption) continue
+            if (to === 1) updates.components = source
+            else if (to === 2) updates.option2Components = source
+            else updates.option3Components = source
+          }
+          set(updates)
+          get().checkForChanges()
+        },
+
+        addComponentToOption: (component, targetOption) => {
+          const { components, option2Components, option3Components } = get()
+          const cloned = get().deepCloneComponent(component)
+          if (targetOption === 1) set({ components: [...components, cloned] })
+          else if (targetOption === 2) set({ option2Components: [...option2Components, cloned] })
+          else set({ option3Components: [...option3Components, cloned] })
           get().checkForChanges()
         },
 
