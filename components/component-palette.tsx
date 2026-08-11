@@ -60,6 +60,8 @@ function DraggableComponent({
           type: componentType.type,
           ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
         }
+        // Always regenerate the top-level id so dropped instances never collide
+        componentData.id = ""
 
         // Generate unique IDs for nested components
         if (componentData.children) {
@@ -198,26 +200,28 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
             </div>
           </AccordionContent>
         </AccordionItem>
-        {/* <AccordionItem value="item-4">
-          <AccordionTrigger>User defined</AccordionTrigger>
+        <AccordionItem value="item-saved-blocks">
+          <AccordionTrigger>Saved Blocks</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
-            {customComponents.length > 0 && (
-              <>
-                <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
-
-                  {customComponents.map((customComponent) => (
-                    <DraggableComponent
-                      key={customComponent.id}
-                      componentType={customComponent}
-                      onAddComponent={onAddComponent}
-                      isCustom={true}
-                    />
-                  ))}
-                </div>
-              </>
+            {customComponents.length === 0 ? (
+              <p className="text-xs text-gray-400 px-1">
+                No saved blocks yet. Select a component on the canvas and use "Save to Saved Blocks".
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+                {customComponents.map((customComponent) => (
+                  <DraggableComponent
+                    key={customComponent.id}
+                    componentType={customComponent}
+                    onAddComponent={onAddComponent}
+                    isCustom={true}
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
             )}
           </AccordionContent>
-        </AccordionItem> */}
+        </AccordionItem>
       </Accordion>
 
       {/* for super admin only */}

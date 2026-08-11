@@ -14,12 +14,20 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert, Code } from "lucide-react";
+import { TriangleAlert, Code, BookmarkPlus } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
 import { verifyHtml } from "@/lib/verify-html";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Ensures value is always a valid 7-char hex string for <input type="color">
 function toHex(value: string): string {
@@ -62,7 +70,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   onUpdateComponent: (updates: Partial<EmailComponent>) => void;
-  onSaveAsCustom?: () => void;
+  onSaveAsCustom?: (name?: string) => void;
 }
 
 export function PropertiesPanel({

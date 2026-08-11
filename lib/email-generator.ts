@@ -1310,7 +1310,7 @@ case "isi": {
            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td width="100%" align="center" valign="top" style="height : 5px; ">
-                   <img width="100%" height="2" src="${component.src || "/elzonris-divider.png"}" alt="${component.alt || "Divider Image"}" style="display:block; height:2px;"/>
+                   <img width="100%" height="2" src="${component.src || "/footer-line.png"}" alt="${component.alt || "Divider Image"}" style="display:block; height:2px;"/>
               </tr>
               <tr>
                 <td align="center" valign="center" style="color: ${component.color || "#646464"}; font-size: ${component.fontSize || "15px"}; font-family: Arial, sans-serif; font-weight: ${component.fontWeight || "bold"};padding: 10px 0 10px 0; ">
@@ -1319,7 +1319,7 @@ case "isi": {
               </tr>
               <tr>
                 <td width="100%" align="center" valign="bottom" style="height : 5px; ">
-                  <img width="100%" height="2" src="${component.src || "/elzonris-divider.png"}" alt="${component.alt || "Divider Image"}" style="display:block; height:2px;"/>
+                  <img width="100%" height="2" src="${component.src || "/footer-line.png"}" alt="${component.alt || "Divider Image"}" style="display:block; height:2px;"/>
               </tr>
            </table>
           </td>
