@@ -17,6 +17,7 @@ import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import EmailPreviewModal from "@/components/email-previw-dalog";
 import { EditorModeDialog } from "@/components/editor-mode-dialog";
+import { toast } from "sonner";
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -424,14 +425,16 @@ function replaceImagesInComponents(components: any[]): any[] {
     }
   };
 
-  const saveAsCustomComponent = (component: any) => {
+  const saveAsCustomComponent = (name?: string) => {
+    if (!selectedComponentData) return;
     const customComponent = {
-      ...component,
-      id: `custom-${Date.now()}`,
+      ...selectedComponentData,
+      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       isCustom: true,
-      name: `Custom ${component.type}`,
+      name: name || selectedComponentData.name || `Custom ${selectedComponentData.type}`,
     };
     addCustomComponent(customComponent);
+    toast.success("Block saved to Saved Blocks");
   };
 
   function findComponentWithParentById(
@@ -711,9 +714,7 @@ if (activeSelectedId) {
                   if (!activeSelectedId) return;
                   updateComponent(activeSelectedId, updates, parentId);
                 }}
-                onSaveAsCustom={() =>
-                  selectedComponentData && saveAsCustomComponent(selectedComponentData)
-                }
+                onSaveAsCustom={(name) => saveAsCustomComponent(name)}
               />
             </div>
           )}

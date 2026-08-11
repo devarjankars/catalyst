@@ -81,6 +81,8 @@ export function PropertiesPanel({
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
+  const [isSaveBlockOpen, setIsSaveBlockOpen] = useState(false);
+  const [blockName, setBlockName] = useState("");
   const { preheaderText, setPreheader } = useEmailBuilderStore();
 
   useEffect(() => {
@@ -116,6 +118,12 @@ export function PropertiesPanel({
   }
 
   const isColumn = component.type === "section" && component.isColumn;
+
+  const handleSaveBlock = () => {
+    onSaveAsCustom?.(blockName.trim() || component.name || `Saved ${component.type}`);
+    setIsSaveBlockOpen(false);
+    setBlockName("");
+  };
 
   const updateLink = (index: number, newHref: string, newText: string, newColor: string) => {
     const parser = new DOMParser();
@@ -2022,6 +2030,23 @@ export function PropertiesPanel({
 
       {renderProperties()}
 
+      {/* Save to Saved Blocks */}
+      {onSaveAsCustom && (
+        <div className="border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setBlockName(component.name || "");
+              setIsSaveBlockOpen(true);
+            }}
+            className="w-full flex items-center gap-2 bg-transparent"
+          >
+            <BookmarkPlus className="w-4 h-4" />
+            Save to Saved Blocks
+          </Button>
+        </div>
+      )}
+
       {/* Common Properties */}
       <div className="border-t pt-4">
         <h4 className="font-medium text-gray-700 mb-3">Spacing</h4>
@@ -2067,6 +2092,36 @@ export function PropertiesPanel({
         initialValue={component.html || ""}
         onSave={saveRawHtml}
       />
+
+      {/* Save to Saved Blocks dialog */}
+      <Dialog open={isSaveBlockOpen} onOpenChange={setIsSaveBlockOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save to Saved Blocks</DialogTitle>
+            <DialogDescription>
+              Name this block so you can recognize it in the left menu.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="blockName">Block Name</Label>
+            <Input
+              id="blockName"
+              value={blockName}
+              onChange={(e) => setBlockName(e.target.value)}
+              placeholder="e.g. Hero section with button"
+              className="mt-1"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSaveBlockOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBlock} disabled={!blockName.trim()}>
+              Save Block
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
