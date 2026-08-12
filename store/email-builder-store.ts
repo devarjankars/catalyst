@@ -110,9 +110,9 @@ interface EmailBuilderState {
   // UI actions
   setSelectedComponent: (id: string | null) => void
   setPreviewMode: (preview: boolean) => void
-  addCustomComponent: (component: EmailComponent) => void
+  addCustomComponent: (component: EmailComponent) => Promise<EmailComponent | null>
   loadCustomComponents: (components: EmailComponent[]) => void
-  deleteCustomComponent: (id: string) => void
+  deleteCustomComponent: (id: string) => Promise<boolean>
   setPreheader: (preheaderTest: string) => void
   setTemplateImages: (images: string[]) => void
   loadTemplateImages: (templateId: string) => Promise<void>
@@ -586,27 +586,29 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         setSelectedComponent: (id) => set({ selectedComponent: id }),
         setPreviewMode: (preview) => set({ previewMode: preview }),
         loadCustomComponents: (components) => {
-          console.log("Loading custom components:", components)
-          set({ customComponents: components })
+          set({ customComponents: Array.isArray(components) ? components : [] })
         },
         addCustomComponent: async (component) => {
           const { customComponents } = get()
-          console.log("Adding custom component:");
-          if (!Array.isArray(customComponents)) {
-            console.error("Custom components is not an array, resetting to empty array.");
+          try {
             const createComponent = await firebaseService.saveCustomComponent(component)
-            set({ customComponents: [createComponent] });
-          } else {
-            const createComponent = await firebaseService.saveCustomComponent(component)
-            set({ customComponents: [...customComponents, createComponent] })
+            const next = Array.isArray(customComponents)
+              ? [...customComponents, createComponent]
+              : [createComponent]
+            set({ customComponents: next })
+            return createComponent
+          } catch (error) {
+            console.error("Failed to save custom component:", error)
+            return null
           }
         },
         deleteCustomComponent: async (id) => {
           const { customComponents } = get()
-          console.log("Deleting custom component with ID:", id);
-
-          await firebaseService.deleteCustomComponent(id)
-          set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
+          const ok = await firebaseService.deleteCustomComponent(id)
+          if (ok) {
+            set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
+          }
+          return ok
         },
 
         setTemplateImages: (images) => set({ templateImages: images }),

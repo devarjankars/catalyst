@@ -24,6 +24,14 @@ import type { EmailTemplate } from "@/types/template";
 import { EmailComponent } from "@/types/email-builder";
 
 function removeUndefinedDeep(value: any): any {
+  if (value === undefined) return undefined;
+
+  // Preserve date-like values so Firestore stores real timestamps instead of
+  // turning them into empty objects via the object branch below.
+  if (value instanceof Date || value instanceof Timestamp || typeof value.toDate === "function") {
+    return value;
+  }
+
   if (Array.isArray(value)) {
     return value.map(removeUndefinedDeep).filter((v) => v !== undefined);
   }
@@ -199,12 +207,10 @@ class FirebaseService {
       return component;
     }
 
-    console.log("Saving custom component with custom ID:", component.id);
-
     try {
       const docRef = doc(db, this.customComponentsCollection, component.id); // your custom ID
       await setDoc(docRef, {
-        ...component,
+        ...removeUndefinedDeep(component),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -215,7 +221,7 @@ class FirebaseService {
       };
     } catch (error) {
       console.error("Failed to save custom component:", error);
-      return component;
+      throw error;
     }
   }
 
@@ -225,19 +231,11 @@ class FirebaseService {
     }
     try {
       const docRef = doc(db, this.customComponentsCollection, id);
-      console.log("Deleting custom component with ID in firebase:", docRef.id);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) {
-        console.log("Document not found. Cannot delete.");
-      } else {
-        console.log("Found doc, trying to delete...");
-        await deleteDoc(docRef);
-      }
       await deleteDoc(docRef);
       return true;
     } catch (error) {
       console.error("Failed to delete custom component:", error);
-      return false; // Fallback to local deletion
+      return false;
     }
   }
 

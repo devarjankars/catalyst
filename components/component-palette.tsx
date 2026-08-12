@@ -116,9 +116,13 @@ function DraggableComponent({
           size="icon"
           title="Delete saved block"
           className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/80 p-0 text-red-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
-          onClick={() => {
-            deleteCustomComponent(componentType.id)
-            toast.warning("custom component deleted")
+          onClick={async () => {
+            const ok = await deleteCustomComponent(componentType.id)
+            if (ok) {
+              toast.success("Saved block deleted")
+            } else {
+              toast.error("Could not delete saved block")
+            }
           }}
         >
           <Trash2 className="h-3.5 w-3.5" />

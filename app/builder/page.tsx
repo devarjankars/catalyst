@@ -429,7 +429,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     }
   };
 
-  const saveAsCustomComponent = (name?: string) => {
+  const saveAsCustomComponent = async (name?: string) => {
     if (!selectedComponentData) return;
     const customComponent = {
       ...selectedComponentData,
@@ -437,8 +437,12 @@ function replaceImagesInComponents(components: any[]): any[] {
       isCustom: true,
       name: name || selectedComponentData.name || `Custom ${selectedComponentData.type}`,
     };
-    addCustomComponent(customComponent);
-    toast.success("Block saved to Saved Blocks");
+    const saved = await addCustomComponent(customComponent);
+    if (saved) {
+      toast.success("Block saved to Saved Blocks");
+    } else {
+      toast.error("Failed to save block. Please try again.");
+    }
   };
 
   function findComponentWithParentById(
