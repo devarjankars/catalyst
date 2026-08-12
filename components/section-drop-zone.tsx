@@ -109,11 +109,10 @@ export function SectionDropZone({
     <div
       ref={drop}
       className={`
-        ${minHeight} relative  rounded-md transition-all 
+        ${minHeight} relative rounded-lg transition-all
         ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}
-        ${!previewMode ? `border-2 border-dashed ${  isSelected ? "border-green-500 hover:border-green-300" : "border-gray-200 hover:border-gray-300"}` : ""}
+        ${!previewMode ? `border border-dashed ${isSelected ? "border-green-400 bg-green-50/40 hover:border-green-500" : "border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"}` : ""}
         ${isColumn ? "flex" : "w-full"}
-        
       `}
       style={{
         textAlign: isColumn ? columnAlignment : "left",

@@ -20,14 +20,14 @@ const PaddingInput = ({ value = "0px 0px 0px 0px", onChange }: PaddingInputProps
       const parts = value.split(" ").map(v => v.replace("px", ""));
       setPadding({
         top: parts[0] || "0",
-        right: parts[1]  || "0",
-        bottom: parts[2]  || "0",
-        left: parts[3] ||   "0",
+        right: parts[1] || "0",
+        bottom: parts[2] || "0",
+        left: parts[3] || "0",
       });
     }
   }, [value]);
 
-  const handleChange = ({side, newValue}: {side : string , newValue: number}) => {
+  const handleChange = ({ side, newValue }: { side: string; newValue: number }) => {
     const newPadding = { ...padding, [side]: newValue };
     setPadding(newPadding);
 
@@ -38,50 +38,31 @@ const PaddingInput = ({ value = "0px 0px 0px 0px", onChange }: PaddingInputProps
 
     setTimeout(() => {
         onChange?.(aggregated);
-    },100)  
+    },100)
   };
 
+  const sides = [
+    { key: "top", label: "Top" },
+    { key: "right", label: "Right" },
+    { key: "bottom", label: "Bottom" },
+    { key: "left", label: "Left" },
+  ] as const;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full p-4 border rounded-lg bg-white shadow-sm">
-      <label className="flex flex-col text-sm font-medium text-gray-700">
-        Top
-        <Input
-          type="number"
-          value={padding.top}
-          onChange={e => handleChange({ side: "top", newValue: Number(e.target.value) })}
-           className="mt-1 w-10 h-10 rounded-md border-gray-300 shadow-sm  text-sm px-2 py-1"
-        />
-      </label>
-
-      <label className="flex flex-col text-sm font-medium text-gray-700">
-        Right
-        <Input
-          type="number"
-          value={padding.right}
-         onChange={e => handleChange({ side: "right", newValue: Number(e.target.value) })}
-           className="mt-1 w-10 h-10 rounded-md border-gray-300 shadow-sm  text-sm px-2 py-1"
-        />
-      </label>
-
-      <label className="flex flex-col text-sm font-medium text-gray-700">
-        Bottom
-        <Input
-          type="number"
-          value={padding.bottom}
-          onChange={e => handleChange({ side: "bottom", newValue: Number(e.target.value) })}
-          className="mt-1 w-10 h-10 rounded-md border-gray-300 shadow-sm  text-sm px-2 py-1"
-        />
-      </label>
-
-      <label className="flex flex-col text-sm font-medium text-gray-700">
-        Left
-        <Input
-          type="number"
-          value={padding.left}
-          onChange={e => handleChange({ side: "left", newValue: Number(e.target.value) })}
-           className="mt-1 w-10 h-10 rounded-md border-gray-300 shadow-sm  text-sm px-2 py-1"
-        />
-      </label>
+    <div className="grid grid-cols-4 gap-1.5">
+      {sides.map(({ key, label }) => (
+        <label key={key} className="flex flex-col items-center gap-1">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            {label}
+          </span>
+          <Input
+            type="number"
+            value={padding[key]}
+            onChange={e => handleChange({ side: key, newValue: Number(e.target.value) })}
+            className="h-9 w-full rounded-md px-0 text-center"
+          />
+        </label>
+      ))}
     </div>
   );
 };

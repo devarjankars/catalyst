@@ -1,6 +1,7 @@
 "use client"
 import { forwardRef, useEffect, useState } from "react"
 import { useDrop } from "react-dnd"
+import { Layout } from "lucide-react"
 import { EmailComponentRenderer } from "./email-component-renderer"
 import type { EmailComponent } from "@/types/email-builder"
 
@@ -179,14 +180,22 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               ref.current = node
             }
           }}
-          className={`bg-white shadow-lg max-w-2xl w-full min-h-[600px] relative pb-10 ${isOver ? "ring-2 ring-blue-500" : ""}`}
+          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
           style={{ width: `${canvasWidth ?? 600}px` }}
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}
         >
           {components.length === 0 && !isOver && (
-            <div className="h-full flex flex-col justify-center items-center text-gray-400">
-              <p>Drag a component from component palette to start building</p>
+            <div className="flex min-h-[400px] flex-col items-center justify-center gap-3 text-center px-6 py-16">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 ring-1 ring-gray-200">
+                <Layout className="h-6 w-6 text-gray-400" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-700">Your email is empty</p>
+                <p className="text-sm text-gray-400">
+                  Drag a component from the left panel to start building
+                </p>
+              </div>
             </div>
           )}
 
@@ -195,7 +204,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             return (
               <div key={component.id || index} className="relative" data-component-id={component.id}>
                 {dropIndicator?.index === index && isOver && !previewMode && (
-                  <div className="h-1 bg-blue-600 mx-2 rounded-sm opacity-75 my-2 shadow-lg animate-grow-x origin-center" />
+                  <div className="h-0.5 bg-blue-500 mx-4 rounded-full my-2 shadow-sm shadow-blue-200 animate-grow-x origin-center" />
                 )}
                 <EmailComponentRenderer
                   component={component}
@@ -223,8 +232,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           })}
 
           {dropIndicator?.index === components.length && isOver && !previewMode && (
-            <div className="h-2 border border-dashed border-blue-500 mx-4 min-h-[5vh] rounded-sm opacity-75 my-2 shadow-lg relative flex items-center justify-center">
-              <p className="text-center text-sm text-blue-500 absolute top-2 left-1/2 transform -translate-x-1/2 font-medium">drop here</p>
+            <div className="mx-4 my-2 flex min-h-[5vh] items-center justify-center rounded-md border border-dashed border-blue-400 bg-blue-50/60 opacity-90">
+              <p className="text-sm font-medium text-blue-500">Drop here</p>
             </div>
           )}
         </div>

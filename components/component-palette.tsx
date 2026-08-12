@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useDrag } from "react-dnd"
 import { Trash2, Type } from "lucide-react"
@@ -89,24 +89,41 @@ function DraggableComponent({
     <div
       ref={drag}
       className={`
-        p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-grabbing
-        hover:border-blue-500 hover:bg-blue-50 transition-colors
-        flex flex-col items-center gap-1
-        ${isDragging ? "opacity-50" : ""}
+        group relative flex flex-col items-center gap-2 rounded-xl border bg-white p-4
+        transition-all cursor-grabbing
+        hover:border-blue-300 hover:shadow-md hover:shadow-blue-100 hover:-translate-y-0.5
+        ${isDragging ? "opacity-50 scale-95" : ""}
         ${disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}
-        ${isCustom ? "bg-purple-50 border-purple-300" : ""}
-        ${isTemplate ? "bg-green-50 border-green-300" : ""}
-        relative
+        ${isCustom ? "border-purple-200 bg-purple-50/50 hover:border-purple-300 hover:shadow-purple-100" : ""}
+        ${isTemplate ? "border-green-200 bg-green-50/50 hover:border-green-300 hover:shadow-green-100" : ""}
+        ${!isCustom && !isTemplate ? "border-gray-200" : ""}
       `}
     >
-      <Icon className="w-5 h-5 text-gray-600" />
-      <span className="font-medium text-gray-700 text-center">{label}</span>
-      {/* {isCustom && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Custom</span>} */}
-      {isCustom && <Button variant={"secondary"} size={"icon"} className=" bg-transparent  absolute top-0 right-0" onClick={() => {
-        deleteCustomComponent(componentType.id)
-        toast.warning("custom component deleted")
-      }}><Trash2 className="text-red-400 w-4 h-4" /></Button>}
-      {/* {isTemplate && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Template</span>} */}
+      <div className={`
+        flex h-10 w-10 items-center justify-center rounded-lg transition-colors
+        ring-1
+        ${isCustom ? "bg-purple-100 text-purple-600 ring-purple-200 group-hover:bg-purple-200/70" : ""}
+        ${isTemplate ? "bg-green-100 text-green-600 ring-green-200 group-hover:bg-green-200/70" : ""}
+        ${!isCustom && !isTemplate ? "bg-gray-50 text-gray-500 ring-gray-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:ring-blue-200" : ""}
+      `}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <span className="text-center text-sm font-medium leading-tight text-gray-700">{label}</span>
+      {isCustom && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          title="Delete saved block"
+          className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/80 p-0 text-red-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+          onClick={() => {
+            deleteCustomComponent(componentType.id)
+            toast.warning("custom component deleted")
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -129,15 +146,15 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
         defaultValue="item-1"
       >
         <AccordionItem value="item-gallery">
-          <AccordionTrigger>Images</AccordionTrigger>
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Images</AccordionTrigger>
           <AccordionContent className="p-0">
             <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-1">
-          <AccordionTrigger>Basic Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Basic Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+            <div className="grid grid-cols-2 gap-2">
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "basic")
                 .map((componentType) => (
@@ -148,9 +165,9 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-2">
-          <AccordionTrigger>Orserdu Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Orserdu Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
               {componentTypes
                 .filter((type) => type.type !== "section" && type.category === "custom")
                 .map((componentType) => (
@@ -161,9 +178,9 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-ferring">
-          <AccordionTrigger>Ferring Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Ferring Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
               {componentTypes
                 .filter((type) => type.category === "ferring")
                 .map((componentType) => (
@@ -173,9 +190,9 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-elzonris">
-          <AccordionTrigger>Elzonris Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Elzonris Components</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
               {componentTypes
                 .filter((type) => type.category === "elzonris")
                 .map((componentType) => (
@@ -185,9 +202,9 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-3">
-          <AccordionTrigger>Sections</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
-            <div className="grid grid-cols-2 gap-2 mb-4 w-[95%]">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Sections</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+            <div className="grid grid-cols-2 gap-2">
               {sectionTemplates.map((template, index) => (
                 <DraggableComponent
                   key={`${template.type}-${index}`}
@@ -201,14 +218,14 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-saved-blocks">
-          <AccordionTrigger>Saved Blocks</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
+          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Saved Blocks</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
             {customComponents.length === 0 ? (
               <p className="text-xs text-gray-400 px-1">
                 No saved blocks yet. Select a component on the canvas and use "Save to Saved Blocks".
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-2 mb-4 w-[100%] max-h-[40vh] overflow-y-auto pr-2">
+              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
                 {customComponents.map((customComponent) => (
                   <DraggableComponent
                     key={customComponent.id}
