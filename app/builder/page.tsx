@@ -10,8 +10,7 @@ import { SaveTemplateDialog } from "@/components/save-template-dialog";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Code, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate } from "lucide-react";
+import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
@@ -72,12 +71,17 @@ export default function EmailBuilder() {
     applyOptionConfiguration,
   } = useEmailBuilderStore();
 
+  const copyOptionTo = useEmailBuilderStore((s) => s.copyOptionTo);
+  const addComponentToOption = useEmailBuilderStore((s) => s.addComponentToOption);
+
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
   const [unsavedDialog, setUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [awaitingModeSelection, setAwaitingModeSelection] = useState(false);
   const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
+  const [copyToDialogOpen, setCopyToDialogOpen] = useState(false);
+  const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
@@ -511,101 +515,105 @@ if (activeSelectedId) {
     <>
       <div className="h-screen flex flex-col bg-gray-50">
         {/* Header - sticky */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-4">
+        <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-0 flex items-center justify-between sticky top-0 z-30 h-14">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
+              size="sm"
               onClick={handleBackToDashboard}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full px-3"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
+              <span className="text-sm">Back</span>
             </Button>
-            <div className="border-l pl-4">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900">
-                  {getHeaderTitle()}
-                </h1>
-                {hasComponentChanges && (
-                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                    Component Changes
-                  </span>
-                )}
-                {hasUnsavedTemplate && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    Unsaved Template
-                  </span>
-                )}
-                {isWorkingCopy && (
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                    Working Copy
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600">{getHeaderSubtitle()}</p>
+            <div className="h-5 w-px bg-gray-200" />
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-semibold text-gray-900 max-w-[260px] truncate">
+                {getHeaderTitle()}
+              </h1>
+              {hasComponentChanges && (
+                <span className="text-[11px] bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full font-medium">
+                  Unsaved changes
+                </span>
+              )}
+              {hasUnsavedTemplate && !hasComponentChanges && (
+                <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                  Draft
+                </span>
+              )}
+              {isWorkingCopy && (
+                <span className="text-[11px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-medium">
+                  Working copy
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-2">
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5 text-gray-600 rounded-full h-8 px-3 text-xs"
               onClick={() => {
                 const id = currentTemplate?.id || savedTemplateId;
                 if (id) router.push(`/vsb/${id}`);
               }}
             >
-              <LayoutTemplate className="w-4 h-4" />
+              <LayoutTemplate className="w-3.5 h-3.5" />
               Create VSB
             </Button>
+
+            {hasComponentChanges && !isWorkingCopy && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetComponentChanges}
+                className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset
+              </Button>
+            )}
 
             {canSaveComponentChanges && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleSaveComponentChanges}
                 disabled={saving}
-                className="flex items-center gap-2 bg-transparent"
+                className="flex items-center gap-1.5 rounded-full h-8 px-3 text-xs border-gray-300"
               >
                 {saving ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                    Saving...
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600" />
+                    Saving…
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
+                    <Save className="w-3.5 h-3.5" />
+                    Save changes
                   </>
                 )}
               </Button>
             )}
 
-            {hasComponentChanges && !isWorkingCopy && (
-              <Button
-                variant="outline"
-                onClick={resetComponentChanges}
-                className="flex items-center gap-2 bg-transparent"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset Changes
-              </Button>
-            )}
-
             <Button
+              size="sm"
               variant={needsTemplateSave ? "default" : "outline"}
               onClick={() => setSaveTemplateDialog(true)}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-1.5 rounded-full h-8 px-3 text-xs ${needsTemplateSave ? "bg-[#BC2030] hover:bg-[#a01c29] text-white border-0" : "border-gray-300"}`}
             >
-              <FileText className="w-4 h-4" />
-              {currentTemplate && !isNewTemplate && !isWorkingCopy
-                ? "Update Email"
-                : "Save Email"}
+              <FileText className="w-3.5 h-3.5" />
+              {currentTemplate && !isNewTemplate && !isWorkingCopy ? "Update email" : "Save email"}
             </Button>
 
             <Button
-              variant={previewMode ? "default" : "outline"}
+              size="sm"
+              variant="outline"
               onClick={() => setOpenPreview(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1.5 rounded-full h-8 px-3 text-xs border-gray-300"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5" />
               Preview
             </Button>
 
@@ -615,66 +623,87 @@ if (activeSelectedId) {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
-          
 
-          {/* components panel */}
+          {/* Components panel */}
           {!previewMode && (
-            <div className="w-80 bg-white border-r flex flex-col p-4 overflow-y-auto">
-              <h4 className="font-bold text-lg text-gray-700 mb-3">
-                Components
-              </h4>
-              <ComponentPalette
-                onAddComponent={addComponent}
-                customComponents={customComponents}
-                disabled={isHeaderOnlyLocked}
-                getSelectionInfo={() => {
-                  return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
-                }}
-                applyUpdates={(updates, parentId) => {
-                  if (!activeSelectedId) return
-                  updateComponent(activeSelectedId, updates, parentId)
-                }}
-              />
+            <div className="w-72 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Components</h4>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3">
+                <ComponentPalette
+                  onAddComponent={addComponent}
+                  customComponents={customComponents}
+                  disabled={isHeaderOnlyLocked}
+                  getSelectionInfo={() => {
+                    return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
+                  }}
+                  applyUpdates={(updates, parentId) => {
+                    if (!activeSelectedId) return
+                    updateComponent(activeSelectedId, updates, parentId)
+                  }}
+                />
+              </div>
             </div>
           )}
 
           {/* Canvas */}
-          <div className={`flex-1 overflow-auto bg-gray-100 ${optionMode === "three" ?" pt-0" : ""} p-8 flex flex-col items-center`} 
-            onClick={(e)=>{
+          <div
+            className={`flex-1 overflow-auto bg-[#f0f2f5] ${optionMode === "three" ? "pt-0" : ""} p-8 flex flex-col items-center`}
+            onClick={(e) => {
               e.stopPropagation()
               setSelectedComponent(null)
             }}>
-            
+
             {optionMode === "three" && (
-              <div className="mb-6 w-full max-w-[600px] space-y-3 sticky top-0 z-10 bg-gray-100 py-4">
-                <div className="flex items-center justify-between px-1">
-                  <p className="text-sm font-semibold text-gray-700">Email Options</p>
-                  <span className="text-xs text-gray-500 capitalize">
-                    {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
-                  </span>
-                </div>
-                <Tabs value={`option-${activeOption}`} className="w-full" onValueChange={(val) => setActiveOption(parseInt(val.split('-')[1]) as 1|2|3)}>
-                  <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-300 shadow-sm h-11 p-1">
-                    <TabsTrigger value="option-1" className="gap-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                      Option 1
-                      {activeOption === 1 && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                    </TabsTrigger>
-                    <TabsTrigger value="option-2" className="gap-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                      Option 2
-                      {activeOption === 2 && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                    </TabsTrigger>
-                    <TabsTrigger value="option-3" className="gap-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                      Option 3
-                      {activeOption === 3 && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                {isHeaderOnlyLocked && (
-                  <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    <Lock className="h-4 w-4 shrink-0" />
-                    Header-only mode: body is synced from Option 1. Only the header image can be edited here.
+              <div className="mb-5 w-full max-w-[600px] sticky top-0 z-20 pt-4 pb-3 bg-[#f0f2f5]">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  {/* Tab row */}
+                  <div className="flex border-b border-gray-100">
+                    {([1, 2, 3] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setActiveOption(opt)}
+                        className={`flex-1 py-2.5 text-sm font-medium transition-colors relative ${
+                          activeOption === opt
+                            ? "text-[#BC2030] bg-red-50"
+                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                        }`}
+                      >
+                        Option {opt}
+                        {activeOption === opt && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BC2030] rounded-t-full" />
+                        )}
+                      </button>
+                    ))}
                   </div>
-                )}
+                  {/* Info row */}
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
+                    <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
+                      {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
+                    </span>
+                    {optionSubMode === "completely-different" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[11px] px-2 gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => {
+                          setCopyToTargets([]);
+                          setCopyToDialogOpen(true);
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                        Copy Option {activeOption} to…
+                      </Button>
+                    )}
+                  </div>
+                  {isHeaderOnlyLocked && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-t border-amber-100 text-xs text-amber-700">
+                      <Lock className="h-3.5 w-3.5 shrink-0" />
+                      Body synced from Option 1 — only the header image can be edited here.
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -700,22 +729,35 @@ if (activeSelectedId) {
                 duplicateComponent={duplicateComponent}
                 addComponent={addComponent}
                 isLockedMode={isHeaderOnlyLocked}
+                activeOption={optionMode === "three" && optionSubMode === "completely-different" ? activeOption : undefined}
+                onCopyToOption={
+                  optionMode === "three" && optionSubMode === "completely-different"
+                    ? (component, targetOption) => {
+                        addComponentToOption(component, targetOption);
+                        toast.success(`Component copied to Option ${targetOption}`);
+                      }
+                    : undefined
+                }
               />
             </div>
           </div>
 
           {/* Right Panel: Properties */}
           {!previewMode && selectedComponent && (
-            <div className="w-80 bg-white border-l p-4 overflow-y-auto">
-              <h4 className="font-bold text-lg text-gray-700 mb-3">Properties</h4>
-              <PropertiesPanel
-                component={selectedComponentData}
-                onUpdateComponent={(updates) => {
-                  if (!activeSelectedId) return;
-                  updateComponent(activeSelectedId, updates, parentId);
-                }}
-                onSaveAsCustom={(name) => saveAsCustomComponent(name)}
-              />
+            <div className="w-72 bg-white border-l border-gray-200 flex flex-col overflow-y-auto">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Properties</h4>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3">
+                <PropertiesPanel
+                  component={selectedComponentData}
+                  onUpdateComponent={(updates) => {
+                    if (!activeSelectedId) return;
+                    updateComponent(activeSelectedId, updates, parentId);
+                  }}
+                  onSaveAsCustom={(name) => saveAsCustomComponent(name)}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -757,6 +799,53 @@ if (activeSelectedId) {
 
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />
+
+      {/* Copy Option To Dialog */}
+      <Dialog open={copyToDialogOpen} onOpenChange={setCopyToDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Copy Option {activeOption} to…</DialogTitle>
+            <DialogDescription>
+              Select which option(s) should receive a copy of Option {activeOption}'s current layout. This will overwrite the target option(s).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            {([1, 2, 3] as const).filter((o) => o !== activeOption).map((opt) => (
+              <label key={opt} className="flex items-center gap-3 cursor-pointer rounded-md border p-3 hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                  checked={copyToTargets.includes(opt)}
+                  onChange={(e) =>
+                    setCopyToTargets((prev) =>
+                      e.target.checked ? [...prev, opt] : prev.filter((t) => t !== opt)
+                    )
+                  }
+                />
+                <span className="text-sm font-medium text-gray-800">Option {opt}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCopyToDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={copyToTargets.length === 0}
+              onClick={() => {
+                copyOptionTo(activeOption, copyToTargets);
+                setCopyToDialogOpen(false);
+                setCopyToTargets([]);
+                toast.success(
+                  `Option ${activeOption} copied to Option${copyToTargets.length > 1 ? "s" : ""} ${copyToTargets.join(" & ")}`
+                );
+              }}
+            >
+              Apply Copy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

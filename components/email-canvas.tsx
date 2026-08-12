@@ -16,6 +16,8 @@ interface EmailCanvasProps {
   addComponent: (component: EmailComponent, index?: number) => void
   canvasWidth?: number
   isLockedMode?: boolean
+  activeOption?: 1 | 2 | 3
+  onCopyToOption?: (component: EmailComponent, targetOption: 1 | 2 | 3) => void
 }
 
 export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
@@ -32,6 +34,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       addComponent,
       canvasWidth,
       isLockedMode = false,
+      activeOption,
+      onCopyToOption,
     },
     ref,
   ) => {
@@ -211,6 +215,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                   totalComponents={components.length}
                   onDuplicate={() => duplicateComponent(component.id)}
                   isLockedMode={isLockedMode && component.type !== "header-image"}
+                  activeOption={activeOption}
+                  onCopyToOption={onCopyToOption ? (targetOption) => onCopyToOption(component, targetOption) : undefined}
                 />
               </div>
             )
