@@ -38,7 +38,7 @@ export function RearrangeControls({
   const showCopyToOption = !!onCopyToOption && !!activeOption
 
   return (
-    <div className="absolute -right-12 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20">
+    <div className="absolute -right-12 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-10">
       <Button
         size="sm"
         variant="outline"

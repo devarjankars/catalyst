@@ -516,7 +516,7 @@ if (activeSelectedId) {
     <>
       <div className="h-screen flex flex-col bg-gray-50">
         {/* Header - sticky */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+        <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -651,7 +651,7 @@ if (activeSelectedId) {
             }}>
             
             {optionMode === "three" && (
-              <div className="mb-6 w-full max-w-[600px] space-y-3 sticky top-0 z-10 bg-gray-100 py-4">
+              <div className="mb-6 w-full max-w-[600px] space-y-3 sticky top-0 z-20 bg-gray-100 py-4">
                 <div className="flex items-center justify-between px-1">
                   <p className="text-sm font-semibold text-gray-700">Email Options</p>
                   <div className="flex items-center gap-2">
