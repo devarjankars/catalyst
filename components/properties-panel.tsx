@@ -77,12 +77,14 @@ interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   onUpdateComponent: (updates: Partial<EmailComponent>) => void;
   onSaveAsCustom?: (name?: string) => void;
+  onSaveHtmlBlock?: (value: string, name: string) => void;
 }
 
 export function PropertiesPanel({
   component,
   onUpdateComponent,
   onSaveAsCustom,
+  onSaveHtmlBlock,
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
@@ -171,6 +173,15 @@ export function PropertiesPanel({
   const saveRawHtml = (rawHtml: string) => {
     if (verifyHtml(rawHtml)) {
       onUpdateComponent({ html: rawHtml });
+      setIsRawHtmlEditorOpen(false);
+    } else {
+      toast.error("Invalid HTML");
+    }
+  };
+
+  const saveRawHtmlBlock = (rawHtml: string, name: string) => {
+    if (verifyHtml(rawHtml)) {
+      onSaveHtmlBlock?.(rawHtml, name);
       setIsRawHtmlEditorOpen(false);
     } else {
       toast.error("Invalid HTML");
@@ -2128,6 +2139,7 @@ export function PropertiesPanel({
         onClose={() => setIsRawHtmlEditorOpen(false)}
         initialValue={component.html || ""}
         onSave={saveRawHtml}
+        onSaveBlock={saveRawHtmlBlock}
       />
 
       {/* Save to Saved Blocks dialog */}
