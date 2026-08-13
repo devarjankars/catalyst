@@ -10,7 +10,7 @@ import { SaveTemplateDialog } from "@/components/save-template-dialog";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Copy } from "lucide-react";
+import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Copy, Undo2, Redo2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
@@ -69,6 +69,10 @@ export default function EmailBuilder() {
     ensureThreeOptions,
     markComponentsSaved,
     applyOptionConfiguration,
+    undo,
+    redo,
+    past,
+    future,
   } = useEmailBuilderStore();
 
   const copyOptionTo = useEmailBuilderStore((s) => s.copyOptionTo);
@@ -141,6 +145,36 @@ export default function EmailBuilder() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasComponentChanges, hasUnsavedTemplate]);
+
+  // Global undo/redo shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      } else if (key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
 const PLACEHOLDER_IMAGE = "/placeholder.svg?";
 
@@ -429,7 +463,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     }
   };
 
-  const saveAsCustomComponent = (name?: string) => {
+  const saveAsCustomComponent = async (name?: string) => {
     if (!selectedComponentData) return;
     const customComponent = {
       ...selectedComponentData,
@@ -437,8 +471,12 @@ function replaceImagesInComponents(components: any[]): any[] {
       isCustom: true,
       name: name || selectedComponentData.name || `Custom ${selectedComponentData.type}`,
     };
-    addCustomComponent(customComponent);
-    toast.success("Block saved to Saved Blocks");
+    const saved = await addCustomComponent(customComponent);
+    if (saved) {
+      toast.success("Block saved to Saved Blocks");
+    } else {
+      toast.error("Failed to save block. Please try again.");
+    }
   };
 
   function findComponentWithParentById(
@@ -550,6 +588,29 @@ if (activeSelectedId) {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => undo()}
+              disabled={past.length === 0}
+              title="Undo (Ctrl+Z)"
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs disabled:opacity-40"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              Undo
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => redo()}
+              disabled={future.length === 0}
+              title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs disabled:opacity-40"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+              Redo
+            </Button>
+
             <Button
               variant="outline"
               size="sm"

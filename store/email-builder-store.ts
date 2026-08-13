@@ -4,6 +4,21 @@ import type { EmailComponent } from "@/types/email-builder"
 import type { EmailTemplate } from "@/types/template"
 import { firebaseService } from "@/services/firebase-service"
 
+const HISTORY_LIMIT = 100
+const COALESCE_THROTTLE_MS = 800
+let lastCoalescedAt = 0
+let lastPushCoalescible = false
+
+interface EditorSnapshot {
+  components: EmailComponent[]
+  option2Components: EmailComponent[]
+  option3Components: EmailComponent[]
+  preheaderText: string
+  activeOption: 1 | 2 | 3
+  optionMode: "single" | "three"
+  optionSubMode: "header-only" | "completely-different"
+}
+
 function deleteByIdRecursive(components: any[], targetId: string): any[] {
   return components
     .map(comp => {
@@ -61,6 +76,10 @@ interface EmailBuilderState {
   hasUnsavedTemplate: boolean // Template not saved yet (new or copy)
   isNewTemplate: boolean
 
+  // Undo/redo history
+  past: EditorSnapshot[]
+  future: EditorSnapshot[]
+
   // Loading states
   loading: boolean
   saving: boolean
@@ -110,9 +129,9 @@ interface EmailBuilderState {
   // UI actions
   setSelectedComponent: (id: string | null) => void
   setPreviewMode: (preview: boolean) => void
-  addCustomComponent: (component: EmailComponent) => void
+  addCustomComponent: (component: EmailComponent) => Promise<EmailComponent | null>
   loadCustomComponents: (components: EmailComponent[]) => void
-  deleteCustomComponent: (id: string) => void
+  deleteCustomComponent: (id: string) => Promise<boolean>
   setPreheader: (preheaderTest: string) => void
   setTemplateImages: (images: string[]) => void
   loadTemplateImages: (templateId: string) => Promise<void>
@@ -129,6 +148,13 @@ interface EmailBuilderState {
 
   // Change detection
   checkForChanges: () => void
+
+  // Undo/redo actions
+  undo: () => void
+  redo: () => void
+  captureSnapshot: () => EditorSnapshot
+  pushHistory: (coalesce?: boolean) => void
+  clearHistory: () => void
 
   // Helper methods
   deepCloneComponent: (component: EmailComponent) => EmailComponent
@@ -159,6 +185,8 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         hasComponentChanges: false,
         hasUnsavedTemplate: false,
         isNewTemplate: false,
+        past: [],
+        future: [],
         loading: false,
         saving: false,
         preheaderText: "",
@@ -166,6 +194,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         // Template actions
         setCurrentTemplate: (template) => {
+          get().clearHistory()
           const components = template?.components || []
           const option2Components = template?.option2Components || []
           const option3Components = template?.option3Components || []
@@ -202,6 +231,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         setComponents: (components) => {
+          get().pushHistory()
           set({ components })
           get().checkForChanges()
         },
@@ -212,6 +242,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         setPreheader: (preheadertext) => {
+          get().pushHistory(true)
           set({ preheaderText: preheadertext })
           const { currentTemplate } = get()
           if (currentTemplate) {
@@ -250,6 +281,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           return option3Components
         },
         setActiveComponents: (components) => {
+          get().pushHistory()
           const { activeOption } = get()
           if (activeOption === 1) set({ components })
           else if (activeOption === 2) set({ option2Components: components })
@@ -321,6 +353,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           get().checkForChanges()
         },
         applyOptionConfiguration: (config) => {
+          get().pushHistory()
           set({ optionMode: config.mode })
           if (config.subMode) {
             set({ optionSubMode: config.subMode })
@@ -351,6 +384,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         copyOptionTo: (fromOption, toOptions) => {
+          get().pushHistory()
           const { components, option2Components, option3Components } = get()
           const getOptionComponents = (opt: 1 | 2 | 3) => {
             if (opt === 1) return components
@@ -370,6 +404,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         addComponentToOption: (component, targetOption) => {
+          get().pushHistory()
           const { components, option2Components, option3Components } = get()
           const cloned = get().deepCloneComponent(component)
           if (targetOption === 1) set({ components: [...components, cloned] })
@@ -380,6 +415,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         // Working copy actions
         startWorkingCopy: (sourceTemplate, optionOverrides) => {
+          get().clearHistory()
           const optionMode =
             optionOverrides?.optionMode ?? sourceTemplate.optionMode ?? "single"
           const optionSubMode =
@@ -413,6 +449,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         saveWorkingCopyAsTemplate: (templateData) => {
+          get().clearHistory()
           const { components, optionMode, optionSubMode, option2Components, option3Components } = get()
           const newTemplate: EmailTemplate = {
             ...templateData,
@@ -442,6 +479,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         // Component actions
         addComponent: (component, index) => {
+          get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
           if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
@@ -470,6 +508,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         updateComponent: (id, updates, parentId = null) => {
+          get().pushHistory(true)
           const { activeOption, optionMode, optionSubMode } = get()
           const componentsToEdit = get().getActiveComponents()
           const findById = (items: EmailComponent[]): EmailComponent | null => {
@@ -519,6 +558,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         deleteComponent: (id) => {
+          get().pushHistory()
           const { activeOption, optionMode, optionSubMode, selectedComponent } = get()
           if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
@@ -540,6 +580,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         moveComponent: (dragIndex, hoverIndex) => {
+          get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
           if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
@@ -560,6 +601,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
 
         duplicateComponent: (id) => {
+          get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
           if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
@@ -586,27 +628,29 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         setSelectedComponent: (id) => set({ selectedComponent: id }),
         setPreviewMode: (preview) => set({ previewMode: preview }),
         loadCustomComponents: (components) => {
-          console.log("Loading custom components:", components)
-          set({ customComponents: components })
+          set({ customComponents: Array.isArray(components) ? components : [] })
         },
         addCustomComponent: async (component) => {
           const { customComponents } = get()
-          console.log("Adding custom component:");
-          if (!Array.isArray(customComponents)) {
-            console.error("Custom components is not an array, resetting to empty array.");
+          try {
             const createComponent = await firebaseService.saveCustomComponent(component)
-            set({ customComponents: [createComponent] });
-          } else {
-            const createComponent = await firebaseService.saveCustomComponent(component)
-            set({ customComponents: [...customComponents, createComponent] })
+            const next = Array.isArray(customComponents)
+              ? [...customComponents, createComponent]
+              : [createComponent]
+            set({ customComponents: next })
+            return createComponent
+          } catch (error) {
+            console.error("Failed to save custom component:", error)
+            return null
           }
         },
         deleteCustomComponent: async (id) => {
           const { customComponents } = get()
-          console.log("Deleting custom component with ID:", id);
-
-          await firebaseService.deleteCustomComponent(id)
-          set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
+          const ok = await firebaseService.deleteCustomComponent(id)
+          if (ok) {
+            set({ customComponents: customComponents.filter((comp) => comp.id !== id) })
+          }
+          return ok
         },
 
         setTemplateImages: (images) => set({ templateImages: images }),
@@ -623,6 +667,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           try {
             const template = await firebaseService.getTemplate(templateId)
             if (template) {
+              get().clearHistory()
               set({
                 currentTemplate: template,
                 components: template.components || [],
@@ -678,9 +723,11 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             isWorkingCopy: false,
             workingCopySource: null,
           })
+          get().clearHistory()
         },
 
         resetComponentChanges: () => {
+          get().pushHistory()
           const { originalComponents, originalOption2Components, originalOption3Components, selectedComponent } = get()
 
           // Check if the currently selected component still exists in the original components
@@ -718,6 +765,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             hasUnsavedTemplate: false,
             isNewTemplate: false,
           })
+          get().clearHistory()
         },
 
         // Change detection
@@ -733,6 +781,79 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             hasComponentChanges: componentsChanged || option2Changed || option3Changed || preheaderChanged,
             hasUnsavedTemplate: isWorkingCopy || isNewTemplate,
           })
+        },
+
+        // Undo/redo
+        captureSnapshot: (): EditorSnapshot => {
+          const {
+            components,
+            option2Components,
+            option3Components,
+            preheaderText,
+            activeOption,
+            optionMode,
+            optionSubMode,
+          } = get()
+          return {
+            components: [...components],
+            option2Components: [...option2Components],
+            option3Components: [...option3Components],
+            preheaderText,
+            activeOption,
+            optionMode,
+            optionSubMode,
+          }
+        },
+        pushHistory: (coalesce = false) => {
+          const now = Date.now()
+          if (
+            coalesce &&
+            lastPushCoalescible &&
+            now - lastCoalescedAt < COALESCE_THROTTLE_MS
+          ) {
+            lastCoalescedAt = now
+            return
+          }
+          const { past } = get()
+          set({
+            past: [...past, get().captureSnapshot()].slice(-HISTORY_LIMIT),
+            future: [],
+          })
+          lastCoalescedAt = now
+          lastPushCoalescible = coalesce
+        },
+        undo: () => {
+          const { past, future } = get()
+          if (past.length === 0) return
+          const previous = past[past.length - 1]
+          set({
+            past: past.slice(0, -1),
+            future: [get().captureSnapshot(), ...future].slice(0, HISTORY_LIMIT),
+            ...previous,
+            selectedComponent: null,
+          })
+          lastCoalescedAt = 0
+          lastPushCoalescible = false
+          get().checkForChanges()
+        },
+        redo: () => {
+          const { past, future } = get()
+          if (future.length === 0) return
+          const next = future[0]
+          set({
+            future: future.slice(1),
+            past: [...past, get().captureSnapshot()].slice(-HISTORY_LIMIT),
+            ...next,
+            selectedComponent: null,
+          })
+          lastCoalescedAt = 0
+          lastPushCoalescible = false
+          get().checkForChanges()
+        },
+        clearHistory: () => {
+          set({ past: [], future: [] })
+          lastCoalescedAt = 0
+          lastPushCoalescible = false
         },
 
         // Helper methods (not exposed in interface but available internally)

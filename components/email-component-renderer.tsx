@@ -403,24 +403,21 @@ export function EmailComponentRenderer({
             style={{ ...baseStyle, textAlign: component.textAlign || "center" }}
             className="mt-2"
           >
-            {!previewMode && isSelected ? (
-              <div className="space-y-2 mb-2">
-                <input
-                  type="text"
+            {!previewMode && isSelected && (
+              <div className="mb-2 space-y-2 rounded-lg border border-dashed border-blue-200 bg-blue-50/60 p-2">
+                <Input
                   value={component.text || ""}
                   onChange={(e) => onUpdate({ text: e.target.value })}
                   placeholder="Button text"
-                  className="w-full p-2 border rounded text-sm"
                 />
-                <input
+                <Input
                   type="url"
                   value={component.href || ""}
                   onChange={(e) => onUpdate({ href: e.target.value })}
-                  placeholder="Button link"
-                  className="w-full p-2 border rounded text-sm"
+                  placeholder="Button link URL"
                 />
               </div>
-            ) : null}
+            )}
             <a
               href={component.href || "#"}
               title={component.linkTitle || undefined}
@@ -1118,14 +1115,16 @@ export function EmailComponentRenderer({
       data-handler-id={handlerId}
       data-component-id={component.id}
       className={`
-        relative group
+        relative group ${!previewMode ? "cursor-pointer" : ""}
         ${
           isSelected && !previewMode
-            ? `ring-2 ${isColumn ? "ring-green-500" : "ring-blue-500"}`
+            ? isColumn
+              ? "rounded-md ring-2 ring-green-500/80 ring-offset-2"
+              : "rounded-md ring-2 ring-blue-500/80 ring-offset-2"
             : ""
         }
+        ${!isSelected && !previewMode && !isLockedMode ? "hover:ring-1 hover:ring-blue-200" : ""}
         ${isDragging ? "opacity-50" : ""}
-       
       `}
       onClick={(e) => {
         e.stopPropagation();
@@ -1138,13 +1137,10 @@ export function EmailComponentRenderer({
           { !isColumn && !isLockedMode && 
             <div
               ref={dragHandleRef}
-              className="absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              title="Drag to reorder"
+              className="absolute -left-6 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 opacity-0 shadow-sm transition-opacity hover:text-gray-600 hover:shadow group-hover:opacity-100 z-10"
             >
-              <GripVertical
-                className={`w-4 h-4 cursor-move ${
-                  isColumn ? "text-green-400" : "text-gray-400"
-                }`}
-              />
+              <GripVertical className="h-4 w-4 cursor-grab" />
             </div>
           }
 
@@ -1162,13 +1158,6 @@ export function EmailComponentRenderer({
               onCopyToOption={onCopyToOption}
             />
           )}
-
-          {/* Edit overlay for non-text and non-section components */}
-          {component.type !== "text" &&
-            component.type !== "section" &&
-            isSelected && (
-              <div className="absolute inset-0 bg-blue-500 bg-opacity-10 hover:border-black  pointer-events-none" />
-            )}
         </>
       )}
 

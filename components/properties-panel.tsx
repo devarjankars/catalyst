@@ -14,12 +14,13 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert, Code, BookmarkPlus } from "lucide-react";
+import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
 import { verifyHtml } from "@/lib/verify-html";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -47,13 +48,18 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   };
 
   return (
-    <div className="flex items-center gap-2 mt-1">
-      <input
-        type="color"
-        value={toHex(text)}
-        onChange={(e) => { setText(e.target.value); onChange(e.target.value); }}
-        className="h-9 w-10 cursor-pointer rounded border p-0.5"
-      />
+    <div className="mt-1.5 flex items-center gap-2">
+      <div
+        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow"
+        title="Pick color"
+      >
+        <input
+          type="color"
+          value={toHex(text)}
+          onChange={(e) => { setText(e.target.value); onChange(e.target.value); }}
+          className="absolute inset-0 h-[140%] w-[140%] -translate-x-[14%] -translate-y-[14%] cursor-pointer border-0 p-0"
+        />
+      </div>
       <Input
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -71,12 +77,14 @@ interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   onUpdateComponent: (updates: Partial<EmailComponent>) => void;
   onSaveAsCustom?: (name?: string) => void;
+  onSaveHtmlBlock?: (value: string, name: string) => void;
 }
 
 export function PropertiesPanel({
   component,
   onUpdateComponent,
   onSaveAsCustom,
+  onSaveHtmlBlock,
 }: PropertiesPanelProps) {
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
@@ -110,9 +118,16 @@ export function PropertiesPanel({
 
   if (!component) {
     return (
-      <div className="text-center text-gray-500 py-8">
-        <div className="text-lg font-medium mb-2">No component selected</div>
-        <div className="text-sm">Select a component to edit its properties</div>
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-gray-200 px-6 py-12 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 ring-1 ring-gray-200">
+          <MousePointerClick className="h-5 w-5 text-gray-400" />
+        </div>
+        <div>
+          <div className="font-medium text-gray-700">No component selected</div>
+          <div className="mt-1 text-sm text-gray-400">
+            Select a component on the canvas to edit its properties
+          </div>
+        </div>
       </div>
     );
   }
@@ -158,6 +173,15 @@ export function PropertiesPanel({
   const saveRawHtml = (rawHtml: string) => {
     if (verifyHtml(rawHtml)) {
       onUpdateComponent({ html: rawHtml });
+      setIsRawHtmlEditorOpen(false);
+    } else {
+      toast.error("Invalid HTML");
+    }
+  };
+
+  const saveRawHtmlBlock = (rawHtml: string, name: string) => {
+    if (verifyHtml(rawHtml)) {
+      onSaveHtmlBlock?.(rawHtml, name);
       setIsRawHtmlEditorOpen(false);
     } else {
       toast.error("Invalid HTML");
@@ -1970,28 +1994,41 @@ export function PropertiesPanel({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">
-          {isColumn
-            ? "Column"
-            : (component.type?.charAt(0).toUpperCase() ?? "") +
-              component.type?.slice(1)}{" "}
-          Properties
-        </h3>
-        
+    <div className="eb-props space-y-5">
+      <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+        <div
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+            isColumn
+              ? "bg-green-50 text-green-600 ring-green-100"
+              : "bg-blue-50 text-blue-600 ring-blue-100",
+          )}
+        >
+          {isColumn ? <Layers className="h-4 w-4" /> : <Box className="h-4 w-4" />}
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">
+            {isColumn
+              ? "Column"
+              : (component.type?.charAt(0).toUpperCase() ?? "") +
+                component.type?.slice(1)}
+          </h3>
+          <p className="text-xs text-gray-400">Properties</p>
+        </div>
       </div>
 
       {component.type === "section" && (
         <div
-          className={`${
-            isColumn ? "bg-green-50" : "bg-blue-50"
-          } p-3 rounded-lg`}
+          className={cn(
+            "rounded-xl border p-3",
+            isColumn ? "border-green-100 bg-green-50/70" : "border-blue-100 bg-blue-50/70",
+          )}
         >
           <div
-            className={`text-sm ${
-              isColumn ? "text-green-800" : "text-blue-800"
-            } font-medium mb-1`}
+            className={cn(
+              "mb-1 text-sm font-medium",
+              isColumn ? "text-green-800" : "text-blue-800",
+            )}
           >
             {isColumn ? (
               <>Column Container</>
@@ -2005,9 +2042,10 @@ export function PropertiesPanel({
             )}
           </div>
           <div
-            className={`text-xs ${
-              isColumn ? "text-green-600" : "text-blue-600"
-            }`}
+            className={cn(
+              "eb-info-chip",
+              isColumn ? "text-green-600" : "text-blue-600",
+            )}
           >
             {isColumn ? (
               <>
@@ -2030,54 +2068,64 @@ export function PropertiesPanel({
 
       {renderProperties()}
 
+      {/* Common Properties */}
+      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+        <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Spacing
+        </h4>
+        <div>
+          <Label htmlFor="padding">Padding</Label>
+          <PaddingInput
+            value={component.padding || "0 20px 10px 20px"}
+            onChange={(value) => onUpdateComponent({ padding: value })}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+        <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Responsive
+        </h4>
+        <div>
+          <Label htmlFor="diplayType">Display on</Label>
+          <Select
+            value={component.displayType || "all"}
+            onValueChange={(value) =>
+              onUpdateComponent({ displayType: value as "all" | "mobile-only" | "desktop-only" })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Devices</SelectItem>
+              <SelectItem value="desktop-only">Desktop Only</SelectItem>
+              <SelectItem value="mobile-only">Mobile Only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="flex items-start gap-1.5 text-xs text-amber-600">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Responsiveness is only visible in Preview
+        </p>
+      </div>
+
       {/* Save to Saved Blocks */}
       {onSaveAsCustom && (
-        <div className="border-t pt-4">
+        <div className="pt-1">
           <Button
             variant="outline"
             onClick={() => {
               setBlockName(component.name || "");
               setIsSaveBlockOpen(true);
             }}
-            className="w-full flex items-center gap-2 bg-transparent"
+            className="w-full bg-white hover:bg-gray-50"
           >
-            <BookmarkPlus className="w-4 h-4" />
+            <BookmarkPlus className="h-4 w-4 text-blue-600" />
             Save to Saved Blocks
           </Button>
         </div>
       )}
-
-      {/* Common Properties */}
-      <div className="border-t pt-4">
-        <h4 className="font-medium text-gray-700 mb-3">Spacing</h4>
-        <div>
-          <Label htmlFor="padding">Padding</Label>
-          <PaddingInput
-          value={component.padding || "0 20px 10px 20px"}
-          onChange={(value) => onUpdateComponent({ padding: value })}
-          />
-        </div>
-      </div>
-      <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-700 mb-3">Responsive</h4>
-            <Label htmlFor="diplayType">Select Display type of component</Label>
-            <Select 
-              value={component.displayType || "all"}
-              onValueChange={(value) =>
-                onUpdateComponent({ displayType: value as "all" | "mobile-only" | "desktop-only" })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Devices</SelectItem>
-                <SelectItem value="desktop-only">Desktop Only</SelectItem>
-                <SelectItem value="mobile-only">Mobile Only</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground text-orange-500 mt-2 flex"><TriangleAlert className="w-5 h-5 mr-2"/>Responssiveness is seen only in priview</p>
-      </div>
       {/* text html editor modal */}
       <HtmlEditorModal
         isOpen={isHtmlEditorOpen}
@@ -2091,6 +2139,7 @@ export function PropertiesPanel({
         onClose={() => setIsRawHtmlEditorOpen(false)}
         initialValue={component.html || ""}
         onSave={saveRawHtml}
+        onSaveBlock={saveRawHtmlBlock}
       />
 
       {/* Save to Saved Blocks dialog */}
