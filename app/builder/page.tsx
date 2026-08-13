@@ -551,7 +551,7 @@ if (activeSelectedId) {
 
   return (
     <>
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div className="h-full flex flex-col bg-gray-50">
         {/* Header - sticky */}
         <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-0 flex items-center justify-between sticky top-0 z-30 h-14">
           <div className="flex items-center gap-3">

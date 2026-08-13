@@ -1,15 +1,13 @@
 'use client'
 import { Input } from "@/components/ui/input"
-import {Button} from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { Plus, Search, Mail, Send, Globe } from "lucide-react"
+import { Search, X, Mail, Send, Globe } from "lucide-react"
 import { useEffect, useState } from "react"
 import { EmailTemplate } from "@/types/template"
 import { ShimmerCardGrid } from "@/components/shimmer"
 import { firebaseService } from "@/services/firebase-service"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { useLoggedInUserStore } from '@/store/logged-in-user'
 
 
 export default function ManageTemplates() {
@@ -23,10 +21,9 @@ export default function ManageTemplates() {
     open: false,
     template: null,
   })
-  const {userRole} = useLoggedInUserStore()
-    useEffect(() => {
+  useEffect(() => {
         loadTemplates();
-       
+        
         setFilteredTemplates(templates);
       }, [])
   useEffect(() => {
@@ -58,9 +55,6 @@ export default function ManageTemplates() {
          
        }
     }
-    const handleCreateBlank = () => {
-    router.push("/builder?selectMode=true")
-  }
     const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
     router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
@@ -102,26 +96,25 @@ export default function ManageTemplates() {
             <div className="px-4 sm:px-6 lg:px-8 py-8 border rounded-lg bg-[linear-gradient(168deg,rgba(255,160,162,1)_0%,rgba(255,239,239,1)_100%)]" >
               <div className="flex flex-col items-start">
                 <div className="flex flex-col sm:flex-row gap-8 w-full">
-                {/* <div className="flex flex-col sm:flex-row gap-4"> */}
-                  <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <div className="relative flex-1 max-w-xl">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-colors" />
                   <Input
-                    placeholder="Search"
+                    placeholder="Search emailers..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-2/3 rounded-full"
+                    className="pl-10 pr-10 h-11 w-full rounded-full border-0 bg-white/70 backdrop-blur-sm text-sm text-slate-700 shadow-sm ring-1 ring-slate-200/70 transition-all duration-200 placeholder:text-slate-400 hover:bg-white hover:shadow-md hover:ring-slate-300/80 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#BC2030]/30 focus-visible:shadow-lg focus-visible:outline-none"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Filter by category</span>
-                </div> */}
-                {/* </div> */}
-                {(userRole === "superadmin" || userRole === "admin") && <Button className="flex items-center gap-2 rounded-full px-6" onClick={handleCreateBlank}>
-                  <Plus className="w-4 h-4" />
-                  Create template
-                </Button>}
-                
               </div>
                 
               </div>
