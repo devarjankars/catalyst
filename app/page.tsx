@@ -23,7 +23,7 @@ export default  function LandingPage() {
   {
     label: "Emailer",
     icon: Mail,
-    href: "/dashboard",
+    href: "/builder?selectMode=true",
   },
   {
     label: "Banner",
@@ -54,10 +54,11 @@ export default  function LandingPage() {
         {tools.map(({ label, icon: Icon, href }) => (
           <Card
             key={label}
-           
+            onClick={() => router.push(href)}
             className="
               group relative bg-[#111111] border border-[#2a2a2a] rounded-2xl
               overflow-hidden transition-all duration-300
+              cursor-pointer
               hover:-translate-y-1 hover:border-[#E12A29]
               hover:shadow-[0_12px_32px_rgba(225,42,41,0.18)]
               [&:nth-child(4)]:col-start-1

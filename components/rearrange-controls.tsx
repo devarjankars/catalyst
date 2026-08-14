@@ -77,7 +77,7 @@ export function RearrangeControls({
 
   return (
     <div
-      className="absolute -top-3 right-2 z-20 flex items-center rounded-full border border-gray-200 bg-white/95 py-1 pl-1.5 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
+      className="absolute -top-3 right-2 z-[60] flex items-center rounded-full border border-gray-200 bg-white/95 py-1 pl-1.5 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-0.5">
