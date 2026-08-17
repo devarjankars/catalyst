@@ -103,7 +103,8 @@ const config: Config = {
 				"grow-x": {
           "0%": { transform: "scaleX(0)" },
           "100%": { transform: "scaleX(1)" },
-		   blink: {
+        },
+        blink: {
           "0%, 49%": { opacity: "1" },
           "50%, 100%": { opacity: "0" },
         },
@@ -111,12 +112,35 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
         },
-			},
+        "spin-reverse": {
+          from: { transform: "rotate(360deg)" },
+          to: { transform: "rotate(0deg)" },
+        },
+        "ring-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(0.5)", opacity: "0.5" },
+        },
+        "ping-once": {
+          "0%": { transform: "scale(1)", opacity: "0.8" },
+          "80%, 100%": { transform: "scale(2.2)", opacity: "0" },
+        },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				 "grow-x": "grow-x 0.2s ease-out forwards",
+				"grow-x": "grow-x 0.2s ease-out forwards",
+				"spin-slow": "spin-slow 1.1s linear infinite",
+				"spin-reverse": "spin-reverse 2.4s linear infinite",
+				"ring-pulse": "ring-pulse 1.1s ease-in-out infinite",
+				"shimmer": "shimmer 1.4s ease-in-out infinite",
+				"ping-once": "ping-once 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
 			}
 		}
 	},
