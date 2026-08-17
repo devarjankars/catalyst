@@ -24,6 +24,8 @@ export default function EmailBuilder() {
   const templateId = searchParams.get("template");
   const isCopy = searchParams.get("copy") === "true";
   const isEdit = searchParams.get("edit") === "true";
+  const keepImages = searchParams.get("keepImages") === "true";
+  const urlTemplateName = searchParams.get("name") || "";
 
   const {
     currentTemplate,
@@ -227,7 +229,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     try {
       const template = await firebaseService.getTemplate(id);
       if (template) {
-        const templateWithPlaceholders = isCopy
+        const templateWithPlaceholders = isCopy && !keepImages
           ? {
               ...template,
               components: replaceImagesInComponents(template.components || []),
@@ -551,7 +553,7 @@ if (activeSelectedId) {
 
   return (
     <>
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div className="h-full flex flex-col bg-gray-50">
         {/* Header - sticky */}
         <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-0 flex items-center justify-between sticky top-0 z-30 h-14">
           <div className="flex items-center gap-3">
@@ -829,7 +831,11 @@ if (activeSelectedId) {
         open={saveTemplateDialog}
         onClose={() => setSaveTemplateDialog(false)}
         onSave={handleSaveTemplate}
-        initialName={currentTemplate?.name || workingCopySource?.name || ""}
+        initialName={
+          isWorkingCopy && urlTemplateName
+            ? `${urlTemplateName} (Copy)`
+            : currentTemplate?.name || workingCopySource?.name || ""
+        }
         initialDescription={
           currentTemplate?.description || workingCopySource?.description || ""
         }

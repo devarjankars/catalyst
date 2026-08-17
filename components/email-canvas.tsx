@@ -180,7 +180,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               ref.current = node
             }
           }}
-          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
+          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative isolate pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
           style={{ width: `${canvasWidth ?? 600}px` }}
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}

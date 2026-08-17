@@ -1671,16 +1671,6 @@ export function generateEmailHTML(
           <meta name="supported-color-schemes" content="light">
 
     <title>Email Template</title>
-    <!--[if mso]>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings>
-                <o:AllowPNG/>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <![endif]-->
 
     <!--to support dark mode meta tags-->
     <style type="text/css">

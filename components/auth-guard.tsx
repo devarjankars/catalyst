@@ -40,7 +40,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   if (isChecking) {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
-        <LoadingSpinner message="Authenticating..." size="lg" />
+        <LoadingSpinner message="MEDTRIX..." size="lg" />
       </div>
     );
   }

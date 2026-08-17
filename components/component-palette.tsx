@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useDrag } from "react-dnd"
-import { Trash2, Type } from "lucide-react"
+import { Trash2, Type, Image as ImageIcon, Boxes, Pill, Building2, Sparkles, LayoutGrid, Bookmark } from "lucide-react"
 import type { EmailComponent } from "@/types/email-builder"
 import { componentTypes } from "@/data/component-types"
 import { sectionTemplates } from "@/data/section-templates"
@@ -134,6 +134,10 @@ function DraggableComponent({
 
 export function ComponentPalette({ onAddComponent, customComponents, disabled = false, getSelectionInfo, applyUpdates }: ComponentPaletteProps) {
 
+  const sectionItem =
+    "overflow-hidden rounded-xl border border-gray-200/80 bg-white transition-all duration-200 data-[state=open]:border-gray-300 data-[state=open]:shadow-[0_2px_10px_rgba(17,24,39,0.06)]"
+  const sectionTrigger =
+    "px-3.5 py-3 text-[13px] font-semibold tracking-wide text-gray-700 transition-colors duration-200 hover:no-underline hover:bg-gray-50/80 data-[state=open]:text-gray-900"
 
   return (
     <div className="space-y-4 overflow-y-auto h-full relative overflow-x-hidden">
@@ -146,68 +150,118 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
       <Accordion
         type="single"
         collapsible
-        className="w-full"
+        className="w-full space-y-2.5 pr-0.5"
         defaultValue="item-1"
       >
-        <AccordionItem value="item-gallery">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Images</AccordionTrigger>
-          <AccordionContent className="p-0">
+        <AccordionItem value="item-gallery" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                <ImageIcon className="h-3.5 w-3.5" />
+              </span>
+              Images
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-0.5">
             <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-1">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Basic Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
-            <div className="grid grid-cols-2 gap-2">
-              {componentTypes
-                .filter((type) => type.type !== "section" && type.category === "basic")
-                .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
-                ))}
+        <AccordionItem value="item-1" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                <Boxes className="h-3.5 w-3.5" />
+              </span>
+              Basic Components
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
+            <div className="flex flex-col gap-3 text-balance">
+              <div className="grid grid-cols-2 gap-2">
+                {componentTypes
+                  .filter((type) => type.type !== "section" && type.category === "basic")
+                  .map((componentType) => (
+                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                  ))}
 
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-2">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Orserdu Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
-            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-              {componentTypes
-                .filter((type) => type.type !== "section" && type.category === "custom")
-                .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
-                ))}
+        <AccordionItem value="item-2" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-green-600">
+                <Pill className="h-3.5 w-3.5" />
+              </span>
+              Orserdu Components
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
+            <div className="flex flex-col gap-3 text-balance">
+              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+                {componentTypes
+                  .filter((type) => type.type !== "section" && type.category === "custom")
+                  .map((componentType) => (
+                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                  ))}
 
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-ferring">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Ferring Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
-            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-              {componentTypes
-                .filter((type) => type.category === "ferring")
-                .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
-                ))}
+        <AccordionItem value="item-ferring" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-sky-600">
+                <Building2 className="h-3.5 w-3.5" />
+              </span>
+              Ferring Components
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
+            <div className="flex flex-col gap-3 text-balance">
+              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+                {componentTypes
+                  .filter((type) => type.category === "ferring")
+                  .map((componentType) => (
+                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                  ))}
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-elzonris">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Elzonris Components</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
-            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-              {componentTypes
-                .filter((type) => type.category === "elzonris")
-                .map((componentType) => (
-                  <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
-                ))}
+        <AccordionItem value="item-elzonris" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-orange-50 text-orange-500">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+              Elzonris Components
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
+            <div className="flex flex-col gap-3 text-balance">
+              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+                {componentTypes
+                  .filter((type) => type.category === "elzonris")
+                  .map((componentType) => (
+                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                  ))}
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-3">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Sections</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+        <AccordionItem value="item-3" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </span>
+              Sections
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
             <div className="grid grid-cols-2 gap-2">
               {sectionTemplates.map((template, index) => (
                 <DraggableComponent
@@ -221,9 +275,16 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-saved-blocks">
-          <AccordionTrigger className="rounded-lg px-2 py-3 text-sm font-semibold text-gray-700 transition-colors hover:no-underline hover:bg-gray-50 data-[state=open]:text-blue-600">Saved Blocks</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 px-1 text-balance">
+        <AccordionItem value="item-saved-blocks" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50 text-amber-600">
+                <Bookmark className="h-3.5 w-3.5" />
+              </span>
+              Saved Blocks
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
             {customComponents.length === 0 ? (
               <p className="text-xs text-gray-400 px-1">
                 No saved blocks yet. Select a component on the canvas and use "Save to Saved Blocks".
