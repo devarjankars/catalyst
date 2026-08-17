@@ -1639,6 +1639,138 @@ case "isi": {
       `.trim();
     }
 
+    case "tryvio-footer": {
+      const logoSrc        = component.tryvioFooterLogoSrc    || "/logo.png";
+      const logoHref       = component.tryvioFooterLogoHref   || "#";
+      const logoAlt        = component.tryvioFooterLogoAlt    || "Tryvio";
+      const emailLine      = component.tryvioFooterEmailLine   || "This email was sent to {{Account.PersonEmail}}";
+      const sentByLine     = component.tryvioFooterSentByLine  || "This email was sent by: Idorsia Pharmaceuticals US Inc.";
+      const addressLine    = component.tryvioFooterAddressLine || "One Radnor Corporate Center, Suite 101, Radnor, PA 19087";
+      const privacyFull    = component.tryvioFooterPrivacyText || "We respect your right to privacy - view our Privacy policy.";
+      const privacyHref    = component.tryvioFooterPrivacyHref || "https://www.idorsia.us/privacy-policy";
+      const unsubText      = component.tryvioFooterUnsubscribeText || "Unsubscribe";
+      const unsubHref      = component.tryvioFooterUnsubscribeHref || "{{unsubscribe_product_link}}";
+      const liSrc          = component.tryvioFooterLinkedinSrc  || "/linkedin.png";
+      const liHref         = component.tryvioFooterLinkedinHref || "https://www.linkedin.com/company/tryvio-aprocitentan/";
+      const liAlt          = component.tryvioFooterLinkedinAlt  || "LinkedIn";
+      const copyText       = component.tryvioFooterCopyrightText || "©2026 Idorsia Pharmaceuticals, Ltd.";
+      const copyHref       = component.tryvioFooterCopyrightHref || "https://www.idorsia.us/";
+      const jobCode        = component.tryvioFooterJobCode      || "US-AP-00162 04/26";
+      const idorsiaLogoSrc = component.tryvioFooterIdorsiaLogoSrc  || "/Idorsia.png";
+      const idorsiaHref    = component.tryvioFooterIdorsiaLogoHref || "https://www.idorsia.us/";
+      const idorsiaAlt     = component.tryvioFooterIdorsiaLogoAlt  || "Idorsia logo";
+
+      // Split privacy text around "Privacy policy" to inject the hyperlink
+      const privacySplit = privacyFull.split("Privacy policy");
+      const privacyHTML  = `${privacySplit[0]}<a href="${privacyHref}" target="_blank" style="text-decoration:underline !important;color:#002D7C;">Privacy policy</a>${privacySplit[1] ?? ""}`;
+
+      const tdStyle = `font-weight:700;color:#002D7C;font-family:Arial,sans-serif;font-size:12px;line-height:16px;text-align:center;`;
+
+return `
+<table class="mobile-table" width="100%" align="center" bgcolor="#E7E7E7" border="0" cellpadding="0" cellspacing="0" style="max-width:600px;">
+  <tr><td>
+    <table width="100%" bgcolor="#E7E7E7" border="0" cellspacing="0" cellpadding="0">
+      <tbody>
+        <tr>
+          <td width="5%" style="font-size:0;line-height:1px;">&nbsp;</td>
+          <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tbody>
+                <!-- top spacer -->
+                <tr><td width="100%" height="40" style="font-size:0;line-height:40px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                <!-- TRYVIO logo (centered) -->
+                <tr align="center">
+                  <td>
+                    <table width="100%" align="center" bgcolor="#E7E7E7" border="0" cellspacing="0" cellpadding="0">
+                      <tbody>
+                        <tr>
+                          <td width="5%" bgcolor="#E7E7E7" style="font-size:0;line-height:1px;">&nbsp;</td>
+                          <td align="center">
+                            <a href="${logoHref}" target="_blank" style="display:block;">
+                              <img src="${logoSrc}" alt="${logoAlt}" width="260" height="auto" border="0"
+                                style="display:block;padding:0;width:100%;max-width:260px;height:auto;" class="imgwidth" />
+                            </a>
+                          </td>
+                          <td width="5%" bgcolor="#E7E7E7" style="font-size:0;line-height:1px;">&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- 23px spacer -->
+                <tr><td height="23" style="font-size:0;line-height:23px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                <!-- "Sent to" -->
+                <tr><td style="${tdStyle}padding:0 0 10px 0;">${emailLine}</td></tr>
+
+                <!-- "Sent by" -->
+                <tr><td style="${tdStyle}padding:0 0 10px 0;">${sentByLine}</td></tr>
+
+                <!-- Address -->
+                <tr><td style="${tdStyle}padding:0 0 34px 0;">${addressLine}</td></tr>
+
+                <!-- Privacy -->
+                <tr><td style="${tdStyle}padding:0 0 10px 0;">${privacyHTML}</td></tr>
+
+                <!-- Unsubscribe -->
+                <tr>
+                  <td style="${tdStyle}padding:0 0 40px 0;">
+                    <a href="${unsubHref}" target="_blank" style="text-decoration:underline !important;color:#002D7C;">${unsubText}</a>
+                  </td>
+                </tr>
+
+                <!-- 40px spacer before LinkedIn -->
+                <tr><td height="40" style="font-size:0;line-height:40px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                <!-- LinkedIn icon (centered) -->
+                <tr>
+                  <td valign="top" align="center">
+                    <a href="${liHref}" target="_blank" style="display:inline-block;">
+                      <img src="${liSrc}" alt="${liAlt}" width="40" height="40" border="0"
+                        style="display:block;padding:0;width:40px;height:40px;" />
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- 30px spacer after LinkedIn -->
+                <tr><td height="30" style="font-size:0;line-height:30px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                <!-- Copyright -->
+                <tr>
+                  <td style="${tdStyle}font-size:10px;line-height:14px;padding:0 0 10px 0;">
+                    <a href="${copyHref}" target="_blank" style="text-decoration:underline !important;color:#002D7C;">${copyText}</a>
+                  </td>
+                </tr>
+
+                <!-- Job code -->
+                <tr><td height="10" style="font-size:0;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                <tr><td style="${tdStyle}padding:0 0 30px 0;">${jobCode}</td></tr>
+
+                <!-- Idorsia logo (left-aligned) -->
+                <tr>
+                  <td valign="top" align="left">
+                    <a href="${idorsiaHref}" target="_blank" style="display:block;width:111px;">
+                      <img src="${idorsiaLogoSrc}" alt="${idorsiaAlt}" width="111" height="auto" border="0"
+                        style="display:block;padding:0;width:111px;max-width:111px;height:auto;" />
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- bottom spacer -->
+                <tr><td width="100%" height="40" style="font-size:0;line-height:40px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+              </tbody>
+            </table>
+          </td>
+          <td width="5%" style="font-size:0;line-height:1px;">&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+  </td></tr>
+</table>`.trim();
+    }
+
     default:
       return "";
   }

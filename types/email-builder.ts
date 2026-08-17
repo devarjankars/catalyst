@@ -1,8 +1,8 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text" | "tryvio-footer"
 
-  category: "basic" | "custom" | "ferring" | "user-created"
+  category: "basic" | "custom" | "ferring" | "user-created" | "idorsia"
 
   // Custom component properties
   isCustom?: boolean
@@ -114,5 +114,24 @@ export interface EmailComponent {
   // custom-text (Veeva token) properties
   customTextOptions?: string[]   // array of option strings that go inside {{customText[opt1|opt2|...]}}
 
-
+  // tryvio-footer properties
+  tryvioFooterLogoSrc?: string
+  tryvioFooterLogoHref?: string
+  tryvioFooterLogoAlt?: string
+  tryvioFooterEmailLine?: string
+  tryvioFooterSentByLine?: string
+  tryvioFooterAddressLine?: string
+  tryvioFooterPrivacyText?: string
+  tryvioFooterPrivacyHref?: string
+  tryvioFooterUnsubscribeText?: string
+  tryvioFooterUnsubscribeHref?: string
+  tryvioFooterLinkedinSrc?: string
+  tryvioFooterLinkedinHref?: string
+  tryvioFooterLinkedinAlt?: string
+  tryvioFooterCopyrightText?: string
+  tryvioFooterCopyrightHref?: string
+  tryvioFooterJobCode?: string
+  tryvioFooterIdorsiaLogoSrc?: string
+  tryvioFooterIdorsiaLogoHref?: string
+  tryvioFooterIdorsiaLogoAlt?: string
 }
