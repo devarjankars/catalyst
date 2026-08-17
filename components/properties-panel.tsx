@@ -18,6 +18,7 @@ import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers } fro
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
+import { RichTextEditor } from "./rich-text-editor";
 import { verifyHtml } from "@/lib/verify-html";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -1426,6 +1427,139 @@ export function PropertiesPanel({
             <div>
               <Label>Padding</Label>
               <Input value={component.padding || "0 20px 10px 20px"} onChange={(e) => onUpdateComponent({ padding: e.target.value })} placeholder="0 20px 10px 20px" />
+            </div>
+          </div>
+        );
+
+      case "footer-tokens":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Regards</Label>
+              <Input
+                value={component.footerTokens?.regards || ""}
+                onChange={(e) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, regards: e.target.value },
+                  })
+                }
+                placeholder="Regards,"
+              />
+            </div>
+            <div>
+              <Label>User Name</Label>
+              <Input
+                value={component.footerTokens?.userName || ""}
+                onChange={(e) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, userName: e.target.value },
+                  })
+                }
+                placeholder="{{userName}}"
+              />
+            </div>
+            <div>
+              <Label>User Email</Label>
+              <Input
+                value={component.footerTokens?.userEmailAddress || ""}
+                onChange={(e) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, userEmailAddress: e.target.value },
+                  })
+                }
+                placeholder="{{userEmailAddress}}"
+              />
+            </div>
+            <div>
+              <Label>User Phone</Label>
+              <Input
+                value={component.footerTokens?.userPhone || ""}
+                onChange={(e) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, userPhone: e.target.value },
+                  })
+                }
+                placeholder="{{User.Phone}}"
+              />
+            </div>
+            <div>
+              <Label>User Photo</Label>
+              <Input
+                value={component.footerTokens?.userPhoto || ""}
+                onChange={(e) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, userPhoto: e.target.value },
+                  })
+                }
+                placeholder="{{userPhoto}}"
+              />
+            </div>
+            <div>
+              <Label>Company</Label>
+              <RichTextEditor
+                value={component.footerTokens?.company || ""}
+                onChange={(content) =>
+                  onUpdateComponent({
+                    footerTokens: { ...component.footerTokens, company: content },
+                  })
+                }
+                style={{ minHeight: "60px" }}
+              />
+            </div>
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-gray-700 mb-3">Styling</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>Font Size</Label>
+                  <Input
+                    value={component.fontSize || "16px"}
+                    onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                    placeholder="16px"
+                  />
+                </div>
+                <div>
+                  <Label>Color</Label>
+                  <ColorInput
+                    value={component.color || "#000000"}
+                    onChange={(v) => onUpdateComponent({ color: v })}
+                  />
+                </div>
+                <div>
+                  <Label>Text Align</Label>
+                  <Select
+                    value={component.textAlign || "left"}
+                    onValueChange={(value) => onUpdateComponent({ textAlign: value as any })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Font Weight</Label>
+                  <Select
+                    value={component.fontWeight || "normal"}
+                    onValueChange={(value) => onUpdateComponent({ fontWeight: value as any })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="bold">Bold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Line Height</Label>
+                  <Input
+                    value={component.lineHeight || "18px"}
+                    onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
+                    placeholder="18px"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         );

@@ -24,6 +24,8 @@ export default function EmailBuilder() {
   const templateId = searchParams.get("template");
   const isCopy = searchParams.get("copy") === "true";
   const isEdit = searchParams.get("edit") === "true";
+  const keepImages = searchParams.get("keepImages") === "true";
+  const urlTemplateName = searchParams.get("name") || "";
 
   const {
     currentTemplate,
@@ -227,7 +229,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     try {
       const template = await firebaseService.getTemplate(id);
       if (template) {
-        const templateWithPlaceholders = isCopy
+        const templateWithPlaceholders = isCopy && !keepImages
           ? {
               ...template,
               components: replaceImagesInComponents(template.components || []),
@@ -829,7 +831,11 @@ if (activeSelectedId) {
         open={saveTemplateDialog}
         onClose={() => setSaveTemplateDialog(false)}
         onSave={handleSaveTemplate}
-        initialName={currentTemplate?.name || workingCopySource?.name || ""}
+        initialName={
+          isWorkingCopy && urlTemplateName
+            ? `${urlTemplateName} (Copy)`
+            : currentTemplate?.name || workingCopySource?.name || ""
+        }
         initialDescription={
           currentTemplate?.description || workingCopySource?.description || ""
         }

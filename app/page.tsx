@@ -23,7 +23,7 @@ export default  function LandingPage() {
   {
     label: "Emailer",
     icon: Mail,
-    href: "/builder?selectMode=true",
+    href: "/dashboard",
   },
   {
     label: "Banner",

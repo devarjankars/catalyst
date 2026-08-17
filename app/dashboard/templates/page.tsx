@@ -57,7 +57,7 @@ export default function ManageTemplates() {
     }
     const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {

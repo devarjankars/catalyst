@@ -64,7 +64,7 @@ export default function CategoryTemplatesPage() {
   }
 
   const handleUseTemplate = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
