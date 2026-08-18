@@ -12,7 +12,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const initialized = useRef(false);
 
   useEffect(() => {
-    // Only run the full auth check once on initial load
     if (initialized.current) return;
     initialized.current = true;
 
@@ -21,16 +20,19 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!userId) {
       const raw = sessionStorage.getItem("auth");
       if (raw) {
-        hydrate(JSON.parse(raw));
+        try { hydrate(JSON.parse(raw)); } catch {}
         setIsChecking(false);
         return;
       }
       if (!isAuthPage) {
+        // Redirect to login but stop spinner so the login page renders immediately
         router.replace("/login");
+        setIsChecking(false);
         return;
       }
     } else if (isAuthPage) {
       router.replace("/dashboard");
+      setIsChecking(false);
       return;
     }
 
@@ -45,5 +47,5 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return children;
+  return <>{children}</>;
 }
