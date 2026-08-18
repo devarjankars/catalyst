@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 
-export default function PromptForm({ onSubmit, disabled, placeholder, autoFocus = false }) {
+export default function PromptForm({
+  onSubmit,
+  disabled,
+  placeholder,
+  autoFocus = false,
+}: {
+  onSubmit: (text: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  autoFocus?: boolean;
+}) {
   const [value, setValue] = useState("");
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
@@ -11,7 +21,7 @@ export default function PromptForm({ onSubmit, disabled, placeholder, autoFocus 
     }
   }, [autoFocus]);
 
-  function handleSubmit(e) {
+  function handleSubmit(e: { preventDefault: () => void }) {
     e.preventDefault();
     if (!value.trim() || disabled) return;
     onSubmit(value.trim());

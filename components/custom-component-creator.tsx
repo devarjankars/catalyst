@@ -48,8 +48,8 @@ export function CustomComponentCreator() {
       
 
       const isTableHTML =
-    /^<table[\s\S]*<\/table>$/.test(html) ||
-    (html?.startsWith("<tr") && html?.includes("</tr>"));
+    /^<table[\s\S]*<\/table>$/.test(html || "") ||
+    ((html || "").startsWith("<tr") && (html || "").includes("</tr>"));
 
         if(html && !isTableHTML){
           toast.error("Enter valid code")
@@ -65,8 +65,9 @@ export function CustomComponentCreator() {
       name: componentName,
       isCustom: true,
       padding: "16px",
+      category: "user-created",
       ...componentProps,
-    };
+    } as unknown as EmailComponent;
 
     // Set default props based on type
     switch (componentType) {

@@ -207,6 +207,7 @@ export const componentTypes = [
   icon: List,
   defaultProps: {
     listItems: [`List Item`],   // array of strings
+    fontSize: "12px",
   },
 },
 {

@@ -1,19 +1,23 @@
-import { embed, bestMatchScore } from "@/lib/wsb/embeddingEngine";
+import { embed, bestMatchScore, EmbeddingVector } from "@/lib/wsb/embeddingEngine";
 import { PRODUCTS, TYPES, SLOT_CONFIDENCE_THRESHOLD } from "@/data/config";
 import { extractTopic } from "@/lib/wsb/wsbGenerator";
+import {
+  WsbSlotOption,
+  SlotResolution,
+} from "@/lib/wsb/types";
 
 // ─── Character bigram similarity ──────────────────────────────────────────────
 // Handles typos like "elozoris" ≈ "elzonris" where Jaccard token-overlap fails
 // because the misspelled word is a completely different token.
 
-function bigrams(str) {
+function bigrams(str: string): Set<string> {
   const s = str.toLowerCase().replace(/\s+/g, "");
-  const bg = new Set();
+  const bg = new Set<string>();
   for (let i = 0; i < s.length - 1; i++) bg.add(s.slice(i, i + 2));
   return bg;
 }
 
-function bigramSimilarity(a, b) {
+function bigramSimilarity(a: string, b: string): number {
   const bgA = bigrams(a);
   const bgB = bigrams(b);
   let intersection = 0;
@@ -30,7 +34,7 @@ function bigramSimilarity(a, b) {
  */
 const BIGRAM_THRESHOLD = 0.38; // "elozoris" vs "elzonris" ≈ 0.40, well above unrelated words (~0)
 
-function fuzzyDirectScore(prompt, option) {
+function fuzzyDirectScore(prompt: string, option: WsbSlotOption): number {
   const promptWords = prompt
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
@@ -39,7 +43,7 @@ function fuzzyDirectScore(prompt, option) {
 
   let best = 0;
 
-  for (const phrase of option.referencePhrases) {
+  for (const phrase of option.referencePhrases ?? []) {
     const refWords = phrase
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, " ")
@@ -66,13 +70,17 @@ function fuzzyDirectScore(prompt, option) {
  *  1. Embedding-based semantic similarity (real model or Jaccard fallback)
  *  2. Character-bigram fuzzy match as a typo-tolerant fallback
  */
-async function resolveSlot(promptEmbedding, prompt, options) {
-  let best = null;
+async function resolveSlot(
+  promptEmbedding: EmbeddingVector,
+  prompt: string,
+  options: WsbSlotOption[]
+): Promise<WsbSlotOption | null> {
+  let best: WsbSlotOption | null = null;
   let bestScore = 0;
 
   // ── Layer 1: semantic / Jaccard score ────────────────────────────────────
   for (const option of options) {
-    const score = await bestMatchScore(promptEmbedding, option.referencePhrases);
+    const score = await bestMatchScore(promptEmbedding, option.referencePhrases ?? []);
     if (score > bestScore) {
       bestScore = score;
       best = option;
@@ -84,7 +92,7 @@ async function resolveSlot(promptEmbedding, prompt, options) {
   }
 
   // ── Layer 2: character-bigram fuzzy match (typo tolerance) ───────────────
-  let fuzzyBest = null;
+  let fuzzyBest: WsbSlotOption | null = null;
   let fuzzyBestScore = 0;
 
   for (const option of options) {
@@ -107,7 +115,7 @@ async function resolveSlot(promptEmbedding, prompt, options) {
  * Returns { product, type } where each is either a matched option object
  * or null if missing.
  */
-export async function detectSlots(prompt) {
+export async function detectSlots(prompt: string): Promise<SlotResolution> {
   const promptEmbedding = await embed(prompt);
 
   const [product, type] = await Promise.all([
@@ -122,7 +130,13 @@ export async function detectSlots(prompt) {
   };
 }
 
-export function missingSlotNames({ product, type }) {
+export function missingSlotNames({
+  product,
+  type,
+}: {
+  product: WsbSlotOption | null;
+  type: WsbSlotOption | null;
+}): string[] {
   const missing = [];
   if (!product) missing.push("product");
   if (!type) missing.push("type");

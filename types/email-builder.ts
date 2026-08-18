@@ -64,7 +64,6 @@ export interface EmailComponent {
   isiHref?: string
   piTitle?: string
   isiTitle?: string
-  linkTitle?: string
   linkColor?: string
 
   //footer-links properties
@@ -113,6 +112,10 @@ export interface EmailComponent {
 
   // custom-text (Veeva token) properties
   customTextOptions?: string[]   // array of option strings that go inside {{customText[opt1|opt2|...]}}
+
+  // elzonris references / abbreviations properties
+  references?: string
+  abbreviations?: string
 
   // tryvio-footer properties
   tryvioFooterLogoSrc?: string

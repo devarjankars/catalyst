@@ -1,4 +1,4 @@
-import type { Team } from "@/app/dashboard/admin/page";
+import type { Team } from "@/types/team";
 
 export const initialTeams: Team[] = [
   {

@@ -1,6 +1,15 @@
 // Safe wrapper for transformers library with fallback implementation
-let extractorPromise = null;
-const embeddingCache = new Map(); // key → vector (or FallbackEmbedding)
+
+export type EmbeddingVector = number[] | FallbackEmbedding;
+
+interface ExtractorLike {
+  _call: (text: string) => Promise<{ data: EmbeddingVector }>;
+}
+
+type Extractor = ((text: string, options?: unknown) => Promise<{ data: EmbeddingVector }>) | ExtractorLike;
+
+let extractorPromise: Promise<Extractor> | null = null;
+const embeddingCache = new Map<string, EmbeddingVector>(); // key → vector (or FallbackEmbedding)
 
 // ─── Fallback: token-overlap scoring ─────────────────────────────────────────
 // When the real model cannot load we use Jaccard overlap instead of random
@@ -8,12 +17,14 @@ const embeddingCache = new Map(); // key → vector (or FallbackEmbedding)
 // cosineSimilarity so it scores only on genuine keyword overlap.
 
 class FallbackEmbedding {
-  constructor(tokens) {
-    this.tokens = tokens; // Set<string>
+  tokens: Set<string>;
+
+  constructor(tokens: Set<string>) {
+    this.tokens = tokens;
   }
 }
 
-function tokenize(text) {
+function tokenize(text: string): Set<string> {
   return new Set(
     text
       .toLowerCase()
@@ -23,14 +34,14 @@ function tokenize(text) {
   );
 }
 
-function jaccardSimilarity(setA, setB) {
+function jaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
   let intersection = 0;
   for (const t of setA) if (setB.has(t)) intersection++;
   const union = setA.size + setB.size - intersection;
   return union === 0 ? 0 : intersection / union;
 }
 
-const fallbackExtractor = {
+const fallbackExtractor: ExtractorLike = {
   _call: async (text) => ({ data: new FallbackEmbedding(tokenize(text)) }),
 };
 
@@ -39,7 +50,7 @@ const fallbackExtractor = {
  * it only downloads/initializes once per session. Falls back gracefully if
  * transformers fails to load.
  */
-function getExtractor() {
+function getExtractor(): Promise<Extractor> {
   if (!extractorPromise) {
     extractorPromise = (async () => {
       try {
@@ -66,9 +77,12 @@ function getExtractor() {
             env.allowLocalModels = true;
           }
 
-          return await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+          return (await pipeline(
+            "feature-extraction",
+            "Xenova/all-MiniLM-L6-v2"
+          )) as unknown as Extractor;
         } catch (err) {
-          console.warn("Failed to load transformers, using keyword fallback:", err.message);
+          console.warn("Failed to load transformers, using keyword fallback:", (err as Error).message);
           window.onerror = oldErrorHandler;
           window.onunhandledrejection = oldUnhandledRejection;
           return fallbackExtractor;
@@ -88,9 +102,9 @@ function getExtractor() {
  * In fallback mode:   a FallbackEmbedding instance (carries token set).
  * Results are memoized so re-embedding the same phrase is free.
  */
-export async function embed(text) {
+export async function embed(text: string): Promise<EmbeddingVector> {
   const key = text.trim().toLowerCase();
-  if (embeddingCache.has(key)) return embeddingCache.get(key);
+  if (embeddingCache.has(key)) return embeddingCache.get(key)!;
 
   const extractor = await getExtractor();
 
@@ -105,7 +119,7 @@ export async function embed(text) {
   }
 
   // Preserve FallbackEmbedding instances; convert real model output to Array.
-  const vector =
+  const vector: EmbeddingVector =
     output.data instanceof FallbackEmbedding
       ? output.data
       : Array.from(output.data);
@@ -114,17 +128,19 @@ export async function embed(text) {
   return vector;
 }
 
-export function cosineSimilarity(a, b) {
+export function cosineSimilarity(a: EmbeddingVector, b: EmbeddingVector): number {
   // Fallback mode: both sides are FallbackEmbedding — use Jaccard token overlap
   if (a instanceof FallbackEmbedding && b instanceof FallbackEmbedding) {
     return jaccardSimilarity(a.tokens, b.tokens);
   }
 
   // Real model mode: standard dot-product cosine similarity
+  const av = a as number[];
+  const bv = b as number[];
   let dot = 0;
-  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
-  const normA = Math.sqrt(a.reduce((s, v) => s + v * v, 0));
-  const normB = Math.sqrt(b.reduce((s, v) => s + v * v, 0));
+  for (let i = 0; i < av.length; i++) dot += av[i] * bv[i];
+  const normA = Math.sqrt(av.reduce((s, v) => s + v * v, 0));
+  const normB = Math.sqrt(bv.reduce((s, v) => s + v * v, 0));
   if (normA === 0 || normB === 0) return 0;
   return dot / (normA * normB);
 }
@@ -133,7 +149,10 @@ export function cosineSimilarity(a, b) {
  * Scores a query against a list of reference phrases and returns the best
  * (highest) similarity score found.
  */
-export async function bestMatchScore(queryEmbedding, referencePhrases) {
+export async function bestMatchScore(
+  queryEmbedding: EmbeddingVector,
+  referencePhrases: string[]
+): Promise<number> {
   let best = 0;
   for (const phrase of referencePhrases) {
     const refEmbedding = await embed(phrase);
@@ -147,7 +166,7 @@ export async function bestMatchScore(queryEmbedding, referencePhrases) {
  * Preloads the model and warms the cache for a set of reference phrases so
  * the first real user prompt doesn't pay the full latency cost.
  */
-export async function warmUp(allReferencePhrases) {
+export async function warmUp(allReferencePhrases: string[]): Promise<void> {
   await getExtractor();
   await Promise.all(allReferencePhrases.map((phrase) => embed(phrase)));
 }

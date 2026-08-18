@@ -25,6 +25,7 @@ import { EmailComponent } from "@/types/email-builder";
 
 function removeUndefinedDeep(value: any): any {
   if (value === undefined) return undefined;
+  if (value === null) return null;
 
   // Preserve date-like values so Firestore stores real timestamps instead of
   // turning them into empty objects via the object branch below.
@@ -190,7 +191,7 @@ class FirebaseService {
           ...data,
           createdAt: parseDate(data.createdAt),
           updatedAt: parseDate(data.updatedAt),
-        } as EmailComponent);
+        } as unknown as EmailComponent);
       });
       return components;
     } catch (error) {
@@ -214,11 +215,7 @@ class FirebaseService {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      return {
-        ...component,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      return { ...component };
     } catch (error) {
       console.error("Failed to save custom component:", error);
       throw error;
@@ -307,9 +304,9 @@ class FirebaseService {
       return {
         id,
         ...data,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-      };
+        createdAt: parseDate(data.createdAt),
+        updatedAt: parseDate(data.updatedAt),
+      } as EmailTemplate;
     } catch (error) {
       console.error(
         "Failed to update template in Firebase, falling back to localStorage:",
@@ -537,10 +534,11 @@ class FirebaseService {
     }));
   }
 
-  private getSampleTemplates(): Omit<
-    EmailTemplate,
-    "id" | "createdAt" | "updatedAt"
-  >[] {
+  private getSampleTemplates(): Array<
+    Omit<Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">, "components"> & {
+      components: any[];
+    }
+  > {
     return [
       {
         name: "Welcome Newsletter",

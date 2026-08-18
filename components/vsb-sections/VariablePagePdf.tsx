@@ -6,6 +6,7 @@ import { useRef } from 'react';
 import { Button } from '../ui/button';
 import { reactToHtml } from '@/lib/react-to-html';
 import VariablePagePdfView from './VariablePagePdfView';
+import type { VariableSection } from '@/types/variableSectionTemplate';
 
 interface Pdfprops {
   heading: string;
@@ -14,7 +15,7 @@ interface Pdfprops {
 
 
 
-function VariablePagePdf({ emailname, data, headingColor }: { emailname: string, data: Pdfprops[], headingColor?: string }) {
+function VariablePagePdf({ emailname, data, headingColor }: { emailname: string, data: VariableSection[], headingColor?: string }) {
   const pageRef = useRef(null)
   const items = Array.isArray(data) ? data : [];
 

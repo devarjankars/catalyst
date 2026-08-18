@@ -1,6 +1,6 @@
 import {create} from 'zustand'
 import {devtools , persist} from 'zustand/middleware'
-import type {Team , Employee , PermissionKey , TeamKey} from '@/app/dashboard/admin/page'
+import type {Team , Employee , PermissionKey , TeamKey} from '@/types/team'
 import {initialTeams} from '@/data/users'
 
 type userData = {

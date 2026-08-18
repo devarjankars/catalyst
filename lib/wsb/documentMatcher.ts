@@ -1,5 +1,6 @@
 import { embed, bestMatchScore } from "@/lib/wsb/embeddingEngine";
 import { DOCUMENTS, MIN_DOCUMENT_MATCH_CONFIDENCE } from "@/data/config";
+import { WsbDocument, MatchResult } from "@/lib/wsb/types";
 
 /**
  * Matches a prompt (with product + type already resolved) against the
@@ -7,7 +8,11 @@ import { DOCUMENTS, MIN_DOCUMENT_MATCH_CONFIDENCE } from "@/data/config";
  * uses semantic similarity to break ties or handle phrasing variation.
  */
 
-export async function matchDocument(prompt, productId, typeId) {
+export async function matchDocument(
+  prompt: string,
+  productId: string,
+  typeId: string
+): Promise<MatchResult> {
   const candidates = DOCUMENTS.filter(
     (doc) => doc.product === productId && doc.type === typeId
   );
@@ -15,7 +20,7 @@ export async function matchDocument(prompt, productId, typeId) {
   const pool = candidates.length > 0 ? candidates : DOCUMENTS;
   const promptEmbedding = await embed(prompt);
 
-  let best = null;
+  let best: WsbDocument | null = null;
   let bestScore = 0;
 
   for (const doc of pool) {

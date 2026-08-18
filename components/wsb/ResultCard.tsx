@@ -1,4 +1,14 @@
-export default function ResultCard({ document, confidence, onReset }) {
+import { WsbDocument } from "@/lib/wsb/types";
+
+export default function ResultCard({
+  document,
+  confidence,
+  onReset,
+}: {
+  document: WsbDocument;
+  confidence: number;
+  onReset: () => void;
+}) {
   const draft = document?.generatedDraft;
   const title = draft?.title || document?.label || "Work statement brief";
   const topic = draft?.topic || "topic";

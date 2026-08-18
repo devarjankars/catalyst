@@ -1,15 +1,15 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useDrop } from "react-dnd"
 import type { EmailComponent } from "@/types/email-builder"
 
 interface SectionDropZoneProps {
   sectionId: string
   children: EmailComponent[]
-  onAddToSection: (sectionId: string, component: EmailComponent, index?: number) => void
-  onMoveWithinSection: (sectionId: string, dragIndex: number, hoverIndex: number) => void
+  onAddToSection?: (sectionId: string, component: EmailComponent, index?: number) => void
+  onMoveWithinSection?: (sectionId: string, dragIndex: number, hoverIndex: number) => void
   onSelect?: (id: string) => void
   renderChildren: () => React.ReactNode
   isSelected?: boolean
@@ -34,6 +34,7 @@ export function SectionDropZone({
 
 }: SectionDropZoneProps) {
   const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
+  const dropRef = useRef<HTMLDivElement | null>(null)
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "component",
@@ -54,8 +55,8 @@ export function SectionDropZone({
       const clientOffset = monitor.getClientOffset()
       const dropTarget = monitor.getDropResult()
 
-      if (clientOffset && drop.current) {
-        const rect = drop.current.getBoundingClientRect()
+      if (clientOffset && dropRef.current) {
+        const rect = dropRef.current.getBoundingClientRect()
         const dropY = clientOffset.y - rect.top
 
         // Calculate drop index based on Y position
@@ -63,7 +64,7 @@ export function SectionDropZone({
         let position: "top" | "bottom" = "bottom"
 
         if (children.length > 0) {
-          const childElements = drop.current.querySelectorAll(`[data-section-child="${sectionId}"]`)
+          const childElements = dropRef.current.querySelectorAll(`[data-section-child="${sectionId}"]`)
 
           for (let i = 0; i < childElements.length; i++) {
             const element = childElements[i] as HTMLElement
@@ -107,7 +108,10 @@ export function SectionDropZone({
 
   return (
     <div
-      ref={drop}
+      ref={(node) => {
+        dropRef.current = node;
+        drop(node);
+      }}
       className={`
         ${minHeight} relative rounded-lg transition-all
         ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}

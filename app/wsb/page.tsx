@@ -12,8 +12,17 @@ import { matchDocument } from "@/lib/wsb/documentMatcher";
 import { buildMockWsbDraft } from "@/lib/wsb/wsbGenerator";
 import { PRODUCTS, TYPES, DOCUMENTS } from "@/data/config";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import {
+  ChatMessage,
+  Clarification,
+  TraceLine,
+  WsbDocument,
+  WsbDraftPhase,
+  WsbResult,
+  WsbSlotOption,
+} from "@/lib/wsb/types";
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const INTRO =
   "Tell me what you need — for example, \"create a WSB for an Orserdu SFMC emailer.\"";
@@ -66,7 +75,7 @@ const UNSUPPORTED_MESSAGE =
 
 /** Lightweight check: does the text mention a competitor / non-Orserdu product?
  *  You can extend this list or swap in your real detectSlots logic. */
-function detectUnsupportedProduct(text) {
+function detectUnsupportedProduct(text: string): boolean {
   const lower = text.toLowerCase();
   // If user explicitly mentions orserdu that's fine — only flag non-orserdu products
   const competitorHints = [
@@ -78,19 +87,19 @@ function detectUnsupportedProduct(text) {
 }
 
 /** Lightweight check: does the text mention a non-SFMC channel? */
-function detectUnsupportedType(text) {
+function detectUnsupportedType(text: string): boolean {
   const lower = text.toLowerCase();
   const unsupportedTypes = ["banner", "print", "msl", "webinar", "social", "linkedin", "twitter"];
   return unsupportedTypes.some((t) => lower.includes(t));
 }
 
 export default function Wsb() {
-  const [messages, setMessages] = useState([{ from: "ai", text: INTRO }]);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ from: "ai", text: INTRO }]);
   const [busy, setBusy] = useState(false);
-  const [traceLines, setTraceLines] = useState([]);
-  const [result, setResult] = useState(null);
+  const [traceLines, setTraceLines] = useState<TraceLine[]>([]);
+  const [result, setResult] = useState<WsbResult | null>(null);
   const [modelReady, setModelReady] = useState(false);
-  const [draftPhases, setDraftPhases] = useState([]);
+  const [draftPhases, setDraftPhases] = useState<WsbDraftPhase[]>([]);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [preparing, setPreparing] = useState(false);
 
@@ -98,20 +107,24 @@ export default function Wsb() {
   // null  = not in interview mode (initial state / reset)
   // 0..4  = waiting for user answer to INTERVIEW_STEPS[interviewStep]
   // 5     = all answers collected, generation in progress
-  const [interviewStep, setInterviewStep] = useState(null);
-  const interviewAnswers = useRef({}); // { goal, concepts, claims, references, images }
+  const [interviewStep, setInterviewStep] = useState<number | null>(null);
+  const interviewAnswers = useRef<Record<string, string>>({}); // { goal, concepts, claims, references, images }
 
   // ── Legacy slot-filling fallback (only used when product/type can't be detected
   //    from the initial prompt at all and we need explicit picker UI) ──────────
-  const [pendingClarification, setPendingClarification] = useState(null);
+  const [pendingClarification, setPendingClarification] = useState<Clarification | null>(null);
 
-  const contextRef = useRef([]);
-  const resolvedRef = useRef({ product: null, type: null, topic: null });
-  const bottomRef = useRef(null);
+  const contextRef = useRef<string[]>([]);
+  const resolvedRef = useRef<{
+    product: WsbSlotOption | null;
+    type: WsbSlotOption | null;
+    topic: string | null;
+  }>({ product: null, type: null, topic: null });
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // ── Warm up embedding engine ────────────────────────────────────────────────
   useEffect(() => {
-    import("@/lib/wsb/embeddingEngine.ts")
+    import("@/lib/wsb/embeddingEngine")
       .then(({ warmUp }) => {
         const allPhrases = [
           ...PRODUCTS.flatMap((p) => p.referencePhrases),
@@ -129,22 +142,22 @@ export default function Wsb() {
   }, [messages, traceLines, result, pendingClarification, interviewStep]);
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
-  async function pushTrace(text, tone = "neutral", delay = 260) {
+  async function pushTrace(text: string, tone: TraceLine["tone"] = "neutral", delay = 260) {
     await sleep(delay);
     setTraceLines((prev) => [...prev, { text, tone }]);
   }
 
-  function addAiMessage(text) {
+  function addAiMessage(text: string) {
     setMessages((prev) => [...prev, { from: "ai", text }]);
   }
 
-  function addUserMessage(text) {
+  function addUserMessage(text: string) {
     setMessages((prev) => [...prev, { from: "user", text }]);
   }
 
   /** Check text for unsupported products/types and show error if needed.
    *  Returns true if unsupported (caller should stop). */
-  function checkAndWarnUnsupported(text) {
+  function checkAndWarnUnsupported(text: string): boolean {
     if (detectUnsupportedProduct(text)) {
       addAiMessage(UNSUPPORTED_MESSAGE);
       setBusy(false);
@@ -167,6 +180,8 @@ export default function Wsb() {
     const resolvedProduct = resolvedRef.current.product;
     const resolvedType = resolvedRef.current.type;
 
+    if (!resolvedProduct || !resolvedType) return;
+
     await pushTrace("both slots resolved, generating draft…", "neutral", 320);
     const { document, confidence } = await matchDocument(
       contextRef.current.join(". "),
@@ -188,8 +203,11 @@ export default function Wsb() {
       id: "mock-wsb",
       label: draft.title,
       file: document?.file || DOCUMENTS[0]?.file || "/documents/WSB_placeholder.txt",
+      product: resolvedProduct.id,
+      type: resolvedType.id,
+      referencePrompts: [],
       generatedDraft: draft,
-    };
+    } as WsbDocument;
 
     const resolvedDocument = document
       ? { ...document, label: draft.title, generatedDraft: draft }
@@ -216,9 +234,9 @@ export default function Wsb() {
 
   // ─── Interview flow handler ──────────────────────────────────────────────────
   // Called when the user submits a reply during the structured interview.
-  async function handleInterviewAnswer(text) {
+  async function handleInterviewAnswer(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || interviewStep === null) return;
 
     addUserMessage(trimmed);
 
@@ -268,7 +286,7 @@ export default function Wsb() {
   }
 
   // ─── Initial submit (first user message) ────────────────────────────────────
-  async function handleSubmit(text) {
+  async function handleSubmit(text: string) {
     addUserMessage(text);
     setPendingClarification(null);
     setBusy(true);
@@ -295,13 +313,13 @@ export default function Wsb() {
 
     await pushTrace(
       resolvedRef.current.product
-        ? `product: ${resolvedRef.current.product.label} (${(resolvedRef.current.product.confidence * 100).toFixed(0)}%)`
+        ? `product: ${resolvedRef.current.product.label} (${((resolvedRef.current.product.confidence ?? 0) * 100).toFixed(0)}%)`
         : "product: not specified",
       resolvedRef.current.product ? "match" : "miss"
     );
     await pushTrace(
       resolvedRef.current.type
-        ? `type: ${resolvedRef.current.type.label} (${(resolvedRef.current.type.confidence * 100).toFixed(0)}%)`
+        ? `type: ${resolvedRef.current.type.label} (${((resolvedRef.current.type.confidence ?? 0) * 100).toFixed(0)}%)`
         : "type: not specified",
       resolvedRef.current.type ? "match" : "miss"
     );
@@ -350,7 +368,7 @@ export default function Wsb() {
   }
 
   // ─── Legacy option-picker handler (slot clarification) ─────────────────────
-  async function handleOptionPick(slot, option) {
+  async function handleOptionPick(slot: "product" | "type", option: WsbSlotOption) {
     addUserMessage(option.label);
     setPendingClarification(null);
     contextRef.current.push(option.label);
@@ -402,11 +420,9 @@ export default function Wsb() {
   // ─── Derived UI state ────────────────────────────────────────────────────────
   // The bottom input is in "interview" mode when interviewStep is a number
   const isInterviewing = interviewStep !== null;
-  // The bottom input is in "topic" mode (legacy) — no longer used but kept for safety
-  const isTopicMode = pendingClarification?.slot === "topic";
   // Disable input when busy OR model not ready OR waiting for an option picker
   const inputDisabled =
-    busy || !modelReady || (!!pendingClarification && !isTopicMode && !isInterviewing);
+    busy || !modelReady || (!!pendingClarification && !isInterviewing);
 
   return (
     <div className="flex min-h-screen flex-col bg-paper pt-10">
@@ -427,7 +443,7 @@ export default function Wsb() {
           )}
 
           {/* ── Legacy slot option picker (product / type) ── */}
-          {pendingClarification && !busy && pendingClarification.slot !== "topic" && (
+          {pendingClarification && !busy && (
             <OptionPicker
               question={SLOT_QUESTIONS[pendingClarification.slot]}
               options={pendingClarification.options}
@@ -489,29 +505,6 @@ export default function Wsb() {
               autoFocus
             />
           </div>
-        ) : isTopicMode ? (
-          // ── Legacy topic input (fallback, rarely reached now) ────────────
-          <div className="space-y-2">
-            <p className="font-mono text-[10.5px] uppercase tracking-wider text-signal">
-              Please enter the topic for the emailer (e.g., "new patient education launch")
-            </p>
-            <PromptForm
-              onSubmit={(t) => {
-                const trimmed = t.trim();
-                if (!trimmed) return;
-                addUserMessage(trimmed);
-                setPendingClarification(null);
-                contextRef.current.push(trimmed);
-                resolvedRef.current.topic = trimmed;
-                // Start interview from here
-                addAiMessage(INTERVIEW_STEPS[0].aiMessage);
-                setInterviewStep(0);
-              }}
-              disabled={busy || !modelReady}
-              placeholder="Type the topic here…"
-              autoFocus
-            />
-          </div>
         ) : (
           // ── Default / initial prompt input ───────────────────────────────
           <PromptForm
@@ -532,7 +525,7 @@ export default function Wsb() {
 }
 
 // ─── Placeholder helpers ──────────────────────────────────────────────────────
-function getInterviewPlaceholder(step) {
+function getInterviewPlaceholder(step: number): string {
   const placeholders = [
     "Describe the goal of this email…",
     "Describe the scientific or clinical concepts…",

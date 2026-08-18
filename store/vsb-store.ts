@@ -1,11 +1,9 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { firebaseService } from '@/services/firebase-service'
+import type { VariableSection } from '@/types/variableSectionTemplate'
 
-export interface VariableCopy {
-  heading: string,
-  options: [string]
-}
+export type VariableCopy = VariableSection;
 
 export interface AltnamePage {
   name: string,
@@ -24,6 +22,8 @@ export interface VSBData {
   variableCopyHeadingColor?: string;
   altNamePage: { images: AltnamePage[], headingColor?: string };
   headerDetails?: HeaderDetail[];
+  desktopView?: any[];
+  mobileView?: any[];
   currentVersion?: string,
   versions?: string[],
   createdAt?: string;

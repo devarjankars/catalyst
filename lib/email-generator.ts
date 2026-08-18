@@ -878,7 +878,7 @@ case "isi": {
                                        <tr>
                                           <td class="f_14 black f_normal" align="left" valign="top"
                                              style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
+                                             ORSERDU is available as 345 mg tablets and <br class="mobile-only">86 mg tablets. </td>
                                        </tr>
                 </tbody>
                </table>
@@ -904,7 +904,7 @@ case "isi": {
 
       const itemStyle = `
         color: ${component.color || "#000000"};
-        font-size: ${component.fontSize || "16px"};
+        font-size: ${component.fontSize || "12px"};
         font-weight: ${component.fontWeight || "normal"};
         text-align: ${component.textAlign || "left"};
         line-height: ${component.lineHeight || "18px"};

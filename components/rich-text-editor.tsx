@@ -294,7 +294,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
       />
 
       {/* Toolbar */}
-      {isSelected && (
+      {isSelected && focused && (
         <div
           ref={toolbarRef}
           className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 flex gap-1 z-50"

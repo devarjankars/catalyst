@@ -1,5 +1,6 @@
 'use client'
 import React , {useState} from 'react'
+import { useRouter } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -26,7 +27,7 @@ const alltasks = [
                         template_name:"MAT-US_ELA-930456",
                         resources:["Darshan","Kavya"],
                         createdOn:"10-02-2224",
-                        dueDtae:"10-03-2224",
+                        dueDate:"10-03-2224",
                         priority:"high",
                         type:"RTE",
                         status:"In progress"
@@ -39,13 +40,14 @@ const alltasks = [
                         template_name:"MAT-US_ELA-930457",
                         resources:["Darshan","Kavya"],
                         createdOn:"15-02-2224",
-                        dueDtae:"15-03-2224",
+                        dueDate:"15-03-2224",
                         priority:"medium",
                         type:"RTE",
                         status:"In progress"
                     },
                 ]
 export default function Tasktable() {
+    const router = useRouter();
     const [tasks , setTasks] = useState(alltasks);
     const [isDialogOpen, setIsDialogOpen] = useState<{open: boolean; t_id: string;}>({open : false , t_id: "" });
     const handleDelete = () => {
