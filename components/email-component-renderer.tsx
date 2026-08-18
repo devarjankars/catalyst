@@ -1142,6 +1142,166 @@ export function EmailComponentRenderer({
               </div>
             </div>
           );
+      case "tryvio-footer": {
+        const {
+          tryvioFooterLogoSrc, tryvioFooterLogoHref, tryvioFooterLogoAlt,
+          tryvioFooterEmailLine, tryvioFooterSentByLine, tryvioFooterAddressLine,
+          tryvioFooterPrivacyText, tryvioFooterPrivacyHref,
+          tryvioFooterUnsubscribeText, tryvioFooterUnsubscribeHref,
+          tryvioFooterLinkedinSrc, tryvioFooterLinkedinHref, tryvioFooterLinkedinAlt,
+          tryvioFooterCopyrightText, tryvioFooterCopyrightHref,
+          tryvioFooterJobCode,
+          tryvioFooterIdorsiaLogoSrc, tryvioFooterIdorsiaLogoHref, tryvioFooterIdorsiaLogoAlt,
+        } = component;
+
+        const privacyFull = tryvioFooterPrivacyText || "We respect your right to privacy - view our Privacy policy.";
+        const privacySplit = privacyFull.split("Privacy policy");
+        const txtStyle: React.CSSProperties = { fontWeight: 700, color: "#002D7C", fontFamily: "Arial, sans-serif", fontSize: "12px", lineHeight: "16px", margin: "0 0 10px", textAlign: "center" };
+        const lnkStyle: React.CSSProperties = { textDecoration: "underline", color: "#002D7C" };
+
+        const EditRow = ({ label, field, type = "text", value }: { label: string; field: keyof typeof component; type?: string; value: string }) => (
+          <div className="mb-2">
+            <p className="text-[10px] text-gray-400 mb-0.5">{label}</p>
+            <input type={type} className="w-full border rounded px-2 py-1 text-xs text-center bg-white"
+              value={value} onChange={(e) => onUpdate({ [field]: e.target.value } as any)} />
+          </div>
+        );
+
+        return (
+          <div style={{ backgroundColor: "#E7E7E7", width: "100%", overflow: "hidden" }}>
+            <style>{`
+              .tf-logo { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; }
+              .tf-inner { padding: 0 30px; box-sizing: border-box; }
+              .tf-linkedin { display: inline-block; width: 40px; height: auto; }
+              .tf-idorsia { display: block; width: 111px; max-width: 30%; height: auto; }
+              @media screen and (max-width: 480px) {
+                .tf-logo { max-width: 70% !important; }
+                .tf-inner { padding: 0 12px !important; }
+              }
+            `}</style>
+
+            <div className="tf-inner" style={{ padding: "0 30px" }}>
+              {/* ── top spacer ── */}
+              <div style={{ height: "40px" }} />
+
+              {/* ── TRYVIO logo (centered) ── */}
+              <div style={{ textAlign: "center", marginBottom: "23px" }}>
+                {isSelected ? (
+                  <div className="text-left space-y-0">
+                    <EditRow label="TRYVIO logo – image URL" field="tryvioFooterLogoSrc" value={tryvioFooterLogoSrc || ""} />
+                    <EditRow label="TRYVIO logo – link URL" field="tryvioFooterLogoHref" type="url" value={tryvioFooterLogoHref || ""} />
+                    <EditRow label="Alt text" field="tryvioFooterLogoAlt" value={tryvioFooterLogoAlt || ""} />
+                  </div>
+                ) : (
+                  <a href={tryvioFooterLogoHref || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !previewMode && e.preventDefault()}>
+                    <img src={tryvioFooterLogoSrc || "/logo.png"} alt={tryvioFooterLogoAlt || "Tryvio"} className="tf-logo" />
+                  </a>
+                )}
+              </div>
+
+              {/* ── "Sent to" ── */}
+              {isSelected
+                ? <EditRow label='"Sent to" line' field="tryvioFooterEmailLine" value={tryvioFooterEmailLine || ""} />
+                : <p style={txtStyle}>{tryvioFooterEmailLine || "This email was sent to {{Account.PersonEmail}}"}</p>}
+
+              {/* ── "Sent by" ── */}
+              {isSelected
+                ? <EditRow label='"Sent by" line' field="tryvioFooterSentByLine" value={tryvioFooterSentByLine || ""} />
+                : <p style={txtStyle}>{tryvioFooterSentByLine || "This email was sent by: Idorsia Pharmaceuticals US Inc."}</p>}
+
+              {/* ── Address ── */}
+              {isSelected
+                ? <EditRow label="Address" field="tryvioFooterAddressLine" value={tryvioFooterAddressLine || ""} />
+                : <p style={{ ...txtStyle, margin: "0 0 34px" }}>{tryvioFooterAddressLine || "One Radnor Corporate Center, Suite 101, Radnor, PA 19087"}</p>}
+
+              {/* ── Privacy line ── */}
+              {isSelected ? (
+                <div className="mb-2">
+                  <p className="text-[10px] text-gray-400 mb-0.5">Privacy line (keep "Privacy policy" as the link anchor)</p>
+                  <input type="text" className="w-full border rounded px-2 py-1 text-xs text-center bg-white mb-1"
+                    value={tryvioFooterPrivacyText || ""} onChange={(e) => onUpdate({ tryvioFooterPrivacyText: e.target.value })} />
+                  <p className="text-[10px] text-gray-400 mb-0.5">Privacy policy URL</p>
+                  <input type="url" className="w-full border rounded px-2 py-1 text-xs text-center bg-white"
+                    value={tryvioFooterPrivacyHref || ""} onChange={(e) => onUpdate({ tryvioFooterPrivacyHref: e.target.value })} />
+                </div>
+              ) : (
+                <p style={txtStyle}>
+                  {privacySplit[0]}
+                  <a href={tryvioFooterPrivacyHref || "#"} target="_blank" rel="noopener noreferrer" style={lnkStyle} onClick={(e) => !previewMode && e.preventDefault()}>Privacy policy</a>
+                  {privacySplit[1] ?? ""}
+                </p>
+              )}
+
+              {/* ── Unsubscribe ── */}
+              {isSelected ? (
+                <div className="mb-2">
+                  <p className="text-[10px] text-gray-400 mb-0.5">Unsubscribe link text</p>
+                  <input type="text" className="w-full border rounded px-2 py-1 text-xs text-center bg-white mb-1"
+                    value={tryvioFooterUnsubscribeText || ""} onChange={(e) => onUpdate({ tryvioFooterUnsubscribeText: e.target.value })} />
+                  <p className="text-[10px] text-gray-400 mb-0.5">Unsubscribe URL / token</p>
+                  <input type="text" className="w-full border rounded px-2 py-1 text-xs text-center bg-white"
+                    placeholder="e.g. {{unsubscribe_product_link}}" value={tryvioFooterUnsubscribeHref || ""} onChange={(e) => onUpdate({ tryvioFooterUnsubscribeHref: e.target.value })} />
+                </div>
+              ) : (
+                <p style={{ ...txtStyle, margin: "0 0 40px" }}>
+                  <a href={tryvioFooterUnsubscribeHref || "#"} target="_blank" rel="noopener noreferrer" style={lnkStyle} onClick={(e) => !previewMode && e.preventDefault()}>
+                    {tryvioFooterUnsubscribeText || "Unsubscribe"}
+                  </a>
+                </p>
+              )}
+
+              {/* ── LinkedIn icon (centered) ── */}
+              <div style={{ textAlign: "center", marginBottom: "30px" }}>
+                {isSelected ? (
+                  <div className="text-left">
+                    <EditRow label="LinkedIn icon – image URL" field="tryvioFooterLinkedinSrc" value={tryvioFooterLinkedinSrc || ""} />
+                    <EditRow label="LinkedIn – link URL" field="tryvioFooterLinkedinHref" type="url" value={tryvioFooterLinkedinHref || ""} />
+                  </div>
+                ) : (
+                  <a href={tryvioFooterLinkedinHref || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !previewMode && e.preventDefault()}>
+                    <img src={tryvioFooterLinkedinSrc || "/linkedin.png"} alt={tryvioFooterLinkedinAlt || "LinkedIn"} className="tf-linkedin" />
+                  </a>
+                )}
+              </div>
+
+              {/* ── Copyright ── */}
+              {isSelected ? (
+                <div className="mb-2">
+                  <EditRow label="Copyright text" field="tryvioFooterCopyrightText" value={tryvioFooterCopyrightText || ""} />
+                  <EditRow label="Copyright URL" field="tryvioFooterCopyrightHref" type="url" value={tryvioFooterCopyrightHref || ""} />
+                </div>
+              ) : (
+                <p style={{ ...txtStyle, fontSize: "10px", lineHeight: "14px" }}>
+                  <a href={tryvioFooterCopyrightHref || "#"} target="_blank" rel="noopener noreferrer" style={lnkStyle} onClick={(e) => !previewMode && e.preventDefault()}>
+                    {tryvioFooterCopyrightText || "©2026 Idorsia Pharmaceuticals, Ltd."}
+                  </a>
+                </p>
+              )}
+
+              {/* ── Job code ── */}
+              {isSelected
+                ? <EditRow label="Job code" field="tryvioFooterJobCode" value={tryvioFooterJobCode || ""} />
+                : <p style={{ ...txtStyle, margin: "0 0 30px" }}>{tryvioFooterJobCode || "US-AP-00162 04/26"}</p>}
+
+              {/* ── Idorsia logo (left-aligned) ── */}
+              <div style={{ paddingBottom: "40px", textAlign: "left" }}>
+                {isSelected ? (
+                  <div>
+                    <EditRow label="Idorsia logo – image URL" field="tryvioFooterIdorsiaLogoSrc" value={tryvioFooterIdorsiaLogoSrc || ""} />
+                    <EditRow label="Idorsia logo – link URL" field="tryvioFooterIdorsiaLogoHref" type="url" value={tryvioFooterIdorsiaLogoHref || ""} />
+                  </div>
+                ) : (
+                  <a href={tryvioFooterIdorsiaLogoHref || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !previewMode && e.preventDefault()}>
+                    <img src={tryvioFooterIdorsiaLogoSrc || "/Idorsia.png"} alt={tryvioFooterIdorsiaLogoAlt || "Idorsia logo"} className="tf-idorsia" />
+                  </a>
+                )}
+              </div>
+
+            </div>{/* /.tf-inner */}
+          </div>
+        );
+      }
+
       default:
         return <div>Unknown component type</div>;
     }

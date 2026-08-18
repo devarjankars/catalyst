@@ -297,7 +297,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
       {isSelected && (
         <div
           ref={toolbarRef}
-          className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 flex gap-1 z-10"
+          className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 flex gap-1 z-50"
           tabIndex={-1}
           onMouseDown={() => saveSelection()}
         >

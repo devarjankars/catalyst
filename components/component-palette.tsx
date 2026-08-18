@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useDrag } from "react-dnd"
-import { Trash2, Type, Image as ImageIcon, Boxes, Pill, Building2, Sparkles, LayoutGrid, Bookmark } from "lucide-react"
+import { Trash2, Type, Image as ImageIcon, Boxes, Pill, Building2, Sparkles, LayoutGrid, Bookmark, FlaskConical } from "lucide-react"
 import type { EmailComponent } from "@/types/email-builder"
 import { componentTypes } from "@/data/component-types"
 import { sectionTemplates } from "@/data/section-templates"
@@ -224,6 +224,27 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
               <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
                 {componentTypes
                   .filter((type) => type.category === "ferring")
+                  .map((componentType) => (
+                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                  ))}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-idorsia" className={sectionItem}>
+          <AccordionTrigger className={sectionTrigger}>
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                <FlaskConical className="h-3.5 w-3.5" />
+              </span>
+              Idorsia Components
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 pt-1">
+            <div className="flex flex-col gap-3 text-balance">
+              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+                {componentTypes
+                  .filter((type) => type.category === "idorsia")
                   .map((componentType) => (
                     <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
                   ))}
