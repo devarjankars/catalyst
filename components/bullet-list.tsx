@@ -59,7 +59,7 @@ export default function BulletList({
                   onChange={(content) => handleUpdateItem(index, content)}
                   style={{
                     flex: 1,
-                    fontSize: component.fontSize || "16px",
+                    fontSize: component.fontSize || "12px",
                     color: component.color || "#000000",
                     textAlign: component.textAlign || "left",
                     fontWeight: component.fontWeight || "normal",
@@ -71,7 +71,7 @@ export default function BulletList({
               <p
                 style={{
                   flex: 1,
-                  fontSize: component.fontSize || "16px",
+                  fontSize: component.fontSize || "12px",
                   color: component.color || "#000000",
                   textAlign: component.textAlign || "left",
                   fontWeight: component.fontWeight || "normal",

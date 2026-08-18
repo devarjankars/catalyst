@@ -27,7 +27,7 @@ export default function RecentTemplates({ temps, handleUseTemplate, handleEditTe
         new Date(b.updatedAt!).getTime() -
         new Date(a.updatedAt!).getTime()
     )
-    .slice(0, 4);
+    .slice(0, 8);
 }, [temps]);
   return (
     <>

@@ -904,7 +904,7 @@ case "isi": {
 
       const itemStyle = `
         color: ${component.color || "#000000"};
-        font-size: ${component.fontSize || "16px"};
+        font-size: ${component.fontSize || "12px"};
         font-weight: ${component.fontWeight || "normal"};
         text-align: ${component.textAlign || "left"};
         line-height: ${component.lineHeight || "18px"};
