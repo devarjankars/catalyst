@@ -95,7 +95,7 @@ export default function ManageTemplates() {
           <div className="mt-4">
             <div className="px-4 sm:px-6 lg:px-8 py-8 border rounded-lg bg-[linear-gradient(168deg,rgba(255,160,162,1)_0%,rgba(255,239,239,1)_100%)]" >
               <div className="flex flex-col items-start">
-                <div className="flex flex-col sm:flex-row gap-8 w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-8 w-full">
                 <div className="relative flex-1 max-w-xl">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-colors" />
                   <Input
@@ -115,6 +115,28 @@ export default function ManageTemplates() {
                     </button>
                   )}
                 </div>
+                <div className="flex items-center gap-2">
+                  {([
+                    { id: "all",       label: "All",       icon: null },
+                    { id: "rte",       label: "RTE",       icon: Mail },
+                    { id: "sfmc",      label: "SFMC",      icon: Send },
+                    { id: "unbranded", label: "Unbranded", icon: Globe },
+                    { id: "other",     label: "Other",     icon: null },
+                  ] as const).map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedCategory(id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                        selectedCategory === id
+                          ? "bg-[#4A5565] text-white border-[#4A5565]"
+                          : "bg-white text-gray-600 border-gray-300 hover:border-[#4A5565] hover:text-[#4A5565]"
+                      }`}
+                    >
+                      {Icon && <Icon className="w-3 h-3" />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
                 
               </div>
@@ -125,28 +147,6 @@ export default function ManageTemplates() {
           <div className="Templates mt-6">
             <div className="header flex items-center justify-between mb-4">
               <h1 className="font-bold">All Emailers</h1>
-              <div className="flex items-center gap-2">
-                {([
-                  { id: "all",       label: "All",       icon: null },
-                  { id: "rte",       label: "RTE",       icon: Mail },
-                  { id: "sfmc",      label: "SFMC",      icon: Send },
-                  { id: "unbranded", label: "Unbranded", icon: Globe },
-                  { id: "other",     label: "Other",     icon: null },
-                ] as const).map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setSelectedCategory(id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                      selectedCategory === id
-                        ? "bg-[#4A5565] text-white border-[#4A5565]"
-                        : "bg-white text-gray-600 border-gray-300 hover:border-[#4A5565] hover:text-[#4A5565]"
-                    }`}
-                  >
-                    {Icon && <Icon className="w-3 h-3" />}
-                    {label}
-                  </button>
-                ))}
-              </div>
             </div>
             <div className="templates">
                   <div className="templates">
