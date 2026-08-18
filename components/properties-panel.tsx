@@ -481,6 +481,78 @@ export function PropertiesPanel({
           </div>
         );
 
+      case "Salutation":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="salutationFontSize">Font Size</Label>
+              <Input
+                id="salutationFontSize"
+                value={component.fontSize || "16px"}
+                onChange={(e) =>
+                  onUpdateComponent({ fontSize: e.target.value })
+                }
+                placeholder="16px"
+              />
+            </div>
+            <div>
+              <Label htmlFor="salutationColor">Text Color</Label>
+              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Font weight</Label>
+              <Select
+                value={component.fontWeight || "normal"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ fontWeight: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="lighter">Lighter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="salutationBackgroundColor">Background color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+            </div>
+            <div>
+              <Label htmlFor="salutationTextAlign">Text Align</Label>
+              <Select
+                value={component.textAlign || "left"}
+                onValueChange={(value) =>
+                  onUpdateComponent({ textAlign: value as any })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="salutationLineHeight">Line Height</Label>
+              <Input
+                id="salutationLineHeight"
+                type="text"
+                value={component.lineHeight || "18px"}
+                onChange={(e) =>
+                  onUpdateComponent({ lineHeight: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        );
+
       case "text":
         return (
           <div className="space-y-4">

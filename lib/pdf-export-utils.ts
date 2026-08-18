@@ -6,7 +6,10 @@ export async function exportToPDF(
     viewMode: "desktop" | "mobile" = "desktop"
 ) {
     try {
-        const html2pdf = (await import("html2pdf.js")).default
+        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+            import("html2canvas-pro"),
+            import("jspdf"),
+        ])
 
         const iframeDoc = iframeElement.contentDocument || iframeElement.contentWindow?.document
         if (!iframeDoc || !iframeDoc.documentElement) {
@@ -80,11 +83,8 @@ export async function exportToPDF(
         const emailContainer = iframeDoc.querySelector<HTMLElement>('.email-container')
         const contentHeight = (emailContainer ? emailContainer.scrollHeight : element.scrollHeight) + 40
 
-        const opt = {
-            margin: 0,
-            filename: fileName,
-            image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: {
+        try {
+            const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 allowTaint: true,
@@ -93,19 +93,21 @@ export async function exportToPDF(
                 windowWidth: width,
                 scrollX: 0,
                 scrollY: 0,
-            },
-            jsPDF: {
-                unit: 'px' as const,
-                format: [width, contentHeight] as [number, number],
-                orientation: 'portrait' as const,
-                hotfixes: ["px_scaling"],
-            },
-            enableLinks: true,
-            pagebreak: { mode: 'avoid-all' },
-        }
+                backgroundColor: "#ffffff",
+            })
 
-        try {
-            await html2pdf().set(opt).from(element).save()
+            const imgData = canvas.toDataURL("image/jpeg", 0.98)
+
+            const pdf = new jsPDF({
+                unit: "px",
+                format: [width, contentHeight],
+                orientation: "portrait",
+                hotfixes: ["px_scaling"],
+                compress: true,
+            })
+
+            pdf.addImage(imgData, "JPEG", 0, 0, width, contentHeight, undefined, "FAST")
+            pdf.save(fileName)
         } finally {
             // Restore everything
             injectedStyles.forEach(s => s.remove())

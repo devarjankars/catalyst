@@ -895,21 +895,61 @@ export function EmailComponentRenderer({
 
         case "Salutation":
         return (
-          <div style={baseStyle} className="mt-2 z-50 flex justify-start">
-            <div>{component.content}</div>
+          <div className="mt-2 z-50">
+            <RichTextEditor
+              isSelected={isSelected}
+              value={component.content || ""}
+              onChange={(content) => onUpdate({ content })}
+              style={{
+                fontSize: component.fontSize || "16px",
+                color: component.color || "#000000",
+                textAlign: component.textAlign || "left",
+                fontWeight: component.fontWeight || "normal",
+                backgroundColor: component.backgroundColor || "transparent",
+                lineHeight: component.lineHeight || "18px",
+              }}
+            />
           </div>
         );  
         case "footer-tokens":
-        return (
-          <div style={baseStyle} className="z-50 flex flex-col justify-start text-[#000000]">
-            <div>{component.footerTokens?.regards}</div>
-            <div>{component.footerTokens?.userName}</div>
-            <div dangerouslySetInnerHTML={{__html : component.footerTokens?.company}}></div>
-            {/* <div>{component.footerTokens?.userPhoto}</div> */}
-            <div>{component.footerTokens?.userPhone}</div>
-            <div>{component.footerTokens?.userEmailAddress}</div>
-          </div>
-        );
+        {
+          const tokens = component.footerTokens || {};
+          const combinedValue = [tokens.regards, tokens.userName, tokens.company, tokens.userEmailAddress, tokens.userPhone]
+            .filter((v) => v !== undefined && v !== null)
+            .join("<br/>");
+
+          const handleFooterChange = (content: string) => {
+            const parts = content.split(/<br\s*\/?>/i);
+            const [regards, userName, company, userEmailAddress, userPhone] = parts;
+            onUpdate({
+              footerTokens: {
+                ...tokens,
+                regards,
+                userName,
+                company,
+                userEmailAddress,
+                userPhone,
+              },
+            });
+          };
+
+          return (
+            <div style={{ ...baseStyle, paddingBottom: component.padding ? undefined : "5px", paddingLeft: component.padding ? undefined : "20px" }} className="z-50 flex flex-col justify-start text-[#000000]">
+              <RichTextEditor
+                isSelected={isSelected}
+                value={combinedValue}
+                onChange={handleFooterChange}
+                style={{
+                  fontSize: component.fontSize || "16px",
+                  color: component.color || "#000000",
+                  textAlign: component.textAlign || "left",
+                  fontWeight: component.fontWeight || "normal",
+                  lineHeight: component.lineHeight || "18px",
+                }}
+              />
+            </div>
+          );
+        }
         case "orsedu-footer":
         return (
           <div style={baseStyle} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">

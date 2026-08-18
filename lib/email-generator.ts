@@ -1125,35 +1125,35 @@ case "isi": {
             <tr>
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              }' style="padding: ${component.padding || "0 0 5px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.regards || ""}
               </td>
             </tr>
             <tr>
               <td ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              }' style="padding: ${component.padding || "0 0 5px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userName || ""}
               </td>
             </tr>
             <tr>
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              }' style="padding: ${component.padding || "0 0 5px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.company || ""}
               </td>
             </tr>
             <tr>
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              }' style="padding: ${component.padding || "0 0 5px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userEmailAddress || ""}
               </td>
             </tr>
             <tr>
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 20px 20px 20px"}; ${itemStyle}">
+              }' style="padding: ${component.padding || "0 0 5px 20px"}; ${itemStyle}">
                  ${component.footerTokens?.userPhone || ""}
               </td>
             </tr>

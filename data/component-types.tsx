@@ -325,6 +325,7 @@ export const componentTypes = [
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
+      padding: "0 0 5px 20px",
   },
   
 },
