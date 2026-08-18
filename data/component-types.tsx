@@ -354,6 +354,26 @@ export const componentTypes = [
   
 },
 
+{
+  type: "orserdu-emerald-stats",
+  label: "EMERALD Stats",
+  category: "custom",
+  icon: NotepadText,
+  defaultProps: {
+    emeraldLeftIconSrc: "/placeholder.svg?width=72&height=72&text=2X",
+    emeraldLeftIconAlt: "Primary endpoint: mPFS results for ORSERDU (elacestrant) vs. fulvestrant or AI",
+    emeraldLeftHeading: "Primary endpoint in EMERALD",
+    emeraldLeftStat: `<b style="color:#006937;font-size:18px;">3.8 months</b>&nbsp;(95% CI: 2.2-7.3) for ORSERDU (n=115) vs. <b>1.9 months</b>&nbsp;(95% CI: 1.9-2.1) for fulvestrant or AI* (n=113).`,
+    emeraldLeftHR: `HR=0.55 (95% CI: 0.39-0.77); <i>P</i>=0.0005<sup>1</sup>`,
+    emeraldRightStatNumber: "8.6",
+    emeraldRightStatLabel: "months\nmPFS",
+    emeraldRightDesc: "Exploratory post hoc analysis: Patients with prior ET + CDK4/6i for ≥12 months",
+    emeraldRightStat: "8.6 months (95% CI: 4.1-10.8) for ORSERDU (n=78) vs. 1.9 months (95% CI: 1.9-3.7) for fulvestrant or AI (n=81).",
+    emeraldRightHR: `HR=0.41 (95% CI: 0.26-0.63)<sup>2</sup>`,
+    padding: "0 20px 10px 20px",
+  },
+},
+
 
   {
     type: "elzonris-pi",

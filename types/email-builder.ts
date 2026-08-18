@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text" | "tryvio-footer"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text" | "tryvio-footer" | "orserdu-emerald-stats"
 
   category: "basic" | "custom" | "ferring" | "user-created" | "idorsia"
 
@@ -134,4 +134,20 @@ export interface EmailComponent {
   tryvioFooterIdorsiaLogoSrc?: string
   tryvioFooterIdorsiaLogoHref?: string
   tryvioFooterIdorsiaLogoAlt?: string
+
+  // orserdu-emerald-stats properties
+  emeraldLeftIconSrc?: string
+  emeraldLeftIconAlt?: string
+  emeraldLeftHeading?: string
+  emeraldLeftStat?: string
+  emeraldLeftHR?: string
+  emeraldRightStatNumber?: string
+  emeraldRightStatLabel?: string
+  emeraldRightDesc?: string
+  emeraldRightStat?: string
+  emeraldRightHR?: string
+
+  // elzonris references/abbreviations
+  references?: string
+  abbreviations?: string
 }

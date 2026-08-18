@@ -987,6 +987,153 @@ export function EmailComponentRenderer({
             
           </div>
         );
+        case "orserdu-emerald-stats": {
+          const {
+            emeraldLeftIconSrc, emeraldLeftIconAlt,
+            emeraldLeftHeading, emeraldLeftStat, emeraldLeftHR,
+            emeraldRightStatNumber, emeraldRightStatLabel, emeraldRightDesc,
+            emeraldRightStat, emeraldRightHR,
+          } = component;
+
+          // Right stat label lines (split on \n)
+          const rightLabelLines = (emeraldRightStatLabel || "months\nmPFS").split("\n");
+
+          return (
+            <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
+              <style>{`
+                .emerald-wrap { display: flex; flex-wrap: wrap; gap: 0; width: 100%; }
+                .emerald-left { flex: 1 1 240px; min-width: 200px; padding-right: 16px; border-right: 1px solid #c1c1c1; box-sizing: border-box; }
+                .emerald-sep  { display: none; }
+                .emerald-right { flex: 1 1 240px; min-width: 200px; padding-left: 16px; box-sizing: border-box; }
+                @media screen and (max-width: 480px) {
+                  .emerald-left  { border-right: none !important; padding-right: 0 !important; border-bottom: 1px solid #c1c1c1; padding-bottom: 16px; margin-bottom: 0; }
+                  .emerald-sep   { display: block; height: 0; }
+                  .emerald-right { padding-left: 0 !important; padding-top: 16px; }
+                }
+              `}</style>
+              <div className="emerald-wrap">
+
+              {/* ── LEFT COLUMN ── */}
+                <div className="emerald-left">
+                  {/* icon + heading row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                    {isSelected ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", width: "100%" }}>
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left icon URL</p>
+                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                          value={emeraldLeftIconSrc || ""} onChange={(e) => onUpdate({ emeraldLeftIconSrc: e.target.value })} />
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left icon alt</p>
+                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                          value={emeraldLeftIconAlt || ""} onChange={(e) => onUpdate({ emeraldLeftIconAlt: e.target.value })} />
+                      </div>
+                    ) : (
+                      <img src={emeraldLeftIconSrc || "/placeholder.svg?width=72&height=72&text=2X"}
+                        alt={emeraldLeftIconAlt || "mPFS icon"} width={72}
+                        style={{ display: "block", flexShrink: 0, border: 0, outline: "none", textDecoration: "none" }} />
+                    )}
+                    {isSelected ? (
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left heading</p>
+                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                          value={emeraldLeftHeading || ""} onChange={(e) => onUpdate({ emeraldLeftHeading: e.target.value })} />
+                      </div>
+                    ) : (
+                      <span style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px", fontWeight: 700 }}>
+                        {emeraldLeftHeading || "Primary endpoint in EMERALD"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Left stat */}
+                  {isSelected ? (
+                    <div style={{ marginBottom: "8px" }}>
+                      <p style={{ fontSize: "10px", color: "#888", margin: "0 0 2px" }}>Left stat (HTML supported)</p>
+                      <textarea className="w-full border rounded px-2 py-1 text-xs" rows={3}
+                        value={emeraldLeftStat || ""} onChange={(e) => onUpdate({ emeraldLeftStat: e.target.value })} />
+                    </div>
+                  ) : (
+                    <div style={{ color: "#2B2E34", fontFamily: "Arial, sans-serif", fontSize: "14px", fontWeight: 400, marginBottom: "8px" }}
+                      dangerouslySetInnerHTML={{ __html: emeraldLeftStat || "" }} />
+                  )}
+
+                  {/* Left HR */}
+                  {isSelected ? (
+                    <div>
+                      <p style={{ fontSize: "10px", color: "#888", margin: "0 0 2px" }}>Left HR (HTML supported)</p>
+                      <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                        value={emeraldLeftHR || ""} onChange={(e) => onUpdate({ emeraldLeftHR: e.target.value })} />
+                    </div>
+                  ) : (
+                    <div style={{ fontWeight: "bold", color: "#0C6938", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px" }}
+                      dangerouslySetInnerHTML={{ __html: emeraldLeftHR || "" }} />
+                  )}
+                </div>
+
+                {/* ── RIGHT COLUMN ── */}
+                <div className="emerald-right">
+                  {/* stat number + label + desc row */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "10px" }}>
+                    {/* big number */}
+                    {isSelected ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "80px" }}>
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Stat number</p>
+                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                          value={emeraldRightStatNumber || ""} onChange={(e) => onUpdate({ emeraldRightStatNumber: e.target.value })} />
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Stat label (use \n for line breaks)</p>
+                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                          value={emeraldRightStatLabel || ""} onChange={(e) => onUpdate({ emeraldRightStatLabel: e.target.value })} />
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#000", fontFamily: "Arial, sans-serif", flexShrink: 0, paddingRight: "10px", minWidth: "60px" }}>
+                        <div style={{ fontSize: "22px", fontWeight: 700, lineHeight: "24px" }}>{emeraldRightStatNumber || "8.6"}</div>
+                        <div style={{ fontSize: "12px", lineHeight: "14px", fontWeight: 400 }}>
+                          {rightLabelLines.map((l, i) => <div key={i}>{l}</div>)}
+                        </div>
+                      </div>
+                    )}
+                    {/* description */}
+                    {isSelected ? (
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Right description</p>
+                        <textarea className="w-full border rounded px-2 py-1 text-xs" rows={3}
+                          value={emeraldRightDesc || ""} onChange={(e) => onUpdate({ emeraldRightDesc: e.target.value })} />
+                      </div>
+                    ) : (
+                      <div style={{ color: "#231F20", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px", fontWeight: 400, flex: 1 }}>
+                        {emeraldRightDesc}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right stat */}
+                  {isSelected ? (
+                    <div style={{ marginBottom: "8px" }}>
+                      <p style={{ fontSize: "10px", color: "#888", margin: "0 0 2px" }}>Right stat text (HTML supported)</p>
+                      <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2}
+                        value={emeraldRightStat || ""} onChange={(e) => onUpdate({ emeraldRightStat: e.target.value })} />
+                    </div>
+                  ) : (
+                    <div style={{ color: "#000", fontFamily: "Arial, sans-serif", fontSize: "14px", fontWeight: 400, marginBottom: "8px" }}
+                      dangerouslySetInnerHTML={{ __html: emeraldRightStat || "" }} />
+                  )}
+
+                  {/* Right HR */}
+                  {isSelected ? (
+                    <div>
+                      <p style={{ fontSize: "10px", color: "#888", margin: "0 0 2px" }}>Right HR (HTML supported)</p>
+                      <input type="text" className="w-full border rounded px-2 py-1 text-xs"
+                        value={emeraldRightHR || ""} onChange={(e) => onUpdate({ emeraldRightHR: e.target.value })} />
+                    </div>
+                  ) : (
+                    <div style={{ color: "#000", fontFamily: "Arial, sans-serif", fontSize: "14px", fontWeight: 400 }}
+                      dangerouslySetInnerHTML={{ __html: emeraldRightHR || "" }} />
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         case "elzonris-isi":
         return (
           <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: component.html || "" }} />

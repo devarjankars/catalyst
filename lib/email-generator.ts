@@ -1639,6 +1639,185 @@ case "isi": {
       `.trim();
     }
 
+    case "orserdu-emerald-stats": {
+      const leftIconSrc   = component.emeraldLeftIconSrc    || "/placeholder.svg?width=72&height=72&text=2X";
+      const leftIconAlt   = component.emeraldLeftIconAlt    || "mPFS icon";
+      const leftHeading   = component.emeraldLeftHeading    || "Primary endpoint in EMERALD";
+      const leftStat      = component.emeraldLeftStat       || "";
+      const leftHR        = component.emeraldLeftHR         || "";
+      const rightNum      = component.emeraldRightStatNumber || "8.6";
+      const rightLabelRaw = component.emeraldRightStatLabel  || "months\nmPFS";
+      const rightLabel    = rightLabelRaw.replace(/\\n|\n/g, "<br/>");
+      const rightDesc     = component.emeraldRightDesc      || "";
+      const rightStat     = component.emeraldRightStat      || "";
+      const rightHR       = component.emeraldRightHR        || "";
+      const pad           = component.padding               || "0 20px 10px 20px";
+
+      return `
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff">
+  <tbody>
+    <tr>
+      <td style="padding:${pad};">
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- DESKTOP layout (hidden on mobile)       -->
+        <!-- ═══════════════════════════════════════ -->
+        <table class="deskDisp" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+            <tr>
+              <!-- LEFT COLUMN -->
+              <td class="stack-column" width="50%" valign="top"
+                style="width:50%;padding-right:12px;border-right:1px solid #c1c1c1;vertical-align:top;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tbody><tr>
+                    <td width="72" valign="middle" style="width:72px;">
+                      <img src="${leftIconSrc}" alt="${leftIconAlt}" width="72" border="0"
+                        style="display:block;width:72px;height:auto;" />
+                    </td>
+                    <td valign="middle"
+                      style="color:#006937;font-family:Arial,sans-serif;font-size:14px;
+                             line-height:16px;padding-left:12px;font-weight:700;">
+                      ${leftHeading}
+                    </td>
+                  </tr></tbody>
+                </table>
+                <p style="color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;
+                           line-height:18px;font-weight:400;margin:10px 0 0 0;padding:0;">
+                  ${leftStat}
+                </p>
+                <p style="font-weight:bold;color:#0C6938;font-family:Arial,sans-serif;
+                           font-size:14px;line-height:16px;margin:18px 0 0 0;padding:0;">
+                  ${leftHR}
+                </p>
+              </td>
+              <!-- RIGHT COLUMN -->
+              <td class="stack-column" width="50%" valign="top"
+                style="width:50%;padding-left:12px;vertical-align:top;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tbody><tr>
+                    <td width="60" align="center" valign="top"
+                      style="width:60px;text-align:center;vertical-align:top;padding-right:10px;">
+                      <p style="margin:0;padding:0;font-family:Arial,sans-serif;
+                                 font-size:22px;line-height:24px;font-weight:700;color:#000;">
+                        ${rightNum}
+                      </p>
+                      <p style="margin:0;padding:0;font-family:Arial,sans-serif;
+                                 font-size:12px;line-height:14px;font-weight:400;color:#000;">
+                        ${rightLabel}
+                      </p>
+                    </td>
+                    <td valign="top"
+                      style="color:#231F20;font-family:Arial,sans-serif;font-size:14px;
+                             line-height:16px;font-weight:400;vertical-align:top;">
+                      ${rightDesc}
+                    </td>
+                  </tr></tbody>
+                </table>
+                <p style="color:#000;font-family:Arial,sans-serif;font-size:14px;
+                           line-height:18px;font-weight:400;margin:10px 0 0 0;padding:0;">
+                  ${rightStat}
+                </p>
+                <p style="color:#000;font-family:Arial,sans-serif;font-size:14px;
+                           line-height:18px;font-weight:400;margin:10px 0 0 0;padding:0;">
+                  ${rightHR}
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- MOBILE layout (hidden on desktop)       -->
+        <!-- ═══════════════════════════════════════ -->
+        <!--[if !mso]><!-->
+        <table class="mbDisp" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+          style="display:none;">
+          <tbody>
+            <!-- heading full width -->
+            <tr>
+              <td style="color:#006937;font-family:Arial,sans-serif;font-size:16px;
+                         line-height:18px;font-weight:700;padding-bottom:12px;">
+                ${leftHeading}:
+              </td>
+            </tr>
+            <!-- icon + primary stat side by side -->
+            <tr>
+              <td>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tbody><tr>
+                    <td width="72" valign="top" style="width:72px;padding-right:12px;">
+                      <img src="${leftIconSrc}" alt="${leftIconAlt}" width="72" border="0"
+                        style="display:block;width:72px;height:auto;" />
+                    </td>
+                    <td valign="top"
+                      style="color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;
+                             line-height:18px;font-weight:400;">
+                      ${leftStat}
+                    </td>
+                  </tr></tbody>
+                </table>
+              </td>
+            </tr>
+            <!-- primary HR -->
+            <tr>
+              <td style="font-weight:bold;color:#0C6938;font-family:Arial,sans-serif;
+                         font-size:14px;line-height:16px;padding:14px 0 14px 0;">
+                ${leftHR}
+              </td>
+            </tr>
+            <!-- horizontal separator -->
+            <tr>
+              <td height="1" bgcolor="#c1c1c1"
+                style="font-size:0;line-height:1px;background-color:#c1c1c1;padding:0;">
+              </td>
+            </tr>
+            <!-- spacing -->
+            <tr><td height="14" style="font-size:0;line-height:14px;">&nbsp;</td></tr>
+            <!-- secondary description full width -->
+            <tr>
+              <td style="color:#231F20;font-family:Arial,sans-serif;font-size:14px;
+                         line-height:18px;font-weight:400;padding-bottom:10px;">
+                ${rightDesc}
+              </td>
+            </tr>
+            <!-- stat number + secondary stat side by side -->
+            <tr>
+              <td>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tbody><tr>
+                    <td width="60" align="left" valign="top"
+                      style="width:60px;text-align:left;vertical-align:top;padding-right:12px;">
+                      <p style="margin:0;padding:0;font-family:Arial,sans-serif;
+                                 font-size:16px;line-height:18px;font-weight:400;color:#000;">
+                        ${rightNum}<br/>${rightLabel}
+                      </p>
+                    </td>
+                    <td valign="top"
+                      style="color:#000;font-family:Arial,sans-serif;font-size:14px;
+                             line-height:18px;font-weight:400;vertical-align:top;">
+                      ${rightStat}
+                    </td>
+                  </tr></tbody>
+                </table>
+              </td>
+            </tr>
+            <!-- secondary HR -->
+            <tr>
+              <td style="color:#000;font-family:Arial,sans-serif;font-size:14px;
+                         line-height:18px;font-weight:400;padding-top:10px;">
+                ${rightHR}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <!--<![endif]-->
+
+      </td>
+    </tr>
+  </tbody>
+</table>`.trim();
+    }
+
     case "tryvio-footer": {
       const logoSrc        = component.tryvioFooterLogoSrc    || "/logo.png";
       const logoHref       = component.tryvioFooterLogoHref   || "#";
