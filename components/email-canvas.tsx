@@ -60,15 +60,15 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           addComponent(newComponent, dropIndex)
           setDropIndicator(null)
           onSelectComponent(newComponent.id)
-          return { dropZone: "canvas", dropIndex, dropElement: ref?.current, handled: true }
+          return { dropZone: "canvas", dropIndex, dropElement: (ref as React.RefObject<HTMLDivElement>).current, handled: true }
         }
-        return { dropZone: "canvas", dropElement: ref?.current }
+        return { dropZone: "canvas", dropElement: (ref as React.RefObject<HTMLDivElement>).current }
       },
       hover: (item: any, monitor) => {
         if (!item.fromPalette || isLockedMode) return
 
         const clientOffset = monitor.getClientOffset()
-        if (clientOffset && ref?.current) {
+        if (clientOffset && (ref as React.RefObject<HTMLDivElement>).current) {
           const canvasRect = (ref as React.RefObject<HTMLDivElement>).current!.getBoundingClientRect()
           const buffer = 50
           if (
@@ -114,7 +114,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         }
       },
       collect: (monitor) => ({
-        isOver: monitor.isOver({ shallow: true }) && !isLockedMode,
+        isOver: monitor.isOver() && !isLockedMode,
       }),
     })
 
@@ -180,7 +180,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               ref.current = node
             }
           }}
-          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative isolate pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
+          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative isolate pb-10 rounded-md transition-shadow space-y-1 ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
           style={{ width: `${canvasWidth ?? 600}px` }}
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}
@@ -204,7 +204,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             return (
               <div key={component.id || index} className="relative" data-component-id={component.id}>
                 {dropIndicator?.index === index && isOver && !previewMode && (
-                  <div className="h-0.5 bg-blue-500 mx-4 rounded-full my-2 shadow-sm shadow-blue-200 animate-grow-x origin-center" />
+                  <div className="h-0.5 bg-blue-500 mx-4 rounded-full shadow-sm shadow-blue-200 animate-grow-x origin-center" />
                 )}
                 <EmailComponentRenderer
                   component={component}

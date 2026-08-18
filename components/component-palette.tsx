@@ -59,7 +59,7 @@ function DraggableComponent({
           id: "",
           type: componentType.type,
           ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
-        }
+        } as unknown as EmailComponent
         // Always regenerate the top-level id so dropped instances never collide
         componentData.id = ""
 
@@ -87,7 +87,9 @@ function DraggableComponent({
 
   return (
     <div
-      ref={drag}
+      ref={(node) => {
+        if (node) drag(node)
+      }}
       className={`
         group relative flex flex-col items-center gap-2 rounded-xl border bg-white p-4
         transition-all cursor-grabbing
@@ -117,7 +119,7 @@ function DraggableComponent({
           title="Delete saved block"
           className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/80 p-0 text-red-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
           onClick={async () => {
-            const ok = await deleteCustomComponent(componentType.id)
+            const ok = await deleteCustomComponent((componentType as EmailComponent).id)
             if (ok) {
               toast.success("Saved block deleted")
             } else {

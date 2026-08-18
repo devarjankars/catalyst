@@ -1,4 +1,12 @@
-export default function MessageBubble({ from, children }) {
+import { ReactNode } from "react";
+
+export default function MessageBubble({
+  from,
+  children,
+}: {
+  from: "ai" | "user";
+  children: ReactNode;
+}) {
   const isUser = from === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>

@@ -1,4 +1,6 @@
-export default function TraceLog({ lines }) {
+import { TraceLine } from "@/lib/wsb/types";
+
+export default function TraceLog({ lines }: { lines: TraceLine[] }) {
   if (lines.length === 0) return null;
 
   return (

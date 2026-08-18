@@ -6,7 +6,17 @@
  *   options   – array of { id, label } objects
  *   onPick    – (option) => void
  */
-export default function OptionPicker({ question, options, onPick }) {
+import { WsbSlotOption } from "@/lib/wsb/types";
+
+export default function OptionPicker({
+  question,
+  options,
+  onPick,
+}: {
+  question: string;
+  options: WsbSlotOption[];
+  onPick: (option: WsbSlotOption) => void;
+}) {
   return (
     <div className="animate-rise flex flex-col gap-3">
       {/* Question bubble (same style as AI message) */}

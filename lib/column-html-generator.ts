@@ -68,7 +68,7 @@ function generateTdHTML(
 }
 // ${index < totalColumns - 1 ? `<td width="${gap}" style="width: ${gap};">&nbsp;</td>` : ""}
 // Wrap in a table row for email compatibility
-if(columns > 1 && direction === "row"){
+if((columns || 1) > 1 && direction === "row"){
     return `
     <tr bgcolor="${component.backgroundColor}" style="background-color='${component.backgroundColor}'" ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
       ${children
@@ -81,7 +81,7 @@ if(columns > 1 && direction === "row"){
 }
 
 // this is for vertical alignment
-if (columns > 1 && direction === "column") {
+if ((columns || 1) > 1 && direction === "column") {
     return (children
     ?.map(
         (child,index) => `
@@ -105,7 +105,7 @@ if (columns > 1 && direction === "column") {
         
     `
     )
-    .join(""))
+    .join("")) || ""
   }
 // ${index < (children?.length || 0) - 1 ? `<tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
   // single column section 

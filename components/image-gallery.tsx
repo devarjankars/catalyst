@@ -73,7 +73,7 @@ export function ImageGallery({ getSelectionInfo, applyUpdates }: ImageGalleryPro
       return null
     }
 
-    const parentId = findParentId(selectionInfo.components, selectionInfo.selectedComponent!)
+    const parentId = findParentId(selectionInfo?.components || [], selectionInfo?.selectedComponent!)
 
     // Create update payload based on component type
     let updates: any = {}
@@ -91,7 +91,7 @@ export function ImageGallery({ getSelectionInfo, applyUpdates }: ImageGalleryPro
     if (applyUpdates) {
       applyUpdates(updates, parentId)
     } else {
-      updateComponent(selectionInfo.selectedComponent!, updates, parentId)
+      updateComponent(selectionInfo?.selectedComponent!, updates, parentId)
     }
 
     toast.success("Image applied to component")

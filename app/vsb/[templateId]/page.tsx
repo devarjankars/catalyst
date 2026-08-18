@@ -71,7 +71,7 @@ export default function VSBPage() {
     mobileView:   boolean;
     altNamePage:  boolean;
   }) => {
-    if (!currentVsb) return;
+    if (!currentVsb) throw new Error('No VSB selected');
     
     const headerDetails = currentVsb?.headerDetails || [];
     const emailName = currentTemplate?.name || 'Template';
@@ -381,7 +381,7 @@ export default function VSBPage() {
           return (
             <div className="space-y-6 ">
               <HeaderDetailsEditor
-                data={currentVsb.headerDetails}
+                data={currentVsb.headerDetails || []}
                 onChange={(data) => handleUpdateData('headerDetails', data)}
               />
               <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>

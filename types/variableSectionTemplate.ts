@@ -1,4 +1,4 @@
-const sfmc = [
+const sfmc: VariableSection[] = [
   {
     heading: "[Variable Subject Line]",
     options: [""],
@@ -56,7 +56,7 @@ const sfmc = [
   },
 ];
 
-const RTE = [
+const RTE: VariableSection[] = [
   {
     heading: "[Variable Subject Line]",
     options: [""],
@@ -112,7 +112,7 @@ const RTE = [
   },
 ];
 
-const TPE = [
+const TPE: VariableSection[] = [
   {
     heading: "[Variable Subject Line]",
     options: [""],
@@ -139,8 +139,36 @@ const TPE = [
   },
 ];
 
+export interface NormalSection {
+  heading: string;
+  options: string[];
+  structure: "normal";
+  listText?: string | null;
+}
+
+export interface TableSection {
+  heading: string;
+  options: Array<{
+    fromEmail: string;
+    friendlyNames: string[];
+  }>;
+  structure: "table";
+  listText?: null;
+}
+
+export interface ThirdPartySection {
+  heading: string;
+  options: string[];
+  structure: "third-party-placeholder";
+  listText?: null;
+}
+
+export type VariableSection = NormalSection | TableSection | ThirdPartySection;
+
 const categoryMap = { rte: RTE, sfmc: sfmc, tpe: TPE };
 
-export function getVaribleCopyTemplate(emailCategory: string) {
-  return categoryMap[emailCategory];
+export function getVaribleCopyTemplate(
+  emailCategory?: string
+): VariableSection[] {
+  return categoryMap[emailCategory as keyof typeof categoryMap] ?? RTE;
 }

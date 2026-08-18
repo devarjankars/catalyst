@@ -87,15 +87,12 @@ export function EmailComponentRenderer({
   const { currentTemplate, addTemplateImage } = useEmailBuilderStore();
 
   const handleImageFileDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return; // let palette/reorder drops bubble to the canvas
     e.preventDefault();
     e.stopPropagation();
     setImgDragOver(false);
     if (previewMode || isLockedMode) return;
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) {
-      toast.error("Please drop an image file");
-      return;
-    }
     setImgUploading(true);
     try {
       const url = await firebaseService.uploadImage(file, currentTemplate?.id);
@@ -360,9 +357,9 @@ export function EmailComponentRenderer({
         return (
           <div
             style={baseStyle}
-            className={`flex flex-col items-${ImageAlimentMap[component?.textAlign] || "center"} mt-2 relative`}
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
-            onDragLeave={(e) => { e.stopPropagation(); setImgDragOver(false); }}
+            className={`flex flex-col items-${ImageAlimentMap[component?.textAlign || "center"] || "center"} mt-2 relative`}
+            onDragOver={(e) => { e.preventDefault(); if (!previewMode && !isLockedMode && Array.from(e.dataTransfer?.types || []).includes("Files")) setImgDragOver(true); }}
+            onDragLeave={(e) => { setImgDragOver(false); }}
             onDrop={handleImageFileDrop}
           >
             <img
@@ -461,7 +458,7 @@ export function EmailComponentRenderer({
         return (
           <div
             className="mt-2 p-5"
-            dangerouslySetInnerHTML={{ __html: component.html }}
+            dangerouslySetInnerHTML={{ __html: component.html || "" }}
           ></div>
         );
 
@@ -797,8 +794,8 @@ export function EmailComponentRenderer({
         return (
           <div
             className="mt-2 z-50 flex justify-center relative"
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
-            onDragLeave={(e) => { e.stopPropagation(); setImgDragOver(false); }}
+            onDragOver={(e) => { e.preventDefault(); if (!previewMode && !isLockedMode && Array.from(e.dataTransfer?.types || []).includes("Files")) setImgDragOver(true); }}
+            onDragLeave={(e) => { setImgDragOver(false); }}
             onDrop={handleImageFileDrop}
           >
             <img
@@ -1061,7 +1058,7 @@ export function EmailComponentRenderer({
           <div
             style={baseStyle}
             className={`flex flex-col items-${
-              ImageAlimentMap[component?.textAlign ] || "center"
+              ImageAlimentMap[component?.textAlign || "center"] || "center"
             } mt-2`}
           >
            
@@ -1319,8 +1316,8 @@ export function EmailComponentRenderer({
         ${
           isSelected && !previewMode
             ? isColumn
-              ? "rounded-md ring-2 ring-green-500/80 ring-offset-2"
-              : "rounded-md ring-2 ring-blue-500/80 ring-offset-2"
+              ? "rounded-md ring-2 ring-green-500/80 ring-offset-1"
+              : "rounded-md ring-2 ring-blue-500/80 ring-offset-1"
             : ""
         }
         ${!isSelected && !previewMode && !isLockedMode ? "hover:ring-1 hover:ring-blue-200" : ""}

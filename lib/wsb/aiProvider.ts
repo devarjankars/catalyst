@@ -20,12 +20,12 @@ const FALLBACK_QUESTIONS = {
     "A couple of things I need first: which product (Orserdu or Elzonris), and which email type (SFMC, RTE, or other)?",
 };
 
-function templateFallback(missing) {
+function templateFallback(missing: string[]) {
   if (missing.length === 2) return FALLBACK_QUESTIONS.both;
-  return FALLBACK_QUESTIONS[missing[0]];
+  return FALLBACK_QUESTIONS[missing[0] as keyof typeof FALLBACK_QUESTIONS];
 }
 
-async function callExternalProvider(prompt, missing) {
+async function callExternalProvider(prompt: string, missing: string[]) {
   // Example shape for a Groq/OpenAI-compatible chat completions endpoint.
   // Left unimplemented until a provider is chosen — throwing here just
   // falls back to the template question below.
@@ -67,7 +67,7 @@ async function callExternalProvider(prompt, missing) {
  * Tries the configured external provider first, falls back to a
  * template so the demo always has something reasonable to show.
  */
-export async function getClarifyingQuestion(prompt, missing) {
+export async function getClarifyingQuestion(prompt: string, missing: string[]) {
   try {
     const question = await callExternalProvider(prompt, missing);
     if (question) return { text: question, source: "ai" };

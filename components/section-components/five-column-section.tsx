@@ -8,10 +8,10 @@ interface FiveColumnSectionProps {
     sectionId: string, 
     component: EmailComponent,
     renderSectionChild: (child: EmailComponent, childIndex: number, sectionId: string) => React.ReactNode,
-    onAddToSection: (sectionId: string, component: EmailComponent, index?: number) => void,
-    onMoveWithinSection: (sectionId: string, dragIndex: number, hoverIndex: number) => void,
-    onUpdateChild: (sectionId: string, childId: string, updates: Partial<EmailComponent>) => void,
-    onSelectSection: (id: string) => void,
+    onAddToSection?: (sectionId: string, component: EmailComponent, index?: number) => void,
+    onMoveWithinSection?: (sectionId: string, dragIndex: number, hoverIndex: number) => void,
+    onUpdateChild?: (sectionId: string, childId: string, updates: Partial<EmailComponent>) => void,
+    onSelectSection?: (id: string) => void,
     selectedComponent?: string | null
 }
 
@@ -45,7 +45,7 @@ export default function FiveColumnSection({
                     <SectionDropZone 
                         sectionId={child.id}
                        
-                        children={child.children}
+                        children={child.children || []}
                         onSelect={onSelectSection}
                         isSelected={selectedComponent === child.id}
                         previewMode={false}

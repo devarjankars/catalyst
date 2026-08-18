@@ -1,3 +1,5 @@
+import { WsbDraft, WsbDraftInput } from "@/lib/wsb/types";
+
 const GENERIC_WORDS = new Set([
   "a",
   "an",
@@ -40,7 +42,7 @@ const GENERIC_WORDS = new Set([
   "audience",
 ]);
 
-function normalizeText(value) {
+function normalizeText(value: string): string {
   return (value || "")
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, " ")
@@ -48,7 +50,7 @@ function normalizeText(value) {
     .trim();
 }
 
-function cleanTopicCandidate(value) {
+function cleanTopicCandidate(value: string): string {
   const normalized = normalizeText(value);
   if (!normalized) return "";
 
@@ -60,7 +62,7 @@ function cleanTopicCandidate(value) {
   return tokens.join(" ").trim();
 }
 
-function toDisplayTopic(value) {
+function toDisplayTopic(value: string): string {
   const cleaned = cleanTopicCandidate(value);
   if (!cleaned) return "general campaign";
 
@@ -74,7 +76,7 @@ function toDisplayTopic(value) {
     .join(" ");
 }
 
-export function extractTopic(prompt) {
+export function extractTopic(prompt: string): string | null {
   const normalized = normalizeText(prompt);
   if (!normalized) return null;
 
@@ -111,7 +113,12 @@ export function extractTopic(prompt) {
   return hasTopicLikeSignal ? toDisplayTopic(fallback) : null;
 }
 
-export function buildMockWsbDraft({ product, type, topic, prompt = "" }) {
+export function buildMockWsbDraft({
+  product,
+  type,
+  topic,
+  prompt = "",
+}: WsbDraftInput): WsbDraft {
   const resolvedTopic = topic || extractTopic(prompt) || "General Campaign";
   const productLabel = product?.label || "product";
   const typeLabel = type?.label || "email";

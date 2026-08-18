@@ -111,7 +111,9 @@ class TemplateService {
     }
   }
 
-  private getSampleTemplates(): EmailTemplate[] {
+  private getSampleTemplates(): Array<
+    Omit<EmailTemplate, "components"> & { components: any[] }
+  > {
     return [
       {
         id: "sample-1",
