@@ -24,10 +24,24 @@ const DARK_CSS = `
   img { filter: brightness(0.85); }
 `;
 
-function buildHtml(components: EmailComponent[], preheaderText: string | undefined, dark: boolean): string {
+const MOBILE_CSS = `
+  .deskDisp { display: none !important; }
+  .mbDisp   { display: table !important; }
+  .desk-show-table { display: none !important; }
+  .desk-show-cell  { display: none !important; }
+  .desk-show-tr    { display: none !important; }
+  .mbl-show-table  { display: table !important; }
+  .mbl-show-cell   { display: table-cell !important; }
+  .mbl-show-tr     { display: table-row !important; }
+  .stack-column    { display: block !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; border-right: none !important; }
+`;
+
+function buildHtml(components: EmailComponent[], preheaderText: string | undefined, dark: boolean, mobile = false): string {
   const base = generateEmailHTML(components, preheaderText);
-  if (!dark) return base;
-  return base.replace("</head>", `<style>${DARK_CSS}</style></head>`);
+  let result = base;
+  if (mobile) result = result.replace("</head>", `<style>${MOBILE_CSS}</style></head>`);
+  if (dark)   result = result.replace("</head>", `<style>${DARK_CSS}</style></head>`);
+  return result;
 }
 
 export default function EmailPreviewModal({ open, onOpenChange, components }: EmailPreviewModalProps) {
@@ -60,16 +74,16 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   useEffect(() => {
     if (!open) return;
     const timer = setTimeout(() => {
-      writeHtml(buildHtml(getActiveComponents(), preheaderText, dark));
+      writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px"));
     }, 30);
     return () => clearTimeout(timer);
   }, [open, activeTab]);
 
-  // Write on mode or component change
+  // Write on mode, screen, or component change
   useEffect(() => {
     if (!open) return;
-    writeHtml(buildHtml(getActiveComponents(), preheaderText, dark));
-  }, [dark, components, option2Components, option3Components, preheaderText, activeTab]);
+    writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px"));
+  }, [dark, screen, components, option2Components, option3Components, preheaderText, activeTab]);
 
   const handleClose = () => {
     onOpenChange(false);

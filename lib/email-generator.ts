@@ -2034,6 +2034,10 @@ export function generateEmailHTML(
         .mbl-show-cell {
             display: none !important;
         }
+
+        /* emerald stats default: show desktop, hide mobile */
+        .deskDisp { display: table !important; }
+        .mbDisp   { display: none  !important; }
        
 
         sup {
@@ -2185,6 +2189,15 @@ export function generateEmailHTML(
 
             .mbl-show-cell {
                 display: table-cell !important;
+            }
+
+            /* emerald stats: hide desktop table, show mobile table */
+            .deskDisp {
+                display: none !important;
+            }
+
+            .mbDisp {
+                display: table !important;
             }
            
        

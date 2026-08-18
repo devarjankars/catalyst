@@ -1009,7 +1009,6 @@ export function EmailComponentRenderer({
                 }
               `}</style>
               <div className="emerald-wrap">
-
               {/* ── LEFT COLUMN ── */}
                 <div className="emerald-left">
                   {/* icon + heading row */}
