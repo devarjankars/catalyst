@@ -671,6 +671,8 @@ export function EmailComponentRenderer({
               {links.map((link, linkIndex) => {
                 const isLast = linkIndex === links.length - 1;
                 const isEven = (linkIndex + 1) % 2 === 0;
+                const linkColor = link.color || component.color || "#0563C1";
+                const pipeColor = !isLast ? (links[linkIndex + 1].color || "#000000") : "#000000";
                 return (
                   <React.Fragment key={linkIndex}>
                     <a
@@ -679,7 +681,7 @@ export function EmailComponentRenderer({
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
-                        color: component.color || "#0563C1",
+                        color: linkColor,
                         textDecoration: "underline",
                         fontSize: component.fontSize || "12px",
                         fontFamily: "Arial, sans-serif",
@@ -694,8 +696,8 @@ export function EmailComponentRenderer({
                       {link.text}
                     </a>
                     {!isLast && (
-                      <span style={{ color: component.color || "#0563C1", fontSize: component.fontSize || "12px" }}>
-                        &nbsp;&nbsp;|&nbsp;
+                      <span style={{ color: pipeColor, fontSize: component.fontSize || "12px" }}>
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
                       </span>
                     )}
                   </React.Fragment>
