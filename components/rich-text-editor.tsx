@@ -182,6 +182,53 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
     handleInput()
   }
 
+  const applyFontSize = (size: string) => {
+    restoreSelection()
+
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
+
+    const range = selection.getRangeAt(0)
+    if (range.collapsed) return
+
+    const commonAncestor = range.commonAncestorContainer
+    let targetElement: HTMLElement | null = null
+
+    if (commonAncestor.nodeType === Node.TEXT_NODE) {
+      targetElement = commonAncestor.parentElement
+    } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
+      targetElement = commonAncestor as HTMLElement
+    }
+
+    if (
+      targetElement &&
+      targetElement.nodeName === 'SPAN' &&
+      targetElement.contains(range.startContainer) &&
+      targetElement.contains(range.endContainer)
+    ) {
+      const spanText = targetElement.textContent?.trim() || ''
+      const selectedText = range.toString().trim()
+
+      if (spanText === selectedText) {
+        targetElement.style.fontSize = size
+        handleInput()
+        return
+      }
+    }
+
+    const span = document.createElement("span")
+    span.style.fontSize = size
+    span.appendChild(range.extractContents())
+    range.insertNode(span)
+
+    range.setStartAfter(span)
+    range.setEndAfter(span)
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    handleInput()
+  }
+
   const applyColor = (color: string) => {
     restoreSelection()
 
@@ -325,6 +372,25 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
             <input type="color" className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
               onBlur={(e) => applyColor(e.target.value)} title="Text Color" />
           </div>
+          <select
+            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
+            value=""
+            onChange={(e) => { if (e.target.value) applyFontSize(e.target.value) }}
+            onMouseDown={() => saveSelection()}
+            title="Font Size"
+          >
+            <option value="" disabled>Size</option>
+            <option value="12px">12</option>
+            <option value="14px">14</option>
+            <option value="16px">16</option>
+            <option value="18px">18</option>
+            <option value="20px">20</option>
+            <option value="24px">24</option>
+            <option value="28px">28</option>
+            <option value="32px">32</option>
+            <option value="40px">40</option>
+            <option value="48px">48</option>
+          </select>
         </div>
       )}
 
