@@ -149,8 +149,4 @@ export interface EmailComponent {
   emeraldRightDesc?: string
   emeraldRightStat?: string
   emeraldRightHR?: string
-
-  // elzonris references/abbreviations
-  references?: string
-  abbreviations?: string
 }

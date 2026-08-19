@@ -49,7 +49,7 @@ const sfmc: VariableSection[] = [
     listText: null,
   },
   {
-    heading: "[Variable Header image]",
+    heading: "[Variable Header Image]",
     options: [""],
     structure: "normal",
     listText: "Option",
@@ -132,7 +132,7 @@ const TPE: VariableSection[] = [
     listText: null,
   },
   {
-    heading: "[Variable Header image]",
+    heading: "[Variable Header Image]",
     options: [""],
     structure: "normal",
     listText: "Option",
