@@ -1640,7 +1640,7 @@ case "isi": {
     }
 
     case "orserdu-emerald-stats": {
-      const leftIconSrc   = component.emeraldLeftIconSrc    || "/placeholder.svg?width=72&height=72&text=2X";
+      const leftIconSrc   = component.emeraldLeftIconSrc    || "/2Xmpfs.png";
       const leftIconAlt   = component.emeraldLeftIconAlt    || "mPFS icon";
       const leftHeading   = component.emeraldLeftHeading    || "Primary endpoint in EMERALD";
       const leftStat      = component.emeraldLeftStat       || "";
