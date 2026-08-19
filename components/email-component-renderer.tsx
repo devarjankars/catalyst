@@ -84,6 +84,9 @@ export function EmailComponentRenderer({
   // --- Image drag-and-drop state (declared at component level to satisfy Rules of Hooks) ---
   const [imgDragOver, setImgDragOver] = useState(false);
   const [imgUploading, setImgUploading] = useState(false);
+  // --- Emerald icon upload state ---
+  const [emeraldIconDragOver, setEmeraldIconDragOver] = useState(false);
+  const [emeraldIconUploading, setEmeraldIconUploading] = useState(false);
   const { currentTemplate, addTemplateImage } = useEmailBuilderStore();
 
   const handleImageFileDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
@@ -104,6 +107,27 @@ export function EmailComponentRenderer({
       toast.error("Upload failed. Please try again.");
     } finally {
       setImgUploading(false);
+    }
+  }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
+
+  const handleEmeraldIconDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setEmeraldIconDragOver(false);
+    if (previewMode || isLockedMode) return;
+    setEmeraldIconUploading(true);
+    try {
+      const url = await firebaseService.uploadImage(file, currentTemplate?.id);
+      if (url === "PATH_NOT_FOUND") { toast.warning("Please save the email first!"); return; }
+      onUpdate({ emeraldLeftIconSrc: url });
+      addTemplateImage(url);
+      toast.success("Icon updated");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setEmeraldIconUploading(false);
     }
   }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
 
@@ -1015,20 +1039,63 @@ export function EmailComponentRenderer({
                 <div className="emerald-left">
                   {/* icon + heading row */}
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-                    {isSelected ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", width: "100%" }}>
-                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left icon URL</p>
-                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
-                          value={emeraldLeftIconSrc || ""} onChange={(e) => onUpdate({ emeraldLeftIconSrc: e.target.value })} />
-                        <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left icon alt</p>
-                        <input type="text" className="w-full border rounded px-2 py-1 text-xs"
-                          value={emeraldLeftIconAlt || ""} onChange={(e) => onUpdate({ emeraldLeftIconAlt: e.target.value })} />
-                      </div>
-                    ) : (
-                      <img src={emeraldLeftIconSrc || "/placeholder.svg?width=72&height=72&text=2X"}
-                        alt={emeraldLeftIconAlt || "mPFS icon"} width={72}
-                        style={{ display: "block", flexShrink: 0, border: 0, outline: "none", textDecoration: "none" }} />
-                    )}
+                    {/* icon with drag-to-upload */}
+                    <div
+                      className="relative flex-shrink-0"
+                      style={{ width: 72, height: 72 }}
+                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (!previewMode && !isLockedMode) setEmeraldIconDragOver(true); }}
+                      onDragLeave={() => setEmeraldIconDragOver(false)}
+                      onDrop={handleEmeraldIconDrop}
+                    >
+                      <img
+                        src={emeraldLeftIconSrc || "/2Xmpfs.png"}
+                        alt={emeraldLeftIconAlt || "mPFS icon"}
+                        width={72}
+                        style={{ display: "block", width: 72, height: "auto", opacity: emeraldIconUploading ? 0.4 : 1 }}
+                      />
+                      {/* drop overlay */}
+                      {emeraldIconDragOver && !emeraldIconUploading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-50/80 border-2 border-dashed border-blue-400 rounded pointer-events-none z-10">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      {emeraldIconUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded z-10">
+                          <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                        </div>
+                      )}
+                      {/* click-to-upload via hidden file input */}
+                      {isSelected && !previewMode && (
+                        <label className="absolute inset-0 flex items-end justify-center cursor-pointer">
+                          <span className="bg-black/50 text-white text-[9px] w-full text-center py-0.5 rounded-b">
+                            {emeraldIconUploading ? "Uploading…" : "Click or drop"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setEmeraldIconUploading(true);
+                              try {
+                                const url = await firebaseService.uploadImage(file, currentTemplate?.id);
+                                if (url === "PATH_NOT_FOUND") { toast.warning("Please save the email first!"); return; }
+                                onUpdate({ emeraldLeftIconSrc: url });
+                                addTemplateImage(url);
+                                toast.success("Icon updated");
+                              } catch {
+                                toast.error("Upload failed.");
+                              } finally {
+                                setEmeraldIconUploading(false);
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                     {isSelected ? (
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Left heading</p>

@@ -361,7 +361,7 @@ export const componentTypes = [
   category: "custom",
   icon: NotepadText,
   defaultProps: {
-    emeraldLeftIconSrc: "/placeholder.svg?width=72&height=72&text=2X",
+    emeraldLeftIconSrc: "/2Xmpfs.png",
     emeraldLeftIconAlt: "Primary endpoint: mPFS results for ORSERDU (elacestrant) vs. fulvestrant or AI",
     emeraldLeftHeading: "Primary endpoint in EMERALD",
     emeraldLeftStat: `<b style="color:#006937;font-size:18px;">3.8 months</b>&nbsp;(95% CI: 2.2-7.3) for ORSERDU (n=115) vs. <b>1.9 months</b>&nbsp;(95% CI: 1.9-2.1) for fulvestrant or AI* (n=113).`,
