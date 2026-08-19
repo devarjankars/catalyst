@@ -84,7 +84,7 @@ const TableView = ({ section }: { section: TableSection }) => (
               </div>
             ))}
           </td>
-          <td style={{ ...tdStyle, verticalAlign: 'middle' }}>
+          <td style={{ ...tdStyle, verticalAlign: 'middle', textAlign: 'center' }}>
             {row.fromEmail}
           </td>
         </tr>

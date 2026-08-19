@@ -137,12 +137,12 @@ export default function SenderTable({ data, onChange}: Props) {
                 </td>
 
                 {/* Email */}
-                <td className="px-4 py-3 align-middle">
+                <td className="px-4 py-3 align-middle text-center">
                   <Input
                     placeholder="noreply@example.com"
                     value={row.fromEmail}
                     onChange={(e) => updateEmail(rowIndex, e.target.value)}
-                    className="bg-white text-sm"
+                    className="bg-white text-sm text-center"
                   />
                 </td>
               </tr>

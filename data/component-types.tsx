@@ -212,7 +212,7 @@ export const componentTypes = [
 },
 {
   type: "email-footer",
-  label: "Footer Links (5)",
+  label: "Orserdu Footer 5 Links",
   category: "basic",
   icon: PanelBottom,
   defaultProps: {
@@ -231,7 +231,7 @@ export const componentTypes = [
 },
 {
   type: "footer-with-Preferences",
-  label: "Footer Links (4)",
+  label: "Orserdu Footer 4 Links",
   category: "basic",
   icon: PanelBottom,
   defaultProps: {
@@ -301,7 +301,7 @@ export const componentTypes = [
   icon : NotepadText,
   defaultProps: {
       content: "Dear {{customText[Dr.|Mr.|Mrs.|Ms.|Mx.]}} {{accFname}} {{accLname}},",
-      fontSize: "16px",
+      fontSize: "12px",
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
@@ -322,7 +322,7 @@ export const componentTypes = [
         userEmailAddress : "{{userEmailAddress}}",
         userPhone : "{{User.Phone}}"
       },
-      fontSize: "16px",
+      fontSize: "12px",
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
@@ -410,7 +410,7 @@ export const componentTypes = [
   },
   {
     type: "footer-link-3",
-    label: "Elzonris Footer Links (3)",
+    label: "Elzonris Footer 3 Links",
     category: "elzonris",
     icon: PanelBottom,
     defaultProps: {
