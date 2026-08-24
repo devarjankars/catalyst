@@ -1,15 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowUp, ArrowDown, Copy, Trash2, SendToBack } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ArrowUp, ArrowDown, Copy, Trash2, ClipboardCopy } from "lucide-react"
 
 interface RearrangeControlsProps {
   componentId: string
@@ -20,8 +12,8 @@ interface RearrangeControlsProps {
   onDuplicate: () => void
   onDelete: () => void
   // Optional: only shown in 3-option completely-different mode
-  activeOption?: 1 | 2 | 3
-  onCopyToOption?: (targetOption: 1 | 2 | 3) => void
+  showCopyToOption?: boolean
+  onCopyToOptions?: () => void
 }
 
 function ToolbarButton({
@@ -69,12 +61,9 @@ export function RearrangeControls({
   onMoveDown,
   onDuplicate,
   onDelete,
-  activeOption,
-  onCopyToOption,
+  showCopyToOption,
+  onCopyToOptions,
 }: RearrangeControlsProps) {
-  const otherOptions = ([1, 2, 3] as const).filter((o) => o !== activeOption)
-  const showCopyToOption = !!onCopyToOption && !!activeOption
-
   return (
     <div
       className="absolute -right-10 top-1/2 z-[60] flex -translate-y-1/2 flex-col items-center rounded-full border border-gray-200 bg-white/95 py-1.5 pl-1 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
@@ -97,29 +86,9 @@ export function RearrangeControls({
         </ToolbarButton>
 
         {showCopyToOption && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <ToolbarButton title="Copy to another option" onClick={() => {}}>
-                <SendToBack className="h-3.5 w-3.5 text-blue-500" />
-              </ToolbarButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="left" align="center" className="w-44">
-              <DropdownMenuLabel className="text-xs font-medium text-gray-500">
-                Copy to…
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {otherOptions.map((opt) => (
-                <DropdownMenuItem
-                  key={opt}
-                  onClick={() => {
-                    onCopyToOption(opt)
-                  }}
-                >
-                  Option {opt}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ToolbarButton title="Copy to another option" onClick={() => onCopyToOptions?.()}>
+            <ClipboardCopy className="h-3.5 w-3.5 text-blue-500" />
+          </ToolbarButton>
         )}
       </div>
 

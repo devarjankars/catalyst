@@ -52,8 +52,8 @@ interface EmailComponentRendererProps {
   onDuplicate?: () => void;
   parentId?: string; // New prop for container isolation
   isLockedMode?: boolean; // New prop for header-only lock
-  activeOption?: 1 | 2 | 3;
-  onCopyToOption?: (targetOption: 1 | 2 | 3) => void;
+  showCopyToOption?: boolean;
+  onCopyToOptions?: () => void;
 }
 
 export function EmailComponentRenderer({
@@ -75,8 +75,8 @@ export function EmailComponentRenderer({
   onDuplicate,
   parentId = "root", // Default to root
   isLockedMode = false,
-  activeOption,
-  onCopyToOption,
+  showCopyToOption,
+  onCopyToOptions,
 }: EmailComponentRendererProps) {
   const ref = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
@@ -1566,8 +1566,8 @@ export function EmailComponentRenderer({
               onMoveDown={handleMoveDown}
               onDuplicate={handleDuplicate}
               onDelete={onDelete}
-              activeOption={activeOption}
-              onCopyToOption={onCopyToOption}
+              showCopyToOption={showCopyToOption}
+              onCopyToOptions={onCopyToOptions}
             />
           )}
         </>
