@@ -213,7 +213,7 @@ export const componentTypes = [
 {
   type: "email-footer",
   label: "Orserdu Footer 5 Links",
-  category: "basic",
+  category: "custom",
   icon: PanelBottom,
   defaultProps: {
     links: [
@@ -232,7 +232,7 @@ export const componentTypes = [
 {
   type: "footer-with-Preferences",
   label: "Orserdu Footer 4 Links",
-  category: "basic",
+  category: "custom",
   icon: PanelBottom,
   defaultProps: {
     links: [
@@ -782,7 +782,7 @@ export const componentTypes = [
   {
     type: "elzonris-references",
     label: "References",
-    category: "basic",
+    category: "elzonris",
     icon: NotepadText,
     defaultProps: {
       references: "1. Pemmaraju N, et al. <i>N Engl J Med.</i> 2019;380(17):1628-1637.",
@@ -796,7 +796,7 @@ export const componentTypes = [
   {
     type: "elzonris-abbreviations",
     label: "Abbreviations",
-    category: "basic",
+    category: "elzonris",
     icon: NotepadText,
     defaultProps: {
       abbreviations: "BPDCN: blastic plasmacytoid dendritic cell neoplasm; CD123: cluster of differentiation 123.",

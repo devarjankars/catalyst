@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+export const dynamic = 'force-dynamic'
 
 import React, { useState, useEffect, useMemo } from "react"
 import { useVSBStore } from "@/store/vsb-store"
