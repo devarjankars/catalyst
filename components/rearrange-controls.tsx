@@ -99,11 +99,23 @@ export function RearrangeControls({
         {showCopyToOption && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <ToolbarButton title="Copy to another option" onClick={() => {}}>
-                <SendToBack className="h-3.5 w-3.5 text-blue-500" />
-              </ToolbarButton>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                title="Copy to another option"
+                className="h-7 w-7 rounded-full p-0 text-blue-500 transition-colors hover:bg-blue-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SendToBack className="h-3.5 w-3.5" />
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="left" align="center" className="w-44">
+            <DropdownMenuContent
+              side="left"
+              align="center"
+              className="w-44"
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
               <DropdownMenuLabel className="text-xs font-medium text-gray-500">
                 Copy to…
               </DropdownMenuLabel>
@@ -111,7 +123,8 @@ export function RearrangeControls({
               {otherOptions.map((opt) => (
                 <DropdownMenuItem
                   key={opt}
-                  onClick={() => {
+                  onSelect={(e) => {
+                    e.preventDefault()
                     onCopyToOption(opt)
                   }}
                 >

@@ -26,6 +26,12 @@ export default function EmailBuilder() {
   const isEdit = searchParams.get("edit") === "true";
   const keepImages = searchParams.get("keepImages") === "true";
   const urlTemplateName = searchParams.get("name") || "";
+  // Brand selected on the landing page — defaults to "orserdu" if not set
+  const selectedBrand = (searchParams.get("brand") || "orserdu") as
+    | "orserdu"
+    | "ferring"
+    | "idorsia"
+    | "elzonris";
 
   const {
     currentTemplate,
@@ -698,6 +704,7 @@ if (activeSelectedId) {
                   onAddComponent={addComponent}
                   customComponents={customComponents}
                   disabled={isHeaderOnlyLocked}
+                  selectedBrand={selectedBrand}
                   getSelectionInfo={() => {
                     return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
                   }}

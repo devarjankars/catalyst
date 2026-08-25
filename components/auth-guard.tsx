@@ -17,25 +17,33 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
 
-    if (!userId) {
-      const raw = sessionStorage.getItem("auth");
-      if (raw) {
-        try { hydrate(JSON.parse(raw)); } catch {}
-        setIsChecking(false);
-        return;
-      }
-      if (!isAuthPage) {
-        // Redirect to login but stop spinner so the login page renders immediately
-        router.replace("/login");
-        setIsChecking(false);
-        return;
-      }
-    } else if (isAuthPage) {
-      router.replace("/dashboard");
+    // If Zustand already has userId (in-memory, e.g. same tab), we're done
+    if (userId) {
+      if (isAuthPage) router.replace("/");
       setIsChecking(false);
       return;
     }
 
+    // Try restoring from sessionStorage
+    const raw = sessionStorage.getItem("auth");
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        hydrate(parsed);
+        // Session is valid — don't redirect, let the app render
+        if (isAuthPage) router.replace("/");
+        setIsChecking(false);
+        return;
+      } catch {
+        // Corrupt session data — clear it
+        sessionStorage.removeItem("auth");
+      }
+    }
+
+    // No session — redirect to login if not already there
+    if (!isAuthPage) {
+      router.replace("/login");
+    }
     setIsChecking(false);
   }, []);
 

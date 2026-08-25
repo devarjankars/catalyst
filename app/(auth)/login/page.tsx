@@ -43,7 +43,13 @@ export default function LoginPage() {
     }
     sessionStorage.setItem(
       "auth",
-      JSON.stringify({ userEmail: user.userEmail, userpassword: user.userpassword })
+      JSON.stringify({
+        userEmail: user.userEmail,
+        userpassword: user.userpassword,
+        userId: user.userId,
+        userRole: user.userRole,
+        userPermissions: user.userPermissions,
+      })
     );
     loginUser(user.userEmail, user.userpassword, user.userId, user.userRole, user.userPermissions);
     router.push("/");

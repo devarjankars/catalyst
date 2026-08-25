@@ -1574,13 +1574,18 @@ case "isi": {
       `;
 
     case "elzonris-references": {
+      const fontSize   = component.fontSize   || "12px";
+      const color      = component.color      || "#646464";
+      const lineHeight = component.lineHeight || "14px";
+      const fontWeight = component.fontWeight || "normal";
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tbody><tr>
           <td style="padding: ${component.padding || "0 20px 10px 20px"};">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
-                <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                <td align="left" valign="top"
+                  style="color:${color};font-family:Arial,sans-serif;font-weight:${fontWeight};font-size:${fontSize};line-height:${lineHeight};">
                   <strong>References:&nbsp;</strong>${component.references || ""}
                 </td>
               </tr>
@@ -1592,14 +1597,19 @@ case "isi": {
     }
 
     case "elzonris-abbreviations": {
+      const fontSize   = component.fontSize   || "12px";
+      const color      = component.color      || "#646464";
+      const lineHeight = component.lineHeight || "14px";
+      const fontWeight = component.fontWeight || "normal";
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tbody><tr>
           <td style="padding: ${component.padding || "0 20px 10px 20px"};">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
-                <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
-                  <b>Abbreviations:</b> ${component.abbreviations || ""}
+                <td align="left" valign="top"
+                  style="color:${color};font-family:Arial,sans-serif;font-weight:${fontWeight};font-size:${fontSize};line-height:${lineHeight};">
+                  <strong>Abbreviations:&nbsp;</strong>${component.abbreviations || ""}
                 </td>
               </tr>
             </table>
@@ -1610,6 +1620,10 @@ case "isi": {
     }
 
     case "elzonris-ref-abbr": {
+      const fontSize   = component.fontSize   || "12px";
+      const color      = component.color      || "#646464";
+      const lineHeight = component.lineHeight || "14px";
+      const fontWeight = component.fontWeight || "normal";
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tbody>
@@ -1618,17 +1632,19 @@ case "isi": {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 ${component.references ? `
                 <tr>
-                  <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
+                  <td align="left" valign="top"
+                    style="color:${color};font-family:Arial,sans-serif;font-weight:${fontWeight};font-size:${fontSize};line-height:${lineHeight};">
                     <strong>References:&nbsp;</strong>${component.references}
                   </td>
                 </tr>` : ""}
                 ${component.abbreviations ? `
                 <tr>
-                  <td height="6" style="font-size:0; line-height:6px; mso-line-height-rule:exactly;">&nbsp;</td>
+                  <td height="6" style="font-size:0;line-height:6px;mso-line-height-rule:exactly;">&nbsp;</td>
                 </tr>
                 <tr>
-                  <td align="left" valign="middle" style="color:#646464; font-family:Arial,sans-serif; font-weight:400; font-size:12px; line-height:14px;">
-                    <b>Abbreviations:</b> ${component.abbreviations}
+                  <td align="left" valign="top"
+                    style="color:${color};font-family:Arial,sans-serif;font-weight:${fontWeight};font-size:${fontSize};line-height:${lineHeight};">
+                    <strong>Abbreviations:&nbsp;</strong>${component.abbreviations}
                   </td>
                 </tr>` : ""}
               </table>

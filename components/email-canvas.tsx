@@ -1,5 +1,5 @@
 "use client"
-import { forwardRef, useEffect, useState } from "react"
+import { forwardRef, useEffect, useRef, useState } from "react"
 import { useDrop } from "react-dnd"
 import { Layout } from "lucide-react"
 import { EmailComponentRenderer } from "./email-component-renderer"
@@ -41,6 +41,9 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     ref,
   ) => {
     const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
+    // Keep a ref in sync so the drop handler (which closes over initial state) always reads the latest value
+    const dropIndicatorRef = useRef(dropIndicator)
+    useEffect(() => { dropIndicatorRef.current = dropIndicator }, [dropIndicator])
 
     const [{ isOver }, drop] = useDrop({
       accept: "component",
@@ -48,7 +51,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         if (monitor.didDrop() || isLockedMode) return
 
         if (item.fromPalette) {
-          const dropIndex = dropIndicator?.index ?? components.length
+          const dropIndex = dropIndicatorRef.current?.index ?? components.length
           const newComponent = {
             ...item,
             id: Date.now().toString(),
@@ -79,13 +82,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             return
           }
 
-          const dropY = clientOffset.y - canvasRect.top
+          // Use viewport-relative clientOffset.y directly against each element's
+          // viewport-relative bounding rect — this is scroll-safe because both
+          // values are in the same coordinate space.
           let dropIndex = components.length
           let position: "top" | "bottom" = "top"
 
-          // IMPORTANT: scope to direct children only (":scope >") so nested
-          // section children with the same data-component-id attribute don't
-          // get counted and throw off the index math.
           const componentElements = (ref as React.RefObject<HTMLDivElement>).current!.querySelectorAll(
             ":scope > [data-component-id]",
           )
@@ -94,15 +96,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             for (let i = 0; i < componentElements.length; i++) {
               const element = componentElements[i] as HTMLElement
               const elementRect = element.getBoundingClientRect()
-              const elementMidY = elementRect.top - canvasRect.top + elementRect.height / 2
-              if (dropY < elementMidY) {
+              const elementMidY = elementRect.top + elementRect.height / 2
+              if (clientOffset.y < elementMidY) {
                 dropIndex = i
                 position = "top"
                 break
               } else {
-                // cursor is past this element's midpoint; tentatively place
-                // after it (covers the "drop into the last gap" case and
-                // keeps the index correct as we keep scanning forward)
                 dropIndex = i + 1
                 position = "bottom"
               }
@@ -180,7 +179,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               ref.current = node
             }
           }}
-          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative isolate pb-10 rounded-md transition-shadow space-y-1 ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
+          className={`bg-white shadow-sm ring-1 ring-gray-200 max-w-2xl w-full min-h-[600px] relative pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-500 shadow-md" : ""}`}
           style={{ width: `${canvasWidth ?? 600}px` }}
           onClick={() => !previewMode && onSelectComponent(null)}
           onDragLeave={() => setDropIndicator(null)}
