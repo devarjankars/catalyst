@@ -9,11 +9,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // All pages use client-side APIs (sessionStorage, DnD, router) — skip
+  // static prerendering entirely so `next build` succeeds.
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   webpack(config, { isServer, dev }) {
     // Stabilise module IDs so chunk references are consistent across
-    // parallel build workers — fixes the intermittent
-    // "Cannot find module for page" errors caused by non-deterministic
-    // chunk splitting with packages like react-dnd.
+    // parallel build workers — fixes intermittent
+    // "Cannot find module for page" errors.
     if (!dev) {
       config.optimization = {
         ...config.optimization,
