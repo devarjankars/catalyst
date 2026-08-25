@@ -12,7 +12,7 @@ import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon } fr
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import type { EmailTemplate } from "@/types/template"
+import type { EmailTemplate, BrandId } from "@/types/template"
 import { firebaseService } from "@/services/firebase-service"
 import CreateProjectDialog from "@/components/create-project"
 import {
@@ -25,6 +25,7 @@ import Link from "next/link"
 import Tasktable from "@/components/task-table"
 import { useLoggedInUserStore } from "@/store/logged-in-user"
 import dummyTasks from "@/data/dummy-tasks.json"
+import { BRANDS } from "@/components/brand-selection-modal"
 
 const RecentTemplates = lazy(() => import("@/components/recent-templates"));
 const StandardTemplates = lazy(() => import("@/components/standard-templates"))
@@ -32,7 +33,8 @@ export default function Dashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   // Brand selected on the landing page is forwarded as ?brand=<id>
-  const selectedBrand = searchParams.get("brand") || "orserdu"
+  const selectedBrand = (searchParams.get("brand") || "orserdu") as BrandId
+  const activeBrandConfig = BRANDS.find(b => b.id === selectedBrand)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true)
@@ -258,7 +260,23 @@ export default function Dashboard() {
           
           <div className="StandardTemps">
           <div className="header flex justify-between items-center mb-4">
-              <h1 className="font-bold">Standard Templates</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="font-bold">Standard Templates</h1>
+                {activeBrandConfig && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: activeBrandConfig.iconBg, color: activeBrandConfig.accentColor }}
+                  >
+                    <span
+                      className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
+                      style={{ backgroundColor: activeBrandConfig.accentColor, color: "#fff" }}
+                    >
+                      {activeBrandConfig.symbol}
+                    </span>
+                    {activeBrandConfig.label}
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 <button onClick={handleCreateBlank} className="flex items-center gap-2 bg-[#BC2030] text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-black transition-colors">
                   Create New Email
@@ -269,29 +287,53 @@ export default function Dashboard() {
             </div>
           <div className="templates">
             <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
-              <StandardTemplates temps={templates} 
-                                  handleUseTemplate={handleUseTemplate} 
-                                  handleEditTemplate={handleEditTemplate} 
-                                  setDeleteDialog={setDeleteDialog} 
-                                  handleDuplicateTemplate={handleDuplicateTemplate}
-                                  handleCreateBlank={handleCreateBlank}
-                                  loading={loading}
-                                  />
+              <StandardTemplates
+                temps={templates}
+                handleUseTemplate={handleUseTemplate}
+                handleEditTemplate={handleEditTemplate}
+                setDeleteDialog={setDeleteDialog}
+                handleDuplicateTemplate={handleDuplicateTemplate}
+                handleCreateBlank={handleCreateBlank}
+                loading={loading}
+                selectedBrand={selectedBrand}
+              />
           </Suspense>
             </div> 
           </div>
 
           <div className="recentTemps">
-          <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">Recent Emailers</h1>
+          <div className="header flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <h1 className="font-bold">Recent Emailers</h1>
+                {activeBrandConfig && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: activeBrandConfig.iconBg, color: activeBrandConfig.accentColor }}
+                  >
+                    <span
+                      className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
+                      style={{ backgroundColor: activeBrandConfig.accentColor, color: "#fff" }}
+                    >
+                      {activeBrandConfig.symbol}
+                    </span>
+                    {activeBrandConfig.label}
+                  </span>
+                )}
+              </div>
               <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>View all</span>
-            </div>          <div className="templates">
+            </div>
+          <div className="templates">
            <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
-           <RecentTemplates temps={templates} handleUseTemplate={handleUseTemplate} handleEditTemplate={handleEditTemplate} 
-                                  setDeleteDialog={setDeleteDialog} 
-                                  handleDuplicateTemplate={handleDuplicateTemplate}
-                                  handleCreateBlank={handleCreateBlank}
-                                  loading={loading}/>
+           <RecentTemplates
+             temps={templates}
+             handleUseTemplate={handleUseTemplate}
+             handleEditTemplate={handleEditTemplate}
+             setDeleteDialog={setDeleteDialog}
+             handleDuplicateTemplate={handleDuplicateTemplate}
+             handleCreateBlank={handleCreateBlank}
+             loading={loading}
+             selectedBrand={selectedBrand}
+           />
            </Suspense>
             </div> 
           </div>

@@ -8,14 +8,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Save } from "lucide-react"
+import type { BrandId } from "@/types/template"
+import { BRANDS } from "@/components/brand-selection-modal"
 
 interface SaveTemplateDialogProps {
   open: boolean
   onClose: () => void
-  onSave: (name: string, description: string, category: string) => Promise<void>
+  onSave: (name: string, description: string, category: string, brand: BrandId) => Promise<void>
   initialName?: string
   initialDescription?: string
   initialCategory?: string
+  initialBrand?: BrandId
   isEditing?: boolean
 }
 
@@ -26,28 +29,28 @@ export function SaveTemplateDialog({
   initialName = "",
   initialDescription = "",
   initialCategory = "other",
+  initialBrand = "orserdu",
   isEditing = false,
 }: SaveTemplateDialogProps) {
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
   const [category, setCategory] = useState(initialCategory)
+  const [brand, setBrand] = useState<BrandId>(initialBrand)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Update form when props change
   useEffect(() => {
     setName(initialName)
     setDescription(initialDescription)
     setCategory(initialCategory)
-  }, [initialName, initialDescription, initialCategory])
+    setBrand(initialBrand)
+  }, [initialName, initialDescription, initialCategory, initialBrand])
 
   const handleSave = async () => {
     if (!name.trim()) return
-
     setIsSaving(true)
     try {
-      await onSave(name.trim(), description.trim(), category)
+      await onSave(name.trim(), description.trim(), category, brand)
       if (!isEditing) {
-        // Reset form for new templates
         setName("")
         setDescription("")
         setCategory("other")
@@ -67,6 +70,8 @@ export function SaveTemplateDialog({
       }
     }
   }
+
+  const activeBrand = BRANDS.find(b => b.id === brand)
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -111,6 +116,42 @@ export function SaveTemplateDialog({
                 <SelectItem value="unbranded">Unbranded</SelectItem>
                 <SelectItem value="tpe">Third-party</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="brand">Brand</Label>
+            <Select value={brand} onValueChange={(v) => setBrand(v as BrandId)} disabled={isSaving}>
+              <SelectTrigger>
+                <SelectValue>
+                  {activeBrand && (
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
+                        style={{ backgroundColor: activeBrand.accentColor, color: "#fff" }}
+                      >
+                        {activeBrand.symbol}
+                      </span>
+                      {activeBrand.label}
+                    </span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {BRANDS.map(b => (
+                  <SelectItem key={b.id} value={b.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
+                        style={{ backgroundColor: b.accentColor, color: "#fff" }}
+                      >
+                        {b.symbol}
+                      </span>
+                      {b.label}
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

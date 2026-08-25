@@ -342,6 +342,7 @@ class FirebaseService {
       name: `${template.name} (Copy)`,
       description: template.description,
       category: template.category,
+      brand: template.brand,
       components: this.deepCloneComponents(template.components),
       optionMode: template.optionMode || "single",
       optionSubMode: template.optionSubMode,

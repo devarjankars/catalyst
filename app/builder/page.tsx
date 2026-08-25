@@ -425,20 +425,21 @@ function replaceImagesInComponents(components: any[]): any[] {
   const handleSaveTemplate = async (
     name: string,
     description: string,
-    category: string
+    category: string,
+    brand: "orserdu" | "ferring" | "idorsia" | "elzonris"
   ) => {
     setSaving(true);
     try {
       let savedTemplate;
  
       if (isEdit && currentTemplate) {
-        // Update existing template metadata and components
         savedTemplate = await firebaseService.updateTemplate(
           currentTemplate.id,
           {
             name,
             description,
             category: category as any,
+            brand,
             components,
             optionMode,
             optionSubMode,
@@ -448,11 +449,11 @@ function replaceImagesInComponents(components: any[]): any[] {
           }
         );
       } else {
-        // Create new template (from working copy or new template)
         savedTemplate = await firebaseService.createTemplate({
           name,
           description,
           category: category as any,
+          brand,
           components,
           optionMode,
           optionSubMode,
@@ -860,6 +861,9 @@ if (activeSelectedId) {
         }
         initialCategory={
           currentTemplate?.category || workingCopySource?.category || "other"
+        }
+        initialBrand={
+          (currentTemplate?.brand || workingCopySource?.brand || selectedBrand) as any
         }
         isEditing={isEdit && !!currentTemplate}
       />
