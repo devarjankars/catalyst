@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { TemplateCard } from './template-card'
 import { Button } from './ui/button'
 import { ShimmerCardGrid } from "@/components/shimmer"
+import { matchesBrand } from "@/lib/brand-filter"
 
 type StandardTemplatesProps = {
   temps: EmailTemplate[];
@@ -31,13 +32,7 @@ export default function StandardTemplates({
 
     return [...temps]
       .filter(t => !t.isUserCreated)
-      .filter(t => {
-        // If no brand filter active, show all
-        if (!selectedBrand) return true;
-        // If template has no brand set, show it for all brands (legacy/untagged)
-        if (!t.brand) return true;
-        return t.brand === selectedBrand;
-      })
+      .filter(t => matchesBrand(t, selectedBrand))
       .slice(0, 4);
   }, [temps, selectedBrand]);
 

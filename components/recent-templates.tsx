@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { TemplateCard } from './template-card'
 import { Button } from './ui/button'
 import { ShimmerCardGrid } from "@/components/shimmer"
+import { matchesBrand } from "@/lib/brand-filter"
 
 type RecentTemplatesProps = {
   temps: EmailTemplate[];
@@ -31,11 +32,7 @@ export default function RecentTemplates({
 
     return [...temps]
       .filter(t => t.updatedAt && t.isUserCreated)
-      .filter(t => {
-        if (!selectedBrand) return true;
-        if (!t.brand) return true;
-        return t.brand === selectedBrand;
-      })
+      .filter(t => matchesBrand(t, selectedBrand))
       .sort(
         (a, b) =>
           new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()
