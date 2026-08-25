@@ -248,7 +248,7 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
                       value={img.value}
                       onChange={e => updateValue(idx, e.target.value)}
                       className='h-10 text-sm'
-                      placeholder='e.g. Woman drinking coffee outdoors'
+                      placeholder='please enter alt text description'
                     />
                   </div>
 

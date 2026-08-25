@@ -350,20 +350,23 @@ function generateComponentHTML(component: EmailComponent): string {
       const linksHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
         const isEven = (index + 1) % 2 === 0;
+        const linkColor = link.color || color;
+        const pipeColor = !isLast ? (links[index + 1].color || "#000000") : "#000000";
         
         let separator = "";
         if (!isLast) {
           // Not the last link
-          if (isEven) {
+          if (isEven && links.length - index > 2) {
             // After 2nd, 4th link: mobile line break + desktop-only separator
-            separator = `<br class="mobile" style="display: none;"><br class="mobile" style="display: none;"><span class="desktop" style="color:${color}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;</span>`;
+            // (skip the break before the last link so it stays on the same mobile row)
+            separator = `<br class="mobile" style="display: none;"><br class="mobile" style="display: none;"><span class="desktop" style="color:${pipeColor}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
           } else {
             // After 1st, 3rd link: normal separator (visible on both)
-            separator = `<span style="color:${color}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;</span>`;
+            separator = `<span style="color:${pipeColor}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
           }
         }
 
-        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${color}; font-size: ${fontSize}; font-family: Arial, sans-serif; text-decoration: underline;">${link.text.trim()}</a>${separator}`;
+        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${linkColor}; font-size: ${fontSize}; font-family: Arial, sans-serif; text-decoration: underline;">${link.text.trim()}</a>${separator}`;
       }).join("");
 
       return `
@@ -1450,7 +1453,7 @@ case "isi": {
                             <td bgcolor="#0083BF">
                                 <table width="100%" bgcolor="#0083BF">
                                     <td bgcolor="#0083BF" align="left" width="50%" style="padding: 30px 0 20px 30px;">
-                                        <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altTex}" >
+                                        <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
                                     </td>
         
                                     <td valign="top" align="right" bgcolor="#0083BF" width="50%" style="padding: 30px 20px 20px 0;">
@@ -1505,7 +1508,7 @@ case "isi": {
                             <table align="center" bgcolor="#0083BF">
                               <tr bgcolor="#0083BF" align="center">
                                 <td bgcolor="#0083BF" style="padding: 10px 0px 20px 0px;">
-                                  <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altTex}" >
+                                  <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
                                 </td>
                               </tr>
                               <tr bgcolor="#0083BF" align="center">

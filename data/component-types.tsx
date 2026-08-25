@@ -50,7 +50,7 @@ export const componentTypes = [
     defaultProps: {
       text: "Button",
       href: "#",
-      backgroundColor: "#007bff",
+      backgroundColor: "#0563C1",
       color: "#ffffff",
       borderRadius: "4px",
       buttonPadding: "12px 24px",
@@ -104,7 +104,7 @@ export const componentTypes = [
     icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "Privacy and Terms of Use ", href: "#" },
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },
@@ -112,7 +112,7 @@ export const componentTypes = [
     },
     textAlign: "left",
     fontSize: "14px",
-    color: "#007bff",
+    color: "#0563C1",
   },
 
   {
@@ -221,7 +221,7 @@ export const componentTypes = [
       { text: "CCPA Policy", href: "#" },
       { text: "Cookies Policy", href: "#" },
       { text: "Unsubscribe", href: "#" },
-      { text: "Email Preferences", href: "#" },
+      { text: "Email Preferences", href: "#", color: "#ff66cc" },
     ],
     fontSize: "12px",
     color: "#0563C1",
@@ -415,7 +415,7 @@ export const componentTypes = [
     icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Term of Use", href: "#" },
+        { text: "Privacy and Terms of Use", href: "#" },
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
       ],
@@ -750,7 +750,7 @@ export const componentTypes = [
     icon : PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Term of Use ", href: "#" },
+        { text: "Privacy and Terms of Use ", href: "#" },
         { text: "CCPA Policy", href: "#" },
         { text: "Cookies Policy", href: "#" },
         { text: "Unsubscribe", href: "#" },

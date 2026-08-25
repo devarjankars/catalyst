@@ -20,8 +20,9 @@ interface RearrangeControlsProps {
   onDuplicate: () => void
   onDelete: () => void
   // Optional: only shown in 3-option completely-different mode
-  activeOption?: 1 | 2 | 3
+  showCopyToOption?: boolean
   onCopyToOption?: (targetOption: 1 | 2 | 3) => void
+  activeOption?: 1 | 2 | 3
 }
 
 function ToolbarButton({
@@ -69,11 +70,11 @@ export function RearrangeControls({
   onMoveDown,
   onDuplicate,
   onDelete,
-  activeOption,
+  showCopyToOption,
   onCopyToOption,
+  activeOption = 1,
 }: RearrangeControlsProps) {
   const otherOptions = ([1, 2, 3] as const).filter((o) => o !== activeOption)
-  const showCopyToOption = !!onCopyToOption && !!activeOption
 
   return (
     <div
@@ -96,7 +97,7 @@ export function RearrangeControls({
           <Copy className="h-3.5 w-3.5" />
         </ToolbarButton>
 
-        {showCopyToOption && (
+        {showCopyToOption && onCopyToOption && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

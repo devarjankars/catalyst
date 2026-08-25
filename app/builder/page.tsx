@@ -10,7 +10,7 @@ import { SaveTemplateDialog } from "@/components/save-template-dialog";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Copy, Undo2, Redo2 } from "lucide-react";
+import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
@@ -83,7 +83,6 @@ export default function EmailBuilder() {
     future,
   } = useEmailBuilderStore();
 
-  const copyOptionTo = useEmailBuilderStore((s) => s.copyOptionTo);
   const addComponentToOption = useEmailBuilderStore((s) => s.addComponentToOption);
 
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
@@ -97,7 +96,15 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
+  // Run the builder initialization only ONCE per mount. The URL is rewritten
+  // after mode selection (history.replaceState), which changes `searchParams`
+  // and would otherwise re-run this effect and reset the chosen option mode.
+  const didInitRef = useRef(false);
+
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
     const mode = searchParams.get("mode");
     const selectMode = searchParams.get("selectMode") === "true";
     const urlOptionMode = mode === "three" ? ("three" as const) : undefined;
@@ -266,9 +273,24 @@ function replaceImagesInComponents(components: any[]): any[] {
         if (!optionOverrides && (template.optionMode || "single") === "three") {
           ensureThreeOptions();
         }
+      } else if (optionOverrides) {
+        // Template could not be loaded — still apply the chosen configuration
+        // so the editor doesn't get stuck in the wrong mode.
+        applyOptionConfiguration({
+          mode: optionOverrides.optionMode,
+          subMode: optionOverrides.optionSubMode,
+        });
       }
     } catch (error) {
       console.error("Failed to load template:", error);
+      if (optionOverrides) {
+        // Even on failure, apply the chosen configuration so the editor
+        // doesn't get stuck in the wrong mode (e.g. tabs never appearing).
+        applyOptionConfiguration({
+          mode: optionOverrides.optionMode,
+          subMode: optionOverrides.optionSubMode,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -752,20 +774,6 @@ if (activeSelectedId) {
                     <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
                       {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
                     </span>
-                    {optionSubMode === "completely-different" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[11px] px-2 gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        onClick={() => {
-                          setCopyToTargets([]);
-                          setCopyToDialogOpen(true);
-                        }}
-                      >
-                        <Copy className="w-3 h-3" />
-                        Copy Option {activeOption} to…
-                      </Button>
-                    )}
                   </div>
                   {isHeaderOnlyLocked && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-t border-amber-100 text-xs text-amber-700">
@@ -799,12 +807,14 @@ if (activeSelectedId) {
                 duplicateComponent={duplicateComponent}
                 addComponent={addComponent}
                 isLockedMode={isHeaderOnlyLocked}
-                activeOption={optionMode === "three" && optionSubMode === "completely-different" ? activeOption : undefined}
-                onCopyToOption={
-                  optionMode === "three" && optionSubMode === "completely-different"
-                    ? (component, targetOption) => {
-                        addComponentToOption(component, targetOption);
-                        toast.success(`Component copied to Option ${targetOption}`);
+                showCopyToOption={
+                  optionMode === "three" && optionSubMode === "completely-different" && !!selectedComponent
+                }
+                onCopyToOptions={
+                  optionMode === "three" && optionSubMode === "completely-different" && selectedComponent
+                    ? () => {
+                        setCopyToTargets([]);
+                        setCopyToDialogOpen(true);
                       }
                     : undefined
                 }
@@ -874,13 +884,13 @@ if (activeSelectedId) {
       {/* Email Preview Modal */}
       <EmailPreviewModal components={components} open={openPreview} onOpenChange={setOpenPreview} />
 
-      {/* Copy Option To Dialog */}
+      {/* Copy Component To Dialog */}
       <Dialog open={copyToDialogOpen} onOpenChange={setCopyToDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Copy Option {activeOption} to…</DialogTitle>
+            <DialogTitle>Copy selected component to…</DialogTitle>
             <DialogDescription>
-              Select which option(s) should receive a copy of Option {activeOption}'s current layout. This will overwrite the target option(s).
+              Select which option(s) should receive a copy of the selected component ({selectedComponentData?.type || "component"}).
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-2">
@@ -907,11 +917,17 @@ if (activeSelectedId) {
             <Button
               disabled={copyToTargets.length === 0}
               onClick={() => {
-                copyOptionTo(activeOption, copyToTargets);
+                if (!selectedComponentData) return;
+                // Copy to the SAME position in the target option(s)
+                const sourceIndex = getActiveComponents().findIndex((c) => c.id === activeSelectedId);
+                const insertIndex = sourceIndex >= 0 ? sourceIndex : undefined;
+                copyToTargets.forEach((opt) => {
+                  addComponentToOption(selectedComponentData, opt, insertIndex);
+                });
                 setCopyToDialogOpen(false);
                 setCopyToTargets([]);
                 toast.success(
-                  `Option ${activeOption} copied to Option${copyToTargets.length > 1 ? "s" : ""} ${copyToTargets.join(" & ")}`
+                  `Component copied to Option${copyToTargets.length > 1 ? "s" : ""} ${copyToTargets.join(" & ")}`
                 );
               }}
             >

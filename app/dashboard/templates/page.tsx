@@ -128,8 +128,8 @@ export default function ManageTemplates() {
                       onClick={() => setSelectedCategory(id)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                         selectedCategory === id
-                          ? "bg-[#4A5565] text-white border-[#4A5565]"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-[#4A5565] hover:text-[#4A5565]"
+                          ? "bg-[#BC2030] text-white border-[#BC2030]"
+                          : "bg-white text-gray-600 border-gray-300 hover:border-[#BC2030] hover:text-[#BC2030]"
                       }`}
                     >
                       {Icon && <Icon className="w-3 h-3" />}
