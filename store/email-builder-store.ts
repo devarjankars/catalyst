@@ -105,7 +105,7 @@ interface EmailBuilderState {
     subMode?: "header-only" | "completely-different"
   }) => void
   copyOptionTo: (fromOption: 1 | 2 | 3, toOptions: (1 | 2 | 3)[]) => void
-  addComponentToOption: (component: EmailComponent, targetOption: 1 | 2 | 3) => void
+  addComponentToOption: (component: EmailComponent, targetOption: 1 | 2 | 3, index?: number) => void
 
   // Working copy actions
   startWorkingCopy: (
@@ -360,13 +360,20 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           }
 
           if (config.mode === "three") {
+            // Start all options from scratch — never carry over stale builds
+            set({
+              option2Components: [],
+              option3Components: [],
+              activeOption: 1,
+              selectedComponent: null,
+            })
             get().initializeOptions(get().components)
             const subMode = config.subMode ?? get().optionSubMode
             if (subMode === "header-only") {
               get().syncBodyFromOption1()
             }
           } else {
-            set({ activeOption: 1 })
+            set({ activeOption: 1, selectedComponent: null })
           }
 
           const { currentTemplate } = get()
@@ -403,13 +410,19 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           get().checkForChanges()
         },
 
-        addComponentToOption: (component, targetOption) => {
+        addComponentToOption: (component, targetOption, index) => {
           get().pushHistory()
           const { components, option2Components, option3Components } = get()
           const cloned = get().deepCloneComponent(component)
-          if (targetOption === 1) set({ components: [...components, cloned] })
-          else if (targetOption === 2) set({ option2Components: [...option2Components, cloned] })
-          else set({ option3Components: [...option3Components, cloned] })
+          // Insert at the same position the component occupies in the source
+          // option; fall back to appending when no valid index is given.
+          const insertAtSamePlace = (list: EmailComponent[]) => {
+            if (index === undefined || index < 0 || index > list.length) return [...list, cloned]
+            return [...list.slice(0, index), cloned, ...list.slice(index)]
+          }
+          if (targetOption === 1) set({ components: insertAtSamePlace(components) })
+          else if (targetOption === 2) set({ option2Components: insertAtSamePlace(option2Components) })
+          else set({ option3Components: insertAtSamePlace(option3Components) })
           get().checkForChanges()
         },
 
@@ -712,6 +725,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             hasUnsavedTemplate: true,
             currentTemplate: null,
             originalTemplate: null,
+            components: [],
             originalComponents: [],
             optionMode: "single",
             optionSubMode: "header-only",
@@ -720,6 +734,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             option3Components: [],
             originalOption2Components: [],
             originalOption3Components: [],
+            selectedComponent: null,
             isWorkingCopy: false,
             workingCopySource: null,
           })

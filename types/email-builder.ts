@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text" | "tryvio-footer" | "orserdu-emerald-stats"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "email-footer" | "custom-text" | "tryvio-footer" | "orserdu-emerald-stats"
 
   category: "basic" | "custom" | "ferring" | "user-created" | "idorsia"
 
@@ -68,11 +68,11 @@ export interface EmailComponent {
 
   //footer-links properties
   links?: { text: string; href: string; title?: string; color?: string }[]
-  logoA: { altTex: string, href: string, imgSrc: string }
-  logoB: { altTex: string, href: string, imgSrc: string }
+  logoA: { altTex: string; href: string; imgSrc: string }
+  logoB: { altTex: string; href: string; imgSrc: string }
   jobCode?: string
-  socialMediaLinks?: { altText: string; href: string, iconSrc: string }[]
-  logo?: { altTex: string, href: string, logoSrc: string }
+  socialMediaLinks?: { altText: string; href: string; iconSrc: string }[]
+  logo?: { altText?: string; href?: string; logoSrc?: string }
   address?: string
 
   //isi properties

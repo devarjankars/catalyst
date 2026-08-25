@@ -1304,7 +1304,7 @@ export function EmailComponentRenderer({
             >
               <div className="flex items-center justify-between w-full mb-2">
                 <div className="w-[45%]">
-                  <img width={"112"} src={component?.logo?.logoSrc} alt={component?.logo?.altTex}/>
+                  <img width={"112"} src={component?.logo?.logoSrc} alt={component?.logo?.altText}/>
                 </div>
                 <div className="w-[45%] flex justify-end items-center">
                   {component.socialMediaLinks?.map((link, index) => (

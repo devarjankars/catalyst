@@ -90,7 +90,15 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
+  // Run the builder initialization only ONCE per mount. The URL is rewritten
+  // after mode selection (history.replaceState), which changes `searchParams`
+  // and would otherwise re-run this effect and reset the chosen option mode.
+  const didInitRef = useRef(false);
+
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
     const mode = searchParams.get("mode");
     const selectMode = searchParams.get("selectMode") === "true";
     const urlOptionMode = mode === "three" ? ("three" as const) : undefined;
@@ -259,9 +267,24 @@ function replaceImagesInComponents(components: any[]): any[] {
         if (!optionOverrides && (template.optionMode || "single") === "three") {
           ensureThreeOptions();
         }
+      } else if (optionOverrides) {
+        // Template could not be loaded — still apply the chosen configuration
+        // so the editor doesn't get stuck in the wrong mode.
+        applyOptionConfiguration({
+          mode: optionOverrides.optionMode,
+          subMode: optionOverrides.optionSubMode,
+        });
       }
     } catch (error) {
       console.error("Failed to load template:", error);
+      if (optionOverrides) {
+        // Even on failure, apply the chosen configuration so the editor
+        // doesn't get stuck in the wrong mode (e.g. tabs never appearing).
+        applyOptionConfiguration({
+          mode: optionOverrides.optionMode,
+          subMode: optionOverrides.optionSubMode,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -888,8 +911,11 @@ if (activeSelectedId) {
               disabled={copyToTargets.length === 0}
               onClick={() => {
                 if (!selectedComponentData) return;
+                // Copy to the SAME position in the target option(s)
+                const sourceIndex = getActiveComponents().findIndex((c) => c.id === activeSelectedId);
+                const insertIndex = sourceIndex >= 0 ? sourceIndex : undefined;
                 copyToTargets.forEach((opt) => {
-                  addComponentToOption(selectedComponentData, opt);
+                  addComponentToOption(selectedComponentData, opt, insertIndex);
                 });
                 setCopyToDialogOpen(false);
                 setCopyToTargets([]);

@@ -2158,6 +2158,361 @@ export function PropertiesPanel({
               </div>
             </div>
           )
+          case "tryvio-footer":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Footer Logo</Label>
+                  <ImageUpload
+                    currentImage={component.tryvioFooterLogoSrc}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ tryvioFooterLogoSrc: imageUrl })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.tryvioFooterLogoAlt || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterLogoAlt: e.target.value })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                  <div>
+                    <Label>Link URL</Label>
+                    <Input
+                      value={component.tryvioFooterLogoHref || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterLogoHref: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>LinkedIn Icon</Label>
+                  <ImageUpload
+                    currentImage={component.tryvioFooterLinkedinSrc}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ tryvioFooterLinkedinSrc: imageUrl })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.tryvioFooterLinkedinAlt || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterLinkedinAlt: e.target.value })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                  <div>
+                    <Label>Link URL</Label>
+                    <Input
+                      value={component.tryvioFooterLinkedinHref || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterLinkedinHref: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Idorsia Logo</Label>
+                  <ImageUpload
+                    currentImage={component.tryvioFooterIdorsiaLogoSrc}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ tryvioFooterIdorsiaLogoSrc: imageUrl })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.tryvioFooterIdorsiaLogoAlt || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterIdorsiaLogoAlt: e.target.value })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                  <div>
+                    <Label>Link URL</Label>
+                    <Input
+                      value={component.tryvioFooterIdorsiaLogoHref || ""}
+                      onChange={(e) => onUpdateComponent({ tryvioFooterIdorsiaLogoHref: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Job Code</Label>
+                  <Input
+                    value={component.tryvioFooterJobCode || ""}
+                    onChange={(e) => onUpdateComponent({ tryvioFooterJobCode: e.target.value })}
+                    placeholder="US-AP-00162 04/26"
+                  />
+                </div>
+              </div>
+            );
+          case "orserdu-footer":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Footer Logo</Label>
+                  <ImageUpload
+                    currentImage={component.src}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ src: imageUrl })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.alt || ""}
+                      onChange={(e) => onUpdateComponent({ alt: e.target.value })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                  <div>
+                    <Label>Font Size</Label>
+                    <Input
+                      value={component.fontSize || "12px"}
+                      onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                      placeholder="12px"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Footer Text - Reg</Label>
+                  <Input
+                    value={component.footerText?.reg || ""}
+                    onChange={(e) => onUpdateComponent({ footerText: { ...component.footerText, reg: e.target.value } })}
+                    placeholder="ORSERDU is a registered trademark..."
+                  />
+                </div>
+                <div>
+                  <Label>Footer Text - Year</Label>
+                  <Input
+                    value={component.footerText?.year || ""}
+                    onChange={(e) => onUpdateComponent({ footerText: { ...component.footerText, year: e.target.value } })}
+                    placeholder="© 2026 Stemline..."
+                  />
+                </div>
+                <div>
+                  <Label>Footer Text - Address</Label>
+                  <Input
+                    value={component.footerText?.address || ""}
+                    onChange={(e) => onUpdateComponent({ footerText: { ...component.footerText, address: e.target.value } })}
+                    placeholder="750 Lexington Avenue..."
+                  />
+                </div>
+                <div>
+                  <Label>Footer Text - Rights</Label>
+                  <Input
+                    value={component.footerText?.rights || ""}
+                    onChange={(e) => onUpdateComponent({ footerText: { ...component.footerText, rights: e.target.value } })}
+                    placeholder="All rights reserved."
+                  />
+                </div>
+                <div>
+                  <Label>Job Code</Label>
+                  <Input
+                    value={component.footerText?.jobcode || ""}
+                    onChange={(e) => onUpdateComponent({ footerText: { ...component.footerText, jobcode: e.target.value } })}
+                    placeholder="0X/2X MAT-US-ELA-00XXX"
+                  />
+                </div>
+              </div>
+            );
+          case "orserdu-emerald-stats":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Emerald Icon</Label>
+                  <ImageUpload
+                    currentImage={component.emeraldLeftIconSrc}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ emeraldLeftIconSrc: imageUrl })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.emeraldLeftIconAlt || ""}
+                      onChange={(e) => onUpdateComponent({ emeraldLeftIconAlt: e.target.value })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Left Heading</Label>
+                  <Input
+                    value={component.emeraldLeftHeading || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldLeftHeading: e.target.value })}
+                    placeholder="Primary endpoint in EMERALD"
+                  />
+                </div>
+                <div>
+                  <Label>Left Stat</Label>
+                  <textarea
+                    className="w-full border rounded px-2 py-1 text-sm"
+                    rows={3}
+                    value={component.emeraldLeftStat || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldLeftStat: e.target.value })}
+                    placeholder="Left stat content (HTML supported)"
+                  />
+                </div>
+                <div>
+                  <Label>Left HR</Label>
+                  <Input
+                    value={component.emeraldLeftHR || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldLeftHR: e.target.value })}
+                    placeholder="HR=0.55..."
+                  />
+                </div>
+                <div>
+                  <Label>Right Stat Number</Label>
+                  <Input
+                    value={component.emeraldRightStatNumber || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldRightStatNumber: e.target.value })}
+                    placeholder="8.6"
+                  />
+                </div>
+                <div>
+                  <Label>Right Stat Label (use \n for line breaks)</Label>
+                  <Input
+                    value={component.emeraldRightStatLabel || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldRightStatLabel: e.target.value })}
+                    placeholder="months\nmPFS"
+                  />
+                </div>
+                <div>
+                  <Label>Right Description</Label>
+                  <textarea
+                    className="w-full border rounded px-2 py-1 text-sm"
+                    rows={3}
+                    value={component.emeraldRightDesc || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldRightDesc: e.target.value })}
+                    placeholder="Right description"
+                  />
+                </div>
+                <div>
+                  <Label>Right Stat</Label>
+                  <textarea
+                    className="w-full border rounded px-2 py-1 text-sm"
+                    rows={2}
+                    value={component.emeraldRightStat || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldRightStat: e.target.value })}
+                    placeholder="Right stat text"
+                  />
+                </div>
+                <div>
+                  <Label>Right HR</Label>
+                  <Input
+                    value={component.emeraldRightHR || ""}
+                    onChange={(e) => onUpdateComponent({ emeraldRightHR: e.target.value })}
+                    placeholder="HR=0.41..."
+                  />
+                </div>
+              </div>
+            );
+          case "ferring-footer":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Footer Logo</Label>
+                  <ImageUpload
+                    currentImage={component.logo?.logoSrc}
+                    onImageUpload={(imageUrl) =>
+                      onUpdateComponent({ logo: { ...component.logo, logoSrc: imageUrl } })
+                    }
+                  />
+                  <div>
+                    <Label>Alt Text</Label>
+                    <Input
+                      value={component.logo?.altText || ""}
+                      onChange={(e) => onUpdateComponent({ logo: { ...component.logo, altText: e.target.value } })}
+                      placeholder="Alt text"
+                    />
+                  </div>
+                  <div>
+                    <Label>Link URL</Label>
+                    <Input
+                      value={component.logo?.href || ""}
+                      onChange={(e) => onUpdateComponent({ logo: { ...component.logo, href: e.target.value } })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Social Media Links</Label>
+                  <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
+                    {component.socialMediaLinks?.map((link, index) => (
+                      <div key={index} className="flex flex-col items-center gap-2">
+                        <ImageUpload
+                          currentImage={link.iconSrc}
+                          onImageUpload={(imageUrl) =>
+                            onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
+                              i === index ? { ...l, iconSrc: imageUrl } : l
+                            )})
+                          }
+                        />
+                        <Input
+                          value={link.href}
+                          onChange={(e) =>
+                            onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
+                              i === index ? { ...l, href: e.target.value } : l
+                            )})
+                          }
+                          placeholder="Social media URL"
+                        />
+                        <Input
+                          value={link.altText}
+                          onChange={(e) =>
+                            onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
+                              i === index ? { ...l, altText: e.target.value } : l
+                            )})
+                          }
+                          placeholder="Alt text"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Footer Links</Label>
+                  <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
+                    {component.links?.map((link, index) => (
+                      <div key={index} className="flex flex-col items-center gap-2">
+<Input
+                          value={link.text}
+                          onChange={(e) => onUpdateComponent({
+                            links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l)
+                          })}
+                        />
+                        <Input
+                          value={link.href}
+                          onChange={(e) =>
+                            onUpdateComponent({ links: component.links?.map((l, i) =>
+                              i === index ? { ...l, href: e.target.value } : l
+                            )})
+                          }
+                          placeholder="Footer link URL"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Job Code</Label>
+                  <Input
+                    value={component.jobCode || ""}
+                    onChange={(e) => onUpdateComponent({ jobCode: e.target.value })}
+                    placeholder="02/26 GL-RMMH-2600016"
+                  />
+                </div>
+                <div>
+                  <Label>Address</Label>
+                  <Input
+                    value={component.address || ""}
+                    onChange={(e) => onUpdateComponent({ address: e.target.value })}
+                    placeholder="[countries to add appropriate address]"
+                  />
+                </div>
+              </div>
+            );
           case "raw-html":
             return (
               <div className="flex items-center justify-center">
