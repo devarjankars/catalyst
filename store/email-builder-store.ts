@@ -159,6 +159,7 @@ interface EmailBuilderState {
   // Helper methods
   deepCloneComponent: (component: EmailComponent) => EmailComponent
   deepCloneComponents: (components: EmailComponent[]) => EmailComponent[]
+  collectImagesFromComponent: (component: EmailComponent) => string[]
 }
 
 export const useEmailBuilderStore = create<EmailBuilderState>()(
@@ -198,6 +199,9 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const components = template?.components || []
           const option2Components = template?.option2Components || []
           const option3Components = template?.option3Components || []
+          // Collect all built-in images from template components
+          const allComponents = [...components, ...option2Components, ...option3Components]
+          const imageUrls = allComponents.flatMap((c) => get().collectImagesFromComponent(c))
           set({
             currentTemplate: template,
             components,
@@ -211,7 +215,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             hasUnsavedTemplate: false,
             isNewTemplate: false,
             preheaderText: template?.preheaderText || '',
-            templateImages: [],
+            templateImages: [...new Set(imageUrls)], // dedupe
             optionMode: template?.optionMode || "single",
             optionSubMode: template?.optionSubMode || "header-only",
             activeOption: 1,
@@ -434,27 +438,35 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const optionSubMode =
             optionOverrides?.optionSubMode ?? sourceTemplate.optionSubMode ?? "header-only"
 
+          const clonedComponents = get().deepCloneComponents(sourceTemplate.components || [])
+          const clonedOption2 = sourceTemplate.option2Components
+            ? get().deepCloneComponents(sourceTemplate.option2Components)
+            : []
+          const clonedOption3 = sourceTemplate.option3Components
+            ? get().deepCloneComponents(sourceTemplate.option3Components)
+            : []
+          // Collect all built-in images from source template components
+          const allComponents = [...clonedComponents, ...clonedOption2, ...clonedOption3]
+          const imageUrls = allComponents.flatMap((c) => get().collectImagesFromComponent(c))
+
           set({
             isWorkingCopy: true,
             workingCopySource: sourceTemplate,
             currentTemplate: null,
             originalTemplate: null,
-            components: get().deepCloneComponents(sourceTemplate.components || []),
+            components: clonedComponents,
             originalComponents: [], // Empty for working copy
             optionMode,
             optionSubMode,
             activeOption: 1,
-            option2Components: sourceTemplate.option2Components
-              ? get().deepCloneComponents(sourceTemplate.option2Components)
-              : [],
-            option3Components: sourceTemplate.option3Components
-              ? get().deepCloneComponents(sourceTemplate.option3Components)
-              : [],
+            option2Components: clonedOption2,
+            option3Components: clonedOption3,
             originalOption2Components: [],
             originalOption3Components: [],
             hasUnsavedTemplate: true,
             hasComponentChanges: false,
             isNewTemplate: false,
+            templateImages: [...new Set(imageUrls)], // dedupe
           })
           if (optionMode === "three") {
             get().ensureThreeOptions()
@@ -500,6 +512,10 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             ...component,
             id: component.id || `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           }
+
+          // Collect and register any built-in images from the new component
+          const imageUrls = get().collectImagesFromComponent(newComponent)
+          imageUrls.forEach((url: string) => get().addTemplateImage(url))
 
           let newComponents
           if (index !== undefined) {
@@ -869,6 +885,42 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           set({ past: [], future: [] })
           lastCoalescedAt = 0
           lastPushCoalescible = false
+        },
+
+        // Extract all image URLs from a component tree and add to templateImages gallery
+        collectImagesFromComponent: (component: EmailComponent) => {
+          const urls: string[] = []
+          const traverse = (comp: any) => {
+            if (!comp) return
+            // Common image fields
+            const imageFields = [
+              "src",
+              "imageSrc",
+              "logoA?.imgSrc",
+              "logoB?.imgSrc",
+              "logo?.logoSrc",
+              "tryvioFooterLogoSrc",
+              "tryvioFooterLinkedinSrc",
+              "tryvioFooterIdorsiaLogoSrc",
+              "emeraldLeftIconSrc",
+            ]
+            // Simple direct field checks
+            if (comp.src && typeof comp.src === "string") urls.push(comp.src)
+            if (comp.imageSrc && typeof comp.imageSrc === "string") urls.push(comp.imageSrc)
+            if (comp.logoA?.imgSrc && typeof comp.logoA.imgSrc === "string") urls.push(comp.logoA.imgSrc)
+            if (comp.logoB?.imgSrc && typeof comp.logoB.imgSrc === "string") urls.push(comp.logoB.imgSrc)
+            if (comp.logo?.logoSrc && typeof comp.logo.logoSrc === "string") urls.push(comp.logo.logoSrc)
+            if (comp.tryvioFooterLogoSrc && typeof comp.tryvioFooterLogoSrc === "string") urls.push(comp.tryvioFooterLogoSrc)
+            if (comp.tryvioFooterLinkedinSrc && typeof comp.tryvioFooterLinkedinSrc === "string") urls.push(comp.tryvioFooterLinkedinSrc)
+            if (comp.tryvioFooterIdorsiaLogoSrc && typeof comp.tryvioFooterIdorsiaLogoSrc === "string") urls.push(comp.tryvioFooterIdorsiaLogoSrc)
+            if (comp.emeraldLeftIconSrc && typeof comp.emeraldLeftIconSrc === "string") urls.push(comp.emeraldLeftIconSrc)
+            // Recurse children
+            if (Array.isArray(comp.children)) {
+              comp.children.forEach(traverse)
+            }
+          }
+          traverse(component)
+          return urls
         },
 
         // Helper methods (not exposed in interface but available internally)

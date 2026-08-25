@@ -9,8 +9,19 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
-  webpack(config, { isServer }) {
+  webpack(config, { isServer, dev }) {
+    // Stabilise module IDs so chunk references are consistent across
+    // parallel build workers — fixes the intermittent
+    // "Cannot find module for page" errors caused by non-deterministic
+    // chunk splitting with packages like react-dnd.
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
+      }
+    }
+
     // sharp uses native binaries that don't exist in Vercel's build environment
     if (isServer) {
       config.externals = [...(config.externals || []), 'sharp']
