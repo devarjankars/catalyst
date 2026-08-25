@@ -2549,6 +2549,68 @@ export function PropertiesPanel({
                 </div>
               </div>
             )
+      case "elzonris-references":
+      case "elzonris-abbreviations":
+      case "elzonris-ref-abbr":
+        return (
+          <div className="space-y-3">
+            <div>
+              <Label>Font Size</Label>
+              <Input
+                value={component.fontSize || "12px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="12px"
+              />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <Input
+                value={component.lineHeight || "14px"}
+                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
+                placeholder="14px"
+              />
+            </div>
+            <div>
+              <Label>Color</Label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={component.color?.startsWith("#") ? component.color : "#646464"}
+                  onChange={(e) => onUpdateComponent({ color: e.target.value })}
+                  className="w-10 h-8 rounded border cursor-pointer"
+                />
+                <Input
+                  value={component.color || "#646464"}
+                  onChange={(e) => onUpdateComponent({ color: e.target.value })}
+                  placeholder="#646464"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Font Weight</Label>
+              <Select
+                value={component.fontWeight || "normal"}
+                onValueChange={(v) => onUpdateComponent({ fontWeight: v as any })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="lighter">Light</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Padding</Label>
+              <Input
+                value={component.padding || "0 20px 10px 20px"}
+                onChange={(e) => onUpdateComponent({ padding: e.target.value })}
+                placeholder="0 20px 10px 20px"
+              />
+            </div>
+          </div>
+        );
+
       default:
         return <div>No properties available</div>;
     }

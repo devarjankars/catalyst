@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo , lazy , Suspense, use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +28,9 @@ const RecentTemplates = lazy(() => import("@/components/recent-templates"));
 const StandardTemplates = lazy(() => import("@/components/standard-templates"))
 export default function Dashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Brand selected on the landing page is forwarded as ?brand=<id>
+  const selectedBrand = searchParams.get("brand") || "orserdu"
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true)
@@ -120,17 +123,17 @@ export default function Dashboard() {
   }
 
   const handleCreateBlank = () => {
-    router.push("/builder?selectMode=true");
+    router.push(`/builder?selectMode=true&brand=${selectedBrand}`);
   }
 
   const handleUseTemplate = async (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true&brand=${selectedBrand}`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true`)
+      router.push(`/builder?template=${template.id}&edit=true&brand=${selectedBrand}`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)

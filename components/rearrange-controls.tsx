@@ -86,9 +86,48 @@ export function RearrangeControls({
         </ToolbarButton>
 
         {showCopyToOption && (
+<<<<<<< HEAD
           <ToolbarButton title="Copy to another option" onClick={() => onCopyToOptions?.()}>
             <ClipboardCopy className="h-3.5 w-3.5 text-blue-500" />
           </ToolbarButton>
+=======
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                title="Copy to another option"
+                className="h-7 w-7 rounded-full p-0 text-blue-500 transition-colors hover:bg-blue-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SendToBack className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="left"
+              align="center"
+              className="w-44"
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <DropdownMenuLabel className="text-xs font-medium text-gray-500">
+                Copy to…
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {otherOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    onCopyToOption(opt)
+                  }}
+                >
+                  Option {opt}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+>>>>>>> origin/sanjay_emailBuilder
         )}
       </div>
 

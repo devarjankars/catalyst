@@ -1218,12 +1218,26 @@ export function EmailComponentRenderer({
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>References:&nbsp;</span>
+                <span style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "12px",
+                  color: component.color || "#646464",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  paddingTop: "2px"
+                }}>References:&nbsp;</span>
                 <RichTextEditor
                   isSelected={isSelected}
                   value={component.references || ""}
                   onChange={(val) => onUpdate({ references: val })}
-                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                  style={{
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: component.fontSize || "12px",
+                    color: component.color || "#646464",
+                    lineHeight: component.lineHeight || "14px",
+                    fontWeight: component.fontWeight || "normal",
+                  }}
                 />
               </div>
             </div>
@@ -1233,12 +1247,26 @@ export function EmailComponentRenderer({
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>Abbreviations:&nbsp;</span>
+                <span style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "12px",
+                  color: component.color || "#646464",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  paddingTop: "2px"
+                }}>Abbreviations:&nbsp;</span>
                 <RichTextEditor
                   isSelected={isSelected}
                   value={component.abbreviations || ""}
                   onChange={(val) => onUpdate({ abbreviations: val })}
-                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                  style={{
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: component.fontSize || "12px",
+                    color: component.color || "#646464",
+                    lineHeight: component.lineHeight || "14px",
+                    fontWeight: component.fontWeight || "normal",
+                  }}
                 />
               </div>
             </div>
@@ -1248,21 +1276,49 @@ export function EmailComponentRenderer({
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "6px" }}>
-                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>References:&nbsp;</span>
+                <span style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "12px",
+                  color: component.color || "#646464",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  paddingTop: "2px"
+                }}>References:&nbsp;</span>
                 <RichTextEditor
                   isSelected={isSelected}
                   value={component.references || ""}
                   onChange={(val) => onUpdate({ references: val })}
-                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                  style={{
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: component.fontSize || "12px",
+                    color: component.color || "#646464",
+                    lineHeight: component.lineHeight || "14px",
+                    fontWeight: component.fontWeight || "normal",
+                  }}
                 />
               </div>
               <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "bold", whiteSpace: "nowrap", paddingTop: "2px" }}>Abbreviations:&nbsp;</span>
+                <span style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "12px",
+                  color: component.color || "#646464",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  paddingTop: "2px"
+                }}>Abbreviations:&nbsp;</span>
                 <RichTextEditor
                   isSelected={isSelected}
                   value={component.abbreviations || ""}
                   onChange={(val) => onUpdate({ abbreviations: val })}
-                  style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#646464", lineHeight: "14px", fontWeight: "normal" }}
+                  style={{
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: component.fontSize || "12px",
+                    color: component.color || "#646464",
+                    lineHeight: component.lineHeight || "14px",
+                    fontWeight: component.fontWeight || "normal",
+                  }}
                 />
               </div>
             </div>

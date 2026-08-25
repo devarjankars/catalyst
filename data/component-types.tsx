@@ -781,22 +781,30 @@ export const componentTypes = [
 
   {
     type: "elzonris-references",
-    label: "Elzonris References",
-    category: "elzonris",
+    label: "References",
+    category: "basic",
     icon: NotepadText,
     defaultProps: {
       references: "1. Pemmaraju N, et al. <i>N Engl J Med.</i> 2019;380(17):1628-1637.",
       padding: "0 20px 10px 20px",
+      fontSize: "12px",
+      color: "#646464",
+      fontWeight: "normal",
+      lineHeight: "14px",
     },
   },
   {
     type: "elzonris-abbreviations",
-    label: "Elzonris Abbreviations",
-    category: "elzonris",
+    label: "Abbreviations",
+    category: "basic",
     icon: NotepadText,
     defaultProps: {
       abbreviations: "BPDCN: blastic plasmacytoid dendritic cell neoplasm; CD123: cluster of differentiation 123.",
       padding: "0 20px 10px 20px",
+      fontSize: "12px",
+      color: "#646464",
+      fontWeight: "normal",
+      lineHeight: "14px",
     },
   },
 
