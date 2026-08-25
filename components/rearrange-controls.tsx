@@ -1,7 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowUp, ArrowDown, Copy, Trash2, ClipboardCopy } from "lucide-react"
+import { ArrowUp, ArrowDown, Copy, Trash2, SendToBack } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface RearrangeControlsProps {
   componentId: string
@@ -13,7 +21,8 @@ interface RearrangeControlsProps {
   onDelete: () => void
   // Optional: only shown in 3-option completely-different mode
   showCopyToOption?: boolean
-  onCopyToOptions?: () => void
+  onCopyToOption?: (targetOption: 1 | 2 | 3) => void
+  activeOption?: 1 | 2 | 3
 }
 
 function ToolbarButton({
@@ -62,8 +71,11 @@ export function RearrangeControls({
   onDuplicate,
   onDelete,
   showCopyToOption,
-  onCopyToOptions,
+  onCopyToOption,
+  activeOption = 1,
 }: RearrangeControlsProps) {
+  const otherOptions = ([1, 2, 3] as const).filter((o) => o !== activeOption)
+
   return (
     <div
       className="absolute -right-10 top-1/2 z-[60] flex -translate-y-1/2 flex-col items-center rounded-full border border-gray-200 bg-white/95 py-1.5 pl-1 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
@@ -85,12 +97,7 @@ export function RearrangeControls({
           <Copy className="h-3.5 w-3.5" />
         </ToolbarButton>
 
-        {showCopyToOption && (
-<<<<<<< HEAD
-          <ToolbarButton title="Copy to another option" onClick={() => onCopyToOptions?.()}>
-            <ClipboardCopy className="h-3.5 w-3.5 text-blue-500" />
-          </ToolbarButton>
-=======
+        {showCopyToOption && onCopyToOption && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -127,7 +134,6 @@ export function RearrangeControls({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
->>>>>>> origin/sanjay_emailBuilder
         )}
       </div>
 
