@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useDrop } from "react-dnd"
 import type { EmailComponent } from "@/types/email-builder"
 
@@ -19,7 +19,6 @@ interface SectionDropZoneProps {
   columnAlignment?: "left" | "center" | "right"
 }
 
-
 export function SectionDropZone({
   onSelect,
   sectionId,
@@ -31,55 +30,54 @@ export function SectionDropZone({
   columnCount = 1,
   columnAlignment = "left",
   isSelected,
-
 }: SectionDropZoneProps) {
-  const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
   const dropRef = useRef<HTMLDivElement | null>(null)
+  // Track last computed index to skip redundant setState calls
+  const lastDropIndex = useRef<number | null>(null)
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "component",
     drop: (item: any, monitor) => {
-      if (monitor.didDrop()) return // Prevent double drops
+      if (monitor.didDrop()) return
 
       if (item.fromPalette && typeof onAddToSection === "function" && item.type !== "section") {
-        // Handle palette drops with positioning
-        const dropIndex = dropIndicator?.index ?? children.length
-        onAddToSection(sectionId, item, dropIndex)
-        setDropIndicator(null)
+        const idx = lastDropIndex.current ?? children.length
+        onAddToSection(sectionId, item, idx)
+        setDropIndex(null)
+        lastDropIndex.current = null
         return { handled: true, dropZone: "section" }
       }
     },
     hover: (item: any, monitor) => {
-      if (!item.fromPalette) return
+      if (!item.fromPalette || !dropRef.current) return
 
       const clientOffset = monitor.getClientOffset()
-      const dropTarget = monitor.getDropResult()
+      if (!clientOffset) return
 
-      if (clientOffset && dropRef.current) {
-        const rect = dropRef.current.getBoundingClientRect()
-        const dropY = clientOffset.y - rect.top
+      const rect = dropRef.current.getBoundingClientRect()
+      // cursor Y relative to the top of this drop zone (scroll-safe)
+      const cursorY = clientOffset.y - rect.top
 
-        // Calculate drop index based on Y position
-        let dropIndex = children.length
-        let position: "top" | "bottom" = "bottom"
+      let newIndex = children.length
 
-        if (children.length > 0) {
-          const childElements = dropRef.current.querySelectorAll(`[data-section-child="${sectionId}"]`)
-
-          for (let i = 0; i < childElements.length; i++) {
-            const element = childElements[i] as HTMLElement
-            const elementRect = element.getBoundingClientRect()
-            const elementY = elementRect.top - rect.top + elementRect.height / 2
-
-            if (dropY < elementY) {
-              dropIndex = i
-              position = "top"
-              break
-            }
-          }
+      const childEls = dropRef.current.querySelectorAll(`[data-section-child="${sectionId}"]`)
+      for (let i = 0; i < childEls.length; i++) {
+        const el = childEls[i] as HTMLElement
+        const elRect = el.getBoundingClientRect()
+        const elMidY = elRect.top - rect.top + elRect.height / 2
+        if (cursorY < elMidY) {
+          newIndex = i
+          break
+        } else {
+          newIndex = i + 1
         }
+      }
 
-        setDropIndicator({ index: dropIndex, position })
+      // Only update state when the value actually changes
+      if (lastDropIndex.current !== newIndex) {
+        lastDropIndex.current = newIndex
+        setDropIndex(newIndex)
       }
     },
     collect: (monitor) => ({
@@ -88,8 +86,13 @@ export function SectionDropZone({
     }),
   })
 
+  // Clear indicator when not hovered
+  if (!isOver && dropIndex !== null) {
+    setDropIndex(null)
+    lastDropIndex.current = null
+  }
+
   if (!onAddToSection) {
-    // Fallback rendering without drop functionality
     return (
       <div className={`relative p-2 ${isColumn ? "min-h-[120px]" : "min-h-[80px]"}`}>
         {children.length === 0 && !previewMode ? (
@@ -103,66 +106,50 @@ export function SectionDropZone({
     )
   }
 
-  // Calculate minimum height based on column count and whether it's a column
   const minHeight = isColumn ? "min-h-[150px]" : columnCount > 1 ? "min-h-[120px]" : "min-h-[80px]"
+  const activeColor = isColumn ? "ring-green-400 bg-green-50/40" : "ring-blue-400 bg-blue-50/40"
+  const indicatorColor = isColumn ? "bg-green-500" : "bg-blue-500"
 
   return (
     <div
       ref={(node) => {
-        dropRef.current = node;
-        drop(node);
+        dropRef.current = node
+        drop(node)
       }}
       className={`
-        ${minHeight} relative rounded-lg transition-all
-        ${isOver && canDrop && !previewMode ? `${isColumn ? "bg-green-50 ring-2 ring-green-400" : "bg-blue-50 ring-2 ring-blue-400"} ring-dashed` : ""}
-        ${!previewMode ? `border border-dashed ${isSelected ? "border-green-400 bg-green-50/40 hover:border-green-500" : "border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"}` : ""}
+        ${minHeight} relative rounded-lg transition-colors duration-150
+        ${isOver && canDrop && !previewMode ? `ring-2 ring-dashed ${activeColor}` : ""}
+        ${!previewMode
+          ? `border border-dashed ${
+              isSelected
+                ? "border-green-400 bg-green-50/40 hover:border-green-500"
+                : "border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"
+            }`
+          : ""}
         ${isColumn ? "flex" : "w-full"}
       `}
-      style={{
-        textAlign: isColumn ? columnAlignment : "left",
-      }}
-      onDragLeave={() => setDropIndicator(null)}
-
-      onClick={(e)=> { 
-        e.stopPropagation();
-        onSelect?.(sectionId)}}
-     
+      style={{ textAlign: isColumn ? columnAlignment : "left" }}
+      onDragLeave={() => { setDropIndex(null); lastDropIndex.current = null }}
+      onClick={(e) => { e.stopPropagation(); onSelect?.(sectionId) }}
     >
-        {children?.length === 0 && !previewMode && (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">
-              <div className="text-center">
-                <div className="mb-1">Drop in Column </div>
-              </div>
-            </div> 
-        )}
-
-
-        <div className="relative w-full">
-          {/* Top drop indicator */}
-          {dropIndicator?.index === 0 && dropIndicator.position === "top" && !previewMode && (
-            <div className={`h-1 ${isColumn ? "bg-green-500" : "bg-blue-500"} rounded-full opacity-75 mb-2`} />
-          )}
-
-          {renderChildren()}
-
-          {/* Drop indicators between and after components */}
-          
-          </div>
-
-      {isOver && canDrop && !previewMode && (
-        <div
-          className={`absolute inset-0 ${isColumn ? "bg-green-100 border-green-500" : "bg-blue-100 border-blue-500"} bg-opacity-60 border-2 border-dashed rounded-md flex items-center justify-center z-10`}
-        >
-          <div className="text-center">
-            <span className={`${isColumn ? "text-green-700" : "text-blue-700"} font-semibold text-sm`}>Drop here</span>
-            {isColumn && (
-              <div className={`${isColumn ? "text-green-600" : "text-blue-600"} text-xs mt-1`}>
-                Add to this column ({columnAlignment})
-              </div>
-            )}
-          </div>
+      {children.length === 0 && !previewMode && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium pointer-events-none">
+          <span>Drop here</span>
         </div>
       )}
+
+      <div className="relative w-full">
+        {/* Drop indicator — rendered between children */}
+        {isOver && canDrop && dropIndex === 0 && !previewMode && (
+          <div className={`mx-2 mb-1 h-[3px] rounded-full ${indicatorColor}`} />
+        )}
+
+        {renderChildren()}
+
+        {isOver && canDrop && dropIndex !== null && dropIndex > 0 && dropIndex === children.length && !previewMode && (
+          <div className={`mx-2 mt-1 h-[3px] rounded-full ${indicatorColor}`} />
+        )}
+      </div>
     </div>
   )
 }
