@@ -40,10 +40,33 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     },
     ref,
   ) => {
-    const [dropIndicator, setDropIndicator] = useState<{ index: number; position: "top" | "bottom" } | null>(null)
-    // Keep a ref in sync so the drop handler (which closes over initial state) always reads the latest value
-    const dropIndicatorRef = useRef(dropIndicator)
-    useEffect(() => { dropIndicatorRef.current = dropIndicator }, [dropIndicator])
+    const [dropIndex, setDropIndex] = useState<number | null>(null)
+    // Always-current ref — drop handler reads this directly, no stale closure
+    const dropIndexRef = useRef<number | null>(null)
+
+    const setDropIndexBoth = (idx: number | null) => {
+      dropIndexRef.current = idx
+      setDropIndex(idx)
+    }
+
+    const computeDropIndex = (clientY: number, canvasEl: HTMLElement): number => {
+      const componentElements = canvasEl.querySelectorAll(":scope > [data-component-id]")
+      let idx = components.length
+
+      for (let i = 0; i < componentElements.length; i++) {
+        const el = componentElements[i] as HTMLElement
+        const rect = el.getBoundingClientRect()
+        const midY = rect.top + rect.height / 2
+        if (clientY < midY) {
+          idx = i
+          break
+        } else {
+          idx = i + 1
+        }
+      }
+
+      return Math.max(0, Math.min(idx, components.length))
+    }
 
     const [{ isOver }, drop] = useDrop({
       accept: "component",
@@ -51,7 +74,16 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         if (monitor.didDrop() || isLockedMode) return
 
         if (item.fromPalette) {
-          const dropIndex = dropIndicatorRef.current?.index ?? components.length
+          // Re-compute position at drop time using the final cursor position
+          // so we don't depend on stale state/refs
+          let finalIndex = dropIndexRef.current ?? components.length
+
+          const clientOffset = monitor.getClientOffset()
+          const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
+          if (clientOffset && canvasEl) {
+            finalIndex = computeDropIndex(clientOffset.y, canvasEl)
+          }
+
           const newComponent = {
             ...item,
             id: `${item.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -60,51 +92,36 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               id: `${child.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             })),
           }
-          addComponent(newComponent, dropIndex)
-          setDropIndicator(null)
+          addComponent(newComponent, finalIndex)
+          setDropIndexBoth(null)
           onSelectComponent(newComponent.id)
-          return { dropZone: "canvas", dropIndex, dropElement: (ref as React.RefObject<HTMLDivElement>).current, handled: true }
+          return { dropZone: "canvas", dropIndex: finalIndex, handled: true }
         }
-        return { dropZone: "canvas", dropElement: (ref as React.RefObject<HTMLDivElement>).current }
+        return { dropZone: "canvas" }
       },
       hover: (item: any, monitor) => {
         if (!item.fromPalette || isLockedMode) return
 
         const clientOffset = monitor.getClientOffset()
-        if (!clientOffset || !(ref as React.RefObject<HTMLDivElement>).current) return
+        const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
+        if (!clientOffset || !canvasEl) return
 
-        const canvasEl = (ref as React.RefObject<HTMLDivElement>).current!
         const canvasRect = canvasEl.getBoundingClientRect()
 
-        const buffer = 50
+        // Ignore if cursor is well outside the canvas
         if (
-          clientOffset.y < canvasRect.top - buffer ||
-          clientOffset.y > canvasRect.bottom + buffer
+          clientOffset.y < canvasRect.top - 50 ||
+          clientOffset.y > canvasRect.bottom + 50
         ) {
-          setDropIndicator(null)
+          setDropIndexBoth(null)
           return
         }
 
-        let dropIndex = components.length
-        const componentElements = canvasEl.querySelectorAll(":scope > [data-component-id]")
+        const newIndex = computeDropIndex(clientOffset.y, canvasEl)
 
-        for (let i = 0; i < componentElements.length; i++) {
-          const el = componentElements[i] as HTMLElement
-          const elRect = el.getBoundingClientRect()
-          const midY = elRect.top + elRect.height / 2
-          if (clientOffset.y < midY) {
-            dropIndex = i
-            break
-          } else {
-            dropIndex = i + 1
-          }
-        }
-
-        dropIndex = Math.max(0, Math.min(dropIndex, components.length))
-
-        // Only update state when the index actually changes — avoids excessive re-renders
-        if (dropIndicatorRef.current?.index !== dropIndex) {
-          setDropIndicator({ index: dropIndex, position: "top" })
+        // Skip redundant updates
+        if (dropIndexRef.current !== newIndex) {
+          setDropIndexBoth(newIndex)
         }
       },
       collect: (monitor) => ({
@@ -112,8 +129,9 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       }),
     })
 
+    // Clear indicator when drag leaves canvas entirely
     useEffect(() => {
-      if (!isOver) setDropIndicator(null)
+      if (!isOver) setDropIndexBoth(null)
     }, [isOver])
 
     const handleAddToSection = (sectionId: string, component: EmailComponent, index?: number) => {
@@ -176,7 +194,6 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           }}
           className={`bg-white shadow-sm ring-1 ring-gray-200 w-full max-w-[600px] min-h-[600px] relative pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-400 shadow-lg" : ""}`}
           onClick={() => !previewMode && onSelectComponent(null)}
-          onDragLeave={() => setDropIndicator(null)}
         >
           {components.length === 0 && !isOver && (
             <div className="flex min-h-[400px] flex-col items-center justify-center gap-3 text-center px-6 py-16">
@@ -196,8 +213,9 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             if (!component) return null
             return (
               <div key={component.id || index} className="relative" data-component-id={component.id}>
-                {dropIndicator?.index === index && isOver && !previewMode && (
-                  <div className="mx-3 my-1 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+                {/* Drop indicator line ABOVE this component */}
+                {dropIndex === index && isOver && !previewMode && (
+                  <div className="pointer-events-none mx-3 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
                 )}
                 <EmailComponentRenderer
                   component={component}
@@ -224,11 +242,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
             )
           })}
 
-          {dropIndicator?.index === components.length && isOver && !previewMode && (
-            <div className="mx-3 my-1 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+          {/* Drop indicator line AFTER last component */}
+          {dropIndex === components.length && isOver && !previewMode && (
+            <div className="pointer-events-none mx-3 my-1 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
           )}
 
-          {/* Empty canvas drop zone — shown only when no components yet */}
+          {/* Empty canvas hint */}
           {components.length === 0 && isOver && !previewMode && (
             <div className="mx-4 mb-4 flex min-h-[120px] items-center justify-center rounded-lg border-2 border-dashed border-blue-400 bg-blue-50/60">
               <p className="text-sm font-medium text-blue-500">Drop here</p>
