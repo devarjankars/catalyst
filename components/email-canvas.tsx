@@ -71,12 +71,15 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const [{ isOver }, drop] = useDrop({
       accept: "component",
       drop: (item: any, monitor) => {
-        if (monitor.didDrop() || isLockedMode) return
+        // For palette items: never bail on didDrop() — child drop targets
+        // (EmailComponentRenderer) absorb the hover but don't handle palette drops,
+        // so we must always process palette drops here regardless of didDrop().
+        if (!item.fromPalette && monitor.didDrop()) return
+        if (isLockedMode) return
 
         if (item.fromPalette) {
-          // Re-compute position at drop time using the final cursor position
-          // so we don't depend on stale state/refs
-          let finalIndex = dropIndexRef.current ?? components.length
+          // Re-compute the exact drop index from the final cursor position
+          let finalIndex = components.length
 
           const clientOffset = monitor.getClientOffset()
           const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
