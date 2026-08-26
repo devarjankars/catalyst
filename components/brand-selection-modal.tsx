@@ -78,7 +78,7 @@ export function BrandSelectionModal({ open, onSelect }: BrandSelectionModalProps
         <div className="px-8 pt-8 pb-4 bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-900 tracking-tight">
-              Select a Brand
+              Select a Product
             </DialogTitle>
           </DialogHeader>
         </div>

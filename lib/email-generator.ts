@@ -611,7 +611,7 @@ function generateComponentHTML(component: EmailComponent): string {
                 <tbody><tr>${fl3Tds}</tr></tbody>
               </table>
             </td>
-          </tr>
+          </tr>~
         </tbody>
       </table>`.trim();
     }

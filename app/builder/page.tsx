@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmailCanvas } from "@/components/email-canvas";
 import { ComponentPalette } from "@/components/component-palette";
@@ -12,13 +12,15 @@ import { SaveTemplateDialog } from "@/components/save-template-dialog";
 import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2 } from "lucide-react";
+import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2, HistoryIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import EmailPreviewModal from "@/components/email-previw-dalog";
 import { EditorModeDialog } from "@/components/editor-mode-dialog";
 import { toast } from "sonner";
+import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
+import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -97,6 +99,31 @@ export default function EmailBuilder() {
   const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
+
+  // ── Auto-save: restore prompt ─────────────────────────────────────────────
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+
+  // Check for a prior auto-save on first mount (before template is loaded)
+  useEffect(() => {
+    const saved = getAutoSave();
+    if (saved && saved.components?.length > 0) {
+      setShowRestoreBanner(true);
+    }
+  }, []);
+
+  const handleRestoreAutoSave = () => {
+    const saved = getAutoSave();
+    if (!saved) return;
+    setComponents(saved.components || []);
+    toast.success("Draft restored from auto-save");
+    setShowRestoreBanner(false);
+    clearAutoSave();
+  };
+
+  const handleDismissRestore = () => {
+    clearAutoSave();
+    setShowRestoreBanner(false);
+  };
 
   // Run the builder initialization only ONCE per mount. The URL is rewritten
   // after mode selection (history.replaceState), which changes `searchParams`
@@ -476,6 +503,7 @@ function replaceImagesInComponents(components: any[]): any[] {
       }
 
       setSaveTemplateDialog(false);
+      clearAutoSave(); // explicit save succeeded — discard crash backup
 
       // If there was pending navigation after save, execute it
       if (pendingNavigation) {
@@ -548,8 +576,35 @@ if (activeSelectedId) {
   parentId = null;
 }
 
+  // ── Auto-save: run every 5s when there are unsaved changes ──────────────
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAutoSave(
+    {
+      components,
+      option2Components,
+      option3Components,
+      preheaderText,
+      templateId: currentTemplate?.id ?? null,
+      templateName: currentTemplate?.name ?? workingCopySource?.name ?? null,
+    },
+    hasComponentChanges || hasUnsavedTemplate
+  );
 
-  
+  // ── Debounced properties update ─────────────────────────────────────────
+  // Capture latest ids in a ref so the debounced callback stays stable
+  const activeIdRef = useRef(activeSelectedId);
+  const parentIdRef = useRef(parentId);
+  activeIdRef.current = activeSelectedId;
+  parentIdRef.current = parentId;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { debouncedUpdate: debouncedUpdateComponent } = useDebouncedUpdate(
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useCallback((updates: any) => {
+      if (!activeIdRef.current) return;
+      updateComponent(activeIdRef.current, updates, parentIdRef.current);
+    }, [updateComponent])
+  );
 
   if (loading) {
     return (
@@ -585,6 +640,33 @@ if (activeSelectedId) {
   return (
     <>
       <div className="h-full flex flex-col bg-gray-50">
+        {/* Auto-save restore banner */}
+        {showRestoreBanner && (
+          <div className="flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-5 py-2.5 text-sm">
+            <div className="flex items-center gap-2 text-amber-800">
+              <HistoryIcon className="w-4 h-4 shrink-0" />
+              <span>An unsaved draft was found. Want to restore it?</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-3 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                onClick={handleRestoreAutoSave}
+              >
+                Restore draft
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-3 text-xs text-amber-600 hover:bg-amber-100"
+                onClick={handleDismissRestore}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header - sticky */}
         <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-0 flex items-center justify-between sticky top-0 z-30 h-14">
           <div className="flex items-center gap-3">
@@ -836,7 +918,7 @@ if (activeSelectedId) {
                   component={selectedComponentData}
                   onUpdateComponent={(updates) => {
                     if (!activeSelectedId) return;
-                    updateComponent(activeSelectedId, updates, parentId);
+                    debouncedUpdateComponent(updates);
                   }}
                   onSaveAsCustom={(name) => saveAsCustomComponent(name)}
                 />
