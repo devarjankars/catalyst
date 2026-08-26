@@ -702,7 +702,7 @@ export function PropertiesPanel({
               <Label htmlFor="alt">Alt Text</Label>
               <Input
                 id="alt"
-                value={component.alt || ""}
+                value={component.alt ?? ""}
                 onChange={(e) => onUpdateComponent({ alt: e.target.value })}
                 placeholder="Image description"
               />
@@ -711,8 +711,8 @@ export function PropertiesPanel({
               <Label htmlFor="width">Width</Label>
               <Input
                 id="width"
-                value={component.width || "100%"}
-                onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                value={component.width ?? ""}
+                onChange={(e) => onUpdateComponent({ width: e.target.value || "100%" })}
                 placeholder="100% or 400px"
               />
             </div>
@@ -720,17 +720,17 @@ export function PropertiesPanel({
               <Label htmlFor="height">Height</Label>
               <Input
                 id="height"
-                value={component.height || "100px"}
-                onChange={(e) => onUpdateComponent({ height: e.target.value })}
-                placeholder="100% or 400px"
+                value={component.height ?? ""}
+                onChange={(e) => onUpdateComponent({ height: e.target.value || "auto" })}
+                placeholder="auto or 200px"
               />
             </div>
             <div>
               <Label htmlFor="maxWidth">Max Width</Label>
               <Input
                 id="maxWidth"
-                value={component.maxWidth || "100%"}
-                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value })}
+                value={component.maxWidth ?? ""}
+                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value || "100%" })}
                 placeholder="100%"
               />
             </div>
@@ -2031,7 +2031,7 @@ export function PropertiesPanel({
             );
 
       case "image-with-link":
-             return (
+        return (
           <div className="space-y-4">
             <div>
               <Label>Upload Image</Label>
@@ -2043,7 +2043,16 @@ export function PropertiesPanel({
               />
             </div>
             <div>
-              <Label htmlFor="align">Image Alignment</Label>
+              <Label htmlFor="iwl-link">Link URL</Label>
+              <Input
+                id="iwl-link"
+                value={component.href ?? ""}
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="iwl-align">Image Alignment</Label>
               <Select
                 value={component.textAlign || "center"}
                 onValueChange={(value) =>
@@ -2061,48 +2070,39 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="alt">Alt Text</Label>
+              <Label htmlFor="iwl-alt">Alt Text</Label>
               <Input
-                id="alt"
-                value={component.alt || ""}
+                id="iwl-alt"
+                value={component.alt ?? ""}
                 onChange={(e) => onUpdateComponent({ alt: e.target.value })}
                 placeholder="Image description"
               />
             </div>
             <div>
-              <Label htmlFor="width">Width</Label>
+              <Label htmlFor="iwl-width">Width</Label>
               <Input
-                id="width"
-                value={component.width || "100%"}
-                onChange={(e) => onUpdateComponent({ width: e.target.value })}
+                id="iwl-width"
+                value={component.width ?? ""}
+                onChange={(e) => onUpdateComponent({ width: e.target.value || "100%" })}
                 placeholder="100% or 400px"
               />
             </div>
             <div>
-              <Label htmlFor="height">Height</Label>
+              <Label htmlFor="iwl-height">Height</Label>
               <Input
-                id="height"
-                value={component.height || "100px"}
-                onChange={(e) => onUpdateComponent({ height: e.target.value })}
-                placeholder="100% or 400px"
+                id="iwl-height"
+                value={component.height ?? ""}
+                onChange={(e) => onUpdateComponent({ height: e.target.value || "auto" })}
+                placeholder="auto or 200px"
               />
             </div>
             <div>
-              <Label htmlFor="maxWidth">Max Width</Label>
+              <Label htmlFor="iwl-maxWidth">Max Width</Label>
               <Input
-                id="maxWidth"
-                value={component.maxWidth || "100%"}
-                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value })}
+                id="iwl-maxWidth"
+                value={component.maxWidth ?? ""}
+                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value || "100%" })}
                 placeholder="100%"
-              />
-            </div>
-             <div>
-              <Label >Link</Label>
-              <Input
-                
-                value={component.href }
-                onChange={(e) => onUpdateComponent({ href: e.target.value })}
-                placeholder="add link url here"
               />
             </div>
           </div>

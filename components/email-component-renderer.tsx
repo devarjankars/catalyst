@@ -1324,34 +1324,43 @@ export function EmailComponentRenderer({
             </div>
           );
 
-          case "image-with-link" :
-             return (
-          <div
-            style={baseStyle}
-            className={`flex flex-col items-${
-              ImageAlimentMap[component?.textAlign || "center"] || "center"
-            } mt-2`}
-          >
-           
-            <img
-              src={
-                component.src ||
-                "/placeholder.svg?height=200&width=400&text=Click to edit"
-              }
-              alt={component.alt || "Image"}
-              style={{
-                width: component.width || "100%",
-                height: component.height || "auto",
-                display: "block",
-                maxWidth: "100%",
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                !previewMode && !isLockedMode && onSelect()
-              }}
-            />
-          </div>
-        );
+          case "image-with-link":
+            return (
+              <div
+                style={baseStyle}
+                className={`flex flex-col items-${
+                  ImageAlimentMap[component?.textAlign || "center"] || "center"
+                } mt-2`}
+              >
+                <a
+                  href={component.href || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "block", width: component.width || "100%" }}
+                  onClick={(e) => {
+                    if (!previewMode) {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      !isLockedMode && onSelect()
+                    }
+                  }}
+                >
+                  <img
+                    src={
+                      component.src ||
+                      "/placeholder.svg?height=200&width=400&text=Click+to+edit"
+                    }
+                    alt={component.alt || "Image"}
+                    style={{
+                      width: component.width || "100%",
+                      height: component.height || "auto",
+                      display: "block",
+                      maxWidth: component.maxWidth || "100%",
+                    }}
+                  />
+                </a>
+              </div>
+            );
         case "ferring-footer" :
           return (
             <div
