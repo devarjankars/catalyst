@@ -18,7 +18,7 @@ interface SingleColumnSectionProps {
 
 export default function SingleColumnSection({sectionId,component,renderSectionChild,onAddToSection,onMoveWithinSection,onUpdateChild,onSelectSection,selectedComponent}: SingleColumnSectionProps) {
     return (
-        <div className="mt-2 w-full p-[16px]" 
+        <div className="mt-2 w-full p-[16px]" data-section-id={sectionId}
         >
             <div
                 style={{
@@ -32,20 +32,7 @@ export default function SingleColumnSection({sectionId,component,renderSectionCh
                 onSelect={onSelectSection}
                 isSelected={selectedComponent === component.id}
                 previewMode={false}
-                renderChildren={() => (
-                    <div className="flex flex-col gap-2 ">
-                    {(component.children || []).map(
-                        (child, childIndex) => {
-                            if (!child) return null;
-                            return (
-                                <div key={child.id} >
-                                    {renderSectionChild(child,childIndex,sectionId,)}
-                                </div>
-                            )
-                        }
-                    )}
-                    </div>
-                )}
+                renderSectionChild={renderSectionChild}
                 onAddToSection={onAddToSection}
                 onMoveWithinSection={onMoveWithinSection}
             />

@@ -11,7 +11,7 @@ interface SectionDropZoneProps {
   onAddToSection?: (sectionId: string, component: EmailComponent, index?: number) => void
   onMoveWithinSection?: (sectionId: string, dragIndex: number, hoverIndex: number) => void
   onSelect?: (id: string) => void
-  renderChildren: () => React.ReactNode
+  renderSectionChild: (child: EmailComponent, childIndex: number, sectionId: string) => React.ReactNode
   isSelected?: boolean
   previewMode: boolean
   isColumn?: boolean
@@ -24,7 +24,7 @@ export function SectionDropZone({
   sectionId,
   children,
   onAddToSection,
-  renderChildren,
+  renderSectionChild,
   previewMode,
   isColumn = false,
   columnCount = 1,
@@ -81,7 +81,7 @@ export function SectionDropZone({
       }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver({ shallow: true }),
+      isOver: monitor.isOver({ shallow: false }),
       canDrop: monitor.canDrop(),
     }),
   })
@@ -100,7 +100,13 @@ export function SectionDropZone({
             {isColumn ? "Column" : "Section content"}
           </div>
         ) : (
-          renderChildren()
+          <div className="flex flex-col gap-2">
+            {children.map((child, i) => (
+              <div key={child.id} data-section-child={sectionId}>
+                {renderSectionChild(child, i, sectionId)}
+              </div>
+            ))}
+          </div>
         )}
       </div>
     )
@@ -139,15 +145,24 @@ export function SectionDropZone({
       )}
 
       <div className="relative w-full">
-        {/* Drop indicator — rendered between children */}
-        {isOver && canDrop && dropIndex === 0 && !previewMode && (
-          <div className={`mx-2 mb-1 h-[3px] rounded-full ${indicatorColor}`} />
+        {/* Drop indicators and children rendered together */}
+        {children.map((child, i) => (
+          <React.Fragment key={child.id}>
+            {isOver && canDrop && dropIndex === i && !previewMode && (
+              <div className={`mx-2 mb-2 h-[3px] rounded-full ${indicatorColor}`} />
+            )}
+            <div data-section-child={sectionId} className="mb-2">
+              {renderSectionChild(child, i, sectionId)}
+            </div>
+          </React.Fragment>
+        ))}
+        {/* Drop indicator after last child */}
+        {isOver && canDrop && dropIndex === children.length && !previewMode && (
+          <div className={`mx-2 mt-2 h-[3px] rounded-full ${indicatorColor}`} />
         )}
-
-        {renderChildren()}
-
-        {isOver && canDrop && dropIndex !== null && dropIndex > 0 && dropIndex === children.length && !previewMode && (
-          <div className={`mx-2 mt-1 h-[3px] rounded-full ${indicatorColor}`} />
+        {/* Empty state indicator */}
+        {children.length === 0 && isOver && canDrop && !previewMode && (
+          <div className="mx-2 my-2 h-[3px] rounded-full bg-blue-500" />
         )}
       </div>
     </div>

@@ -160,7 +160,6 @@ export function EmailComponentRenderer({
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
-      item.index = hoverIndex;
     },
   });
 
@@ -803,6 +802,126 @@ export function EmailComponentRenderer({
                 </div>
               )
             )}
+          </div>
+        );
+
+      case "sisi":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff' }} className="flex flex-col gap-2">
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.html || ""}
+                onChange={(html) => onUpdate({ html })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#000000',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '16px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{ __html: component.html || "" }}
+                style={{ fontFamily: 'Arial, sans-serif' }}
+              />
+            )}
+          </div>
+        );
+
+      case "orserdu-abbreviations":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.abbreviations || ""}
+                onChange={(content) => onUpdate({ abbreviations: content })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '14px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <p style={{ 
+                fontSize: component.fontSize || '12px', 
+                color: component.color || '#646464', 
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: component.fontWeight || 'normal',
+                lineHeight: component.lineHeight || '14px',
+                margin: 0
+              }}>
+                {component.abbreviations}
+              </p>
+            )}
+          </div>
+        );
+
+      case "orserdu-references":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.references || ""}
+                onChange={(content) => onUpdate({ references: content })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '14px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <p style={{ 
+                fontSize: component.fontSize || '12px', 
+                color: component.color || '#646464', 
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: component.fontWeight || 'normal',
+                lineHeight: component.lineHeight || '14px',
+                margin: 0
+              }}>
+                {component.references}
+              </p>
+            )}
+          </div>
+        );
+
+      case "orserdu-view-in-browser":
+        return (
+          <div style={{
+            textAlign: component.textAlign || 'center',
+            padding: component.padding || '10px 20px',
+            backgroundColor: component.backgroundColor || 'transparent',
+            lineHeight: component.lineHeight || '16px',
+          }}>
+            <a
+              href={component.href || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: component.color || '#2360d9',
+                textDecoration: 'underline',
+                fontSize: component.fontSize || '12px',
+                lineHeight: component.lineHeight || '16px',
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 400,
+              }}
+              onClick={(e) => !previewMode && e.preventDefault()}
+            >
+              View in Browser
+            </a>
           </div>
         );
 

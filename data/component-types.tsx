@@ -374,6 +374,109 @@ export const componentTypes = [
     padding: "0 20px 10px 20px",
   },
 },
+{
+  type: "sisi",
+  label: "SISI (Selected ISI)",
+  category: "custom",
+  icon: NotepadText,
+  defaultProps: {
+    html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="background-color:#ffffff;">
+<tbody>
+<tr>
+<td style="padding: 10px 20px 10px 20px; background-color:transparent;" bgcolor="transparent">
+<div style="font-size: 14px; color: #006937; text-align: left; font-weight: normal; font-family: Arial, sans-serif; line-height: 16px; background-color: transparent;">
+<b>SELECT IMPORTANT SAFETY INFORMATION</b>
+</div>
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" style="padding: 0 20px 0 20px; background-color: transparent;">
+<table bgcolor="#ffffff" style="background-color:#ffffff;" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tbody>
+<tr>
+<td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5; font-size: 16px; line-height: 16px; padding-bottom: 3px; background-color: #ffffff">
+&#8226;</td>
+<td bgcolor="#ffffff" align="left" valign="middle" style="color: #000000; font-size: 14px; font-weight: normal; text-align: left; line-height: 16px; padding-left: 5px; font-family: Arial, sans-serif; background-color : #ffffff">
+<b>The labeling for ORSERDU contains warnings and precautions</b> for dyslipidemia and embryo-fetal toxicity.
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" height="5px" style=" font-size: 0px; line-height: 5px; mso-line-height-rule: exactly;background-color:#ffffff ">
+&nbsp; </td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5; font-size: 16px; line-height: 16px; padding-bottom: 3px; background-color: #ffffff">
+&#8226;</td>
+<td bgcolor="#ffffff" align="left" valign="middle" style="color: #000000; font-size: 14px; font-weight: normal; text-align: left; line-height: 16px; padding-left: 5px; font-family: Arial, sans-serif; background-color : #ffffff">
+<b>The most common serious adverse reactions</b> in >1% of patients who received ORSERDU were musculoskeletal pain and nausea.
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" height="5px" style=" font-size: 0px; line-height: 5px; mso-line-height-rule: exactly;background-color:#ffffff ">
+&nbsp; </td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5; font-size: 16px; line-height: 16px; padding-bottom: 3px; background-color: #ffffff">
+&#8226;</td>
+<td bgcolor="#ffffff" align="left" valign="middle" style="color: #000000; font-size: 14px; font-weight: normal; text-align: left; line-height: 16px; padding-left: 5px; font-family: Arial, sans-serif; background-color : #ffffff">
+<b>The most common adverse reactions,</b> including laboratory abnormalities, in &ge;10% of patients who received ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).
+</td>
+</tr>
+<tr>
+<td bgcolor="#ffffff" height="5px" style=" font-size: 0px; line-height: 5px; mso-line-height-rule: exactly;background-color:#ffffff ">
+&nbsp; </td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>`,
+  },
+},
+  {
+    type: "orserdu-abbreviations",
+    label: "Abbreviations",
+    category: "custom",
+    icon: NotepadText,
+    defaultProps: {
+      abbreviations: "ORSERDU: elacestrant; ER: estrogen receptor; HER2: human epidermal growth factor receptor 2; mPFS: median progression-free survival; ET: endocrine therapy; CDK4/6i: cyclin-dependent kinase 4/6 inhibitor; AI: aromatase inhibitor; CI: confidence interval; HR: hazard ratio.",
+      padding: "0 20px 10px 20px",
+      fontSize: "12px",
+      color: "#646464",
+      fontWeight: "normal",
+      lineHeight: "14px",
+    },
+  },
+  {
+    type: "orserdu-references",
+    label: "References",
+    category: "custom",
+    icon: NotepadText,
+    defaultProps: {
+      references: "1. Bidard F-C, et al. <i>N Engl J Med.</i> 2022;386(10):924-935. 2. Bardia A, et al. <i>J Clin Oncol.</i> 2023;41(17_suppl):1016.",
+      padding: "0 20px 10px 20px",
+      fontSize: "12px",
+      color: "#646464",
+      fontWeight: "normal",
+      lineHeight: "14px",
+    },
+  },
+  {
+    type: "orserdu-view-in-browser",
+    label: "View in Browser",
+    category: "custom",
+    icon: AlignCenter,
+    defaultProps: {
+      href: "#",
+      color: "#2360d9",
+      fontSize: "12px",
+      lineHeight: "16px",
+      textAlign: "center",
+      padding: "10px 20px",
+      backgroundColor: "transparent",
+    },
+  },
 
 
   {
