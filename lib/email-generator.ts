@@ -881,7 +881,7 @@ case "isi": {
                                        <tr>
                                           <td class="f_14 black f_normal" align="left" valign="top"
                                              style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             ORSERDU is available as 345 mg tablets and <br class="mobile-only">86 mg tablets. </td>
+                                             ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
                                        </tr>
                 </tbody>
                </table>
@@ -1577,8 +1577,8 @@ case "isi": {
       `;
 
     case "elzonris-references": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `
@@ -1600,8 +1600,8 @@ case "isi": {
     }
 
     case "elzonris-abbreviations": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `
@@ -1623,8 +1623,8 @@ case "isi": {
     }
 
     case "elzonris-ref-abbr": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `

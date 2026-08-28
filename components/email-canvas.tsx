@@ -183,17 +183,20 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
     const handleAddToSection = (sectionId: string, component: EmailComponent, index?: number) => {
       const newComponent = { ...component, id: Date.now().toString() }
-      onUpdateComponent(sectionId, {
-        children: components.find((c) => c.id === sectionId)?.children
-          ? index !== undefined
-            ? [
-                ...components.find((c) => c.id === sectionId)!.children!.slice(0, index),
-                newComponent,
-                ...components.find((c) => c.id === sectionId)!.children!.slice(index),
-              ]
-            : [...components.find((c) => c.id === sectionId)!.children!, newComponent]
-          : [newComponent],
-      })
+      
+      // Find the section/column recursively (handles nested columns in multi-column sections)
+      const targetSection = getSectionREcursively(sectionId, components)
+      const currentChildren = targetSection?.children || []
+      
+      const updatedChildren = index !== undefined
+        ? [
+            ...currentChildren.slice(0, index),
+            newComponent,
+            ...currentChildren.slice(index),
+          ]
+        : [...currentChildren, newComponent]
+      
+      onUpdateComponent(sectionId, { children: updatedChildren })
     }
 
     const handleMoveWithinSection = (sectionId: string, dragIndex: number, hoverIndex: number) => {

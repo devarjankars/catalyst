@@ -30,6 +30,50 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+
+// Reusable FontSizeInput component with dropdown + slider + custom input
+function FontSizeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const commonSizes = ["10px", "12px", "13px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "36px", "48px"];
+  const isCustom = !commonSizes.includes(value);
+  const numericValue = parseInt(value) || 16;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Select value={isCustom ? "custom" : value} onValueChange={(v) => v !== "custom" && onChange(v)}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Font size" />
+          </SelectTrigger>
+          <SelectContent>
+            {commonSizes.map((size) => (
+              <SelectItem key={size} value={size}>{size}</SelectItem>
+            ))}
+            <SelectItem value="custom">Custom...</SelectItem>
+          </SelectContent>
+        </Select>
+        <Slider
+          min={8}
+          max={72}
+          step={1}
+          value={numericValue}
+          onValueChange={(v) => onChange(`${v}px`)}
+          className="flex-1 max-w-[200px]"
+        />
+        {isCustom && (
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={(e) => { const v = e.target.value; if (/^\d+px?$/i.test(v)) onChange(v.replace('px','')+'px'); }}
+            className="w-[80px] font-mono text-xs"
+            placeholder="px"
+          />
+        )}
+      </div>
+      {!isCustom && <p className="text-xs text-gray-500">Drag slider or pick from dropdown</p>}
+    </div>
+  );
+}
 
 // Ensures value is always a valid 7-char hex string for <input type="color">
 function toHex(value: string): string {
@@ -557,15 +601,8 @@ export function PropertiesPanel({
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "16px"}
-                onChange={(e) =>
-                  onUpdateComponent({ fontSize: e.target.value })
-                }
-                placeholder="16px"
-              />
+              <Label>Font Size</Label>
+              <FontSizeInput value={component.fontSize || "16px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
@@ -882,13 +919,8 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "14px"}
-                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
-                placeholder="14px"
-              />  
+              <Label>Font Size</Label>
+              <FontSizeInput value={component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />  
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
@@ -1100,13 +1132,8 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "14px"}
-                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
-                placeholder="14px"
-              />  
+              <Label>Font Size</Label>
+              <FontSizeInput value={component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />  
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
@@ -2408,6 +2435,34 @@ export function PropertiesPanel({
                 </div>
               </div>
             );
+          case "orserdu-emerald-image-stats":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Left Image</Label>
+                  <ImageUpload currentImage={component.emeraldImgLeftSrc} onImageUpload={(imageUrl) => onUpdateComponent({ emeraldImgLeftSrc: imageUrl })} />
+                  <div><Label>Alt Text</Label><Input value={component.emeraldImgLeftAlt || ""} onChange={(e) => onUpdateComponent({ emeraldImgLeftAlt: e.target.value })} placeholder="Alt text" /></div>
+                  <div><Label>Image Width</Label><Input type="number" value={component.emeraldImgLeftWidth || 106} onChange={(e) => onUpdateComponent({ emeraldImgLeftWidth: parseInt(e.target.value) })} placeholder="106" /></div>
+                </div>
+                <div><Label>Right Heading</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightHeading || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightHeading: e.target.value })} placeholder="Heading (HTML supported)" /></div>
+                <div><Label>Right Subtext</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightSubtext || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightSubtext: e.target.value })} placeholder="Subtext (HTML supported)" /></div>
+                <div><Label>Right Stat Number</Label><Input value={component.emeraldImgRightStatNumber || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightStatNumber: e.target.value })} placeholder="73%" /></div>
+                <div><Label>Right Stat Label</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightStatLabel || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightStatLabel: e.target.value })} placeholder="Label (HTML supported)" /></div>
+              </div>
+            );
+          case "orserdu-moa-image-text":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Left Image</Label>
+                  <ImageUpload currentImage={component.moaLeftImageSrc} onImageUpload={(imageUrl) => onUpdateComponent({ moaLeftImageSrc: imageUrl })} />
+                  <div><Label>Alt Text</Label><Input value={component.moaLeftImageAlt || ""} onChange={(e) => onUpdateComponent({ moaLeftImageAlt: e.target.value })} placeholder="Alt text" /></div>
+                  <div><Label>Image Width</Label><Input type="number" value={component.moaLeftImageWidth || 167} onChange={(e) => onUpdateComponent({ moaLeftImageWidth: parseInt(e.target.value) })} placeholder="167" /></div>
+                </div>
+                <div><Label>Right Text 1</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.moaRightText1 || ""} onChange={(e) => onUpdateComponent({ moaRightText1: e.target.value })} placeholder="Text 1 (HTML supported)" /></div>
+                <div><Label>Right Text 2</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.moaRightText2 || ""} onChange={(e) => onUpdateComponent({ moaRightText2: e.target.value })} placeholder="Text 2 (HTML supported)" /></div>
+              </div>
+            );
           case "ferring-footer":
             return (
               <div className="space-y-4">
@@ -2557,9 +2612,9 @@ export function PropertiesPanel({
             <div>
               <Label>Font Size</Label>
               <Input
-                value={component.fontSize || "12px"}
+                value={component.fontSize || "10px"}
                 onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
-                placeholder="12px"
+                placeholder="10px"
               />
             </div>
             <div>
@@ -2575,14 +2630,14 @@ export function PropertiesPanel({
               <div className="flex gap-2 items-center">
                 <input
                   type="color"
-                  value={component.color?.startsWith("#") ? component.color : "#646464"}
+                  value={component.color?.startsWith("#") ? component.color : "#000000"}
                   onChange={(e) => onUpdateComponent({ color: e.target.value })}
                   className="w-10 h-8 rounded border cursor-pointer"
                 />
                 <Input
-                  value={component.color || "#646464"}
+                  value={component.color || "#000000"}
                   onChange={(e) => onUpdateComponent({ color: e.target.value })}
-                  placeholder="#646464"
+                  placeholder="#000000"
                 />
               </div>
             </div>
