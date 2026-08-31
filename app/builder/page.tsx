@@ -21,6 +21,7 @@ import { EditorModeDialog } from "@/components/editor-mode-dialog";
 import { toast } from "sonner";
 import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
+import { matchesBrand } from "@/lib/brand-filter";
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -457,6 +458,19 @@ function replaceImagesInComponents(components: any[]): any[] {
   ) => {
     setSaving(true);
     try {
+      const normalizedName = name.trim().toLowerCase();
+      const existingTemplates = await firebaseService.getAllTemplates();
+      const duplicate = existingTemplates.some((template) =>
+        template.id !== currentTemplate?.id &&
+        template.name.trim().toLowerCase() === normalizedName &&
+        matchesBrand(template, brand)
+      );
+
+      if (duplicate) {
+        alert(`An emailer named "${name.trim()}" already exists for ${brand}. Please choose a different name.`);
+        return;
+      }
+
       let savedTemplate;
  
       if (isEdit && currentTemplate) {
