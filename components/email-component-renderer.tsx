@@ -826,7 +826,14 @@ export function EmailComponentRenderer({
             ) : (
               <div
                 dangerouslySetInnerHTML={{ __html: component.html || "" }}
-                style={{ fontFamily: 'Arial, sans-serif' }}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#000000',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  lineHeight: component.lineHeight || '16px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
               />
             )}
           </div>
@@ -851,16 +858,18 @@ export function EmailComponentRenderer({
                 }}
               />
             ) : (
-              <p style={{ 
-                fontSize: component.fontSize || '12px', 
-                color: component.color || '#646464', 
-                fontFamily: 'Arial, sans-serif',
-                fontWeight: component.fontWeight || 'normal',
-                lineHeight: component.lineHeight || '14px',
-                margin: 0
-              }}>
-                {component.abbreviations}
-              </p>
+              <p
+                dangerouslySetInnerHTML={{ __html: component.abbreviations || "" }}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                  fontWeight: component.fontWeight || 'normal',
+                  lineHeight: component.lineHeight || '14px',
+                  textAlign: component.textAlign || 'left',
+                  margin: 0,
+                }}
+              />
             )}
           </div>
         );
@@ -887,9 +896,10 @@ export function EmailComponentRenderer({
               <p style={{ 
                 fontSize: component.fontSize || '12px', 
                 color: component.color || '#646464', 
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: component.fontFamily || 'Arial, sans-serif',
                 fontWeight: component.fontWeight || 'normal',
                 lineHeight: component.lineHeight || '14px',
+                textAlign: component.textAlign || 'left',
                 margin: 0
               }}>
                 {component.references}
@@ -915,7 +925,7 @@ export function EmailComponentRenderer({
                 textDecoration: 'underline',
                 fontSize: component.fontSize || '12px',
                 lineHeight: component.lineHeight || '16px',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: component.fontFamily || 'Arial, sans-serif',
                 fontWeight: 400,
               }}
               onClick={(e) => !previewMode && e.preventDefault()}
@@ -1331,6 +1341,34 @@ export function EmailComponentRenderer({
                   <div style={{ color: "#231F20", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px" }}>
                     <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "34px", fontWeight: 700, lineHeight: "1.1", marginBottom: "4px" }}>{!previewMode && isSelected ? <input type="text" className="w-full border rounded px-2 py-1 text-xs text-center" value={emeraldImgRightStatNumber || ""} onChange={(e) => onUpdate({ emeraldImgRightStatNumber: e.target.value })} /> : emeraldImgRightStatNumber || "73%"}</div>
                     <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "14px", fontWeight: 400, lineHeight: "1.3" }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={emeraldImgRightStatLabel || ""} onChange={(e) => onUpdate({ emeraldImgRightStatLabel: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: emeraldImgRightStatLabel || "" }} />}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        case "orserdu-image-text-block":
+        case "elzonris-image-text-block": {
+          const { imageTextImageSrc, imageTextImageAlt, imageTextImageWidth, imageTextText1 } = component;
+          const verticalAlign = component.imageTextVerticalAlign || "top";
+          return (
+            <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
+              <style>{`.image-text-block-wrap { display:flex; flex-wrap:wrap; width:100%; } .image-text-block-image { flex:1 1 240px; min-width:200px; padding-right:16px; box-sizing:border-box; text-align:center; } .image-text-block-copy { flex:1 1 240px; min-width:200px; padding-left:16px; box-sizing:border-box; } @media screen and (max-width:480px) { .image-text-block-image { padding-right:0; padding-bottom:16px; } .image-text-block-copy { padding-left:0; } }`}</style>
+              <div className="image-text-block-wrap" style={{ alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start" }}>
+                <div className="image-text-block-image">
+                  <img src={imageTextImageSrc || "/placeholder.svg"} alt={imageTextImageAlt || ""} width={imageTextImageWidth || 167} style={{ display: "block", width: imageTextImageWidth || 167, maxWidth: "100%", height: "auto", margin: "0 auto" }} />
+                </div>
+                <div className="image-text-block-copy" style={{ textAlign: component.textAlign || "left" }}>
+                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", marginBottom: "17px" }}>
+                    {!previewMode && isSelected ? (
+                      <RichTextEditor
+                        isSelected={isSelected}
+                        value={imageTextText1 || ""}
+                        onChange={(html) => onUpdate({ imageTextText1: html })}
+                        style={{ fontSize: "14px", lineHeight: "20px", color: "#000000" }}
+                      />
+                    ) : <span dangerouslySetInnerHTML={{ __html: imageTextText1 || "" }} />}
                   </div>
                 </div>
               </div>

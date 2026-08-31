@@ -14,31 +14,34 @@ const PaddingInput = ({ value = "0px 0px 0px 0px", onChange }: PaddingInputProps
     left: "",
   });
 
-  // Parse incoming value when prop changes
   useEffect(() => {
-    if (value) {
-      const parts = value.split(" ").map(v => v.replace("px", ""));
-      setPadding({
-        top: parts[0] || "0",
-        right: parts[1] || "0",
-        bottom: parts[2] || "0",
-        left: parts[3] || "0",
-      });
-    }
+    const parts = value.trim().split(/\s+/).filter(Boolean);
+    const values = parts.length === 1
+      ? [parts[0], parts[0], parts[0], parts[0]]
+      : parts.length === 2
+        ? [parts[0], parts[1], parts[0], parts[1]]
+        : parts.length === 3
+          ? [parts[0], parts[1], parts[2], parts[1]]
+          : parts.slice(0, 4);
+
+    setPadding({
+      top: (values[0] || "0").replace(/px$/i, ""),
+      right: (values[1] || "0").replace(/px$/i, ""),
+      bottom: (values[2] || "0").replace(/px$/i, ""),
+      left: (values[3] || "0").replace(/px$/i, ""),
+    });
   }, [value]);
 
-  const handleChange = ({ side, newValue }: { side: string; newValue: number }) => {
+  const handleChange = ({ side, newValue }: { side: keyof typeof padding; newValue: string }) => {
     const newPadding = { ...padding, [side]: newValue };
     setPadding(newPadding);
 
     const { top, right, bottom, left } = newPadding;
     const aggregated = [top, right, bottom, left]
-      .map(v => (v !== "" ? `${v}px` : "0"))
+      .map(v => (v !== "" ? `${v}px` : "0px"))
       .join(" ");
 
-    setTimeout(() => {
-        onChange?.(aggregated);
-    },100)
+    onChange(aggregated);
   };
 
   const sides = [
@@ -58,7 +61,7 @@ const PaddingInput = ({ value = "0px 0px 0px 0px", onChange }: PaddingInputProps
           <Input
             type="number"
             value={padding[key]}
-            onChange={e => handleChange({ side: key, newValue: Number(e.target.value) })}
+            onChange={e => handleChange({ side: key, newValue: e.target.value })}
             className="h-9 w-full rounded-md px-0 text-center"
           />
         </label>

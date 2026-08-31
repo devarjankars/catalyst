@@ -56,8 +56,8 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
           min={8}
           max={72}
           step={1}
-          value={numericValue}
-          onValueChange={(v) => onChange(`${v}px`)}
+          value={[numericValue]}
+          onValueChange={(v) => onChange(`${v[0]}px`)}
           className="flex-1 max-w-[200px]"
         />
         {isCustom && (
@@ -1525,7 +1525,10 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Padding</Label>
-              <Input value={component.padding || "0 20px 10px 20px"} onChange={(e) => onUpdateComponent({ padding: e.target.value })} placeholder="0 20px 10px 20px" />
+              <PaddingInput
+                value={component.padding || "0px 20px 10px 20px"}
+                onChange={(padding) => onUpdateComponent({ padding })}
+              />
             </div>
           </div>
         );
@@ -2450,6 +2453,49 @@ export function PropertiesPanel({
                 <div><Label>Right Stat Label</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightStatLabel || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightStatLabel: e.target.value })} placeholder="Label (HTML supported)" /></div>
               </div>
             );
+          case "orserdu-image-text-block":
+          case "elzonris-image-text-block":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Image</Label>
+                  <ImageUpload currentImage={component.imageTextImageSrc} onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })} />
+                  <div><Label>Alt Text</Label><Input value={component.imageTextImageAlt || ""} onChange={(e) => onUpdateComponent({ imageTextImageAlt: e.target.value })} placeholder="Alt text" /></div>
+                  <div><Label>Image Width</Label><Input type="number" value={component.imageTextImageWidth || 167} onChange={(e) => onUpdateComponent({ imageTextImageWidth: parseInt(e.target.value) || 0 })} placeholder="167" /></div>
+                </div>
+                <div>
+                  <Label>Text</Label>
+                  <RichTextEditor
+                    value={component.imageTextText1 || ""}
+                    onChange={(html) => onUpdateComponent({ imageTextText1: html })}
+                    style={{ minHeight: "100px" }}
+                  />
+                </div>
+                <div>
+                  <Label>Text Align</Label>
+                  <Select value={component.textAlign || "left"} onValueChange={(value) => onUpdateComponent({ textAlign: value as "left" | "center" | "right" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Vertical Align</Label>
+                  <Select value={component.imageTextVerticalAlign || "top"} onValueChange={(value) => onUpdateComponent({ imageTextVerticalAlign: value as "top" | "middle" | "bottom" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top">Top</SelectItem>
+                      <SelectItem value="middle">Center</SelectItem>
+                      <SelectItem value="bottom">Bottom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Padding</Label><PaddingInput value={component.padding || "0px 20px 10px 20px"} onChange={(padding) => onUpdateComponent({ padding })} /></div>
+              </div>
+            );
           case "orserdu-moa-image-text":
             return (
               <div className="space-y-4">
@@ -2604,6 +2650,60 @@ export function PropertiesPanel({
                 </div>
               </div>
             )
+      case "sisi":
+      case "orserdu-references":
+      case "orserdu-abbreviations": {
+        const textProperty = component.type === "sisi"
+          ? "html"
+          : component.type === "orserdu-references" ? "references" : "abbreviations";
+        const textValue = component[textProperty] || "";
+
+        return (
+          <div className="space-y-3">
+            {component.type === "sisi" ? (
+              <Button className="w-full" variant="outline" onClick={() => setIsRawHtmlEditorOpen(true)}>
+                <Code /> Edit SISI HTML
+              </Button>
+            ) : (
+              <div>
+                <Label>{component.type === "orserdu-references" ? "References" : "Abbreviations"}</Label>
+                <textarea
+                  value={textValue}
+                  onChange={(e) => onUpdateComponent({ [textProperty]: e.target.value })}
+                  className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            )}
+            <div>
+              <Label>Font Size</Label>
+              <Input
+                value={component.fontSize || "12px"}
+                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
+                placeholder="12px"
+              />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <Input
+                value={component.lineHeight || "14px"}
+                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
+                placeholder="14px"
+              />
+            </div>
+            <div>
+              <Label>Color</Label>
+              <ColorInput value={component.color || "#646464"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Padding</Label>
+              <PaddingInput
+                value={component.padding || "0px 20px 10px 20px"}
+                onChange={(padding) => onUpdateComponent({ padding })}
+              />
+            </div>
+          </div>
+        );
+      }
       case "elzonris-references":
       case "elzonris-abbreviations":
       case "elzonris-ref-abbr":

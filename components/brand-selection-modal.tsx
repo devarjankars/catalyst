@@ -61,11 +61,12 @@ export const BRANDS: BrandConfig[] = [
 interface BrandSelectionModalProps {
   open: boolean;
   onSelect: (brand: Brand) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function BrandSelectionModal({ open, onSelect }: BrandSelectionModalProps) {
+export function BrandSelectionModal({ open, onSelect, onOpenChange }: BrandSelectionModalProps) {
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Prevent closing by clicking outside or pressing Escape — user must pick a brand */}
       <DialogContent
         className="sm:max-w-[560px] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl"
@@ -78,7 +79,7 @@ export function BrandSelectionModal({ open, onSelect }: BrandSelectionModalProps
         <div className="px-8 pt-8 pb-4 bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-900 tracking-tight">
-              Select a Product
+              Select a Client
             </DialogTitle>
           </DialogHeader>
         </div>

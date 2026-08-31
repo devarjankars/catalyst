@@ -90,7 +90,11 @@ export default function LandingPage() {
       </div>
 
       {/* Brand selection modal — shown when the user clicks "Emailer" */}
-      <BrandSelectionModal open={brandModalOpen} onSelect={handleBrandSelect} />
+      <BrandSelectionModal
+        open={brandModalOpen}
+        onOpenChange={setBrandModalOpen}
+        onSelect={handleBrandSelect}
+      />
     </>
   )
 }

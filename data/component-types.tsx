@@ -193,6 +193,11 @@ export const componentTypes = [
                 content:
                   "ORSERDU is available as 345 mg tablets and 86 mg tablets.",
               },
+              {
+                isBullet: false,
+                content:
+                  `<b style="color:#006937;display:block;font-size:16px;margin-bottom:5px;">INDICATION</b>ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer with disease progression following at least one line of endocrine therapy.`,
+              },
             ],
           },
         ],
@@ -464,13 +469,28 @@ export const componentTypes = [
 </table>`,
   },
 },
+{
+  type: "orserdu-image-text-block",
+  label: "image+text block",
+  category: "orserdu",
+  icon: NotepadText,
+  defaultProps: {
+    imageTextImageSrc: "/MOAofORSERDU.png",
+    imageTextImageAlt: "ORSERDU image",
+    imageTextImageWidth: 167,
+    imageTextText1: "<i>ESR1</i> mutations alter the binding pocket, leading to constitutively active estrogen receptors<sup>7</sup>",
+    textAlign: "left",
+    imageTextVerticalAlign: "top",
+    padding: "0 20px 10px 20px",
+  },
+},
   {
     type: "orserdu-abbreviations",
     label: "Abbreviations",
     category: "custom",
     icon: NotepadText,
     defaultProps: {
-      abbreviations: "ORSERDU: elacestrant; ER: estrogen receptor; HER2: human epidermal growth factor receptor 2; mPFS: median progression-free survival; ET: endocrine therapy; CDK4/6i: cyclin-dependent kinase 4/6 inhibitor; AI: aromatase inhibitor; CI: confidence interval; HR: hazard ratio.",
+      abbreviations: "aBC, advanced breast cancer; AI, aromatase inhibitor; ALT, alanine aminotransferase; AST, aspartate aminotransferase; BIRC, blinded imaging review committee; CDK4/6i, cyclin-dependent kinase 4/6 inhibitor; CI, confidence interval; ER+, estrogen receptor-positive; <i>ESR1</i>, estrogen receptor 1; <i>ESR1</i>m, estrogen receptor 1 mutation; ET, endocrine therapy; HER2-, human epidermal growth factor receptor 2-negative; HR, hazard ratio; mBC, metastatic breast cancer; mPFS, median progression-free survival; PFS, progression-free survival; RWE, real-world evidence.",
       padding: "0 20px 10px 20px",
       fontSize: "12px",
       color: "#646464",
@@ -484,7 +504,7 @@ export const componentTypes = [
     category: "custom",
     icon: NotepadText,
     defaultProps: {
-      references: "1. Bidard F-C, et al. <i>N Engl J Med.</i> 2022;386(10):924-935. 2. Bardia A, et al. <i>J Clin Oncol.</i> 2023;41(17_suppl):1016.",
+      references: "1. Pemmaraju N, et al. <i>N Engl J Med.</i> 2019;380(17):1628-1637.",
       padding: "0 20px 10px 20px",
       fontSize: "12px",
       color: "#646464",
@@ -924,6 +944,21 @@ export const componentTypes = [
       color: "#646464",
       fontWeight: "normal",
       lineHeight: "14px",
+    },
+  },
+  {
+    type: "elzonris-image-text-block",
+    label: "image+text block",
+    category: "elzonris",
+    icon: NotepadText,
+    defaultProps: {
+      imageTextImageSrc: "",
+      imageTextImageAlt: "Elzonris image",
+      imageTextImageWidth: 167,
+      imageTextText1: "First text block",
+      textAlign: "left",
+      imageTextVerticalAlign: "top",
+      padding: "0 20px 10px 20px",
     },
   },
   {

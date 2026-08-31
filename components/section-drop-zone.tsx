@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useRef, useState } from "react"
 import { useDrop } from "react-dnd"
 import type { EmailComponent } from "@/types/email-builder"
