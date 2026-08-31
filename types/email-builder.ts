@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "orserdu-emerald-stats" | "orserdu-emerald-image-stats" | "orserdu-moa-image-text"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "orserdu-emerald-stats"
 
   category: "basic" | "custom" | "orserdu" | "ferring" | "user-created" | "idorsia"
 
@@ -137,22 +137,6 @@ export interface EmailComponent {
   tryvioFooterIdorsiaLogoSrc?: string
   tryvioFooterIdorsiaLogoHref?: string
   tryvioFooterIdorsiaLogoAlt?: string
-
-  // orserdu-emerald-image-stats properties
-  emeraldImgLeftSrc?: string
-  emeraldImgLeftAlt?: string
-  emeraldImgLeftWidth?: number
-  emeraldImgRightHeading?: string
-  emeraldImgRightSubtext?: string
-  emeraldImgRightStatNumber?: string
-  emeraldImgRightStatLabel?: string
-
-  // orserdu-moa-image-text properties
-  moaLeftImageSrc?: string
-  moaLeftImageAlt?: string
-  moaLeftImageWidth?: number
-  moaRightText1?: string
-  moaRightText2?: string
 
   // image+text block properties
   imageTextImageSrc?: string

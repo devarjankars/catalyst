@@ -379,36 +379,7 @@ export const componentTypes = [
     padding: "0 20px 10px 20px",
   },
 },
-{
-  type: "orserdu-emerald-image-stats",
-  label: "Emerald Image + Stats",
-  category: "orserdu",
-  icon: NotepadText,
-  defaultProps: {
-    emeraldImgLeftSrc: "/38thmonths.png",
-    emeraldImgLeftAlt: "3.8 months mPFS with ORSERDU",
-    emeraldImgLeftWidth: 106,
-    emeraldImgRightHeading: "for ORSERDU (n=115) vs. 1.9 months<sup>‡</sup> for fulvestrant (n=83) HR=0.50 (95% CI: 0.34-0.74); <i>P</i>=0.0005<sup>3,4</sup>",
-    emeraldImgRightSubtext: "<sup>†</sup>95% CI: 2.2-7.3.<sup>3,4</sup> <sup>‡</sup>95% CI: 1.8-2.1.<sup>3,4</sup>",
-    emeraldImgRightStatNumber: "73%",
-    emeraldImgRightStatLabel: "of patients in the control arm of EMERALD <br> were treated with fulvestrant (n=83)<sup>3</sup>",
-    padding: "0 20px 10px 20px",
-  },
-},
-{
-  type: "orserdu-moa-image-text",
-  label: "MOA Image + Text",
-  category: "orserdu",
-  icon: NotepadText,
-  defaultProps: {
-    moaLeftImageSrc: "/MOAofORSERDU.png",
-    moaLeftImageAlt: "MOA of ORSERDU",
-    moaLeftImageWidth: 167,
-    moaRightText1: "<i>ESR1</i> mutations alter the binding pocket, leading to constitutively active estrogen receptors<sup>7</sup>",
-    moaRightText2: "Fulvestrant has decreased binding affinity for <i>ESR1</i>-mutated receptors<sup>7</sup>",
-    padding: "0 20px 10px 20px",
-  },
-},
+
 {
   type: "sisi",
   label: "SISI (Selected ISI)",
@@ -472,7 +443,7 @@ export const componentTypes = [
 {
   type: "orserdu-image-text-block",
   label: "image+text block",
-  category: "orserdu",
+  category: "custom",
   icon: NotepadText,
   defaultProps: {
     imageTextImageSrc: "/MOAofORSERDU.png",

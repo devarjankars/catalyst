@@ -2438,21 +2438,6 @@ export function PropertiesPanel({
                 </div>
               </div>
             );
-          case "orserdu-emerald-image-stats":
-            return (
-              <div className="space-y-4">
-                <div>
-                  <Label>Left Image</Label>
-                  <ImageUpload currentImage={component.emeraldImgLeftSrc} onImageUpload={(imageUrl) => onUpdateComponent({ emeraldImgLeftSrc: imageUrl })} />
-                  <div><Label>Alt Text</Label><Input value={component.emeraldImgLeftAlt || ""} onChange={(e) => onUpdateComponent({ emeraldImgLeftAlt: e.target.value })} placeholder="Alt text" /></div>
-                  <div><Label>Image Width</Label><Input type="number" value={component.emeraldImgLeftWidth || 106} onChange={(e) => onUpdateComponent({ emeraldImgLeftWidth: parseInt(e.target.value) })} placeholder="106" /></div>
-                </div>
-                <div><Label>Right Heading</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightHeading || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightHeading: e.target.value })} placeholder="Heading (HTML supported)" /></div>
-                <div><Label>Right Subtext</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightSubtext || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightSubtext: e.target.value })} placeholder="Subtext (HTML supported)" /></div>
-                <div><Label>Right Stat Number</Label><Input value={component.emeraldImgRightStatNumber || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightStatNumber: e.target.value })} placeholder="73%" /></div>
-                <div><Label>Right Stat Label</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.emeraldImgRightStatLabel || ""} onChange={(e) => onUpdateComponent({ emeraldImgRightStatLabel: e.target.value })} placeholder="Label (HTML supported)" /></div>
-              </div>
-            );
           case "orserdu-image-text-block":
           case "elzonris-image-text-block":
             return (
@@ -2494,19 +2479,6 @@ export function PropertiesPanel({
                   </Select>
                 </div>
                 <div><Label>Padding</Label><PaddingInput value={component.padding || "0px 20px 10px 20px"} onChange={(padding) => onUpdateComponent({ padding })} /></div>
-              </div>
-            );
-          case "orserdu-moa-image-text":
-            return (
-              <div className="space-y-4">
-                <div>
-                  <Label>Left Image</Label>
-                  <ImageUpload currentImage={component.moaLeftImageSrc} onImageUpload={(imageUrl) => onUpdateComponent({ moaLeftImageSrc: imageUrl })} />
-                  <div><Label>Alt Text</Label><Input value={component.moaLeftImageAlt || ""} onChange={(e) => onUpdateComponent({ moaLeftImageAlt: e.target.value })} placeholder="Alt text" /></div>
-                  <div><Label>Image Width</Label><Input type="number" value={component.moaLeftImageWidth || 167} onChange={(e) => onUpdateComponent({ moaLeftImageWidth: parseInt(e.target.value) })} placeholder="167" /></div>
-                </div>
-                <div><Label>Right Text 1</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.moaRightText1 || ""} onChange={(e) => onUpdateComponent({ moaRightText1: e.target.value })} placeholder="Text 1 (HTML supported)" /></div>
-                <div><Label>Right Text 2</Label><textarea className="w-full border rounded px-2 py-1 text-sm" rows={2} value={component.moaRightText2 || ""} onChange={(e) => onUpdateComponent({ moaRightText2: e.target.value })} placeholder="Text 2 (HTML supported)" /></div>
               </div>
             );
           case "ferring-footer":

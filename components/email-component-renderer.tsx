@@ -1328,26 +1328,6 @@ export function EmailComponentRenderer({
           );
         }
 
-        case "orserdu-emerald-image-stats": {
-          const { emeraldImgLeftSrc, emeraldImgLeftAlt, emeraldImgLeftWidth, emeraldImgRightHeading, emeraldImgRightSubtext, emeraldImgRightStatNumber, emeraldImgRightStatLabel } = component;
-          return (
-            <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
-              <style>{` .em-img-wrap { display: flex; flex-wrap: wrap; gap: 0; width: 100%; } .em-img-left { flex: 1 1 240px; min-width: 200px; padding-right: 16px; box-sizing: border-box; text-align: center; } .em-img-right { flex: 1 1 240px; min-width: 200px; padding-left: 16px; box-sizing: border-box; } @media screen and (max-width: 480px) { .em-img-left { padding-right: 0 !important; padding-bottom: 16px; margin-bottom: 0; } .em-img-right { padding-left: 0 !important; padding-top: 16px; } } `}</style>
-              <div className="em-img-wrap">
-                <div className="em-img-left"><img src={emeraldImgLeftSrc || "/38thmonths.png"} alt={emeraldImgLeftAlt || "3.8 months mPFS with ORSERDU"} width={emeraldImgLeftWidth || 106} style={{ display: "block", width: emeraldImgLeftWidth || 106, height: "auto" }} /></div>
-                <div className="em-img-right">
-                  <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "17px", fontWeight: 700, marginBottom: "8px" }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={emeraldImgRightHeading || ""} onChange={(e) => onUpdate({ emeraldImgRightHeading: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: emeraldImgRightHeading || "" }} />}</div>
-                  <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px", fontWeight: 400, marginBottom: "10px" }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={emeraldImgRightSubtext || ""} onChange={(e) => onUpdate({ emeraldImgRightSubtext: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: emeraldImgRightSubtext || "" }} />}</div>
-                  <div style={{ color: "#231F20", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "16px" }}>
-                    <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "34px", fontWeight: 700, lineHeight: "1.1", marginBottom: "4px" }}>{!previewMode && isSelected ? <input type="text" className="w-full border rounded px-2 py-1 text-xs text-center" value={emeraldImgRightStatNumber || ""} onChange={(e) => onUpdate({ emeraldImgRightStatNumber: e.target.value })} /> : emeraldImgRightStatNumber || "73%"}</div>
-                    <div style={{ color: "#006937", fontFamily: "Arial, sans-serif", fontSize: "14px", fontWeight: 400, lineHeight: "1.3" }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={emeraldImgRightStatLabel || ""} onChange={(e) => onUpdate({ emeraldImgRightStatLabel: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: emeraldImgRightStatLabel || "" }} />}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
         case "orserdu-image-text-block":
         case "elzonris-image-text-block": {
           const { imageTextImageSrc, imageTextImageAlt, imageTextImageWidth, imageTextText1 } = component;
@@ -1370,22 +1350,6 @@ export function EmailComponentRenderer({
                       />
                     ) : <span dangerouslySetInnerHTML={{ __html: imageTextText1 || "" }} />}
                   </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        case "orserdu-moa-image-text": {
-          const { moaLeftImageSrc, moaLeftImageAlt, moaLeftImageWidth, moaRightText1, moaRightText2 } = component;
-          return (
-            <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
-              <style>{` .moa-wrap { display: flex; flex-wrap: wrap; gap: 0; width: 100%; } .moa-left { flex: 1 1 240px; min-width: 200px; padding-right: 16px; box-sizing: border-box; text-align: center; } .moa-right { flex: 1 1 240px; min-width: 200px; padding-left: 16px; box-sizing: border-box; } @media screen and (max-width: 480px) { .moa-left { padding-right: 0 !important; padding-bottom: 16px; margin-bottom: 0; } .moa-right { padding-left: 0 !important; padding-top: 16px; } } `}</style>
-              <div className="moa-wrap">
-                <div className="moa-left"><img src={moaLeftImageSrc || "/MOAofORSERDU.png"} alt={moaLeftImageAlt || "MOA of ORSERDU"} width={moaLeftImageWidth || 167} style={{ display: "block", width: moaLeftImageWidth || 167, height: "auto" }} /></div>
-                <div className="moa-right">
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", fontWeight: 400, marginBottom: "17px" }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={moaRightText1 || ""} onChange={(e) => onUpdate({ moaRightText1: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: moaRightText1 || "" }} />}</div>
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", fontWeight: 400 }}>{!previewMode && isSelected ? <textarea className="w-full border rounded px-2 py-1 text-xs" rows={2} value={moaRightText2 || ""} onChange={(e) => onUpdate({ moaRightText2: e.target.value })} /> : <span dangerouslySetInnerHTML={{ __html: moaRightText2 || "" }} />}</div>
                 </div>
               </div>
             </div>
