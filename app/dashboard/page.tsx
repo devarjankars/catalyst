@@ -26,6 +26,7 @@ import Tasktable from "@/components/task-table"
 import { useLoggedInUserStore } from "@/store/logged-in-user"
 import dummyTasks from "@/data/dummy-tasks.json"
 import { BrandSelectionModal, BRANDS, type Brand } from "@/components/brand-selection-modal"
+import { matchesBrand } from "@/lib/brand-filter"
 
 const RecentTemplates = lazy(() => import("@/components/recent-templates"));
 const StandardTemplates = lazy(() => import("@/components/standard-templates"))
@@ -72,7 +73,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     filterTemplates();
-  }, [templates, searchQuery, selectedCategory])
+  }, [templates, searchQuery, selectedCategory, selectedBrand])
 
 
   function getFirstNameFromEmail(email : string | null): string {
@@ -103,7 +104,7 @@ export default function Dashboard() {
   
 
   const filterTemplates = () => {
-    let filtered = templates
+    let filtered = templates.filter((template) => matchesBrand(template, selectedBrand))
 
     // Filter by category
     if (selectedCategory !== "all") {
@@ -123,8 +124,9 @@ export default function Dashboard() {
   }
 
   const getCategoryCount = (categoryId: string) => {
-    if (categoryId === "all") return templates.length
-    return templates.filter((template) => template.category === categoryId).length
+    const brandTemplates = templates.filter((template) => matchesBrand(template, selectedBrand))
+    if (categoryId === "all") return brandTemplates.length
+    return brandTemplates.filter((template) => template.category === categoryId).length
   }
 
   const handleCreateBlank = () => {
@@ -188,7 +190,7 @@ export default function Dashboard() {
     router.push('/dashboard/standard-templates');
   }
   const handleRecentTemps = () => {
-    router.push('/dashboard/templates');
+    router.push(`/dashboard/templates?brand=${selectedBrand}`);
   }
   const handleTaskview = () => {
     router.push('/dashboard/tasks');

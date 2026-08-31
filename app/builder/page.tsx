@@ -498,7 +498,7 @@ function replaceImagesInComponents(components: any[]): any[] {
         setSavedTemplateId(savedTemplate.id);
 
         // Update URL to reflect saved template
-        const newUrl = `/builder?template=${savedTemplate.id}&edit=true`;
+        const newUrl = `/builder?template=${savedTemplate.id}&edit=true&brand=${brand}`;
         window.history.replaceState({}, "", newUrl);
       }
 
