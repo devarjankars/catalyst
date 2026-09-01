@@ -1571,7 +1571,96 @@ export function EmailComponentRenderer({
                 </a>
               </div>
             );
-        case "ferring-footer" :
+          case "orserdu-isi-select": {
+            const {
+              heading = "SELECT IMPORTANT SAFETY INFORMATION",
+              headingColor = "#006937",
+              headingFontSize = "16px",
+              headingPadding = "10px 20px 10px 20px",
+              bulletItems = [],
+              bulletColor = "#69d6b5",
+              textColor = "#000000",
+              fontSize = "14px",
+              lineHeight = "16px",
+              backgroundColor = "#ffffff",
+              footerLine = "",
+              footerPadding = "15px 20px 12px 20px",
+              trialDesignHtml = "",
+              trialDesignPadding = "0 20px 10px 20px",
+            } = component as any;
+
+            return (
+              <div style={baseStyle} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+                {/* Heading */}
+                <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
+                  <tbody><tr>
+                    <td style={{ padding: headingPadding, backgroundColor: "transparent" }}>
+                      <div style={{ fontSize: headingFontSize, color: headingColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}>
+                        <b>{heading}</b>
+                      </div>
+                    </td>
+                  </tr></tbody>
+                </table>
+
+                {/* Bullet items */}
+                <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0} style={{ backgroundColor }}>
+                  <tbody><tr>
+                    <td style={{ padding: "0 20px 0 20px", backgroundColor: "transparent" }}>
+                      <table cellPadding={0} cellSpacing={0} border={0} width="100%" style={{ backgroundColor }}>
+                        <tbody>
+                          {(bulletItems as any[]).map((item: any, i: number) => (
+                            <React.Fragment key={i}>
+                              <tr>
+                                <td align="left" valign="top" width="2%" style={{ color: bulletColor, fontSize: "16px", lineHeight, paddingBottom: "3px", backgroundColor: "transparent" }}>
+                                  &bull;
+                                </td>
+                                <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, paddingLeft: "5px", fontFamily: "Arial, sans-serif", backgroundColor }}>
+                                  {item.boldText && <b>{item.boldText}</b>}
+                                  <span dangerouslySetInnerHTML={{ __html: item.normalText || "" }} />
+                                </td>
+                              </tr>
+                              {i < bulletItems.length - 1 && (
+                                <tr><td colSpan={2} height="5px" style={{ fontSize: "0px", lineHeight: "5px", backgroundColor }} />  </tr>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr></tbody>
+                </table>
+
+                {/* Footer line */}
+                {footerLine && (
+                  <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
+                    <tbody><tr>
+                      <td style={{ padding: footerPadding, backgroundColor: "transparent" }}>
+                        <div style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}>
+                          <b>{footerLine}</b>
+                        </div>
+                      </td>
+                    </tr></tbody>
+                  </table>
+                )}
+
+                {/* Trial design paragraph */}
+                {trialDesignHtml && (
+                  <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
+                    <tbody><tr>
+                      <td style={{ padding: trialDesignPadding, backgroundColor: "transparent" }}>
+                        <div
+                          style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}
+                          dangerouslySetInnerHTML={{ __html: trialDesignHtml }}
+                        />
+                      </td>
+                    </tr></tbody>
+                  </table>
+                )}
+              </div>
+            );
+          }
+
+          case "ferring-footer":
           return (
             <div
               

@@ -12,7 +12,7 @@ import {
 import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers } from "lucide-react";
 import PaddingInput from "./padding -inputs";
@@ -103,6 +103,203 @@ function LineHeightInput({ value, onChange }: { value: string; onChange: (v: str
           placeholder="px"
         />
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dedicated sub-component for ORSERDU ISI Select properties.
+// Uses fully LOCAL state so every keystroke is instant — the store is only
+// updated when the user leaves a field (onBlur) or presses Enter.
+// ─────────────────────────────────────────────────────────────────────────────
+interface BulletItem { boldText: string; normalText: string }
+
+function OrserduIsiSelectPanel({
+  component,
+  onUpdateComponent,
+}: {
+  component: any;
+  onUpdateComponent: (updates: any) => void;
+}) {
+  // ── Local state mirrors the component props ──────────────────────────────
+  const [heading,         setHeading]         = useState<string>(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
+  const [headingColor,    setHeadingColor]    = useState<string>(component.headingColor    ?? "#006937");
+  const [headingFontSize, setHeadingFontSize] = useState<string>(component.headingFontSize ?? "16px");
+  const [bulletItems,     setBulletItems]     = useState<BulletItem[]>(component.bulletItems ?? []);
+  const [bulletColor,     setBulletColor]     = useState<string>(component.bulletColor     ?? "#69d6b5");
+  const [textColor,       setTextColor]       = useState<string>(component.textColor       ?? "#000000");
+  const [fontSize,        setFontSize]        = useState<string>(component.fontSize        ?? "14px");
+  const [lineHeight,      setLineHeight]      = useState<string>(component.lineHeight      ?? "16px");
+  const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
+  const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
+  const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
+
+  // Sync if component id changes (different component selected)
+  useEffect(() => {
+    setHeading(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
+    setHeadingColor(component.headingColor    ?? "#006937");
+    setHeadingFontSize(component.headingFontSize ?? "16px");
+    setBulletItems(component.bulletItems   ?? []);
+    setBulletColor(component.bulletColor    ?? "#69d6b5");
+    setTextColor(component.textColor       ?? "#000000");
+    setFontSize(component.fontSize        ?? "14px");
+    setLineHeight(component.lineHeight      ?? "16px");
+    setBackgroundColor(component.backgroundColor ?? "#ffffff");
+    setFooterLine(component.footerLine      ?? "");
+    setTrialDesignHtml(component.trialDesignHtml ?? "");
+  }, [component.id]);
+
+  // ── Commit helpers — only write to store on blur/enter ───────────────────
+  const commit = useCallback((updates: any) => onUpdateComponent(updates), [onUpdateComponent]);
+
+  const updateBullet = (index: number, field: keyof BulletItem, value: string) => {
+    const updated = bulletItems.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    setBulletItems(updated);
+  };
+
+  const commitBullets = () => commit({ bulletItems });
+
+  const removeBullet = (index: number) => {
+    const updated = bulletItems.filter((_, i) => i !== index);
+    setBulletItems(updated);
+    commit({ bulletItems: updated });
+  };
+
+  const addBullet = () => {
+    const updated = [...bulletItems, { boldText: "", normalText: "" }];
+    setBulletItems(updated);
+    commit({ bulletItems: updated });
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Heading */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Heading</p>
+        <div>
+          <Label>Heading Text</Label>
+          <Input
+            value={heading}
+            onChange={(e) => setHeading(e.target.value)}
+            onBlur={() => commit({ heading })}
+            onKeyDown={(e) => e.key === "Enter" && commit({ heading })}
+          />
+        </div>
+        <div>
+          <Label>Heading Color</Label>
+          <ColorInput value={headingColor} onChange={(v) => { setHeadingColor(v); commit({ headingColor: v }); }} />
+        </div>
+        <div>
+          <Label>Heading Font Size</Label>
+          <Input
+            value={headingFontSize}
+            onChange={(e) => setHeadingFontSize(e.target.value)}
+            onBlur={() => commit({ headingFontSize })}
+            placeholder="16px"
+          />
+        </div>
+      </div>
+
+      {/* Bullet items */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bullet Items</p>
+        <div>
+          <Label>Bullet Color</Label>
+          <ColorInput value={bulletColor} onChange={(v) => { setBulletColor(v); commit({ bulletColor: v }); }} />
+        </div>
+        <div>
+          <Label>Text Color</Label>
+          <ColorInput value={textColor} onChange={(v) => { setTextColor(v); commit({ textColor: v }); }} />
+        </div>
+        <div>
+          <Label>Font Size</Label>
+          <Input
+            value={fontSize}
+            onChange={(e) => setFontSize(e.target.value)}
+            onBlur={() => commit({ fontSize })}
+            placeholder="14px"
+          />
+        </div>
+        <div>
+          <Label>Line Height</Label>
+          <Input
+            value={lineHeight}
+            onChange={(e) => setLineHeight(e.target.value)}
+            onBlur={() => commit({ lineHeight })}
+            placeholder="16px"
+          />
+        </div>
+        <div>
+          <Label>Background Color</Label>
+          <ColorInput value={backgroundColor} onChange={(v) => { setBackgroundColor(v); commit({ backgroundColor: v }); }} />
+        </div>
+
+        {/* Per-bullet editing */}
+        {bulletItems.map((item, i) => (
+          <div key={i} className="border rounded-md p-3 space-y-2 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-gray-600">Bullet {i + 1}</p>
+              <Button
+                type="button" size="sm" variant="ghost"
+                className="h-6 px-2 text-xs text-red-500 hover:bg-red-50"
+                onClick={() => removeBullet(i)}
+              >Remove</Button>
+            </div>
+            <div>
+              <Label className="text-xs">Bold text</Label>
+              <Input
+                value={item.boldText ?? ""}
+                onChange={(e) => updateBullet(i, "boldText", e.target.value)}
+                onBlur={commitBullets}
+                placeholder="Bold portion of text"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Normal text (supports &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a&gt;)</Label>
+              <textarea
+                className="w-full min-h-[80px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                value={item.normalText ?? ""}
+                onChange={(e) => updateBullet(i, "normalText", e.target.value)}
+                onBlur={commitBullets}
+                placeholder=" rest of the bullet text"
+              />
+            </div>
+          </div>
+        ))}
+        <Button
+          type="button" size="sm" variant="outline" className="w-full text-xs"
+          onClick={addBullet}
+        >+ Add Bullet</Button>
+      </div>
+
+      {/* Footer line */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Footer Line</p>
+        <div>
+          <Label>Text (shown in bold)</Label>
+          <Input
+            value={footerLine}
+            onChange={(e) => setFooterLine(e.target.value)}
+            onBlur={() => commit({ footerLine })}
+            placeholder="Please see additional Important Safety Information below."
+          />
+        </div>
+      </div>
+
+      {/* Trial design paragraph */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Trial Design Paragraph</p>
+        <p className="text-[11px] text-gray-400">Supports HTML: &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a href=""&gt;</p>
+        <textarea
+          className="w-full min-h-[120px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring font-mono resize-y"
+          value={trialDesignHtml}
+          onChange={(e) => setTrialDesignHtml(e.target.value)}
+          onBlur={() => commit({ trialDesignHtml })}
+          placeholder="<b>TRIAL DESIGN:</b> ..."
+        />
+      </div>
     </div>
   );
 }
@@ -2169,6 +2366,15 @@ export function PropertiesPanel({
             </div>
           </div>
         );
+
+        case "orserdu-isi-select":
+          return (
+            <OrserduIsiSelectPanel
+              component={component}
+              onUpdateComponent={onUpdateComponent}
+            />
+          );
+
         case "ferring-footer":
           return (
             <div className="space-y-4">
