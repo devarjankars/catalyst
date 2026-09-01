@@ -135,7 +135,7 @@ class FirebaseService {
         return this.getAllTemplates();
       }
 
-      return templates;
+      return templates.filter((template) => template.standardKey !== "orserdu-rte-mat-us-ela-01578");
     } catch (error) {
       console.error(
         "Failed to load templates from Firebase, falling back to localStorage:",
@@ -464,12 +464,16 @@ class FirebaseService {
         );
         return sampleTemplates;
       }
-      const templates = JSON.parse(stored);
-      return templates.map((t: any) => ({
+      const templates = templatesWithDates(JSON.parse(stored));
+      return templates.filter((template: EmailTemplate) => template.standardKey !== "orserdu-rte-mat-us-ela-01578");
+    
+      function templatesWithDates(items: any[]): EmailTemplate[] {
+        return items.map((t: any) => ({
         ...t,
         createdAt: new Date(t.createdAt),
         updatedAt: new Date(t.updatedAt),
-      }));
+        }));
+      }
     } catch (error) {
       console.error("Failed to load templates from localStorage:", error);
       return [];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
@@ -1842,7 +1842,7 @@ export function EmailComponentRenderer({
               onDuplicate={handleDuplicate}
               onDelete={onDelete}
               showCopyToOption={showCopyToOption}
-              onCopyToOptions={onCopyToOptions}
+              onCopyToOption={() => onCopyToOptions?.()}
             />
           )}
         </>

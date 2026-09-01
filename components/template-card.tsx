@@ -15,9 +15,10 @@ interface TemplateCardProps {
   onEdit: () => void
   onDelete: () => void
   onDuplicate: () => void
+  readOnly?: boolean
 }
 
-export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }: TemplateCardProps) {
+export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, readOnly = false }: TemplateCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
@@ -101,16 +102,18 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
             )}
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-35 transition-all duration-200" />
             <div className="absolute bottom-0 inset-x-0 flex translate-y-2 items-center justify-center gap-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-              <Button
-                size="sm"
-                className="bg-white/95 text-gray-800 hover:bg-white hover:text-gray-900 border-0 shadow-md shadow-black/20"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit()
-                }}
-              >
-                <Edit className="w-3.5 h-3.5 mr-1" /> Edit
-              </Button>
+              {!readOnly && (
+                <Button
+                  size="sm"
+                  className="bg-white/95 text-gray-800 hover:bg-white hover:text-gray-900 border-0 shadow-md shadow-black/20"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                  }}
+                >
+                  <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="bg-[#BC2030] hover:bg-[#A81B29] shadow-md shadow-black/20"
@@ -122,16 +125,18 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
                 <Play className="w-3.5 h-3.5 mr-1" /> Use Template
               </Button>
             </div>
-            <Button
-              size="icon"
-              className="absolute top-2 right-2 rounded-full bg-white/95 text-red-600 shadow-md shadow-black/20 border-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-700"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {!readOnly && (
+              <Button
+                size="icon"
+                className="absolute top-2 right-2 rounded-full bg-white/95 text-red-600 shadow-md shadow-black/20 border-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-700"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete()
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
             <div className="absolute top-2 left-2 flex gap-2">
               {!template.isUserCreated && (
                 <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm">

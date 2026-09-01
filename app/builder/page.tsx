@@ -327,12 +327,13 @@ function replaceImagesInComponents(components: any[]): any[] {
   };
 
   const handleBackToDashboard = () => {
+    const dashboardUrl = `/dashboard?brand=${selectedBrand}`;
     if (hasComponentChanges || hasUnsavedTemplate) {
-      setPendingNavigation("/dashboard");
+      setPendingNavigation(dashboardUrl);
       setUnsavedDialog(true);
     } else {
       clearAll();
-      router.push("/dashboard");
+      router.push(dashboardUrl);
     }
   };
 
@@ -467,7 +468,7 @@ function replaceImagesInComponents(components: any[]): any[] {
       );
 
       if (duplicate) {
-        alert(`An emailer named "${name.trim()}" already exists for ${brand}. Please choose a different name.`);
+        toast.warning(`An emailer named "${name.trim()}" already exists for ${brand}. Please choose a different name.`);
         return;
       }
 
