@@ -461,12 +461,12 @@ export const componentTypes = [
     category: "custom",
     icon: NotepadText,
     defaultProps: {
-      abbreviations: "aBC, advanced breast cancer; AI, aromatase inhibitor; ALT, alanine aminotransferase; AST, aspartate aminotransferase; BIRC, blinded imaging review committee; CDK4/6i, cyclin-dependent kinase 4/6 inhibitor; CI, confidence interval; ER+, estrogen receptor-positive; <i>ESR1</i>, estrogen receptor 1; <i>ESR1</i>m, estrogen receptor 1 mutation; ET, endocrine therapy; HER2-, human epidermal growth factor receptor 2-negative; HR, hazard ratio; mBC, metastatic breast cancer; mPFS, median progression-free survival; PFS, progression-free survival; RWE, real-world evidence.",
+      abbreviations: "<b>Abbreviations:</b> aBC, advanced breast cancer; AI, aromatase inhibitor; ALT, alanine aminotransferase; AST, aspartate aminotransferase; BIRC, blinded imaging review committee; CDK4/6i, cyclin-dependent kinase 4/6 inhibitor; CI, confidence interval; ER+, estrogen receptor-positive; <i>ESR1</i>, estrogen receptor 1; <i>ESR1</i>m, estrogen receptor 1 mutation; ET, endocrine therapy; HER2-, human epidermal growth factor receptor 2-negative; HR, hazard ratio; mBC, metastatic breast cancer; mPFS, median progression-free survival; PFS, progression-free survival; <i>PIK3CA</i>, phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit alpha; SERDs, selective estrogen receptor degraders.",
       padding: "0 20px 10px 20px",
-      fontSize: "12px",
-      color: "#646464",
+      fontSize: "10px",
+      color: "#000000",
       fontWeight: "normal",
-      lineHeight: "14px",
+      lineHeight: "12px",
     },
   },
   {
@@ -475,12 +475,12 @@ export const componentTypes = [
     category: "custom",
     icon: NotepadText,
     defaultProps: {
-      references: "1. Pemmaraju N, et al. <i>N Engl J Med.</i> 2019;380(17):1628-1637.",
+      references: "<b>References:</b> 1. <b>ORSERDU</b> [prescribing information]. New York, NY: Stemline Therapeutics, Inc., a Menarini Group Company, 2023. <b>2.</b> Lloyd MR, Weipert CM, Ali A, et al. Clinical and genomic factors associated with elacestrant outcomes in <i>ESR1</i>-mutant metastatic breast cancer. <i>Clin Cancer Res</i>. 2026;32:169-178. <b>3.</b> Rugo HS, Kaklamani V, McArthur H, et al. Real-world outcomes of elacestrant in ER+, HER2-, <i>ESR1</i>-mutant metastatic breast cancer. <i>Clin Cancer Res</i>. 2026;32:179-187. <b>4.</b> Bardia A, Cortés J, Bidard FC, et al. Elacestrant in ER+, HER2- metastatic breast cancer with <i>ESR1</i>-mutated tumors: subgroup analyses from the phase III EMERALD trial by prior duration of endocrine therapy plus CDK4/6 inhibitor and in clinical subgroups. <i>Clin Cancer Res</i>. 2024;30(19):4299-4309.",
       padding: "0 20px 10px 20px",
-      fontSize: "12px",
-      color: "#646464",
+      fontSize: "10px",
+      color: "#000000",
       fontWeight: "normal",
-      lineHeight: "14px",
+      lineHeight: "12px",
     },
   },
   {

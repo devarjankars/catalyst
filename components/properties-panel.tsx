@@ -36,13 +36,12 @@ import { Slider } from "@/components/ui/slider";
 function FontSizeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const commonSizes = ["10px", "12px", "13px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "36px", "48px"];
   const isCustom = !commonSizes.includes(value);
-  const numericValue = parseInt(value) || 16;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Select value={isCustom ? "custom" : value} onValueChange={(v) => v !== "custom" && onChange(v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1">
             <SelectValue placeholder="Font size" />
           </SelectTrigger>
           <SelectContent>
@@ -52,14 +51,6 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
             <SelectItem value="custom">Custom...</SelectItem>
           </SelectContent>
         </Select>
-        <Slider
-          min={8}
-          max={72}
-          step={1}
-          value={[numericValue]}
-          onValueChange={(v) => onChange(`${v[0]}px`)}
-          className="flex-1 max-w-[200px]"
-        />
         {isCustom && (
           <Input
             value={value}
@@ -70,7 +61,48 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
           />
         )}
       </div>
-      {!isCustom && <p className="text-xs text-gray-500">Drag slider or pick from dropdown</p>}
+    </div>
+  );
+}
+
+function LineHeightInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const commonValues = ["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"];
+  const [customValue, setCustomValue] = useState(value || "14px");
+  const isCustom = !commonValues.includes(value);
+
+  useEffect(() => {
+    setCustomValue(value || "14px");
+  }, [value]);
+
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={isCustom ? "custom" : value} onValueChange={(nextValue) => nextValue !== "custom" && onChange(nextValue)}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Line height" />
+        </SelectTrigger>
+        <SelectContent>
+          {commonValues.map((lineHeight) => (
+            <SelectItem key={lineHeight} value={lineHeight}>{lineHeight}</SelectItem>
+          ))}
+          <SelectItem value="custom">Custom...</SelectItem>
+        </SelectContent>
+      </Select>
+      {isCustom && (
+        <Input
+          type="number"
+          min="8"
+          max="100"
+          step="1"
+          value={parseInt(customValue, 10) || ""}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setCustomValue(nextValue ? `${nextValue}px` : "");
+            if (nextValue) onChange(`${nextValue}px`);
+          }}
+          className="w-[90px]"
+          placeholder="px"
+        />
+      )}
     </div>
   );
 }
@@ -1483,11 +1515,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Font Size</Label>
-              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+              <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
             </div>
             <div>
               <Label>Line Height</Label>
-              <Input value={component.lineHeight || "14px"} onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })} placeholder="14px" />
+              <LineHeightInput value={component.lineHeight || "14px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
             </div>
             <div>
               <Label>Font Family</Label>
@@ -1721,15 +1753,15 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Font Size</Label>
-              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+              <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
             </div>
             <div>
               <Label>Line Height</Label>
-              <Input value={component.lineHeight || "16px"} onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })} placeholder="16px" />
+              <LineHeightInput value={component.lineHeight || "16px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
             </div>
             <div>
               <Label>Padding (top/bottom sides)</Label>
-              <Input value={component.padding || "10px 20px"} onChange={(e) => onUpdateComponent({ padding: e.target.value })} placeholder="10px 20px" />
+              <PaddingInput value={component.padding || "10px 20px"} onChange={(padding) => onUpdateComponent({ padding })} />
             </div>
           </div>
         );
@@ -1739,7 +1771,7 @@ export function PropertiesPanel({
           <div className="space-y-4">
             <div>
               <Label>Font Size</Label>
-              <Input value={component.fontSize || "12px"} onChange={(e) => onUpdateComponent({ fontSize: e.target.value })} placeholder="12px" />
+              <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
             </div>
             <div>
               <Label>Text Color</Label>
@@ -2636,30 +2668,28 @@ export function PropertiesPanel({
               <Button className="w-full" variant="outline" onClick={() => setIsRawHtmlEditorOpen(true)}>
                 <Code /> Edit SISI HTML
               </Button>
-            ) : (
+            ) : component.type === "orserdu-references" ? (
               <div>
-                <Label>{component.type === "orserdu-references" ? "References" : "Abbreviations"}</Label>
+                <Label>References</Label>
                 <textarea
                   value={textValue}
                   onChange={(e) => onUpdateComponent({ [textProperty]: e.target.value })}
                   className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
               </div>
-            )}
+            ) : null}
             <div>
               <Label>Font Size</Label>
-              <Input
+              <FontSizeInput
                 value={component.fontSize || "12px"}
-                onChange={(e) => onUpdateComponent({ fontSize: e.target.value })}
-                placeholder="12px"
+                onChange={(fontSize) => onUpdateComponent({ fontSize })}
               />
             </div>
             <div>
               <Label>Line Height</Label>
-              <Input
+              <LineHeightInput
                 value={component.lineHeight || "14px"}
-                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
-                placeholder="14px"
+                onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
               />
             </div>
             <div>
