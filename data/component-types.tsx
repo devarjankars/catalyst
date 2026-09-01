@@ -835,4 +835,44 @@ export const componentTypes = [
       tryvioFooterIdorsiaLogoAlt: `Idorsia logo`,
     },
   },
+  {
+    type: "orserdu-isi-select",
+    label: "ORSERDU ISI Select",
+    category: "custom",
+    icon: NotepadText,
+    defaultProps: {
+      // Heading
+      heading: "SELECT IMPORTANT SAFETY INFORMATION",
+      headingColor: "#006937",
+      headingFontSize: "16px",
+      headingPadding: "10px 20px 10px 20px",
+      // Bullet items — each has boldText + normalText
+      bulletItems: [
+        {
+          boldText: "The labeling for ORSERDU contains warnings and precautions",
+          normalText: " for dyslipidemia and embryo-fetal toxicity.",
+        },
+        {
+          boldText: "The most common serious adverse reactions",
+          normalText: " in ≥1% of patients who received ORSERDU were musculoskeletal pain and nausea.",
+        },
+        {
+          boldText: "The most common adverse reactions,",
+          normalText: " including laboratory abnormalities, in ≥10% of patients who received ORSERDU were musculoskeletal pain, nausea, increased cholesterol, increased AST, increased triglycerides, fatigue, decreased hemoglobin, vomiting, increased ALT, decreased sodium, increased creatinine, decreased appetite, diarrhea, headache, constipation, abdominal pain, hot flush, and dyspepsia.",
+        },
+      ],
+      bulletColor: "#69d6b5",
+      textColor: "#000000",
+      fontSize: "14px",
+      lineHeight: "16px",
+      backgroundColor: "#ffffff",
+      // Footer line
+      footerLine: "Please see additional Important Safety Information below.",
+      footerPadding: "15px 20px 12px 20px",
+      // Trial design paragraph (supports basic HTML: <b>, <i>, <sup>, <a>)
+      trialDesignHtml: `<b>TRIAL DESIGN:</b> EMERALD was an open-label, global, phase 3 trial of postmenopausal women or men with confirmed ER+/HER2- advanced or metastatic breast cancer (N=478) who had progressed after 1-2 lines of ET, at least one in combination with a CDK4/6i, randomized (1:1) to receive ORSERDU or endocrine therapy (fulvestrant) or an aromatase inhibitor (anastrozole, letrozole, or exemestane). A major efficacy endpoint was PFS by BIRC in patients with <i>ESR1</i>m (n=228). An exploratory post hoc analysis evaluated efficacy and safety in patients with <i>ESR1</i>m treated with prior ET + CDK4/6i for ≥12 months (n=159).<sup>1,2</sup>`,
+      trialDesignPadding: "0 20px 10px 20px",
+      padding: "0",
+    },
+  },
 ];

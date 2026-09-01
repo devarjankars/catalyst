@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Calendar, Play, Sparkles, Grid } from "lucide-react"
+import { Edit, Trash2, Calendar, Play, Sparkles, Grid, Eye } from "lucide-react"
 import type { EmailTemplate } from "@/types/template"
 import { generateEmailHTML } from "@/lib/email-generator"
 
@@ -21,6 +21,9 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
   const [imageLoading, setImageLoading] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
+
+  // Standard templates (isUserCreated: false) are view/use only — no edit
+  const isStandard = !template.isUserCreated
 
   useEffect(() => {
     if (!previewRef.current) return
@@ -39,8 +42,6 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
         return "bg-green-100 text-green-800"
       case "unbranded":
         return "bg-purple-100 text-purple-800"
-      case "other":
-        return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -99,41 +100,44 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
                 No preview available
               </div>
             )}
+
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-35 transition-all duration-200" />
+
+            {/* Hover action bar */}
             <div className="absolute bottom-0 inset-x-0 flex translate-y-2 items-center justify-center gap-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-              <Button
-                size="sm"
-                className="bg-white/95 text-gray-800 hover:bg-white hover:text-gray-900 border-0 shadow-md shadow-black/20"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit()
-                }}
-              >
-                <Edit className="w-3.5 h-3.5 mr-1" /> Edit
-              </Button>
+              {/* Standard templates: View-only, no Edit */}
+              {!isStandard && (
+                <Button
+                  size="sm"
+                  className="bg-white/95 text-gray-800 hover:bg-white hover:text-gray-900 border-0 shadow-md shadow-black/20"
+                  onClick={(e) => { e.stopPropagation(); onEdit() }}
+                >
+                  <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="bg-[#BC2030] hover:bg-[#A81B29] shadow-md shadow-black/20"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onUse()
-                }}
+                onClick={(e) => { e.stopPropagation(); onUse() }}
               >
-                <Play className="w-3.5 h-3.5 mr-1" /> Use Template
+                <Play className="w-3.5 h-3.5 mr-1" />
+                {isStandard ? "Use Template" : "Use"}
               </Button>
             </div>
-            <Button
-              size="icon"
-              className="absolute top-2 right-2 rounded-full bg-white/95 text-red-600 shadow-md shadow-black/20 border-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-700"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+
+            {/* Delete button — only for user-created templates */}
+            {!isStandard && (
+              <Button
+                size="icon"
+                className="absolute top-2 right-2 rounded-full bg-white/95 text-red-600 shadow-md shadow-black/20 border-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-700"
+                onClick={(e) => { e.stopPropagation(); onDelete() }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+
             <div className="absolute top-2 left-2 flex gap-2">
-              {!template.isUserCreated && (
+              {isStandard && (
                 <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Standard
@@ -148,6 +152,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="p-4 flex flex-col flex-1">
           <div className="mb-2 flex-1">
             <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>

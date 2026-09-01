@@ -1658,6 +1658,81 @@ case "isi": {
       `.trim();
     }
 
+    case "orserdu-isi-select": {
+      const c = component as any;
+      const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
+      const headingColor   = c.headingColor   ?? "#006937";
+      const headingFontSize= c.headingFontSize?? "16px";
+      const headingPadding = c.headingPadding ?? "10px 20px 10px 20px";
+      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string }>;
+      const bulletColor    = c.bulletColor    ?? "#69d6b5";
+      const textColor      = c.textColor      ?? "#000000";
+      const fontSize       = c.fontSize       ?? "14px";
+      const lineHeight     = c.lineHeight     ?? "16px";
+      const backgroundColor= c.backgroundColor?? "#ffffff";
+      const footerLine     = c.footerLine     ?? "";
+      const footerPadding  = c.footerPadding  ?? "15px 20px 12px 20px";
+      const trialDesignHtml= c.trialDesignHtml?? "";
+      const trialDesignPad = c.trialDesignPadding ?? "0 20px 10px 20px";
+
+      const bulletRows = bulletItems.map((item, i) => `
+        <tr>
+          <td align="left" valign="top" width="2%"
+            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding-bottom:3px;background-color:transparent;">
+            &bull;
+          </td>
+          <td align="left" valign="middle"
+            style="color:${textColor};font-size:${fontSize};font-weight:normal;text-align:left;line-height:${lineHeight};padding-left:5px;font-family:Arial,sans-serif;background-color:${backgroundColor};">
+            ${item.boldText ? `<b>${item.boldText}</b>` : ""}${item.normalText ?? ""}
+          </td>
+        </tr>
+        ${i < bulletItems.length - 1 ? `<tr><td colspan="2" height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;background-color:${backgroundColor};">&nbsp;</td></tr>` : ""}
+      `).join("");
+
+      return `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody><tr>
+            <td style="padding:${headingPadding};background-color:transparent;">
+              <div style="font-size:${headingFontSize};color:${headingColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
+                <b>${heading}</b>
+              </div>
+            </td>
+          </tr></tbody>
+        </table>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+          bgcolor="${backgroundColor}" style="background-color:${backgroundColor};">
+          <tbody><tr>
+            <td bgcolor="${backgroundColor}" style="padding:0 20px 0 20px;background-color:transparent;">
+              <table bgcolor="${backgroundColor}" style="background-color:${backgroundColor};"
+                cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tbody>${bulletRows}</tbody>
+              </table>
+            </td>
+          </tr></tbody>
+        </table>
+        ${footerLine ? `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody><tr>
+            <td style="padding:${footerPadding};background-color:transparent;">
+              <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
+                <b>${footerLine}</b>
+              </div>
+            </td>
+          </tr></tbody>
+        </table>` : ""}
+        ${trialDesignHtml ? `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody><tr>
+            <td style="padding:${trialDesignPad};background-color:transparent;">
+              <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
+                ${trialDesignHtml}
+              </div>
+            </td>
+          </tr></tbody>
+        </table>` : ""}
+      `.trim();
+    }
+
     case "orserdu-emerald-stats": {
       const leftIconSrc   = component.emeraldLeftIconSrc    || "/2Xmpfs.png";
       const leftIconAlt   = component.emeraldLeftIconAlt    || "mPFS icon";
