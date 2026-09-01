@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
@@ -160,7 +160,6 @@ export function EmailComponentRenderer({
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
-      item.index = hoverIndex;
     },
   });
 
@@ -806,6 +805,136 @@ export function EmailComponentRenderer({
           </div>
         );
 
+      case "sisi":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff' }} className="flex flex-col gap-2">
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.html || ""}
+                onChange={(html) => onUpdate({ html })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#000000',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '16px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{ __html: component.html || "" }}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#000000',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  lineHeight: component.lineHeight || '16px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            )}
+          </div>
+        );
+
+      case "orserdu-abbreviations":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.abbreviations || ""}
+                onChange={(content) => onUpdate({ abbreviations: content })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '14px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <p
+                dangerouslySetInnerHTML={{ __html: component.abbreviations || "" }}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                  fontWeight: component.fontWeight || 'normal',
+                  lineHeight: component.lineHeight || '14px',
+                  textAlign: component.textAlign || 'left',
+                  margin: 0,
+                }}
+              />
+            )}
+          </div>
+        );
+
+      case "orserdu-references":
+        return (
+          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.references || ""}
+                onChange={(content) => onUpdate({ references: content })}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  textAlign: component.textAlign || 'left',
+                  fontWeight: component.fontWeight || 'normal',
+                  backgroundColor: component.backgroundColor || 'transparent',
+                  lineHeight: component.lineHeight || '14px',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                }}
+              />
+            ) : (
+              <p style={{ 
+                fontSize: component.fontSize || '12px', 
+                color: component.color || '#646464', 
+                fontFamily: component.fontFamily || 'Arial, sans-serif',
+                fontWeight: component.fontWeight || 'normal',
+                lineHeight: component.lineHeight || '14px',
+                textAlign: component.textAlign || 'left',
+                margin: 0
+              }}>
+                {component.references}
+              </p>
+            )}
+          </div>
+        );
+
+      case "orserdu-view-in-browser":
+        return (
+          <div style={{
+            textAlign: component.textAlign || 'center',
+            padding: component.padding || '10px 20px',
+            backgroundColor: component.backgroundColor || 'transparent',
+            lineHeight: component.lineHeight || '16px',
+          }}>
+            <a
+              href={component.href || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: component.color || '#2360d9',
+                textDecoration: 'underline',
+                fontSize: component.fontSize || '12px',
+                lineHeight: component.lineHeight || '16px',
+                fontFamily: component.fontFamily || 'Arial, sans-serif',
+                fontWeight: 400,
+              }}
+              onClick={(e) => !previewMode && e.preventDefault()}
+            >
+              View in Browser
+            </a>
+          </div>
+        );
+
       case "bullet-list":
         return (
           <BulletList
@@ -1199,6 +1328,34 @@ export function EmailComponentRenderer({
           );
         }
 
+        case "orserdu-image-text-block":
+        case "elzonris-image-text-block": {
+          const { imageTextImageSrc, imageTextImageAlt, imageTextImageWidth, imageTextText1 } = component;
+          const verticalAlign = component.imageTextVerticalAlign || "top";
+          return (
+            <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
+              <style>{`.image-text-block-wrap { display:flex; flex-wrap:wrap; width:100%; } .image-text-block-image { flex:1 1 240px; min-width:200px; padding-right:16px; box-sizing:border-box; text-align:center; } .image-text-block-copy { flex:1 1 240px; min-width:200px; padding-left:16px; box-sizing:border-box; } @media screen and (max-width:480px) { .image-text-block-image { padding-right:0; padding-bottom:16px; } .image-text-block-copy { padding-left:0; } }`}</style>
+              <div className="image-text-block-wrap" style={{ alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start" }}>
+                <div className="image-text-block-image">
+                  <img src={imageTextImageSrc || "/placeholder.svg"} alt={imageTextImageAlt || ""} width={imageTextImageWidth || 167} style={{ display: "block", width: imageTextImageWidth || 167, maxWidth: "100%", height: "auto", margin: "0 auto" }} />
+                </div>
+                <div className="image-text-block-copy" style={{ textAlign: component.textAlign || "left" }}>
+                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", marginBottom: "17px" }}>
+                    {!previewMode && isSelected ? (
+                      <RichTextEditor
+                        isSelected={isSelected}
+                        value={imageTextText1 || ""}
+                        onChange={(html) => onUpdate({ imageTextText1: html })}
+                        style={{ fontSize: "14px", lineHeight: "20px", color: "#000000" }}
+                      />
+                    ) : <span dangerouslySetInnerHTML={{ __html: imageTextText1 || "" }} />}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         case "elzonris-isi":
         return (
           <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: component.html || "" }} />
@@ -1217,110 +1374,163 @@ export function EmailComponentRenderer({
         case "elzonris-references":
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: component.fontSize || "12px",
-                  color: component.color || "#646464",
-                  lineHeight: component.lineHeight || "14px",
-                  fontWeight: "bold",
-                  whiteSpace: "nowrap",
-                  paddingTop: "2px"
-                }}>References:&nbsp;</span>
-                <RichTextEditor
-                  isSelected={isSelected}
-                  value={component.references || ""}
-                  onChange={(val) => onUpdate({ references: val })}
-                  style={{
+              {!previewMode && isSelected ? (
+                <div style={{ display: "flex", alignItems: "flex-start" }}>
+                  <span style={{
                     fontFamily: "Arial, sans-serif",
-                    fontSize: component.fontSize || "12px",
-                    color: component.color || "#646464",
+                    fontSize: component.fontSize || "10px",
+                    color: component.color || "#000000",
                     lineHeight: component.lineHeight || "14px",
-                    fontWeight: component.fontWeight || "normal",
-                  }}
-                />
-              </div>
+                    fontWeight: "bold",
+                    whiteSpace: "nowrap",
+                    paddingTop: "2px"
+                  }}>References:&nbsp;</span>
+                  <RichTextEditor
+                    isSelected={isSelected}
+                    value={component.references || ""}
+                    onChange={(val) => onUpdate({ references: val })}
+                    style={{
+                      fontFamily: "Arial, sans-serif",
+                      fontSize: component.fontSize || "10px",
+                      color: component.color || "#000000",
+                      lineHeight: component.lineHeight || "14px",
+                      fontWeight: component.fontWeight || "normal",
+                    }}
+                  />
+                </div>
+              ) : (
+                <p style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "10px",
+                  color: component.color || "#000000",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: component.fontWeight || "normal",
+                  margin: 0
+                }}>
+                  <strong>References:&nbsp;</strong>{component.references}
+                </p>
+              )}
             </div>
           );
 
         case "elzonris-abbreviations":
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: component.fontSize || "12px",
-                  color: component.color || "#646464",
-                  lineHeight: component.lineHeight || "14px",
-                  fontWeight: "bold",
-                  whiteSpace: "nowrap",
-                  paddingTop: "2px"
-                }}>Abbreviations:&nbsp;</span>
-                <RichTextEditor
-                  isSelected={isSelected}
-                  value={component.abbreviations || ""}
-                  onChange={(val) => onUpdate({ abbreviations: val })}
-                  style={{
+              {!previewMode && isSelected ? (
+                <div style={{ display: "flex", alignItems: "flex-start" }}>
+                  <span style={{
                     fontFamily: "Arial, sans-serif",
-                    fontSize: component.fontSize || "12px",
-                    color: component.color || "#646464",
+                    fontSize: component.fontSize || "10px",
+                    color: component.color || "#000000",
                     lineHeight: component.lineHeight || "14px",
-                    fontWeight: component.fontWeight || "normal",
-                  }}
-                />
-              </div>
+                    fontWeight: "bold",
+                    whiteSpace: "nowrap",
+                    paddingTop: "2px"
+                  }}>Abbreviations:&nbsp;</span>
+                  <RichTextEditor
+                    isSelected={isSelected}
+                    value={component.abbreviations || ""}
+                    onChange={(val) => onUpdate({ abbreviations: val })}
+                    style={{
+                      fontFamily: "Arial, sans-serif",
+                      fontSize: component.fontSize || "10px",
+                      color: component.color || "#000000",
+                      lineHeight: component.lineHeight || "14px",
+                      fontWeight: component.fontWeight || "normal",
+                    }}
+                  />
+                </div>
+              ) : (
+                <p style={{
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: component.fontSize || "10px",
+                  color: component.color || "#000000",
+                  lineHeight: component.lineHeight || "14px",
+                  fontWeight: component.fontWeight || "normal",
+                  margin: 0
+                }}>
+                  <strong>Abbreviations:&nbsp;</strong>{component.abbreviations}
+                </p>
+              )}
             </div>
           );
 
         case "elzonris-ref-abbr":
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "6px" }}>
-                <span style={{
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: component.fontSize || "12px",
-                  color: component.color || "#646464",
-                  lineHeight: component.lineHeight || "14px",
-                  fontWeight: "bold",
-                  whiteSpace: "nowrap",
-                  paddingTop: "2px"
-                }}>References:&nbsp;</span>
-                <RichTextEditor
-                  isSelected={isSelected}
-                  value={component.references || ""}
-                  onChange={(val) => onUpdate({ references: val })}
-                  style={{
+              {!previewMode && isSelected ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "6px" }}>
+                    <span style={{
+                      fontFamily: "Arial, sans-serif",
+                      fontSize: component.fontSize || "10px",
+                      color: component.color || "#000000",
+                      lineHeight: component.lineHeight || "14px",
+                      fontWeight: "bold",
+                      whiteSpace: "nowrap",
+                      paddingTop: "2px"
+                    }}>References:&nbsp;</span>
+                    <RichTextEditor
+                      isSelected={isSelected}
+                      value={component.references || ""}
+                      onChange={(val) => onUpdate({ references: val })}
+                      style={{
+                        fontFamily: "Arial, sans-serif",
+                        fontSize: component.fontSize || "10px",
+                        color: component.color || "#000000",
+                        lineHeight: component.lineHeight || "14px",
+                        fontWeight: component.fontWeight || "normal",
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    <span style={{
+                      fontFamily: "Arial, sans-serif",
+                      fontSize: component.fontSize || "10px",
+                      color: component.color || "#000000",
+                      lineHeight: component.lineHeight || "14px",
+                      fontWeight: "bold",
+                      whiteSpace: "nowrap",
+                      paddingTop: "2px"
+                    }}>Abbreviations:&nbsp;</span>
+                    <RichTextEditor
+                      isSelected={isSelected}
+                      value={component.abbreviations || ""}
+                      onChange={(val) => onUpdate({ abbreviations: val })}
+                      style={{
+                        fontFamily: "Arial, sans-serif",
+                        fontSize: component.fontSize || "10px",
+                        color: component.color || "#000000",
+                        lineHeight: component.lineHeight || "14px",
+                        fontWeight: component.fontWeight || "normal",
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p style={{
                     fontFamily: "Arial, sans-serif",
-                    fontSize: component.fontSize || "12px",
-                    color: component.color || "#646464",
+                    fontSize: component.fontSize || "10px",
+                    color: component.color || "#000000",
                     lineHeight: component.lineHeight || "14px",
                     fontWeight: component.fontWeight || "normal",
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <span style={{
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: component.fontSize || "12px",
-                  color: component.color || "#646464",
-                  lineHeight: component.lineHeight || "14px",
-                  fontWeight: "bold",
-                  whiteSpace: "nowrap",
-                  paddingTop: "2px"
-                }}>Abbreviations:&nbsp;</span>
-                <RichTextEditor
-                  isSelected={isSelected}
-                  value={component.abbreviations || ""}
-                  onChange={(val) => onUpdate({ abbreviations: val })}
-                  style={{
+                    margin: "0 0 6px 0"
+                  }}>
+                    <strong>References:&nbsp;</strong>{component.references}
+                  </p>
+                  <p style={{
                     fontFamily: "Arial, sans-serif",
-                    fontSize: component.fontSize || "12px",
-                    color: component.color || "#646464",
+                    fontSize: component.fontSize || "10px",
+                    color: component.color || "#000000",
                     lineHeight: component.lineHeight || "14px",
                     fontWeight: component.fontWeight || "normal",
-                  }}
-                />
-              </div>
+                    margin: 0
+                  }}>
+                    <strong>Abbreviations:&nbsp;</strong>{component.abbreviations}
+                  </p>
+                </>
+              )}
             </div>
           );
 
@@ -1721,7 +1931,7 @@ export function EmailComponentRenderer({
               onDuplicate={handleDuplicate}
               onDelete={onDelete}
               showCopyToOption={showCopyToOption}
-              onCopyToOptions={onCopyToOptions}
+              onCopyToOption={() => onCopyToOptions?.()}
             />
           )}
         </>

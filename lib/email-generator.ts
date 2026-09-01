@@ -881,8 +881,18 @@ case "isi": {
                                        <tr>
                                           <td class="f_14 black f_normal" align="left" valign="top"
                                              style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             ORSERDU is available as 345 mg tablets and <br class="mobile-only">86 mg tablets. </td>
+                                             ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
                                        </tr>
+                                      <tr>
+                                        <td width="100%" height="15"
+                                          style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
+                                          &nbsp;</td>
+                                      </tr>
+                                      <tr>
+                                        <td class="f_14 black f_normal" align="left" valign="top"
+                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                                             <b style="color:#006937;display:block;font-size:16px;margin-bottom:5px;">INDICATION</b>ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer with disease progression following at least one line of endocrine therapy. </td>
+                                      </tr>
                 </tbody>
                </table>
             </td>
@@ -1561,6 +1571,25 @@ case "isi": {
         </table>
       `;
     }
+    case "sisi":
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${component.backgroundColor || "#ffffff"}">
+        <tbody><tr><td style="padding:${component.padding || "0 20px 10px 20px"};font-family:${component.fontFamily || "Arial, sans-serif"};font-size:${component.fontSize || "12px"};color:${component.color || "#000000"};font-weight:${component.fontWeight || "normal"};text-align:${component.textAlign || "left"};line-height:${component.lineHeight || "16px"};background-color:${component.backgroundColor || "#ffffff"};">
+          ${component.html || ""}
+        </td></tr></tbody>
+      </table>`.trim();
+
+    case "orserdu-abbreviations":
+    case "orserdu-references": {
+      const value = component.type === "orserdu-references" ? component.references : component.abbreviations;
+      return `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${component.backgroundColor || "#ffffff"}">
+        <tbody><tr><td style="padding:${component.padding || "0 20px 10px 20px"};font-family:${component.fontFamily || "Arial, sans-serif"};font-size:${component.fontSize || "12px"};color:${component.color || "#646464"};font-weight:${component.fontWeight || "normal"};text-align:${component.textAlign || "left"};line-height:${component.lineHeight || "14px"};background-color:${component.backgroundColor || "#ffffff"};">
+          ${value || ""}
+        </td></tr></tbody>
+      </table>`.trim();
+    }
+
     case "elzonris-isi":
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">
@@ -1577,8 +1606,8 @@ case "isi": {
       `;
 
     case "elzonris-references": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `
@@ -1600,8 +1629,8 @@ case "isi": {
     }
 
     case "elzonris-abbreviations": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `
@@ -1623,8 +1652,8 @@ case "isi": {
     }
 
     case "elzonris-ref-abbr": {
-      const fontSize   = component.fontSize   || "12px";
-      const color      = component.color      || "#646464";
+      const fontSize   = component.fontSize   || "10px";
+      const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
       const fontWeight = component.fontWeight || "normal";
       return `
@@ -2042,6 +2071,36 @@ return `
     </table>
   </td></tr>
 </table>`.trim();
+    }
+
+    case "orserdu-image-text-block":
+    case "elzonris-image-text-block": {
+      const imageSrc = component.imageTextImageSrc || "";
+      const imageAlt = component.imageTextImageAlt || "";
+      const imageWidth = component.imageTextImageWidth || 167;
+      const outerStyle = component.padding || "0 20px 10px 20px";
+      const verticalAlign = component.imageTextVerticalAlign || "top";
+      const textAlign = component.textAlign || "left";
+      return `
+      <table id="deskDisp" class="mobile-table darkmode deskDisp" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+        <tbody><tr class="deskDisp">
+          <td width="20" height="1" valign="top" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;"></td>
+          <td valign="top" width="100%" style="padding:${outerStyle};">
+            <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tbody><tr>
+                <td valign="${verticalAlign}" align="center" style="padding:0 30px 0 0;">
+                  <img width="${imageWidth}" src="${imageSrc}" alt="${imageAlt}" style="display:block;max-width:100%;height:auto;" />
+                </td>
+                <td width="8" height="1" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:20px;text-align:${textAlign};">
+                  <div>${component.imageTextText1 || ""}</div>
+                </td>
+              </tr></tbody>
+            </table>
+          </td>
+          <td width="20" height="1" valign="top" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;"></td>
+        </tr></tbody>
+      </table>`.trim();
     }
 
     default:

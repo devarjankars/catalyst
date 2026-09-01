@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { House, FileCheck, FileMinus, FileText, LogOut, ChevronRight, ChevronLeft } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
 import Link from "next/link";
 
@@ -18,6 +18,8 @@ export default function SideBar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedBrand = searchParams.get("brand") || "orserdu";
   const { logoutUser } = useLoggedInUserStore();
 
   function handleLogout() {
@@ -73,10 +75,11 @@ export default function SideBar() {
         {menus.map((menu) => {
           const Icon = menu.icon;
           const active = isActive(menu.href);
+          const href = `${menu.href}?brand=${selectedBrand}`;
           return (
             <Link
               key={menu.href}
-              href={menu.href}
+              href={href}
               title={!open ? menu.name : undefined}
               className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
                 active

@@ -10,6 +10,9 @@ import { ShimmerCardGrid } from "@/components/shimmer"
 import { firebaseService } from "@/services/firebase-service"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { useSearchParams } from "next/navigation"
+import type { BrandId } from "@/types/template"
+import { matchesBrand } from "@/lib/brand-filter"
 
 
 export default function ManageTemplates() {
@@ -19,6 +22,8 @@ export default function ManageTemplates() {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedBrand = (searchParams.get("brand") || "orserdu") as BrandId;
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
     open: false,
     template: null,
@@ -30,9 +35,10 @@ export default function ManageTemplates() {
       }, [])
   useEffect(() => {
         handleSearch();
-  }, [templates, searchQuery, selectedCategory])
+  }, [templates, searchQuery, selectedCategory, selectedBrand])
     const handleSearch = () => {
       let temps = [...templates].sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+      temps = temps.filter(t => matchesBrand(t, selectedBrand));
       if (selectedCategory !== "all") {
         temps = temps.filter(t => t.category === selectedCategory)
       }
@@ -59,13 +65,13 @@ export default function ManageTemplates() {
     }
     const handleUseTemplate = async (template: EmailTemplate) => {
     // Navigate to builder with copy flag - template will be loaded but not saved until user saves
-    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true`)
+    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true&brand=${selectedBrand}`)
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
     // Only allow editing of user-created templates (not sample templates)
     if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true`)
+      router.push(`/builder?template=${template.id}&edit=true&brand=${selectedBrand}`)
     } else {
       // For sample templates, create a copy instead
       handleUseTemplate(template)

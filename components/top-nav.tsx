@@ -3,19 +3,14 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
-import { FileCheck, FileMinus, FileText, LogOut, ArrowLeft, ChevronDown, Home, Loader2 } from "lucide-react";
+import { FileText, LogOut, Home, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BrandSelectionModal, type Brand } from "./brand-selection-modal";
 
 const menus = [
   { name: "Home", href: "/", icon: Home },
   { name: "Storyboard Creator", href: "/wsb", icon: FileText },
-];
-
-const groupedMenus = [
-  { name: "Standard Templates", href: "/dashboard/standard-templates", icon: FileCheck },
-  { name: "All Emailers", href: "/dashboard/templates", icon: FileMinus },
-  { name: "VSB PDFs", href: "/dashboard/vsb-pdfs", icon: FileText },
 ];
 
 export default function TopNav() {
@@ -26,6 +21,7 @@ export default function TopNav() {
   const [mlrDialogOpen, setMlrDialogOpen] = useState(false);
   const [mlrDialogStep, setMlrDialogStep] = useState<'idle' | 'connecting' | 'redirecting' | 'success' | 'error'>('idle');
   const [mlrDialogMessage, setMlrDialogMessage] = useState('Preparing the MLR connection...');
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -87,6 +83,11 @@ export default function TopNav() {
     router.replace("/login");
   }
 
+  function handleBrandSelect(brand: Brand) {
+    setBrandModalOpen(false);
+    router.push(`/dashboard?brand=${brand}`);
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
@@ -117,36 +118,16 @@ export default function TopNav() {
             );
           })}
 
-          <div className="group relative">
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard")}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-                isDashboardActive ? "bg-[#BC2030] text-white" : "bg-white text-slate-700 hover:bg-gray-100"
-              }`}
-            >
-              <FileText className="h-4 w-4" />
-              Email Builder
-              <ChevronDown className="h-4 w-4" />
-            </button>
-            <div className="pointer-events-none absolute left-0 z-10 hidden w-50 mt-[1px] rounded-2xl border border-gray-200 bg-white p-2 shadow-lg group-hover:block group-hover:pointer-events-auto">
-              {groupedMenus.map(({ name, href, icon: Icon }) => {
-                const active = isActive(href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition ${
-                      active ? "bg-[#BC2030] text-white" : "text-slate-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setBrandModalOpen(true)}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+              isDashboardActive ? "bg-[#BC2030] text-white" : "text-slate-700 hover:bg-gray-100"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Email Builder
+          </button>
 
           <button
             type="button"
@@ -211,6 +192,12 @@ export default function TopNav() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BrandSelectionModal
+        open={brandModalOpen}
+        onOpenChange={setBrandModalOpen}
+        onSelect={handleBrandSelect}
+      />
     </>
   );
 }

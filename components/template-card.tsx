@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Calendar, Play, Sparkles, Grid, Eye } from "lucide-react"
+import { Edit, Trash2, Calendar, Play, Sparkles, Grid } from "lucide-react"
 import type { EmailTemplate } from "@/types/template"
 import { generateEmailHTML } from "@/lib/email-generator"
 
@@ -15,15 +15,18 @@ interface TemplateCardProps {
   onEdit: () => void
   onDelete: () => void
   onDuplicate: () => void
+  readOnly?: boolean
 }
 
-export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }: TemplateCardProps) {
+export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, readOnly = false }: TemplateCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
 
-  // Standard templates (isUserCreated: false) are view/use only — no edit
+  // Standard templates (isUserCreated: false) are view/use only — no edit or delete
   const isStandard = !template.isUserCreated
+  // Either standard template OR explicitly marked read-only = no edit/delete
+  const isReadOnly = isStandard || readOnly
 
   useEffect(() => {
     if (!previewRef.current) return
@@ -36,14 +39,10 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case "rte":
-        return "bg-blue-100 text-blue-800"
-      case "sfmc":
-        return "bg-green-100 text-green-800"
-      case "unbranded":
-        return "bg-purple-100 text-purple-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+      case "rte":       return "bg-blue-100 text-blue-800"
+      case "sfmc":      return "bg-green-100 text-green-800"
+      case "unbranded": return "bg-purple-100 text-purple-800"
+      default:          return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -105,8 +104,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
 
             {/* Hover action bar */}
             <div className="absolute bottom-0 inset-x-0 flex translate-y-2 items-center justify-center gap-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-              {/* Standard templates: View-only, no Edit */}
-              {!isStandard && (
+              {/* Edit — hidden for standard/read-only templates */}
+              {!isReadOnly && (
                 <Button
                   size="sm"
                   className="bg-white/95 text-gray-800 hover:bg-white hover:text-gray-900 border-0 shadow-md shadow-black/20"
@@ -125,8 +124,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate }:
               </Button>
             </div>
 
-            {/* Delete button — only for user-created templates */}
-            {!isStandard && (
+            {/* Delete — hidden for standard/read-only templates */}
+            {!isReadOnly && (
               <Button
                 size="icon"
                 className="absolute top-2 right-2 rounded-full bg-white/95 text-red-600 shadow-md shadow-black/20 border-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-700"

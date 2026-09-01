@@ -160,6 +160,7 @@ export default function ManageTemplates() {
                                   onEdit={() => handleEditTemplate(template)}
                                   onDelete={() => setDeleteDialog({ open: true, template })}
                                   onDuplicate={() => handleDuplicateTemplate(template)}
+                                  readOnly
                                 />
                               ))) }
                              

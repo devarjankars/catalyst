@@ -28,7 +28,7 @@ export default function DoubleColumnSection({
     selectedComponent
 }: DoubleColumnSectionProps) {
     return (
-        <div className="mt-2 w-full flex gap-2  p-[16px]" 
+        <div className="mt-2 w-full flex gap-2  p-[16px]" data-section-id={sectionId}
         style={{
             flexDirection: direction === "row" ? "row" : "column",
             backgroundColor: component.backgroundColor || "#ffffff"
@@ -51,26 +51,10 @@ export default function DoubleColumnSection({
                         isSelected={selectedComponent === child.id}
                         previewMode={false}
                         isColumn={true}
-                        renderChildren={() => (
-                            <div className="flex flex-col gap-2 p-2">
-                            {(child.children || []).map(
-                                (grandChild, childIndex) => {
-                                if (!grandChild) return null;
-                                return (
-                                <div key={grandChild.id}
-                                    
-                                > 
-                                    {/* {console.log("Rendering grand child", grandChild)} */}
-                                    {renderSectionChild(
-                                    grandChild,
-                                    childIndex,
-                                    child.id,
-                                    )}
-                                </div>
-                                )
-                                }
-                            )}
-                            </div>
+                        renderSectionChild={(grandChild, childIndex, sectionId) => (
+                          <div key={grandChild.id}>
+                            {renderSectionChild(grandChild, childIndex, sectionId)}
+                          </div>
                         )}
                          onAddToSection={(sectionId, newComponent, index) => {
                             // Add component directly to this column

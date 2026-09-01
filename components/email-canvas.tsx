@@ -43,6 +43,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const [dropIndex, setDropIndex] = useState<number | null>(null)
     // Always-current ref — drop handler reads this directly, no stale closure
     const dropIndexRef = useRef<number | null>(null)
+    // Track if we're over a section drop zone to avoid conflicting with canvas drop indicator
+    const overSectionRef = useRef(false)
 
     const setDropIndexBoth = (idx: number | null) => {
       dropIndexRef.current = idx
@@ -50,7 +52,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     }
 
     const computeDropIndex = (clientY: number, canvasEl: HTMLElement): number => {
-      const componentElements = canvasEl.querySelectorAll(":scope > [data-component-id]")
+      const componentElements = canvasEl.querySelectorAll(":scope > [data-component-id], :scope > [data-section-id]")
       let idx = components.length
 
       for (let i = 0; i < componentElements.length; i++) {
@@ -78,11 +80,28 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         if (isLockedMode) return
 
         if (item.fromPalette) {
+          // Check if the drop is over a section drop zone
+          const clientOffset = monitor.getClientOffset()
+          const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
+          if (clientOffset && canvasEl) {
+            const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
+            for (const el of sectionElements) {
+              const rect = el.getBoundingClientRect()
+              if (
+                clientOffset.x >= rect.left &&
+                clientOffset.x <= rect.right &&
+                clientOffset.y >= rect.top &&
+                clientOffset.y <= rect.bottom
+              ) {
+                // Drop is over a section - let the section-drop-zone handle it
+                return { dropZone: "canvas" }
+              }
+            }
+          }
+
           // Re-compute the exact drop index from the final cursor position
           let finalIndex = components.length
 
-          const clientOffset = monitor.getClientOffset()
-          const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
           if (clientOffset && canvasEl) {
             finalIndex = computeDropIndex(clientOffset.y, canvasEl)
           }
@@ -117,6 +136,31 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           clientOffset.y > canvasRect.bottom + 50
         ) {
           setDropIndexBoth(null)
+          overSectionRef.current = false
+          return
+        }
+
+        // Check if cursor is over a section drop zone
+        const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
+        let overSection = false
+        for (const el of sectionElements) {
+          const rect = el.getBoundingClientRect()
+          if (
+            clientOffset.x >= rect.left &&
+            clientOffset.x <= rect.right &&
+            clientOffset.y >= rect.top &&
+            clientOffset.y <= rect.bottom
+          ) {
+            overSection = true
+            break
+          }
+        }
+
+        overSectionRef.current = overSection
+
+        // If over a section, don't update canvas drop index (let section handle it)
+        if (overSection) {
+          setDropIndexBoth(null)
           return
         }
 
@@ -134,22 +178,25 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
     // Clear indicator when drag leaves canvas entirely
     useEffect(() => {
-      if (!isOver) setDropIndexBoth(null)
+      if (!isOver && !overSectionRef.current) setDropIndexBoth(null)
     }, [isOver])
 
     const handleAddToSection = (sectionId: string, component: EmailComponent, index?: number) => {
       const newComponent = { ...component, id: Date.now().toString() }
-      onUpdateComponent(sectionId, {
-        children: components.find((c) => c.id === sectionId)?.children
-          ? index !== undefined
-            ? [
-                ...components.find((c) => c.id === sectionId)!.children!.slice(0, index),
-                newComponent,
-                ...components.find((c) => c.id === sectionId)!.children!.slice(index),
-              ]
-            : [...components.find((c) => c.id === sectionId)!.children!, newComponent]
-          : [newComponent],
-      })
+      
+      // Find the section/column recursively (handles nested columns in multi-column sections)
+      const targetSection = getSectionREcursively(sectionId, components)
+      const currentChildren = targetSection?.children || []
+      
+      const updatedChildren = index !== undefined
+        ? [
+            ...currentChildren.slice(0, index),
+            newComponent,
+            ...currentChildren.slice(index),
+          ]
+        : [...currentChildren, newComponent]
+      
+      onUpdateComponent(sectionId, { children: updatedChildren })
     }
 
     const handleMoveWithinSection = (sectionId: string, dragIndex: number, hoverIndex: number) => {
@@ -215,10 +262,10 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           {components.map((component, index) => {
             if (!component) return null
             return (
-              <div key={component.id || index} className="relative" data-component-id={component.id}>
+              <div key={component.id || index} className="relative mb-2" data-component-id={component.id}>
                 {/* Drop indicator line ABOVE this component */}
                 {dropIndex === index && isOver && !previewMode && (
-                  <div className="pointer-events-none mx-3 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+                  <div className="pointer-events-none mx-3 mb-2 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
                 )}
                 <EmailComponentRenderer
                   component={component}
@@ -247,7 +294,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
           {/* Drop indicator line AFTER last component */}
           {dropIndex === components.length && isOver && !previewMode && (
-            <div className="pointer-events-none mx-3 my-1 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+            <div className="pointer-events-none mx-3 mt-2 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
           )}
 
           {/* Empty canvas hint */}

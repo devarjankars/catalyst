@@ -21,6 +21,7 @@ import { EditorModeDialog } from "@/components/editor-mode-dialog";
 import { toast } from "sonner";
 import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
+import { matchesBrand } from "@/lib/brand-filter";
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -326,12 +327,13 @@ function replaceImagesInComponents(components: any[]): any[] {
   };
 
   const handleBackToDashboard = () => {
+    const dashboardUrl = `/dashboard?brand=${selectedBrand}`;
     if (hasComponentChanges || hasUnsavedTemplate) {
-      setPendingNavigation("/dashboard");
+      setPendingNavigation(dashboardUrl);
       setUnsavedDialog(true);
     } else {
       clearAll();
-      router.push("/dashboard");
+      router.push(dashboardUrl);
     }
   };
 
@@ -457,6 +459,19 @@ function replaceImagesInComponents(components: any[]): any[] {
   ) => {
     setSaving(true);
     try {
+      const normalizedName = name.trim().toLowerCase();
+      const existingTemplates = await firebaseService.getAllTemplates();
+      const duplicate = existingTemplates.some((template) =>
+        template.id !== currentTemplate?.id &&
+        template.name.trim().toLowerCase() === normalizedName &&
+        matchesBrand(template, brand)
+      );
+
+      if (duplicate) {
+        toast.warning(`An emailer named "${name.trim()}" already exists for ${brand}. Please choose a different name.`);
+        return;
+      }
+
       let savedTemplate;
  
       if (isEdit && currentTemplate) {
@@ -498,7 +513,7 @@ function replaceImagesInComponents(components: any[]): any[] {
         setSavedTemplateId(savedTemplate.id);
 
         // Update URL to reflect saved template
-        const newUrl = `/builder?template=${savedTemplate.id}&edit=true`;
+        const newUrl = `/builder?template=${savedTemplate.id}&edit=true&brand=${brand}`;
         window.history.replaceState({}, "", newUrl);
       }
 

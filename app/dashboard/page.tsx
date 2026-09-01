@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon } from "lucide-react"
+import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon, Users } from "lucide-react"
 import { TemplateCard } from "@/components/template-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LoadingSpinner } from "@/components/loading-spinner"
@@ -25,7 +25,8 @@ import Link from "next/link"
 import Tasktable from "@/components/task-table"
 import { useLoggedInUserStore } from "@/store/logged-in-user"
 import dummyTasks from "@/data/dummy-tasks.json"
-import { BRANDS } from "@/components/brand-selection-modal"
+import { BrandSelectionModal, BRANDS, type Brand } from "@/components/brand-selection-modal"
+import { matchesBrand } from "@/lib/brand-filter"
 
 const RecentTemplates = lazy(() => import("@/components/recent-templates"));
 const StandardTemplates = lazy(() => import("@/components/standard-templates"))
@@ -48,6 +49,7 @@ export default function Dashboard() {
   })
   const [showAll, setShowAll] = useState(false);
   const [openCreate , setCreate] = useState(false);
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
  const {clientsFolders} = useClientStore(); 
  const displayedFolders = showAll ? clientsFolders : clientsFolders.slice(0, 6);
 
@@ -71,7 +73,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     filterTemplates();
-  }, [templates, searchQuery, selectedCategory])
+  }, [templates, searchQuery, selectedCategory, selectedBrand])
 
 
   function getFirstNameFromEmail(email : string | null): string {
@@ -102,7 +104,7 @@ export default function Dashboard() {
   
 
   const filterTemplates = () => {
-    let filtered = templates
+    let filtered = templates.filter((template) => matchesBrand(template, selectedBrand))
 
     // Filter by category
     if (selectedCategory !== "all") {
@@ -122,13 +124,19 @@ export default function Dashboard() {
   }
 
   const getCategoryCount = (categoryId: string) => {
-    if (categoryId === "all") return templates.length
-    return templates.filter((template) => template.category === categoryId).length
+    const brandTemplates = templates.filter((template) => matchesBrand(template, selectedBrand))
+    if (categoryId === "all") return brandTemplates.length
+    return brandTemplates.filter((template) => template.category === categoryId).length
   }
 
   const handleCreateBlank = () => {
     router.push(`/builder?selectMode=true&brand=${selectedBrand}`);
   }
+
+  const handleBrandSelect = (brand: Brand) => {
+    setBrandModalOpen(false);
+    router.push(`/dashboard?brand=${brand}`);
+  };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
     router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true&brand=${selectedBrand}`)
@@ -182,7 +190,7 @@ export default function Dashboard() {
     router.push('/dashboard/standard-templates');
   }
   const handleRecentTemps = () => {
-    router.push('/dashboard/templates');
+    router.push(`/dashboard/templates?brand=${selectedBrand}`);
   }
   const handleTaskview = () => {
     router.push('/dashboard/tasks');
@@ -278,6 +286,14 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBrandModalOpen(true)}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <Users className="h-4 w-4" />
+                  Switch Client
+                </button>
                 <button onClick={handleCreateBlank} className="flex items-center gap-2 bg-[#BC2030] text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-black transition-colors">
                   Create New Email
                   <PlusIcon className="w-4 h-4" />
@@ -350,6 +366,11 @@ export default function Dashboard() {
         onCancel={() => setDeleteDialog({ open: false, template: null })}
       />
      <CreateProjectDialog onOpen={openCreate} onClose={() => setCreate(false)}/>
+     <BrandSelectionModal
+       open={brandModalOpen}
+       onOpenChange={setBrandModalOpen}
+       onSelect={handleBrandSelect}
+     />
     </div>
   )
 }
