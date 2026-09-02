@@ -32,9 +32,8 @@ export default function StandardTemplates({
 
     return [...temps]
       .filter(t => !t.isUserCreated)
-      .filter(t => t.brand !== "orserdu")   // Orserdu removed from standard templates
       .filter(t => matchesBrand(t, selectedBrand))
-      .slice(0, 4);
+      .slice(0, 6); // up to 6 (3 per brand × 2 brands)
   }, [temps, selectedBrand]);
 
   return (
@@ -66,7 +65,6 @@ export default function StandardTemplates({
                 onEdit={() => handleEditTemplate(template)}
                 onDelete={() => setDeleteDialog({ open: true, template })}
                 onDuplicate={() => handleDuplicateTemplate(template)}
-                readOnly
               />
             </div>
           ))}

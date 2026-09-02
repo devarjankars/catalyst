@@ -120,7 +120,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
                 onClick={(e) => { e.stopPropagation(); onUse() }}
               >
                 <Play className="w-3.5 h-3.5 mr-1" />
-                {isStandard ? "Use Template" : "Use"}
+                Use Template
               </Button>
             </div>
 
