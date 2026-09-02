@@ -127,10 +127,6 @@ class FirebaseService {
       });
 
       // ── Normalise standard templates ─────────────────────────────────────
-      // 1. Delete any old/legacy non-user-created templates that are NOT in our
-      //    canonical 6 names (removes "Welcome Newsletter", duplicates, etc.)
-      // 2. Deduplicate: keep only the first occurrence of each canonical name.
-      // 3. Seed any that are still missing.
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
@@ -145,7 +141,7 @@ class FirebaseService {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
       }
 
-      // Deduplicate: among canonical ones, keep only the first per name
+      // Deduplicate: keep only the first per canonical name
       const seen = new Set<string>();
       const dupes: EmailTemplate[] = [];
       const canonical: EmailTemplate[] = [];
@@ -155,6 +151,28 @@ class FirebaseService {
       }
       for (const t of dupes) {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
+      }
+
+      // ── Brand correction: fix any standard template whose brand tag is wrong ──
+      // "Orserdu Unbranded" must have brand=orserdu, reset components to blank placeholder
+      // "Elzonris Unbranded" must have brand=elzonris
+      const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
+      for (const t of canonical) {
+        const expected = sampleMap.get(t.name);
+        if (!expected) continue;
+        if ((t as any).brand !== expected.brand) {
+          // Wrong brand — overwrite brand AND reset components to clean placeholder
+          try {
+            await updateDoc(doc(db, this.templatesCollection, t.id), {
+              brand: expected.brand,
+              components: expected.components,
+              updatedAt: new Date(),
+            });
+            // Update in-memory too
+            (t as any).brand = expected.brand;
+            t.components = expected.components;
+          } catch {}
+        }
       }
 
       // Seed missing canonical templates
