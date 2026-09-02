@@ -143,13 +143,7 @@ export default function Dashboard() {
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
-    // Only allow editing of user-created templates (not sample templates)
-    if (template.isUserCreated) {
-      router.push(`/builder?template=${template.id}&edit=true&brand=${selectedBrand}`)
-    } else {
-      // For sample templates, create a copy instead
-      handleUseTemplate(template)
-    }
+    router.push(`/builder?template=${template.id}&edit=true&brand=${selectedBrand}`)
   }
 
   const handleDeleteTemplate = async (template: EmailTemplate) => {

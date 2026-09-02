@@ -25,8 +25,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
 
   // Standard templates (isUserCreated: false) are view/use only — no edit or delete
   const isStandard = !template.isUserCreated
-  // Either standard template OR explicitly marked read-only = no edit/delete
-  const isReadOnly = isStandard || readOnly
+  // Only explicitly marked read-only blocks edit/delete — standard templates are now editable
+  const isReadOnly = readOnly
 
   useEffect(() => {
     if (!previewRef.current) return
