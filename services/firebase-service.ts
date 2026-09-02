@@ -126,16 +126,25 @@ class FirebaseService {
         } as EmailTemplate);
       });
 
-      // Add sample templates if no templates exist
-      if (templates.length === 0) {
-        const sampleTemplates = this.getSampleTemplates();
-        for (const template of sampleTemplates) {
+      // Ensure all 6 brand standard templates exist — seed any that are missing
+      const STANDARD_NAMES = [
+        "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
+        "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
+      ];
+      const existingStandardNames = templates
+        .filter(t => !t.isUserCreated)
+        .map(t => t.name);
+      const missingSamples = this.getSampleTemplates().filter(
+        s => !existingStandardNames.includes(s.name)
+      );
+      if (missingSamples.length > 0) {
+        for (const template of missingSamples) {
           await this.createTemplate(template);
         }
         return this.getAllTemplates();
       }
 
-      return templates.filter((template) => template.standardKey !== "orserdu-rte-mat-us-ela-01578");
+      return templates;
     } catch (error) {
       console.error(
         "Failed to load templates from Firebase, falling back to localStorage:",
@@ -449,6 +458,11 @@ class FirebaseService {
   private async getLocalTemplates(): Promise<EmailTemplate[]> {
     try {
       const stored = localStorage.getItem("email-templates");
+      const STANDARD_NAMES = [
+        "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
+        "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
+      ];
+
       if (!stored) {
         const sampleTemplates = this.getSampleTemplates().map(
           (template, index) => ({
@@ -458,22 +472,35 @@ class FirebaseService {
             updatedAt: new Date(),
           })
         );
-        localStorage.setItem(
-          "email-templates",
-          JSON.stringify(sampleTemplates)
-        );
+        localStorage.setItem("email-templates", JSON.stringify(sampleTemplates));
         return sampleTemplates;
       }
-      const templates = templatesWithDates(JSON.parse(stored));
-      return templates.filter((template: EmailTemplate) => template.standardKey !== "orserdu-rte-mat-us-ela-01578");
-    
+
       function templatesWithDates(items: any[]): EmailTemplate[] {
         return items.map((t: any) => ({
-        ...t,
-        createdAt: new Date(t.createdAt),
-        updatedAt: new Date(t.updatedAt),
+          ...t,
+          createdAt: new Date(t.createdAt),
+          updatedAt: new Date(t.updatedAt),
         }));
       }
+
+      let templates = templatesWithDates(JSON.parse(stored));
+
+      // Seed any missing standard templates
+      const existingNames = templates.filter((t: EmailTemplate) => !t.isUserCreated).map((t: EmailTemplate) => t.name);
+      const missing = this.getSampleTemplates().filter(s => !existingNames.includes(s.name));
+      if (missing.length > 0) {
+        const newOnes = missing.map((t, i) => ({
+          ...t,
+          id: `sample-${Date.now()}-${i}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+        templates = [...templates, ...newOnes];
+        localStorage.setItem("email-templates", JSON.stringify(templates));
+      }
+
+      return templates;
     } catch (error) {
       console.error("Failed to load templates from localStorage:", error);
       return [];
