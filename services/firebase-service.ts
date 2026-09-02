@@ -110,14 +110,6 @@ class FirebaseService {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(data, "dhggfdgfg data fdrom firebase");
-        console.log(
-          "RAW Firestore data:",
-          data.createdAt,
-          data.updatedAt,
-          typeof data.createdAt
-        );
-
         templates.push({
           id: doc.id,
           ...data,
@@ -157,8 +149,8 @@ class FirebaseService {
       // For Elzonris standard templates, copy components from named user emailers
       // if the standard template is still blank (only has 2 placeholder components).
       const ELZONRIS_SEED_MAP: Record<string, string> = {
-        "Elzonris RTE":       "MAT-US-TAG-00227-v2_BPDCN_Skin2 lesions_RTE",
-        "Elzonris Unbranded": "MAT-US-DS-00364_speaker-program-invite-email",
+        "Elzonris RTE":       "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE",
+        "Elzonris Unbranded": "MAT-US-TAG-00334_Speaker-Program-Invite",
         "Elzonris SFMC":      "MAT-US-TAG-00291_v2",
       };
       const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded"]);
@@ -174,11 +166,6 @@ class FirebaseService {
         // For Elzonris standard templates: if still blank (≤2 components), copy from source emailer
         const sourceName = ELZONRIS_SEED_MAP[t.name];
         const isBlank = !t.components || t.components.length <= 2;
-
-        // Debug: log what user templates are available for matching
-        if (sourceName && isBlank) {
-          console.log(`[seed] Looking for "${sourceName}" among:`, templates.map(x => x.name));
-        }
 
         if (wrongBrand || forceReset) {
           // Wrong brand — reset to blank placeholder
