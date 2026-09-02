@@ -126,25 +126,49 @@ class FirebaseService {
         } as EmailTemplate);
       });
 
-      // Ensure all 6 brand standard templates exist — seed any that are missing
-      const STANDARD_NAMES = [
+      // ── Normalise standard templates ─────────────────────────────────────
+      // 1. Delete any old/legacy non-user-created templates that are NOT in our
+      //    canonical 6 names (removes "Welcome Newsletter", duplicates, etc.)
+      // 2. Deduplicate: keep only the first occurrence of each canonical name.
+      // 3. Seed any that are still missing.
+      const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
       ];
-      const existingStandardNames = templates
-        .filter(t => !t.isUserCreated)
-        .map(t => t.name);
-      const missingSamples = this.getSampleTemplates().filter(
-        s => !existingStandardNames.includes(s.name)
-      );
-      if (missingSamples.length > 0) {
-        for (const template of missingSamples) {
+
+      const standardTemplates = templates.filter(t => !t.isUserCreated);
+      const userTemplates      = templates.filter(t => t.isUserCreated);
+
+      // Delete legacy / unknown standard templates
+      const legacyToDelete = standardTemplates.filter(t => !CANONICAL_NAMES.includes(t.name));
+      for (const t of legacyToDelete) {
+        try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
+      }
+
+      // Deduplicate: among canonical ones, keep only the first per name
+      const seen = new Set<string>();
+      const dupes: EmailTemplate[] = [];
+      const canonical: EmailTemplate[] = [];
+      for (const t of standardTemplates.filter(t => CANONICAL_NAMES.includes(t.name))) {
+        if (seen.has(t.name)) { dupes.push(t); }
+        else { seen.add(t.name); canonical.push(t); }
+      }
+      for (const t of dupes) {
+        try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
+      }
+
+      // Seed missing canonical templates
+      const missingNames = CANONICAL_NAMES.filter(n => !seen.has(n));
+      if (missingNames.length > 0 || legacyToDelete.length > 0 || dupes.length > 0) {
+        const toCreate = this.getSampleTemplates().filter(s => missingNames.includes(s.name));
+        for (const template of toCreate) {
           await this.createTemplate(template);
         }
+        // Re-fetch clean state
         return this.getAllTemplates();
       }
 
-      return templates;
+      return [...canonical, ...userTemplates];
     } catch (error) {
       console.error(
         "Failed to load templates from Firebase, falling back to localStorage:",
