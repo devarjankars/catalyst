@@ -154,21 +154,22 @@ class FirebaseService {
       }
 
       // ── Brand correction: fix any standard template whose brand tag is wrong ──
-      // "Orserdu Unbranded" must have brand=orserdu, reset components to blank placeholder
-      // "Elzonris Unbranded" must have brand=elzonris
+      // Also force-reset Elzonris Unbranded to a clean blank placeholder
+      // (removes any accidental content like MAT-US-DS-00364_speaker-program-i)
+      const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded", "Elzonris Unbranded"]);
       const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
       for (const t of canonical) {
         const expected = sampleMap.get(t.name);
         if (!expected) continue;
-        if ((t as any).brand !== expected.brand) {
-          // Wrong brand — overwrite brand AND reset components to clean placeholder
+        const wrongBrand = (t as any).brand !== expected.brand;
+        const needsReset = FORCE_RESET_NAMES.has(t.name);
+        if (wrongBrand || needsReset) {
           try {
             await updateDoc(doc(db, this.templatesCollection, t.id), {
               brand: expected.brand,
               components: expected.components,
               updatedAt: new Date(),
             });
-            // Update in-memory too
             (t as any).brand = expected.brand;
             t.components = expected.components;
           } catch {}
