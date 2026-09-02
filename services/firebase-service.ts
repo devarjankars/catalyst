@@ -153,17 +153,30 @@ class FirebaseService {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
       }
 
-      // ── Brand correction: fix any standard template whose brand tag is wrong ──
-      // Also force-reset Elzonris Unbranded to a clean blank placeholder
-      // (removes any accidental content like MAT-US-DS-00364_speaker-program-i)
-      const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded", "Elzonris Unbranded"]);
+      // ── Brand correction + content seeding from existing user emailers ────
+      // For Elzonris standard templates, copy components from named user emailers
+      // if the standard template is still blank (only has 2 placeholder components).
+      const ELZONRIS_SEED_MAP: Record<string, string> = {
+        "Elzonris RTE":       "MAT-US-TAG-00227-v2_BPDCN_Skin2 lesions_RTE",
+        "Elzonris Unbranded": "MAT-US-DS-00364_speaker-program-invite-email",
+        "Elzonris SFMC":      "MAT-US-TAG-00291_v2",
+      };
+      const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded"]);
       const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
+
       for (const t of canonical) {
         const expected = sampleMap.get(t.name);
         if (!expected) continue;
+
         const wrongBrand = (t as any).brand !== expected.brand;
-        const needsReset = FORCE_RESET_NAMES.has(t.name);
-        if (wrongBrand || needsReset) {
+        const forceReset = FORCE_RESET_NAMES.has(t.name);
+
+        // For Elzonris standard templates: if still blank (≤2 components), copy from source emailer
+        const sourceName = ELZONRIS_SEED_MAP[t.name];
+        const isBlank = !t.components || t.components.length <= 2;
+
+        if (wrongBrand || forceReset) {
+          // Wrong brand — reset to blank placeholder
           try {
             await updateDoc(doc(db, this.templatesCollection, t.id), {
               brand: expected.brand,
@@ -173,6 +186,26 @@ class FirebaseService {
             (t as any).brand = expected.brand;
             t.components = expected.components;
           } catch {}
+        } else if (sourceName && isBlank) {
+          // Still blank — find the source emailer and copy its components
+          const sourceTemplate = templates.find(
+            src => src.name === sourceName || src.name?.trim() === sourceName.trim()
+          );
+          if (sourceTemplate && sourceTemplate.components?.length > 0) {
+            try {
+              await updateDoc(doc(db, this.templatesCollection, t.id), {
+                brand: "elzonris",
+                components: sourceTemplate.components,
+                option2Components: sourceTemplate.option2Components ?? [],
+                option3Components: sourceTemplate.option3Components ?? [],
+                optionMode: sourceTemplate.optionMode ?? "single",
+                preheaderText: sourceTemplate.preheaderText ?? "",
+                updatedAt: new Date(),
+              });
+              t.components = sourceTemplate.components;
+              (t as any).brand = "elzonris";
+            } catch {}
+          }
         }
       }
 
