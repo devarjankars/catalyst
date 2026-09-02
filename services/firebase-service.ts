@@ -175,6 +175,11 @@ class FirebaseService {
         const sourceName = ELZONRIS_SEED_MAP[t.name];
         const isBlank = !t.components || t.components.length <= 2;
 
+        // Debug: log what user templates are available for matching
+        if (sourceName && isBlank) {
+          console.log(`[seed] Looking for "${sourceName}" among:`, templates.map(x => x.name));
+        }
+
         if (wrongBrand || forceReset) {
           // Wrong brand — reset to blank placeholder
           try {
@@ -187,10 +192,12 @@ class FirebaseService {
             t.components = expected.components;
           } catch {}
         } else if (sourceName && isBlank) {
-          // Still blank — find the source emailer and copy its components
-          const sourceTemplate = templates.find(
-            src => src.name === sourceName || src.name?.trim() === sourceName.trim()
-          );
+          // Still blank — find the source emailer using partial name match (case-insensitive)
+          const sourceTemplate = templates.find(src => {
+            const srcName = (src.name ?? "").toLowerCase().trim();
+            const needle  = sourceName.toLowerCase().trim();
+            return srcName === needle || srcName.includes(needle) || needle.includes(srcName);
+          });
           if (sourceTemplate && sourceTemplate.components?.length > 0) {
             try {
               await updateDoc(doc(db, this.templatesCollection, t.id), {
