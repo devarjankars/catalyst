@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { generateEmailHTML } from '@/lib/email-generator';
-import { generateCombinedPdfAction } from '@/app/actions';
+import { generateVSBPdfClientSide, screenshotEmailHtml } from '@/lib/pdf-client';
 import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
@@ -75,22 +75,14 @@ export default function VSBPage() {
   }) => {
     if (!currentVsb) throw new Error('No VSB selected');
 
-    const headerDetails = currentVsb?.headerDetails || [];
-    const emailName = currentTemplate?.name || 'Template';
-
+    const emailName  = currentTemplate?.name || 'Template';
     const includeVC  = options ? options.variableCopy : true;
     const includeDV  = options ? options.desktopView  : true;
     const includeMV  = options ? options.mobileView   : true;
     const includeANP = options ? options.altNamePage  : true;
 
-    const variableCopyData = includeVC
-      ? { data: currentVsb.variableCopy, emailname: emailName, headingColor: currentVsb.variableCopyHeadingColor }
-      : undefined;
-    const altNameData = includeANP
-      ? { data: currentVsb.altNamePage, emailName }
-      : undefined;
-
     const isThreeMode = currentTemplate?.optionMode === 'three';
+    const headerDetails = currentVsb?.headerDetails || [];
 
     const optArray = isThreeMode
       ? [
@@ -100,103 +92,85 @@ export default function VSBPage() {
         ]
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
+    // Build header HTML block (injected into each email preview)
     const makeHeaderHtml = (label: string) => `
-      <div style="background-color:#fff;padding-top:10px;padding-bottom:20px;">
-        <div style="margin-left:20px;width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;color:black;font-weight:bold;">${label}</div>
-        <div style="border-top:1px solid #000;">
-          <div style="margin-left:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;padding-top:20px;">
-            ${headerDetails.map(d => `<div style="margin-bottom:2px;"><span style="font-weight:bold;">${d.name}: </span><span style="color:${d.value.includes('[') ? '#FF66CC' : 'black'};">${d.value}</span></div>`).join('')}
-          </div>
+      <div style="background-color:#fff;padding:10px 20px 20px 20px;">
+        <div style="width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;font-weight:bold;">${label}</div>
+        <div style="border-top:1px solid #000;padding-top:16px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;">
+          ${headerDetails.map(d => `<div style="margin-bottom:2px;"><b>${d.name}: </b><span style="color:${d.value.includes('[') ? '#FF66CC' : 'black'};">${d.value}</span></div>`).join('')}
         </div>
       </div>`;
 
-    const injectHeader = (rawHtml: string, headerHtml: string) => {
-      const idx = rawHtml.indexOf('</div>');
-      return idx !== -1 ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6) : rawHtml;
+    const injectHeader = (raw: string, hdr: string) => {
+      const idx = raw.indexOf('</div>');
+      return idx !== -1 ? raw.slice(0, idx + 6) + hdr + raw.slice(idx + 6) : raw;
     };
 
-    const desktopHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      return injectHeader(raw.replace(/<body([^>]*)>/i, '<body$1 style="margin:0;padding:0;width:600px;">'), makeHeaderHtml(`Desktop View - ${opt.title}`));
-    });
+    const buildHtml = (comps: any[], w: number, label: string) => {
+      const raw = generateEmailHTML(comps, currentTemplate?.preheaderText || '');
+      return injectHeader(
+        raw.replace(/<body([^>]*)>/i, `<body$1 style="margin:0;padding:0;width:${w}px;">`),
+        makeHeaderHtml(label),
+      );
+    };
 
-    const mobileHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      return injectHeader(raw.replace(/<body([^>]*)>/i, '<body$1 style="margin:0;padding:0;width:375px;">'), makeHeaderHtml(`Mobile View - ${opt.title}`));
-    });
+    // ── Build PDF sections ─────────────────────────────────────────────────
+    const sections: import('@/lib/pdf-client').PdfSection[] = [];
 
-    // ── Screenshot: render HTML in a hidden iframe then capture via html2canvas ──
-    const screenshotHtml = async (html: string, width: number): Promise<string> => {
-      return new Promise((resolve) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${width}px;height:2px;border:none;`;
-        document.body.appendChild(iframe);
-        iframe.onload = async () => {
-          try {
-            await new Promise(r => setTimeout(r, 800));
-            const doc = iframe.contentDocument || iframe.contentWindow?.document;
-            if (!doc?.body) { resolve(''); return; }
-            doc.body.style.margin = '0';
-            doc.body.style.padding = '0';
-            doc.body.style.width = `${width}px`;
-            const h2c = (await import('html2canvas')).default;
-            const canvas = await h2c(doc.body, {
-              useCORS: true, allowTaint: true,
-              scale: 1,           // scale 1 = smallest file size
-              width, scrollX: 0, scrollY: 0,
-              windowWidth: width, windowHeight: 9999,
-              backgroundColor: '#ffffff',
-            });
-            // JPEG at 0.7 quality — typically 200-500KB vs 3-5MB for PNG
-            resolve(canvas.toDataURL('image/jpeg', 0.7));
-          } catch (e) {
-            console.error('Screenshot failed:', e);
-            resolve('');
-          } finally {
-            document.body.removeChild(iframe);
-          }
-        };
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (doc) { doc.open(); doc.write(html); doc.close(); }
+    // Variable Copy
+    if (includeVC) {
+      sections.push({
+        type: 'variableCopy',
+        variableCopyData: {
+          data: currentVsb.variableCopy,
+          emailname: emailName,
+          headingColor: currentVsb.variableCopyHeadingColor,
+        },
       });
-    };
+    }
 
-    // Capture screenshots
-    let desktopImageBase64: string | undefined;
-    let mobileImageBase64: string | undefined;
-    let desktopImagesBase64: string[] | undefined;
-    let mobileImagesBase64: string[] | undefined;
+    // Alt Name Page
+    if (includeANP) {
+      sections.push({
+        type: 'altName',
+        altNameData: { data: currentVsb.altNamePage, emailName },
+      });
+    }
 
+    // Desktop screenshots
     if (includeDV) {
-      if (isThreeMode) {
-        desktopImagesBase64 = await Promise.all(desktopHtmls.map(h => screenshotHtml(h, 600)));
-      } else {
-        desktopImageBase64 = await screenshotHtml(desktopHtmls[0], 600);
-      }
-    }
-    if (includeMV) {
-      if (isThreeMode) {
-        mobileImagesBase64 = await Promise.all(mobileHtmls.map(h => screenshotHtml(h, 375)));
-      } else {
-        mobileImageBase64 = await screenshotHtml(mobileHtmls[0], 375);
+      for (const opt of optArray) {
+        const html  = buildHtml(opt.components, 600, `Desktop View — ${opt.title}`);
+        const image = await screenshotEmailHtml(html, 600, 0.88);
+        if (image) {
+          sections.push({
+            type: 'emailImage',
+            imageBase64: image,
+            label: `Desktop View${isThreeMode ? ` — ${opt.title}` : ''}`,
+            isMobile: false,
+          });
+        }
       }
     }
 
-    const base64Merged = await generateCombinedPdfAction({
-      desktopImageBase64:  desktopImageBase64,
-      desktopImagesBase64: desktopImagesBase64,
-      mobileImageBase64:   mobileImageBase64,
-      mobileImagesBase64:  mobileImagesBase64,
-      variableCopyData,
-      altNameData,
-      emailName,
-    } as any);
-    const byteCharacters = atob(base64Merged);
-    const byteNumbers    = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    // Mobile screenshots
+    if (includeMV) {
+      for (const opt of optArray) {
+        const html  = buildHtml(opt.components, 375, `Mobile View — ${opt.title}`);
+        const image = await screenshotEmailHtml(html, 375, 0.88);
+        if (image) {
+          sections.push({
+            type: 'emailImage',
+            imageBase64: image,
+            label: `Mobile View${isThreeMode ? ` — ${opt.title}` : ''}`,
+            isMobile: true,
+          });
+        }
+      }
     }
-    return new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+
+    // ── Generate PDF entirely in the browser ──────────────────────────────
+    return generateVSBPdfClientSide({ emailName, sections });
   };
 
   const executeDownloadPDF = async (options?: {
