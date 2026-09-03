@@ -133,21 +133,22 @@ export default function VSBPage() {
         document.body.appendChild(iframe);
         iframe.onload = async () => {
           try {
-            await new Promise(r => setTimeout(r, 800)); // let images load
+            await new Promise(r => setTimeout(r, 800));
             const doc = iframe.contentDocument || iframe.contentWindow?.document;
             if (!doc?.body) { resolve(''); return; }
-            // Set body to exact email width so nothing wraps
             doc.body.style.margin = '0';
             doc.body.style.padding = '0';
             doc.body.style.width = `${width}px`;
             const h2c = (await import('html2canvas')).default;
             const canvas = await h2c(doc.body, {
-              useCORS: true, allowTaint: true, scale: 2,
+              useCORS: true, allowTaint: true,
+              scale: 1,           // scale 1 = smallest file size
               width, scrollX: 0, scrollY: 0,
               windowWidth: width, windowHeight: 9999,
               backgroundColor: '#ffffff',
             });
-            resolve(canvas.toDataURL('image/png', 0.92));
+            // JPEG at 0.7 quality — typically 200-500KB vs 3-5MB for PNG
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
           } catch (e) {
             console.error('Screenshot failed:', e);
             resolve('');

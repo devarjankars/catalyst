@@ -14,7 +14,7 @@ const nextConfig = {
   experimental: {
     missingSuspenseWithCSRBailout: false,
     serverActions: {
-      bodySizeLimit: '15mb',
+      bodySizeLimit: '50mb',
     },
   },
   webpack(config, { isServer, dev }) {
