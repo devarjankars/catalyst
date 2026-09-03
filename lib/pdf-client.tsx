@@ -239,15 +239,11 @@ export async function generateVSBPdfClientSide(params: {
     const pad    = 16;
     const imgW   = pageW - pad * 2;
     const hdrH   = 32;
-    // Convert pixel height (at scale 2) to PDF points (72dpi): pixels/2 * 72/96 * scaling
-    // Simpler: pts ≈ imgHeight / 2 * 0.75 → but we just use the rendered width ratio
-    // imgW pts / (width * 2 px) * imageHeight px = exact height in pts
-    const imgPtH = (imgW / (pageW * 2)) * imageHeight; // rough but accurate ratio
-    const pageH  = Math.ceil(hdrH + imgPtH + pad + 16); // header + image + bottom margin
+    const imgPtH = (imgW / (pageW * 2)) * imageHeight;
+    const pageH  = Math.ceil(hdrH + imgPtH + pad + 16);
 
     return (
       <Page size={[pageW, pageH]} style={{ padding: 0, backgroundColor: '#f3f4f6' }}>
-        {/* Compact header bar */}
         <View style={{
           backgroundColor: '#1a1a2e',
           paddingTop: 7, paddingBottom: 7,
@@ -259,7 +255,6 @@ export async function generateVSBPdfClientSide(params: {
           <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#ffffff', maxWidth: '70%' }}>{title}</Text>
           <Text style={{ fontSize: 7, color: '#aaaaaa' }}>{label}</Text>
         </View>
-        {/* Email fills full page width */}
         <View style={{ backgroundColor: '#fff', marginHorizontal: pad, marginTop: 8 }}>
           <Image src={imageBase64} style={{ width: imgW }} />
         </View>
@@ -267,26 +262,94 @@ export async function generateVSBPdfClientSide(params: {
     );
   };
 
-  // ── Assemble document ─────────────────────────────────────────────────────
+  // Render multiple email options SIDE BY SIDE on one wide page (like the reference PDF)
+  const renderEmailImagesSideBySide = (
+    images: Array<{ base64: string; label: string; height: number }>,
+    title: string,
+    isMobile = false
+  ) => {
+    if (images.length === 0) return null;
+    if (images.length === 1) return renderEmailImage(images[0].base64, title, images[0].label, isMobile, images[0].height);
 
-  const pages = params.sections.map((section, i) => {
-    switch (section.type) {
-      case 'variableCopy':
-        return renderVariableCopy(
-          section.variableCopyData?.data ?? [],
-          section.variableCopyData?.emailname ?? params.emailName,
-          section.variableCopyData?.headingColor,
-        );
-      case 'altName':
-        return renderAltName(section.altNameData?.data, section.altNameData?.emailName ?? params.emailName);
-      case 'emailImage':
-        return section.imageBase64
-          ? renderEmailImage(section.imageBase64, params.emailName, section.label ?? '', section.isMobile, section.imageHeight ?? 800)
-          : null;
-      default:
-        return null;
-    }
-  }).filter(Boolean);
+    // For 3 options side-by-side: each column = (A4_width - margins) / 3
+    const colCount  = images.length;
+    const pad       = 12;
+    const colGap    = 8;
+    const singleW   = isMobile ? 375 : 600;
+    // Page width = sum of all email widths proportionally scaled to fit A4+
+    // Each column in PDF points: scale each column to fit on a wide page
+    const colPtW    = isMobile ? 130 : 175;  // pts per column
+    const pageW     = colCount * colPtW + (colCount - 1) * colGap + pad * 2;
+    // Page height: scale the tallest image
+    const maxH      = Math.max(...images.map(i => i.height));
+    const imgPtH    = (colPtW / (singleW * 2)) * maxH;
+    const hdrH      = 28;
+    const pageH     = Math.ceil(hdrH + imgPtH + pad + 12);
+
+    return (
+      <Page size={[pageW, pageH]} style={{ padding: 0, backgroundColor: '#f3f4f6' }}>
+        {/* Header spanning full width */}
+        <View style={{
+          backgroundColor: '#1a1a2e',
+          paddingTop: 6, paddingBottom: 6,
+          paddingLeft: pad, paddingRight: pad,
+          flexDirection: 'row', alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#ffffff' }}>
+            {title} — {isMobile ? 'Mobile View' : 'Desktop View'}
+          </Text>
+        </View>
+        {/* Side-by-side columns */}
+        <View style={{ flexDirection: 'row', paddingHorizontal: pad, paddingTop: 8, gap: colGap }}>
+          {images.map((img, i) => (
+            <View key={i} style={{ width: colPtW }}>
+              {/* Option label */}
+              <Text style={{ fontSize: 6, color: '#555', marginBottom: 4, textAlign: 'center' }}>
+                {img.label}
+              </Text>
+              <View style={{ backgroundColor: '#fff' }}>
+                <Image src={img.base64} style={{ width: colPtW }} />
+              </View>
+            </View>
+          ))}
+        </View>
+      </Page>
+    );
+  };
+
+  // ── Assemble document ─────────────────────────────────────────────────────
+  // Group email image sections by view type (desktop/mobile) for side-by-side rendering
+  const desktopImages = params.sections
+    .filter(s => s.type === 'emailImage' && !s.isMobile && s.imageBase64)
+    .map(s => ({ base64: s.imageBase64!, label: s.label ?? '', height: s.imageHeight ?? 800 }));
+
+  const mobileImages = params.sections
+    .filter(s => s.type === 'emailImage' && s.isMobile && s.imageBase64)
+    .map(s => ({ base64: s.imageBase64!, label: s.label ?? '', height: s.imageHeight ?? 800 }));
+
+  const otherSections = params.sections.filter(s => s.type !== 'emailImage');
+
+  const pages = [
+    // Variable copy + alt-name first
+    ...otherSections.map((section, i) => {
+      switch (section.type) {
+        case 'variableCopy':
+          return renderVariableCopy(
+            section.variableCopyData?.data ?? [],
+            section.variableCopyData?.emailname ?? params.emailName,
+            section.variableCopyData?.headingColor,
+          );
+        case 'altName':
+          return renderAltName(section.altNameData?.data, section.altNameData?.emailName ?? params.emailName);
+        default:
+          return null;
+      }
+    }),
+    // Desktop: all options on one page (side by side)
+    desktopImages.length > 0 ? renderEmailImagesSideBySide(desktopImages, params.emailName, false) : null,
+    // Mobile: all options on one page (side by side)
+    mobileImages.length > 0 ? renderEmailImagesSideBySide(mobileImages, params.emailName, true) : null,
+  ].filter(Boolean);
 
   const doc = <Document>{pages}</Document>;
   const blob = await pdf(doc).toBlob();

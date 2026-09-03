@@ -117,7 +117,7 @@ export default function VSBPage() {
     // ── Build PDF sections ─────────────────────────────────────────────────
     const sections: import('@/lib/pdf-client').PdfSection[] = [];
 
-    // Variable Copy
+    // 1. Variable Copy
     if (includeVC) {
       sections.push({
         type: 'variableCopy',
@@ -129,15 +129,7 @@ export default function VSBPage() {
       });
     }
 
-    // Alt Name Page
-    if (includeANP) {
-      sections.push({
-        type: 'altName',
-        altNameData: { data: currentVsb.altNamePage, emailName },
-      });
-    }
-
-    // Desktop screenshots
+    // 2. Desktop screenshots (all options)
     if (includeDV) {
       for (const opt of optArray) {
         const html  = buildHtml(opt.components, 600, `Desktop View — ${opt.title}`);
@@ -147,14 +139,14 @@ export default function VSBPage() {
             type: 'emailImage',
             imageBase64: base64,
             imageHeight: height,
-            label: `Desktop View${isThreeMode ? ` — ${opt.title}` : ''}`,
+            label: `Desktop View — ${opt.title}`,
             isMobile: false,
           });
         }
       }
     }
 
-    // Mobile screenshots
+    // 3. Mobile screenshots (all options)
     if (includeMV) {
       for (const opt of optArray) {
         const html  = buildHtml(opt.components, 375, `Mobile View — ${opt.title}`);
@@ -164,11 +156,19 @@ export default function VSBPage() {
             type: 'emailImage',
             imageBase64: base64,
             imageHeight: height,
-            label: `Mobile View${isThreeMode ? ` — ${opt.title}` : ''}`,
+            label: `Mobile View — ${opt.title}`,
             isMobile: true,
           });
         }
       }
+    }
+
+    // 4. Alt Name Page (last)
+    if (includeANP) {
+      sections.push({
+        type: 'altName',
+        altNameData: { data: currentVsb.altNamePage, emailName },
+      });
     }
 
     // ── Generate PDF entirely in the browser ──────────────────────────────
