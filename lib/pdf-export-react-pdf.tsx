@@ -376,17 +376,7 @@ function AltNamePageSection({ data, emailName }: { data: { images: AltNameImage[
   )
 }
 
-function EmailHTMLPreview({ html, title, width }: { html: string; title: string; width: string }) {
-  return (
-    <View style={styles.page}>
-      <Text style={styles.emailNameTitle}>{title}</Text>
-      <Text style={styles.previewLabel}>HTML Preview - {width}</Text>
-      <View style={{ borderWidth: 1, borderColor: '#ddd', borderStyle: 'solid', padding: 10, backgroundColor: '#f9f9f9', fontFamily: 'Courier', fontSize: 7 }}>
-        <Text>{html.substring(0, 3000)}...</Text>
-      </View>
-    </View>
-  )
-}
+// ─── Utility stubs kept for backward compat (no longer used in PDF rendering) ─
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   return new Promise((resolve) => {
@@ -425,27 +415,39 @@ async function inlineImagesInHtml(html: string, baseUrl: string): Promise<string
 }
 
 export async function generateCombinedPdfReactPdf(params: {
-  emailHtmlDesktop?: string
-  emailHtmlMobile?: string
-  emailHtmlsMobile?: string[]
+  // Screenshot images (base64 PNG) — captured client-side via html2canvas
+  desktopImageBase64?:  string;
+  desktopImagesBase64?: string[];
+  mobileImageBase64?:   string;
+  mobileImagesBase64?:  string[];
   variableCopyData?: { data: VariableSection[]; emailname: string; headingColor?: string }
   altNameData?: { data: { images: AltNameImage[]; headingColor?: string } | AltNameImage[]; emailName?: string }
   emailName: string
   desktopWidthOverride?: string
   mobileWidthOverride?: string
 }): Promise<Buffer> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
 
-  let desktopHtml = params.emailHtmlDesktop
-  let mobileHtml = params.emailHtmlMobile
-  let mobileHtmls = params.emailHtmlsMobile
-
-  if (desktopHtml) desktopHtml = await inlineImagesInHtml(desktopHtml, baseUrl)
-  if (mobileHtml) mobileHtml = await inlineImagesInHtml(mobileHtml, baseUrl)
-  if (mobileHtmls) mobileHtmls = await Promise.all(mobileHtmls.map(h => inlineImagesInHtml(h, baseUrl)))
-
-  const bracketLeft = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_left.png`)
-  const bracketRight = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_right.png`)
+  // ── Helper: render a single email image page ──────────────────────────────
+  const EmailImagePage = ({
+    imageBase64,
+    title,
+    label,
+  }: {
+    imageBase64: string;
+    title: string;
+    label: string;
+  }) => (
+    <Page size="A4" style={styles.page}>
+      <View style={{ marginBottom: 8 }}>
+        <Text style={styles.emailNameTitle}>{title}</Text>
+        <Text style={styles.previewLabel}>{label}</Text>
+      </View>
+      <Image
+        src={imageBase64}
+        style={{ width: '100%', objectFit: 'contain' }}
+      />
+    </Page>
+  );
 
   const doc = (
     <Document>
@@ -463,24 +465,42 @@ export async function generateCombinedPdfReactPdf(params: {
           <AltNamePageSection data={params.altNameData.data} emailName={params.altNameData.emailName} />
         </Page>
       )}
-      {desktopHtml && (
-        <Page size={[params.desktopWidthOverride ? parseInt(params.desktopWidthOverride) : 600, 1684]} style={styles.pageWide}>
-          <EmailHTMLPreview
-            html={desktopHtml}
-            title={params.emailName}
-            width={params.desktopWidthOverride || '600px'}
-          />
-        </Page>
+
+      {/* Desktop view — single */}
+      {params.desktopImageBase64 && (
+        <EmailImagePage
+          imageBase64={params.desktopImageBase64}
+          title={params.emailName}
+          label="Desktop View"
+        />
       )}
-      {(mobileHtml || (mobileHtmls && mobileHtmls.length > 0)) && (
-        <Page size={[params.mobileWidthOverride ? parseInt(params.mobileWidthOverride) : 375, 1684]} style={styles.pageWide}>
-          <EmailHTMLPreview
-            html={mobileHtmls && mobileHtmls.length > 1 ? mobileHtmls.join('\n\n---\n\n') : (mobileHtml || mobileHtmls?.[0] || '')}
-            title={params.emailName}
-            width={params.mobileWidthOverride || (mobileHtmls && mobileHtmls.length > 1 ? '1200px (3 options)' : '375px')}
-          />
-        </Page>
+      {/* Desktop view — three options */}
+      {params.desktopImagesBase64?.map((img, i) => img ? (
+        <EmailImagePage
+          key={`desk-${i}`}
+          imageBase64={img}
+          title={params.emailName}
+          label={`Desktop View — Option ${i + 1}`}
+        />
+      ) : null)}
+
+      {/* Mobile view — single */}
+      {params.mobileImageBase64 && (
+        <EmailImagePage
+          imageBase64={params.mobileImageBase64}
+          title={params.emailName}
+          label="Mobile View"
+        />
       )}
+      {/* Mobile view — three options */}
+      {params.mobileImagesBase64?.map((img, i) => img ? (
+        <EmailImagePage
+          key={`mob-${i}`}
+          imageBase64={img}
+          title={params.emailName}
+          label={`Mobile View — Option ${i + 1}`}
+        />
+      ) : null)}
     </Document>
   )
 

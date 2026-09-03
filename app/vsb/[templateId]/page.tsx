@@ -74,7 +74,7 @@ export default function VSBPage() {
     altNamePage:  boolean;
   }) => {
     if (!currentVsb) throw new Error('No VSB selected');
-    
+
     const headerDetails = currentVsb?.headerDetails || [];
     const emailName = currentTemplate?.name || 'Template';
 
@@ -101,71 +101,90 @@ export default function VSBPage() {
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
     const makeHeaderHtml = (label: string) => `
-      <div style="background-color:#fff; padding-top:10px; padding-bottom:20px;">
-        <div style="margin-left:20px; width:fit-content; border:1px solid #000; padding:5px;
-                    margin-bottom:10px; font-size:13px; color:black; font-weight:bold;">
-          ${label}
-        </div>
+      <div style="background-color:#fff;padding-top:10px;padding-bottom:20px;">
+        <div style="margin-left:20px;width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;color:black;font-weight:bold;">${label}</div>
         <div style="border-top:1px solid #000;">
-          <div style="margin-left:20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px;">
-            ${headerDetails.map(detail => `
-              <div style="margin-bottom:2px;">
-                <span style="font-weight:bold; color:black;">${detail.name}: </span>
-                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
-                  ${detail.value}
-                </span>
-              </div>
-            `).join('')}
+          <div style="margin-left:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;padding-top:20px;">
+            ${headerDetails.map(d => `<div style="margin-bottom:2px;"><span style="font-weight:bold;">${d.name}: </span><span style="color:${d.value.includes('[') ? '#FF66CC' : 'black'};">${d.value}</span></div>`).join('')}
           </div>
         </div>
       </div>`;
 
     const injectHeader = (rawHtml: string, headerHtml: string) => {
       const idx = rawHtml.indexOf('</div>');
-      return idx !== -1
-        ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6)
-        : rawHtml;
+      return idx !== -1 ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6) : rawHtml;
     };
 
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      // Inject body margin reset so email fills the 600px viewport edge-to-edge
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:600px;">'
-      );
-      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
+      return injectHeader(raw.replace(/<body([^>]*)>/i, '<body$1 style="margin:0;padding:0;width:600px;">'), makeHeaderHtml(`Desktop View - ${opt.title}`));
     });
 
     const mobileHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:375px;">'
-      );
-      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
+      return injectHeader(raw.replace(/<body([^>]*)>/i, '<body$1 style="margin:0;padding:0;width:375px;">'), makeHeaderHtml(`Mobile View - ${opt.title}`));
     });
 
-    const desktopFinalHtml = isThreeMode
-      ? `<div style="display:flex; gap:20px; align-items:flex-start; justify-content:center;
-                     width:100%; min-width:1900px; background-color:#f3f4f6; padding:20px;">
-          ${desktopHtmls.map(html =>
-            `<div style="flex:1; min-width:600px; max-width:600px; background-color:#fff;
-                         box-shadow:0 4px 6px -1px rgb(0 0 0/0.1);">${html}</div>`
-          ).join('')}
-         </div>`
-      : desktopHtmls[0];
+    // ── Screenshot: render HTML in a hidden iframe then capture via html2canvas ──
+    const screenshotHtml = async (html: string, width: number): Promise<string> => {
+      return new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${width}px;height:2px;border:none;`;
+        document.body.appendChild(iframe);
+        iframe.onload = async () => {
+          try {
+            await new Promise(r => setTimeout(r, 800)); // let images load
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!doc?.body) { resolve(''); return; }
+            const h2c = (await import('html2canvas')).default;
+            const canvas = await h2c(doc.body, {
+              useCORS: true, allowTaint: true, scale: 1.5,
+              width, scrollX: 0, scrollY: 0, windowWidth: width,
+              backgroundColor: '#ffffff',
+            });
+            resolve(canvas.toDataURL('image/png'));
+          } catch (e) {
+            console.error('Screenshot failed:', e);
+            resolve('');
+          } finally {
+            document.body.removeChild(iframe);
+          }
+        };
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc) { doc.open(); doc.write(html); doc.close(); }
+      });
+    };
+
+    // Capture screenshots
+    let desktopImageBase64: string | undefined;
+    let mobileImageBase64: string | undefined;
+    let desktopImagesBase64: string[] | undefined;
+    let mobileImagesBase64: string[] | undefined;
+
+    if (includeDV) {
+      if (isThreeMode) {
+        desktopImagesBase64 = await Promise.all(desktopHtmls.map(h => screenshotHtml(h, 600)));
+      } else {
+        desktopImageBase64 = await screenshotHtml(desktopHtmls[0], 600);
+      }
+    }
+    if (includeMV) {
+      if (isThreeMode) {
+        mobileImagesBase64 = await Promise.all(mobileHtmls.map(h => screenshotHtml(h, 375)));
+      } else {
+        mobileImageBase64 = await screenshotHtml(mobileHtmls[0], 375);
+      }
+    }
 
     const base64Merged = await generateCombinedPdfAction({
-      emailHtmlDesktop:  includeDV ? desktopFinalHtml         : undefined,
-      emailHtmlsMobile:  includeMV && isThreeMode ? mobileHtmls : undefined,
-      emailHtmlMobile:   includeMV && !isThreeMode ? mobileHtmls[0] : undefined,
+      desktopImageBase64:  desktopImageBase64,
+      desktopImagesBase64: desktopImagesBase64,
+      mobileImageBase64:   mobileImageBase64,
+      mobileImagesBase64:  mobileImagesBase64,
       variableCopyData,
       altNameData,
       emailName,
-      desktopWidthOverride: isThreeMode ? '1900px' : undefined,
-    });
-
+    } as any);
     const byteCharacters = atob(base64Merged);
     const byteNumbers    = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
