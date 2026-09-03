@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { generateEmailHTML } from '@/lib/email-generator';
-import { generateCombinedPdfAction } from '@/app/actions';
+import { generateVsbPdfBlob, buildVariableCopyHtml, buildAltNameHtml, type VsbPdfPageSpec } from '@/lib/vsb-pdf-export';
 import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
@@ -83,12 +83,14 @@ export default function VSBPage() {
     const includeMV  = options ? options.mobileView   : true;
     const includeANP = options ? options.altNamePage  : true;
 
-    const variableCopyData = includeVC
-      ? { data: currentVsb.variableCopy, emailname: emailName, headingColor: currentVsb.variableCopyHeadingColor }
-      : undefined;
-    const altNameData = includeANP
-      ? { data: currentVsb.altNamePage, emailName }
-      : undefined;
+    const pages: VsbPdfPageSpec[] = [];
+
+    if (includeVC) {
+      pages.push({
+        html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor),
+        width: 600,
+      });
+    }
 
     const isThreeMode = currentTemplate?.optionMode === 'three';
 
@@ -146,32 +148,40 @@ export default function VSBPage() {
       return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
     });
 
-    const desktopFinalHtml = isThreeMode
-      ? `<div style="display:flex; gap:20px; align-items:flex-start; justify-content:center;
-                     width:100%; min-width:1900px; background-color:#f3f4f6; padding:20px;">
-          ${desktopHtmls.map(html =>
-            `<div style="flex:1; min-width:600px; max-width:600px; background-color:#fff;
-                         box-shadow:0 4px 6px -1px rgb(0 0 0/0.1);">${html}</div>`
-          ).join('')}
-         </div>`
-      : desktopHtmls[0];
-
-    const base64Merged = await generateCombinedPdfAction({
-      emailHtmlDesktop:  includeDV ? desktopFinalHtml         : undefined,
-      emailHtmlsMobile:  includeMV && isThreeMode ? mobileHtmls : undefined,
-      emailHtmlMobile:   includeMV && !isThreeMode ? mobileHtmls[0] : undefined,
-      variableCopyData,
-      altNameData,
-      emailName,
-      desktopWidthOverride: isThreeMode ? '1900px' : undefined,
-    });
-
-    const byteCharacters = atob(base64Merged);
-    const byteNumbers    = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    if (includeDV) {
+      if (isThreeMode) {
+        pages.push({
+          columns: desktopHtmls.map(html => ({ html, width: 600 })),
+          gap: 20,
+          pageWidth: 1900,
+        });
+      } else {
+        pages.push({ html: desktopHtmls[0], width: 600 });
+      }
     }
-    return new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+
+    if (includeMV) {
+      if (isThreeMode) {
+        pages.push({
+          columns: mobileHtmls.map(html => ({ html, width: 375 })),
+          gap: 20,
+          pageWidth: 1235,
+        });
+      } else {
+        pages.push({ html: mobileHtmls[0], width: 375 });
+      }
+    }
+
+    if (includeANP) {
+      pages.push({
+        html: buildAltNameHtml(currentVsb.altNamePage, emailName),
+        width: 600,
+      });
+    }
+
+    if (pages.length === 0) throw new Error('No pages selected for PDF generation');
+
+    return generateVsbPdfBlob(pages);
   };
 
   const executeDownloadPDF = async (options?: {
@@ -265,7 +275,7 @@ export default function VSBPage() {
       variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
-        { name: 'To', value: '[HCP’s email address]' },
+        { name: 'To', value: '[HCPâ€™s email address]' },
         { name: 'From', value: '[Variable From]' },
         { name: 'Friendly From', value: 'Stemline Therapeutics, Inc.' },
         { name: 'Subject Line', value: '[Variable subject line]' },

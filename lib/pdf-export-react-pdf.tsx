@@ -390,8 +390,9 @@ function EmailHTMLPreview({ html, title, width }: { html: string; title: string;
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   return new Promise((resolve) => {
+    const timeoutMs = 15000
     const client = url.startsWith('https') ? https : http
-    const req = client.get(url, { timeout: 8000 }, (res) => {
+    const req = client.get(url, (res) => {
       const chunks: Buffer[] = []
       res.on('data', (chunk) => chunks.push(chunk))
       res.on('end', () => {
@@ -401,8 +402,14 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
       })
       res.on('error', () => resolve(null))
     })
-    req.on('error', () => resolve(null))
-    req.on('timeout', () => { req.destroy(); resolve(null) })
+    req.on('error', (err) => {
+      resolve(null)
+    })
+    req.on('timeout', () => {
+      req.destroy()
+      resolve(null)
+    })
+    req.setTimeout(timeoutMs)
   })
 }
 
@@ -434,7 +441,7 @@ export async function generateCombinedPdfReactPdf(params: {
   desktopWidthOverride?: string
   mobileWidthOverride?: string
 }): Promise<Buffer> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3001'
 
   let desktopHtml = params.emailHtmlDesktop
   let mobileHtml = params.emailHtmlMobile
@@ -444,8 +451,8 @@ export async function generateCombinedPdfReactPdf(params: {
   if (mobileHtml) mobileHtml = await inlineImagesInHtml(mobileHtml, baseUrl)
   if (mobileHtmls) mobileHtmls = await Promise.all(mobileHtmls.map(h => inlineImagesInHtml(h, baseUrl)))
 
-  const bracketLeft = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_left.png`)
-  const bracketRight = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_right.png`)
+  const bracketLeft = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_left.png`).catch(() => null)
+  const bracketRight = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_right.png`).catch(() => null)
 
   const doc = (
     <Document>

@@ -3,8 +3,44 @@
 import { generateCombinedPdfReactPdf, mergePdfBuffers } from '../lib/pdf-export-react-pdf';
 import type { VariableSection } from '@/types/variableSectionTemplate';
 
-export async function handlePdfAction(html: string, viewMode: 'desktop' | 'mobile', customWidth?: string) {
-  return Buffer.from(html).toString('base64');
+export async function handlePdfAction(html: string, viewMode: 'desktop' | 'mobile', customWidth?: string, emailName?: string) {
+  const pdfName = emailName || 'Template';
+
+  const pdfParams: {
+    emailHtmlDesktop?: string;
+    emailHtmlMobile?: string;
+    emailHtmlsMobile?: string[];
+    variableCopyData?: { data: any; emailname: string; headingColor?: string };
+    altNameData?: any;
+    emailName: string;
+    desktopWidthOverride?: string;
+    mobileWidthOverride?: string;
+  } = {
+    emailHtmlDesktop: undefined,
+    emailHtmlMobile: undefined,
+    emailHtmlsMobile: undefined,
+    variableCopyData: undefined,
+    altNameData: undefined,
+    emailName: pdfName,
+    desktopWidthOverride: customWidth,
+    mobileWidthOverride: customWidth,
+  };
+
+  if (viewMode === 'desktop') {
+    pdfParams.emailHtmlDesktop = html;
+    pdfParams.desktopWidthOverride = customWidth;
+  } else {
+    pdfParams.emailHtmlMobile = html;
+    pdfParams.mobileWidthOverride = customWidth;
+  }
+
+  try {
+    const buffer = await generateCombinedPdfReactPdf(pdfParams);
+    return buffer.toString('base64');
+  } catch (error) {
+    console.error('[handlePdfAction] Error:', error);
+    throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export async function generateVariableCopyPdfAction(html: string): Promise<string> {

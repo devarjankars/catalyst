@@ -6,7 +6,7 @@ import { useVSBStore } from '@/store/vsb-store';
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { handlePdfAction } from '@/app/actions';
+import { exportVsbPdf } from '@/lib/vsb-pdf-export';
 
 interface Props {
   data: any;
@@ -20,6 +20,7 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const headerDetails = currentVsb?.headerDetails || [];
+  const emailName = currentTemplate?.name || 'Template';
   
   const isThreeMode = currentTemplate?.optionMode === 'three';
   const preheader = currentTemplate?.preheaderText || '';
@@ -74,15 +75,22 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
-      const pdfWidth = isThreeMode ? '1900px' : undefined;
-      const base64 = await handlePdfAction(combinedPdfHtml, 'desktop', pdfWidth);
-      const link = document.createElement('a');
-      link.href = `data:application/pdf;base64,${base64}`;
-      link.download = `${currentTemplate?.name || 'Template'}-Desktop-VSB.pdf`;
-      link.click();
+      const fileName = `${currentTemplate?.name || 'Template'}-Desktop-VSB.pdf`;
+      if (isThreeMode && htmls.length > 1) {
+        // Render each 600px desktop option in its own viewport so the three
+        // emails are composed side-by-side (mirrors the combined preview).
+        await exportVsbPdf([
+          {
+            columns: htmls.map(html => ({ html, width: 600 })),
+            gap: 20,
+          },
+        ], fileName);
+      } else {
+        await exportVsbPdf([{ html: combinedPdfHtml, width: 600 }], fileName);
+      }
     } catch (error) {
       console.error('PDF Generation failed:', error);
-      alert('Failed to generate PDF');
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setPdfLoading(false);
     }

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { generateEmailHTML } from '@/lib/email-generator';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
@@ -6,7 +6,7 @@ import { useVSBStore } from '@/store/vsb-store';
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { handlePdfAction } from '@/app/actions';
+import { exportVsbPdf } from '@/lib/vsb-pdf-export';
 
 interface Props {
   data: any;
@@ -20,7 +20,8 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false 
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const headerDetails = currentVsb?.headerDetails || [];
-  
+  const emailName = currentTemplate?.name || 'Template';
+
   const isThreeMode = currentTemplate?.optionMode === 'three';
   const preheader = currentTemplate?.preheaderText || '';
 
@@ -35,7 +36,7 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false 
   // Generate HTML and insert header for each option
   const htmls = options.map(opt => {
     const rawHtml = generateEmailHTML(opt.components, preheader);
-    
+
     const headerHtml = `
       <div style="background-color: #fff;padding-top:10px;padding-bottom:20px;">
         <div style="margin-left : 20px; width:fit-content; border:1px solid #000; padding:5px;margin-bottom:10px;font-size:13px;background-color: #fff;color:black; font-weight: bold;">
@@ -67,27 +68,23 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false 
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
-      if (isThreeMode) {
-        // Render each option inside a 375px iframe so mobile media queries
-        // fire per-column while the page is 1200px wide to show all 3.
-        const combinedHtml = `<div style="display:flex;gap:20px;align-items:flex-start;justify-content:center;width:100%;min-width:1200px;background:#f3f4f6;padding:20px;">
-          ${htmls.map(html => `<iframe srcdoc="${html.replace(/"/g, '"')}" style="width:375px;min-height:700px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);"></iframe>`).join('')}
-        </div>`;
-        const base64 = await handlePdfAction(combinedHtml, 'desktop', '1200px');
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${base64}`;
-        link.download = `${currentTemplate?.name || 'Template'}-Mobile-VSB.pdf`;
-        link.click();
+      const fileName = `${currentTemplate?.name || 'Template'}-Mobile-VSB.pdf`;
+      if (isThreeMode && htmls.length > 1) {
+        // Render each option inside its own 375px viewport so the mobile media
+        // queries fire per column, then compose the three columns side-by-side.
+
+        await exportVsbPdf([
+          {
+            columns: htmls.map(html => ({ html, width: 375 })),
+            gap: 20,
+          },
+        ], fileName);
       } else {
-        const base64 = await handlePdfAction(htmls[0], 'mobile');
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${base64}`;
-        link.download = `${currentTemplate?.name || 'Template'}-Mobile-VSB.pdf`;
-        link.click();
+        await exportVsbPdf([{ html: htmls[0], width: 375 }], fileName);
       }
     } catch (error) {
       console.error('PDF Generation failed:', error);
-      alert('Failed to generate PDF');
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setPdfLoading(false);
     }
