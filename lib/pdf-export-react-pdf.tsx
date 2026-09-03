@@ -428,26 +428,39 @@ export async function generateCombinedPdfReactPdf(params: {
 }): Promise<Buffer> {
 
   // ── Helper: render a single email image page ──────────────────────────────
+  // Page width = 640pt (600pt email + 40pt margins), height = tall enough for full email
+  const EMAIL_PAGE_WIDTH  = 640;  // pt — matches 600px email + small margins
+  const EMAIL_PAGE_HEIGHT = 2400; // pt — tall enough for long emails (A4 = 842pt)
+  const MOBILE_PAGE_WIDTH = 415;  // pt — matches 375px mobile + small margins
+
   const EmailImagePage = ({
     imageBase64,
     title,
     label,
+    isMobile = false,
   }: {
     imageBase64: string;
     title: string;
     label: string;
-  }) => (
-    <Page size="A4" style={styles.page}>
-      <View style={{ marginBottom: 8 }}>
-        <Text style={styles.emailNameTitle}>{title}</Text>
-        <Text style={styles.previewLabel}>{label}</Text>
-      </View>
-      <Image
-        src={imageBase64}
-        style={{ width: '100%', objectFit: 'contain' }}
-      />
-    </Page>
-  );
+    isMobile?: boolean;
+  }) => {
+    const pageW = isMobile ? MOBILE_PAGE_WIDTH : EMAIL_PAGE_WIDTH;
+    return (
+      <Page size={[pageW, EMAIL_PAGE_HEIGHT]} style={{ padding: 20, backgroundColor: '#fff' }}>
+        <View style={{ marginBottom: 6 }}>
+          <Text style={{ ...styles.emailNameTitle, fontSize: 10 }}>{title}</Text>
+          <Text style={{ ...styles.previewLabel, fontSize: 8 }}>{label}</Text>
+        </View>
+        <Image
+          src={imageBase64}
+          style={{
+            width: pageW - 40,  // full page width minus padding
+            objectFit: 'contain',
+          }}
+        />
+      </Page>
+    );
+  };
 
   const doc = (
     <Document>
@@ -490,6 +503,7 @@ export async function generateCombinedPdfReactPdf(params: {
           imageBase64={params.mobileImageBase64}
           title={params.emailName}
           label="Mobile View"
+          isMobile={true}
         />
       )}
       {/* Mobile view — three options */}
@@ -499,6 +513,7 @@ export async function generateCombinedPdfReactPdf(params: {
           imageBase64={img}
           title={params.emailName}
           label={`Mobile View — Option ${i + 1}`}
+          isMobile={true}
         />
       ) : null)}
     </Document>
