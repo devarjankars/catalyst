@@ -1,6 +1,6 @@
 "use server"
 
-import { Document, Page, View, Text, StyleSheet, Table, TableRow, TableCell, Image, Font, pdf } from '@react-pdf/renderer'
+import { Document, Page, View, Text, StyleSheet, Image, Font, pdf } from '@react-pdf/renderer'
 import { PDFDocument } from 'pdf-lib'
 import https from 'https'
 import http from 'http'
@@ -279,25 +279,25 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
   const renderTableSection = (section: VariableSection) => {
     const options = section.options as Array<{ fromEmail: string; friendlyNames: string[] }>
     return (
-      <Table key={section.heading} style={styles.table}>
-        <TableRow style={{ backgroundColor: '#f9f9f9' }}>
-          <TableCell style={styles.tableHeader}>Friendly From Name</TableCell>
-          <TableCell style={styles.tableHeader}>From Email Address</TableCell>
-        </TableRow>
+      <View key={section.heading} style={styles.table}>
+        <View style={{ flexDirection: 'row', backgroundColor: '#f9f9f9' }}>
+          <View style={[styles.tableHeader, { flex: 1 }]}><Text>Friendly From Name</Text></View>
+          <View style={[styles.tableHeader, { flex: 1 }]}><Text>From Email Address</Text></View>
+        </View>
         {options.map((row, rowIdx) => (
-          <TableRow key={rowIdx}>
-            <TableCell style={styles.tableCell}>
+          <View key={rowIdx} style={{ flexDirection: 'row' }}>
+            <View style={[styles.tableCell, { flex: 1 }]}>
               {row.friendlyNames.map((name, nameIdx) => (
                 <Text key={nameIdx} style={{ marginBottom: 3 }}>
                   <Text style={{ fontWeight: 'bold', marginRight: 4 }}>{nameIdx + 1}.</Text>
                   {name}
                 </Text>
               ))}
-            </TableCell>
-            <TableCell style={styles.tableCellCenter}>{row.fromEmail}</TableCell>
-          </TableRow>
+            </View>
+            <View style={[styles.tableCellCenter, { flex: 1 }]}><Text>{row.fromEmail}</Text></View>
+          </View>
         ))}
-      </Table>
+      </View>
     )
   }
 
@@ -344,17 +344,17 @@ function AltNamePageSection({ data, emailName }: { data: { images: AltNameImage[
       <View style={{ marginBottom: 12, paddingBottom: 16 }}>
         <Text style={{ ...styles.altNameHeader, color: headingColor }}>ALT-Text for HTML version</Text>
       </View>
-      <Table style={styles.altNameTable}>
+      <View style={styles.altNameTable}>
         {images.length === 0 ? (
-          <TableRow>
-            <TableCell style={{ ...styles.altNameCell, colSpan: 2, textAlign: 'center', padding: 32, fontSize: 12, fontStyle: 'italic', color: '#9ca3af' }}>
-              No images selected for alt text.
-            </TableCell>
-          </TableRow>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ ...styles.altNameCell, flex: 1, alignItems: 'center', padding: 32 }}>
+              <Text style={{ fontSize: 12, fontStyle: 'italic', color: '#9ca3af' }}>No images selected for alt text.</Text>
+            </View>
+          </View>
         ) : (
           images.map((img, idx) => (
-            <TableRow key={idx}>
-              <TableCell style={styles.altNameImageCell}>
+            <View key={idx} style={{ flexDirection: 'row' }}>
+              <View style={styles.altNameImageCell}>
                 {img.name ? (
                   <Image src={img.name} style={styles.altNameImage} />
                 ) : (
@@ -362,16 +362,16 @@ function AltNamePageSection({ data, emailName }: { data: { images: AltNameImage[
                     <Text style={styles.altNamePlaceholderText}>No Image</Text>
                   </View>
                 )}
-              </TableCell>
-              <TableCell style={styles.altNameCell}>
+              </View>
+              <View style={styles.altNameCell}>
                 <Text style={img.value ? styles.altNameValue : styles.altNameNoValue}>
                   {img.value || 'No description provided'}
                 </Text>
-              </TableCell>
-            </TableRow>
+              </View>
+            </View>
           ))
         )}
-      </Table>
+      </View>
     </View>
   )
 }
@@ -464,7 +464,7 @@ export async function generateCombinedPdfReactPdf(params: {
         </Page>
       )}
       {desktopHtml && (
-        <Page size={[params.desktopWidthOverride ? parseInt(params.desktopWidthOverride) : 600, 'auto']} style={styles.pageWide}>
+        <Page size={[params.desktopWidthOverride ? parseInt(params.desktopWidthOverride) : 600, 1684]} style={styles.pageWide}>
           <EmailHTMLPreview
             html={desktopHtml}
             title={params.emailName}
@@ -473,7 +473,7 @@ export async function generateCombinedPdfReactPdf(params: {
         </Page>
       )}
       {(mobileHtml || (mobileHtmls && mobileHtmls.length > 0)) && (
-        <Page size={[params.mobileWidthOverride ? parseInt(params.mobileWidthOverride) : 375, 'auto']} style={styles.pageWide}>
+        <Page size={[params.mobileWidthOverride ? parseInt(params.mobileWidthOverride) : 375, 1684]} style={styles.pageWide}>
           <EmailHTMLPreview
             html={mobileHtmls && mobileHtmls.length > 1 ? mobileHtmls.join('\n\n---\n\n') : (mobileHtml || mobileHtmls?.[0] || '')}
             title={params.emailName}
