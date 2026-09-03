@@ -8,6 +8,7 @@ export interface PdfSection {
   type: 'variableCopy' | 'altName' | 'emailImage';
   label?: string;
   imageBase64?: string;
+  imageHeight?: number;   // actual pixel height of the screenshot (for tight page sizing)
   variableCopyData?: any;
   altNameData?: any;
   emailName?: string;
@@ -17,12 +18,13 @@ export interface PdfSection {
 
 /**
  * Screenshot an HTML string into a base64 JPEG using html2canvas.
+ * Returns both the image data and the natural pixel height of the captured content.
  */
 export async function screenshotEmailHtml(
   html: string,
   width: number,
   quality = 0.92,
-): Promise<string> {
+): Promise<{ base64: string; height: number }> {
   return new Promise((resolve) => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = `
@@ -34,9 +36,9 @@ export async function screenshotEmailHtml(
 
     iframe.onload = async () => {
       try {
-        await new Promise(r => setTimeout(r, 1000)); // let remote images load
+        await new Promise(r => setTimeout(r, 1000));
         const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!doc?.body) { resolve(''); return; }
+        if (!doc?.body) { resolve({ base64: '', height: 800 }); return; }
         doc.body.style.margin  = '0';
         doc.body.style.padding = '0';
         doc.body.style.width   = `${width}px`;
@@ -45,19 +47,22 @@ export async function screenshotEmailHtml(
         const canvas = await html2canvas(doc.body, {
           useCORS:      true,
           allowTaint:   true,
-          scale:        2,            // 2x for sharp, readable text
+          scale:        2,
           width,
           scrollX:      0,
           scrollY:      0,
           windowWidth:  width,
-          windowHeight: 12000,        // capture full-length emails
+          windowHeight: 12000,
           backgroundColor: '#ffffff',
           logging: false,
         });
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve({
+          base64: canvas.toDataURL('image/jpeg', quality),
+          height: canvas.height,   // actual pixel height at scale 2
+        });
       } catch (e) {
         console.error('[screenshotEmailHtml] failed:', e);
-        resolve('');
+        resolve({ base64: '', height: 800 });
       } finally {
         document.body.removeChild(iframe);
       }
@@ -229,26 +234,34 @@ export async function generateVSBPdfClientSide(params: {
     );
   };
 
-  const renderEmailImage = (imageBase64: string, title: string, label: string, isMobile = false) => {
-    // Mobile pages are narrower; desktop fills A4 width
-    const pageW   = isMobile ? 415 : EMAIL_W;
-    const imgW    = pageW - EMAIL_PADDING * 2;
+  const renderEmailImage = (imageBase64: string, title: string, label: string, isMobile = false, imageHeight = 800) => {
+    const pageW  = isMobile ? 415 : 595;
+    const pad    = 16;
+    const imgW   = pageW - pad * 2;
+    const hdrH   = 32;
+    // Convert pixel height (at scale 2) to PDF points (72dpi): pixels/2 * 72/96 * scaling
+    // Simpler: pts ≈ imgHeight / 2 * 0.75 → but we just use the rendered width ratio
+    // imgW pts / (width * 2 px) * imageHeight px = exact height in pts
+    const imgPtH = (imgW / (pageW * 2)) * imageHeight; // rough but accurate ratio
+    const pageH  = Math.ceil(hdrH + imgPtH + pad + 16); // header + image + bottom margin
+
     return (
-      <Page size={[pageW, EMAIL_H_TALL]} style={styles.pageEmail}>
-        {/* Header bar */}
+      <Page size={[pageW, pageH]} style={{ padding: 0, backgroundColor: '#f3f4f6' }}>
+        {/* Compact header bar */}
         <View style={{
-          backgroundColor: '#1a1a2e', padding: '8 12', marginBottom: 12,
-          borderRadius: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+          backgroundColor: '#1a1a2e',
+          paddingTop: 7, paddingBottom: 7,
+          paddingLeft: pad, paddingRight: pad,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#ffffff' }}>{title}</Text>
-          <Text style={{ fontSize: 8, color: '#aaaaaa' }}>{label}</Text>
+          <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#ffffff', maxWidth: '70%' }}>{title}</Text>
+          <Text style={{ fontSize: 7, color: '#aaaaaa' }}>{label}</Text>
         </View>
-        {/* Email image in a white card */}
-        <View style={{ backgroundColor: '#fff', padding: 0, borderRadius: 2 }}>
-          <Image
-            src={imageBase64}
-            style={{ width: imgW, objectFit: 'contain' }}
-          />
+        {/* Email fills full page width */}
+        <View style={{ backgroundColor: '#fff', marginHorizontal: pad, marginTop: 8 }}>
+          <Image src={imageBase64} style={{ width: imgW }} />
         </View>
       </Page>
     );
@@ -268,7 +281,7 @@ export async function generateVSBPdfClientSide(params: {
         return renderAltName(section.altNameData?.data, section.altNameData?.emailName ?? params.emailName);
       case 'emailImage':
         return section.imageBase64
-          ? renderEmailImage(section.imageBase64, params.emailName, section.label ?? '', section.isMobile)
+          ? renderEmailImage(section.imageBase64, params.emailName, section.label ?? '', section.isMobile, section.imageHeight ?? 800)
           : null;
       default:
         return null;

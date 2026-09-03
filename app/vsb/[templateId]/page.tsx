@@ -141,11 +141,12 @@ export default function VSBPage() {
     if (includeDV) {
       for (const opt of optArray) {
         const html  = buildHtml(opt.components, 600, `Desktop View — ${opt.title}`);
-        const image = await screenshotEmailHtml(html, 600, 0.88);
-        if (image) {
+        const { base64, height } = await screenshotEmailHtml(html, 600, 0.88);
+        if (base64) {
           sections.push({
             type: 'emailImage',
-            imageBase64: image,
+            imageBase64: base64,
+            imageHeight: height,
             label: `Desktop View${isThreeMode ? ` — ${opt.title}` : ''}`,
             isMobile: false,
           });
@@ -157,11 +158,12 @@ export default function VSBPage() {
     if (includeMV) {
       for (const opt of optArray) {
         const html  = buildHtml(opt.components, 375, `Mobile View — ${opt.title}`);
-        const image = await screenshotEmailHtml(html, 375, 0.88);
-        if (image) {
+        const { base64, height } = await screenshotEmailHtml(html, 375, 0.88);
+        if (base64) {
           sections.push({
             type: 'emailImage',
-            imageBase64: image,
+            imageBase64: base64,
+            imageHeight: height,
             label: `Mobile View${isThreeMode ? ` — ${opt.title}` : ''}`,
             isMobile: true,
           });
