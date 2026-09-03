@@ -70,7 +70,11 @@ export default function CategoryTemplatesPage() {
   }
 
   const handleEditTemplate = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&edit=true`)
+    if (template.isUserCreated) {
+      router.push(`/builder?template=${template.id}&edit=true`)
+    } else {
+      handleUseTemplate(template)
+    }
   }
 
   const handleDeleteTemplate = async (template: EmailTemplate) => {
