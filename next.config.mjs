@@ -13,6 +13,9 @@ const nextConfig = {
   // static prerendering entirely so `next build` succeeds.
   experimental: {
     missingSuspenseWithCSRBailout: false,
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
   webpack(config, { isServer, dev }) {
     // Stabilise module IDs so chunk references are consistent across

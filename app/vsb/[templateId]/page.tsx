@@ -36,7 +36,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { generateEmailHTML } from '@/lib/email-generator';
+<<<<<<< HEAD
 import { generateVsbPdfBlob, buildVariableCopyHtml, buildAltNameHtml, type VsbPdfPageSpec } from '@/lib/vsb-pdf-export';
+=======
+import { generateVSBPdfClientSide, screenshotEmailHtml } from '@/lib/pdf-client';
+>>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
 import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
@@ -74,15 +78,14 @@ export default function VSBPage() {
     altNamePage:  boolean;
   }) => {
     if (!currentVsb) throw new Error('No VSB selected');
-    
-    const headerDetails = currentVsb?.headerDetails || [];
-    const emailName = currentTemplate?.name || 'Template';
 
+    const emailName  = currentTemplate?.name || 'Template';
     const includeVC  = options ? options.variableCopy : true;
     const includeDV  = options ? options.desktopView  : true;
     const includeMV  = options ? options.mobileView   : true;
     const includeANP = options ? options.altNamePage  : true;
 
+<<<<<<< HEAD
     const pages: VsbPdfPageSpec[] = [];
 
     if (includeVC) {
@@ -92,7 +95,10 @@ export default function VSBPage() {
       });
     }
 
+=======
+>>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
     const isThreeMode = currentTemplate?.optionMode === 'three';
+    const headerDetails = currentVsb?.headerDetails || [];
 
     const optArray = isThreeMode
       ? [
@@ -102,52 +108,32 @@ export default function VSBPage() {
         ]
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
+    // Build header HTML block (injected into each email preview)
     const makeHeaderHtml = (label: string) => `
-      <div style="background-color:#fff; padding-top:10px; padding-bottom:20px;">
-        <div style="margin-left:20px; width:fit-content; border:1px solid #000; padding:5px;
-                    margin-bottom:10px; font-size:13px; color:black; font-weight:bold;">
-          ${label}
-        </div>
-        <div style="border-top:1px solid #000;">
-          <div style="margin-left:20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px;">
-            ${headerDetails.map(detail => `
-              <div style="margin-bottom:2px;">
-                <span style="font-weight:bold; color:black;">${detail.name}: </span>
-                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
-                  ${detail.value}
-                </span>
-              </div>
-            `).join('')}
-          </div>
+      <div style="background-color:#fff;padding:10px 20px 20px 20px;">
+        <div style="width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;font-weight:bold;">${label}</div>
+        <div style="border-top:1px solid #000;padding-top:16px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;">
+          ${headerDetails.map(d => `<div style="margin-bottom:2px;"><b>${d.name}: </b><span style="color:${d.value.includes('[') ? '#FF66CC' : 'black'};">${d.value}</span></div>`).join('')}
         </div>
       </div>`;
 
-    const injectHeader = (rawHtml: string, headerHtml: string) => {
-      const idx = rawHtml.indexOf('</div>');
-      return idx !== -1
-        ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6)
-        : rawHtml;
+    const injectHeader = (raw: string, hdr: string) => {
+      const idx = raw.indexOf('</div>');
+      return idx !== -1 ? raw.slice(0, idx + 6) + hdr + raw.slice(idx + 6) : raw;
     };
 
-    const desktopHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      // Inject body margin reset so email fills the 600px viewport edge-to-edge
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:600px;">'
+    const buildHtml = (comps: any[], w: number, label: string) => {
+      const raw = generateEmailHTML(comps, currentTemplate?.preheaderText || '');
+      return injectHeader(
+        raw.replace(/<body([^>]*)>/i, `<body$1 style="margin:0;padding:0;width:${w}px;">`),
+        makeHeaderHtml(label),
       );
-      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
-    });
+    };
 
-    const mobileHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:375px;">'
-      );
-      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
-    });
+    // ── Build PDF sections ─────────────────────────────────────────────────
+    const sections: import('@/lib/pdf-client').PdfSection[] = [];
 
+<<<<<<< HEAD
     if (includeDV) {
       if (isThreeMode) {
         pages.push({
@@ -182,6 +168,64 @@ export default function VSBPage() {
     if (pages.length === 0) throw new Error('No pages selected for PDF generation');
 
     return generateVsbPdfBlob(pages);
+=======
+    // 1. Variable Copy
+    if (includeVC) {
+      sections.push({
+        type: 'variableCopy',
+        variableCopyData: {
+          data: currentVsb.variableCopy,
+          emailname: emailName,
+          headingColor: currentVsb.variableCopyHeadingColor,
+        },
+      });
+    }
+
+    // 2. Desktop screenshots (all options)
+    if (includeDV) {
+      for (const opt of optArray) {
+        const html  = buildHtml(opt.components, 600, `Desktop View — ${opt.title}`);
+        const { base64, height } = await screenshotEmailHtml(html, 600, 0.88);
+        if (base64) {
+          sections.push({
+            type: 'emailImage',
+            imageBase64: base64,
+            imageHeight: height,
+            label: `Desktop View — ${opt.title}`,
+            isMobile: false,
+          });
+        }
+      }
+    }
+
+    // 3. Mobile screenshots (all options)
+    if (includeMV) {
+      for (const opt of optArray) {
+        const html  = buildHtml(opt.components, 375, `Mobile View — ${opt.title}`);
+        const { base64, height } = await screenshotEmailHtml(html, 375, 0.88);
+        if (base64) {
+          sections.push({
+            type: 'emailImage',
+            imageBase64: base64,
+            imageHeight: height,
+            label: `Mobile View — ${opt.title}`,
+            isMobile: true,
+          });
+        }
+      }
+    }
+
+    // 4. Alt Name Page (last)
+    if (includeANP) {
+      sections.push({
+        type: 'altName',
+        altNameData: { data: currentVsb.altNamePage, emailName },
+      });
+    }
+
+    // ── Generate PDF entirely in the browser ──────────────────────────────
+    return generateVSBPdfClientSide({ emailName, sections });
+>>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
   };
 
   const executeDownloadPDF = async (options?: {
