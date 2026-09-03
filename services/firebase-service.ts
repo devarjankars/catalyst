@@ -110,14 +110,6 @@ class FirebaseService {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(data, "dhggfdgfg data fdrom firebase");
-        console.log(
-          "RAW Firestore data:",
-          data.createdAt,
-          data.updatedAt,
-          typeof data.createdAt
-        );
-
         templates.push({
           id: doc.id,
           ...data,
@@ -127,10 +119,6 @@ class FirebaseService {
       });
 
       // ── Normalise standard templates ─────────────────────────────────────
-      // 1. Delete any old/legacy non-user-created templates that are NOT in our
-      //    canonical 6 names (removes "Welcome Newsletter", duplicates, etc.)
-      // 2. Deduplicate: keep only the first occurrence of each canonical name.
-      // 3. Seed any that are still missing.
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
@@ -145,7 +133,7 @@ class FirebaseService {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
       }
 
-      // Deduplicate: among canonical ones, keep only the first per name
+      // Deduplicate: keep only the first per canonical name
       const seen = new Set<string>();
       const dupes: EmailTemplate[] = [];
       const canonical: EmailTemplate[] = [];
@@ -155,6 +143,64 @@ class FirebaseService {
       }
       for (const t of dupes) {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
+      }
+
+      // ── Brand correction + content seeding from existing user emailers ────
+      // For Elzonris standard templates, copy components from named user emailers
+      // if the standard template is still blank (only has 2 placeholder components).
+      const ELZONRIS_SEED_MAP: Record<string, string> = {
+        "Elzonris RTE":       "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE",
+        "Elzonris Unbranded": "MAT-US-TAG-00334_Speaker-Program-Invite",
+        "Elzonris SFMC":      "MAT-US-TAG-00291_v2",
+      };
+      const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded"]);
+      const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
+
+      for (const t of canonical) {
+        const expected = sampleMap.get(t.name);
+        if (!expected) continue;
+
+        const wrongBrand = (t as any).brand !== expected.brand;
+        const forceReset = FORCE_RESET_NAMES.has(t.name);
+
+        // For Elzonris standard templates: if still blank (≤2 components), copy from source emailer
+        const sourceName = ELZONRIS_SEED_MAP[t.name];
+        const isBlank = !t.components || t.components.length <= 2;
+
+        if (wrongBrand || forceReset) {
+          // Wrong brand — reset to blank placeholder
+          try {
+            await updateDoc(doc(db, this.templatesCollection, t.id), {
+              brand: expected.brand,
+              components: expected.components,
+              updatedAt: new Date(),
+            });
+            (t as any).brand = expected.brand;
+            t.components = expected.components;
+          } catch {}
+        } else if (sourceName && isBlank) {
+          // Still blank — find the source emailer using partial name match (case-insensitive)
+          const sourceTemplate = templates.find(src => {
+            const srcName = (src.name ?? "").toLowerCase().trim();
+            const needle  = sourceName.toLowerCase().trim();
+            return srcName === needle || srcName.includes(needle) || needle.includes(srcName);
+          });
+          if (sourceTemplate && sourceTemplate.components?.length > 0) {
+            try {
+              await updateDoc(doc(db, this.templatesCollection, t.id), {
+                brand: "elzonris",
+                components: sourceTemplate.components,
+                option2Components: sourceTemplate.option2Components ?? [],
+                option3Components: sourceTemplate.option3Components ?? [],
+                optionMode: sourceTemplate.optionMode ?? "single",
+                preheaderText: sourceTemplate.preheaderText ?? "",
+                updatedAt: new Date(),
+              });
+              t.components = sourceTemplate.components;
+              (t as any).brand = "elzonris";
+            } catch {}
+          }
+        }
       }
 
       // Seed missing canonical templates
