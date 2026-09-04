@@ -433,25 +433,12 @@ export async function generateCombinedPdfReactPdf(params: {
   desktopWidthOverride?: string
   mobileWidthOverride?: string
 }): Promise<Buffer> {
-<<<<<<< HEAD
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3001'
-=======
->>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
-
   // ── Helper: render a single email image page ──────────────────────────────
   // Page width = 640pt (600pt email + 40pt margins), height = tall enough for full email
   const EMAIL_PAGE_WIDTH  = 640;  // pt — matches 600px email + small margins
   const EMAIL_PAGE_HEIGHT = 2400; // pt — tall enough for long emails (A4 = 842pt)
   const MOBILE_PAGE_WIDTH = 415;  // pt — matches 375px mobile + small margins
 
-<<<<<<< HEAD
-  if (desktopHtml) desktopHtml = await inlineImagesInHtml(desktopHtml, baseUrl)
-  if (mobileHtml) mobileHtml = await inlineImagesInHtml(mobileHtml, baseUrl)
-  if (mobileHtmls) mobileHtmls = await Promise.all(mobileHtmls.map(h => inlineImagesInHtml(h, baseUrl)))
-
-  const bracketLeft = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_left.png`).catch(() => null)
-  const bracketRight = await fetchImageAsBase64(`${baseUrl}/sqr_bracket_right.png`).catch(() => null)
-=======
   const EmailImagePage = ({
     imageBase64,
     title,
@@ -480,7 +467,6 @@ export async function generateCombinedPdfReactPdf(params: {
       </Page>
     );
   };
->>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
 
   const doc = (
     <Document>

@@ -72,7 +72,7 @@ async function toDataUri(url: string): Promise<string | null> {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob;
+      reader.readAsDataURL(blob);
     });
   } catch {
     return null;
@@ -87,10 +87,10 @@ async function inlineImagesInHtml(html: string): Promise<string> {
   let m: RegExpExecArray | null;
   const jobs: Array<{ full: string; prefix: string; url: string }> = [];
   while ((m = imgRe.exec(html)) !== null) jobs.push({ full: m[0], prefix: m[1] + m[2] + m[3], url: m[4] });
-  for ( (const job of jobs) {
-    const abs = resolveUrl(job.url;
-    const uri = await toDataUri(abs;
-    if (uri) out = out.replace(job.full, job.prefix + uri + m[3];
+  for (const job of jobs) {
+    const abs = resolveUrl(job.url);
+    const uri = await toDataUri(abs);
+    if (uri) out = out.replace(job.full, job.prefix + uri + m[3]);
   }
 
   // Inline CSS url(...) references inside style attributes
@@ -99,8 +99,8 @@ async function inlineImagesInHtml(html: string): Promise<string> {
   while ((cm = cssRe.exec(html)) !== null) {
     const rawUrl = cm[2];
     if (/^data:/i.test(rawUrl)) continue;
-    const abs = resolveUrl(rawUrl;
-    const uri = await toDataUri(abs;
+    const abs = resolveUrl(rawUrl);
+    const uri = await toDataUri(abs);
     if (uri) out = out.replace(cm[0], 'url("' + uri + '")');
   }
 
