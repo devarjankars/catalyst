@@ -133,6 +133,8 @@ function OrserduIsiSelectPanel({
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
   const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
+  const [showFooter,      setShowFooter]      = useState<boolean>(!!(component.footerLine));
+  const [showTrialDesign, setShowTrialDesign] = useState<boolean>(!!(component.trialDesignHtml));
 
   // Sync if component id changes (different component selected)
   useEffect(() => {
@@ -147,6 +149,8 @@ function OrserduIsiSelectPanel({
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
     setTrialDesignHtml(component.trialDesignHtml ?? "");
+    setShowFooter(!!(component.footerLine));
+    setShowTrialDesign(!!(component.trialDesignHtml));
   }, [component.id]);
 
   // ── Commit helpers — only write to store on blur/enter ───────────────────
@@ -274,31 +278,67 @@ function OrserduIsiSelectPanel({
         >+ Add Bullet</Button>
       </div>
 
-      {/* Footer line */}
+      {/* Footer line — toggleable */}
       <div className="border rounded-lg p-3 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Footer Line</p>
-        <div>
-          <Label>Text (shown in bold)</Label>
-          <Input
-            value={footerLine}
-            onChange={(e) => setFooterLine(e.target.value)}
-            onBlur={() => commit({ footerLine })}
-            placeholder="Please see additional Important Safety Information below."
-          />
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Footer Line</p>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs text-gray-500">{showFooter ? "Enabled" : "Disabled"}</span>
+            <div
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showFooter ? "bg-green-500" : "bg-gray-300"}`}
+              onClick={() => {
+                const next = !showFooter;
+                setShowFooter(next);
+                if (!next) { setFooterLine(""); commit({ footerLine: "" }); }
+              }}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${showFooter ? "translate-x-[18px]" : "translate-x-1"}`} />
+            </div>
+          </label>
         </div>
+        {showFooter && (
+          <div>
+            <Label>Text (shown in bold)</Label>
+            <Input
+              value={footerLine}
+              onChange={(e) => setFooterLine(e.target.value)}
+              onBlur={() => commit({ footerLine })}
+              placeholder="Please see additional Important Safety Information below."
+            />
+          </div>
+        )}
       </div>
 
-      {/* Trial design paragraph */}
+      {/* Trial design paragraph — toggleable */}
       <div className="border rounded-lg p-3 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Trial Design Paragraph</p>
-        <p className="text-[11px] text-gray-400">Supports HTML: &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a href=""&gt;</p>
-        <textarea
-          className="w-full min-h-[120px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring font-mono resize-y"
-          value={trialDesignHtml}
-          onChange={(e) => setTrialDesignHtml(e.target.value)}
-          onBlur={() => commit({ trialDesignHtml })}
-          placeholder="<b>TRIAL DESIGN:</b> ..."
-        />
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Trial Design Paragraph</p>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs text-gray-500">{showTrialDesign ? "Enabled" : "Disabled"}</span>
+            <div
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showTrialDesign ? "bg-green-500" : "bg-gray-300"}`}
+              onClick={() => {
+                const next = !showTrialDesign;
+                setShowTrialDesign(next);
+                if (!next) { setTrialDesignHtml(""); commit({ trialDesignHtml: "" }); }
+              }}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${showTrialDesign ? "translate-x-[18px]" : "translate-x-1"}`} />
+            </div>
+          </label>
+        </div>
+        {showTrialDesign && (
+          <>
+            <p className="text-[11px] text-gray-400">Supports HTML: &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a href=""&gt;</p>
+            <textarea
+              className="w-full min-h-[120px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring font-mono resize-y"
+              value={trialDesignHtml}
+              onChange={(e) => setTrialDesignHtml(e.target.value)}
+              onBlur={() => commit({ trialDesignHtml })}
+              placeholder="<b>TRIAL DESIGN:</b> ..."
+            />
+          </>
+        )}
       </div>
     </div>
   );
