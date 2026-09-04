@@ -133,7 +133,6 @@ export default function VSBPage() {
     // ── Build PDF sections ─────────────────────────────────────────────────
     const sections: import('@/lib/pdf-client').PdfSection[] = [];
 
-<<<<<<< HEAD
     if (includeDV) {
       if (isThreeMode) {
         pages.push({
@@ -168,7 +167,6 @@ export default function VSBPage() {
     if (pages.length === 0) throw new Error('No pages selected for PDF generation');
 
     return generateVsbPdfBlob(pages);
-=======
     // 1. Variable Copy
     if (includeVC) {
       sections.push({
@@ -225,7 +223,6 @@ export default function VSBPage() {
 
     // ── Generate PDF entirely in the browser ──────────────────────────────
     return generateVSBPdfClientSide({ emailName, sections });
->>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
   };
 
   const executeDownloadPDF = async (options?: {
