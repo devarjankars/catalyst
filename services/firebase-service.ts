@@ -122,6 +122,7 @@ class FirebaseService {
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
+        "Ferring RTE",
       ];
 
       const standardTemplates = templates.filter(t => !t.isUserCreated);
@@ -151,6 +152,7 @@ class FirebaseService {
         "Elzonris Unbranded": { source: "MAT-US-TAG-00334_Speaker-Program-Invite",     brand: "elzonris" },
         "Elzonris SFMC":      { source: "MAT-US-TAG-00291_v2",                         brand: "elzonris" },
         "Orserdu Unbranded":  { source: "75.1300",                                     brand: "orserdu"  },
+        "Ferring RTE":        { source: "Ferring RTE",                                 brand: "ferring"  },
       };
       const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
 
@@ -687,7 +689,31 @@ class FirebaseService {
         components: placeholderComponents("Orserdu"),
         isUserCreated: false,
       },
-      // ── Elzonris ──────────────────────────────────────────────────────────
+      // ── Ferring ──────────────────────────────────────────────────────────
+      {
+        name: "Ferring RTE",
+        description: "Ferring RTE email template — edit to build your content",
+        category: "rte",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
+      {
+        name: "Ferring SFMC",
+        description: "Ferring SFMC email template — edit to build your content",
+        category: "sfmc",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
+      {
+        name: "Ferring Unbranded",
+        description: "Ferring Unbranded email template — edit to build your content",
+        category: "unbranded",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
       {
         name: "Elzonris RTE",
         description: "Elzonris RTE email template — edit to build your content",
