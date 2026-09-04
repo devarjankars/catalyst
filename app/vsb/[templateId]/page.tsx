@@ -87,6 +87,8 @@ export default function VSBPage() {
       pages.push({
         html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor),
         width: 600,
+        // Render as real, editable PDF text (selectable/searchable, links preserved).
+        mode: 'text',
       });
     }
 
@@ -147,13 +149,6 @@ export default function VSBPage() {
       return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
     });
 
-    if (includeANP) {
-      pages.push({
-        html: buildAltNameHtml(currentVsb.altNamePage, emailName),
-        width: 600,
-      });
-    }
-
     if (includeDV) {
       if (isThreeMode) {
         pages.push({
@@ -176,6 +171,15 @@ export default function VSBPage() {
       } else {
         pages.push({ html: mobileHtmls[0], width: 375 });
       }
+    }
+
+    if (includeANP) {
+      pages.push({
+        html: buildAltNameHtml(currentVsb.altNamePage, emailName),
+        width: 600,
+        // Render as real, editable PDF text (selectable/searchable, links preserved).
+        mode: 'text',
+      });
     }
 
     if (pages.length === 0) throw new Error('No pages selected for PDF generation');
@@ -372,9 +376,9 @@ export default function VSBPage() {
 
   const sectionList: SectionType[] = [
     'Variable Copy',
-    'alt name page',
     'Desktop view',
     'Mobile view',
+    'alt name page',
     'Combined Preview'
   ];
 
@@ -395,7 +399,7 @@ export default function VSBPage() {
                 data={currentVsb.headerDetails || []}
                 onChange={(data) => handleUpdateData('headerDetails', data)}
               />
-              <VSBPageWrapper title="Desktop View" number={3} wide={currentTemplate?.optionMode === 'three'}>
+              <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>
                 <DesktopViewSection data={currentVsb.desktopView} onChange={(data) => handleUpdateData('Desktop view', data)} isPreview={true} />
               </VSBPageWrapper>
             </div>
@@ -403,17 +407,13 @@ export default function VSBPage() {
         case 'Mobile view':
           return (
             <div className="space-y-6">
-              <VSBPageWrapper title="Mobile View" number={4} wide={currentTemplate?.optionMode === 'three'}>
+              <VSBPageWrapper title="Mobile View" number={3} wide={currentTemplate?.optionMode === 'three'}>
                 <MobileViewSection data={currentVsb.mobileView} onChange={(data) => handleUpdateData('Mobile view', data)} isPreview={true} />
               </VSBPageWrapper>
             </div>
           );
         case 'alt name page':
-          return (
-            <VSBPageWrapper title="Alt-Text Configuration" number={2}>
-              <AltNamePageSection data={currentVsb.altNamePage} onChange={(data) => handleUpdateData('alt name page', data)} />
-            </VSBPageWrapper>
-          );
+          return <AltNamePageSection data={currentVsb.altNamePage} onChange={(data) => handleUpdateData('alt name page', data)} />;
         case 'Combined Preview':
           return <CombinedVSBView data={currentVsb} emailName={currentTemplate?.name || 'Template'} />;
         default:
@@ -544,9 +544,9 @@ export default function VSBPage() {
             <div className="grid gap-4 py-4 cursor-default">
               {[
                 { id: 'variableCopy', label: '1. Variable Copy' },
-                { id: 'altNamePage',  label: '2. Alt-Text Configuration' },
-                { id: 'desktopView',  label: '3. Desktop View'  },
-                { id: 'mobileView',   label: '4. Mobile View'   },
+                { id: 'desktopView',  label: '2. Desktop View'  },
+                { id: 'mobileView',   label: '3. Mobile View'   },
+                { id: 'altNamePage',  label: '4. Alt-Text Configuration' },
               ].map(({ id, label }) => (
                 <div key={id} className="flex items-center space-x-2">
                   <Checkbox

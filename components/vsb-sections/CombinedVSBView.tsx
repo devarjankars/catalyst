@@ -49,16 +49,16 @@ const CombinedVSBView = ({ data, emailName }: Props) => {
           <VariablePagePdfView emailname={emailName} data={data.variableCopy} headingColor={data.variableCopyHeadingColor} />
         </VSBPageWrapper>
 
-        <VSBPageWrapper title="Alt-Text Configuration" number={2}>
-          <ALtnamePdfview data={data.altNamePage} emailName={emailName} />
-        </VSBPageWrapper>
-
-        <VSBPageWrapper title="Desktop View" number={3} wide={currentTemplate?.optionMode === 'three'}>
+        <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>
           <DesktopViewSection data={data.desktopView} onChange={() => {}} isPreview={true} />
         </VSBPageWrapper>
 
-        <VSBPageWrapper title="Mobile View" number={4} wide={currentTemplate?.optionMode === 'three'}>
+        <VSBPageWrapper title="Mobile View" number={3} wide={currentTemplate?.optionMode === 'three'}>
           <MobileViewSection data={data.mobileView} onChange={() => {}} isPreview={true} />
+        </VSBPageWrapper>
+
+        <VSBPageWrapper title="Alt-Text Configuration" number={4}>
+          <ALtnamePdfview data={data.altNamePage} emailName={emailName} />
         </VSBPageWrapper>
       </div>
     </div>

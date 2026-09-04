@@ -7,8 +7,19 @@
  * to rasterize the real rendered DOM. The old VSB flow instead sent the raw HTML to a
  * server action that rendered it as plain text in the PDF (and could fail on remote font /
  * image fetching). This module brings the same working browser-based approach to the VSB
- * flow: each page is rendered inside a hidden iframe sized to the target viewport width
- * (so email @media queries fire correctly) and then captured into a proper PDF image page.
+ * flow — with two important improvements for output quality and editability:
+ *
+ * 1. Structured text pages (variable copy, alt-text table) are rendered as REAL PDF text
+ *    using pdfmake + html-to-pdfmake. The text is crisp vector text (not a raster image),
+ *    it is selectable / searchable / editable after download in any PDF editor (Acrobat,
+ *    etc.), and any <a href="..."> links in the source HTML are embedded as clickable
+ *    PDF links — so reviewers can edit copy and add links to the final PDF.
+ * 2. Email pages (complex HTML with @media queries) are still rasterized because they are
+ *    pixel‑perfect email designs, but they are captured at a higher resolution (scale 3)
+ *    and embedded losslessly (PNG) instead of being re-encoded to JPEG.
+ *
+ * Each page spec is emitted as its own single-page PDF (pdfmake for text pages, jsPDF for
+ * image pages so each page keeps its own custom size) and merged with pdf-lib.
  */
 
 export interface VsbPdfColumn {
@@ -27,6 +38,15 @@ export interface VsbPdfPageSpec {
   pageWidth?: number;
   /** Gap between composed columns (default 20). */
   gap?: number;
+  /**
+   * Page rendering mode:
+   *  - 'text'  → render the HTML as real selectable/editable vector PDF text (pdfmake).
+   *             Use this for structured content pages (variable copy, alt-text table).
+   *  - 'image' → rasterize the DOM to a high-resolution lossless image page (default).
+   *             Use this for pixel-perfect email previews.
+   * Defaults to 'image' for backwards compatibility.
+   */
+  mode?: 'text' | 'image';
 }
 
 interface CapturedPage {
@@ -57,7 +77,7 @@ function waitForImages(doc: Document): Promise<void> {
   });
 }
 function resolveUrl(src: string): string {
-  if (/^data:/i.test(src) || /^https?:\/\//i.test(src)) return src;
+  if (/^data:/i.test(src) || /^https?:\/\//i.test(src) || /^blob:/i.test(src)) return src;
   if (src.startsWith('//')) return window.location.protocol + src;
   if (src.startsWith('/')) return window.location.origin + src;
   return window.location.origin + '/' + src;
@@ -85,12 +105,14 @@ async function inlineImagesInHtml(html: string): Promise<string> {
   // Inline <img src="...">
   const imgRe = /(<img\b[^>]*?)(\bsrc=)(["'])(.*?)\3/gi;
   let m: RegExpExecArray | null;
-  const jobs: Array<{ full: string; prefix: string; url: string }> = [];
-  while ((m = imgRe.exec(html)) !== null) jobs.push({ full: m[0], prefix: m[1] + m[2] + m[3], url: m[4] });
+  const jobs: Array<{ full: string; prefix: string; quote: string; url: string }> = [];
+  while ((m = imgRe.exec(html)) !== null) {
+    jobs.push({ full: m[0], prefix: m[1] + m[2] + m[3], quote: m[3], url: m[4] });
+  }
   for (const job of jobs) {
     const abs = resolveUrl(job.url);
     const uri = await toDataUri(abs);
-    if (uri) out = out.replace(job.full, job.prefix + uri + m[3]);
+    if (uri) out = out.replace(job.full, job.prefix + uri + job.quote);
   }
 
   // Inline CSS url(...) references inside style attributes
@@ -159,7 +181,7 @@ async function captureHtml(html: string, width: number, html2canvas: any): Promi
   body.style.overflow = 'visible';
 
   const canvas = await html2canvas(body, {
-    scale: 2,
+    scale: 3,
     useCORS: true,
     allowTaint: true,
     logging: false,
@@ -170,17 +192,18 @@ async function captureHtml(html: string, width: number, html2canvas: any): Promi
     backgroundColor: '#ffffff',
   });
 
-  const height = Math.max(body.scrollHeight, Math.ceil(canvas.height / 2)) + 16;
+  const height = Math.max(body.scrollHeight, Math.ceil(canvas.height / 3)) + 16;
   frame.remove();
   return { dataUrl: canvas.toDataURL('image/png'), width, height };
 }
 async function composeColumns(columns: CapturedPage[], gap: number, pageWidth?: number): Promise<CapturedPage> {
+  const CAPTURE_SCALE = 3; // must match the html2canvas scale used in captureHtml
   const contentWidth = columns.reduce((sum, col) => sum + col.width, 0) + gap * (columns.length - 1);
   const width = pageWidth && pageWidth > contentWidth ? pageWidth : contentWidth;
   const height = Math.max(...columns.map(col => col.height));
   const canvas = document.createElement('canvas');
-  canvas.width = Math.ceil(width * 2);
-  canvas.height = Math.ceil(height * 2);
+  canvas.width = Math.ceil(width * CAPTURE_SCALE);
+  canvas.height = Math.ceil(height * CAPTURE_SCALE);
   const ctx = canvas.getContext('2d');
   if (!ctx) return columns[0];
 
@@ -193,7 +216,7 @@ async function composeColumns(columns: CapturedPage[], gap: number, pageWidth?: 
     const img = new Image();
     img.src = col.dataUrl;
     await img.decode().catch(() => undefined);
-    ctx.drawImage(img, x * 2, 0, col.width * 2, col.height * 2);
+    ctx.drawImage(img, x * CAPTURE_SCALE, 0, col.width * CAPTURE_SCALE, col.height * CAPTURE_SCALE);
     x += col.width + gap;
   }
 
@@ -210,36 +233,161 @@ async function capturePage(spec: VsbPdfPageSpec, html2canvas: any): Promise<Capt
 }
 
 /**
+ * Prepare a structured (text-mode) HTML fragment for pdfmake:
+ * - Inline all <img>/CSS url() references as data URIs so pdfmake can render them.
+ * - Drop any <img> that could not be inlined (pdfmake would fail to resolve them).
+ */
+async function prepareTextHtml(html: string): Promise<string> {
+  const inlined = await inlineImagesInHtml(html);
+  // Keep only <img> tags whose src is already a data:image URI.
+  return inlined.replace(/<img\b(?![^>]*\bsrc\s*=\s*["']?data:image\/)[^>]*>/gi, '');
+}
+
+/**
+ * Render a structured (text-mode) page as a real, editable-text PDF using pdfmake.
+ * Returns the raw bytes of the generated PDF.
+ */
+async function generateTextPageBytes(html: string, widthPx?: number): Promise<Uint8Array> {
+  const [pdfMakeMod, pdfFontsMod, htmlToPdfmakeMod] = await Promise.all([
+    import('pdfmake/build/pdfmake'),
+    import('pdfmake/build/vfs_fonts'),
+    import('html-to-pdfmake'),
+  ]);
+
+  const pdfMake: any = (pdfMakeMod as any).default ?? pdfMakeMod;
+  const pdfFonts: any = (pdfFontsMod as any).default ?? pdfFontsMod;
+  const htmlToPdfmake: any = (htmlToPdfmakeMod as any).default ?? htmlToPdfmakeMod;
+
+  // Register the bundled Roboto virtual fonts once.
+  if (!pdfMake._vsbRegistered) {
+    if (typeof pdfMake.addVirtualFileSystem === 'function') {
+      pdfMake.addVirtualFileSystem(pdfFonts);
+    } else {
+      pdfMake.vfs = pdfFonts;
+    }
+    // The VSB HTML uses Arial/Helvetica; map them to the bundled Roboto so
+    // pdfmake does not throw "Font ... not defined in the font section".
+    pdfMake.addFonts?.({
+      Arial:             { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      Helvetica:         { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      'Helvetica Neue':  { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      sansserif:         { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      Georgia:           { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      'Times New Roman': { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+      Verdana:           { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' },
+    });
+    pdfMake._vsbRegistered = true;
+  }
+
+  // The HTML content stays at the same visual width as the on-screen preview
+  // (600px desktop → 450pt). Auto-height keeps one page per section, like before.
+  const pageWidthPt = Math.max(320, Math.round((widthPx ?? 600) * 0.75));
+
+  const content: any = htmlToPdfmake(await prepareTextHtml(html), {
+    removeExtraBlanks: true,
+  });
+
+  // Post-process the html-to-pdfmake output so tables/images render reliably
+  // in pdfmake (which otherwise uses auto-layout that can clip cells, especially
+  // cells containing images, in the browser):
+  //   - give every table an explicit `widths` (equal columns) so columns are
+  //     sized deterministically instead of by content;
+  //   - cap image dimensions so a large uploaded image can't blow a cell wide.
+  function fixLayout(node: any): any {
+    if (node == null) return node;
+    if (Array.isArray(node)) return node.map(fixLayout);
+    if (node.table) {
+      const rows = node.table.body || [];
+      const ncols = rows.reduce((m: number, r: any) => Math.max(m, Array.isArray(r) ? r.length : 0), 0);
+      if (ncols > 0) node.table.widths = Array(ncols).fill('*');
+    }
+    if (node.image && typeof node.image === 'string') {
+      if (node.maxWidth == null && node.width == null) node.maxWidth = '100%';
+      if (node.maxHeight == null && node.height == null) node.maxHeight = 90;
+    }
+    for (const key of ['stack', 'body', 'columns', 'ul', 'ol', 'table']) {
+      if (node[key] && Array.isArray(node[key])) node[key] = node[key].map(fixLayout);
+    }
+    if (node.table && node.table.body) node.table.body = node.table.body.map(fixLayout);
+    return node;
+  }
+  const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+
+  const docDefinition: any = {
+    pageSize: { width: pageWidthPt, height: Infinity },
+    pageMargins: 24,
+    content: fixedContent,
+    defaultStyle: { font: 'Roboto', fontSize: 10 },
+  };
+
+  const pdfDoc = pdfMake.createPdf(docDefinition);
+  const blob: Blob = await pdfDoc.getBlob();
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+/**
+ * Embed a captured page as a lossless image into its own single-page PDF (jsPDF).
+ * Returns the raw bytes of the generated PDF.
+ */
+async function generateImagePageBytes(page: CapturedPage): Promise<Uint8Array> {
+  const { jsPDF } = await import('jspdf');
+  const pdf = new jsPDF({
+    unit: 'px',
+    format: [page.width, page.height],
+    hotfixes: ['px_scaling'],
+    compress: true,
+  });
+  // PNG is embedded losslessly so text in the email screenshots stays crisp.
+  // 'FAST' zlib-compresses the raw pixels — quality is identical to 'NONE'
+  // (PNG/PNG pixels are always lossless here) but keeps the file size sane.
+  pdf.addImage(page.dataUrl, 'PNG', 0, 0, page.width, page.height, undefined, 'FAST');
+  const blob = pdf.output('blob') as Blob;
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+/**
+ * Merge single-page PDFs (each with its own custom page size) into one document.
+ */
+async function mergePdfBytes(pdfBytes: Uint8Array[]): Promise<Blob> {
+  const { PDFDocument } = await import('pdf-lib');
+  const merged = await PDFDocument.create();
+  for (const bytes of pdfBytes) {
+    const src = await PDFDocument.load(bytes, {
+      ignoreEncryption: true,
+      throwOnInvalidObject: false,
+    });
+    const copied = await merged.copyPages(src, src.getPageIndices());
+    copied.forEach(p => merged.addPage(p));
+  }
+  const saved = await merged.save({ useObjectStreams: false });
+  return new Blob([saved], { type: 'application/pdf' });
+}
+
+/**
  * Generate a PDF Blob from the given page specs (browser-side).
+ *
+ * Text-mode pages produce real, editable, linkable vector text (pdfmake).
+ * Image-mode pages produce high-resolution lossless screenshots (html2canvas + jsPDF).
+ * All pages are merged into a single PDF, preserving each page's own size.
  */
 export async function generateVsbPdfBlob(pages: VsbPdfPageSpec[]): Promise<Blob> {
   if (typeof window === 'undefined') throw new Error('PDF generation is only available in the browser');
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import('html2canvas-pro'),
-    import('jspdf'),
-  ]);
+  const { default: html2canvas } = await import('html2canvas-pro');
 
-  let pdf: any = null;
+  const pdfBytes: Uint8Array[] = [];
   for (const spec of pages) {
-    const page = await capturePage(spec, html2canvas);
-    if (!pdf) {
-      pdf = new jsPDF({
-        unit: 'px',
-        format: [page.width, page.height],
-        orientation: 'portrait',
-        hotfixes: ['px_scaling'],
-        compress: true,
-      });
-      pdf.addImage(page.dataUrl, 'JPEG', 0, 0, page.width, page.height, undefined, 'FAST');
+    if (spec.mode === 'text') {
+      if (!spec.html) throw new Error('Text-mode PDF page requires html');
+      pdfBytes.push(await generateTextPageBytes(spec.html, spec.width));
     } else {
-      pdf.addPage([page.width, page.height], 'portrait');
-      pdf.addImage(page.dataUrl, 'JPEG', 0, 0, page.width, page.height, undefined, 'FAST');
+      const page = await capturePage(spec, html2canvas);
+      pdfBytes.push(await generateImagePageBytes(page));
     }
   }
 
-  return pdf.output('blob') as Blob;
+  return mergePdfBytes(pdfBytes);
 }
 
 /**
@@ -337,7 +485,7 @@ export function buildAltNameHtml(data: any, emailName?: string): string {
   const headingColor = (!Array.isArray(data) && data?.headingColor) ? data.headingColor : '#006836';
 
   return `
-    <div style="width:100%;background:#fff;padding:24px;font-family:Arial,sans-serif;color:#000;">
+        <div style="width:100%;background:#fff;padding:24px;font-family:Arial,sans-serif;color:#000;min-height:500px;">
       <div style="margin-bottom:12px;padding-bottom:16px;">
         <h2 style="font-size:18px;text-align:center;font-weight:bold;margin:0;color:${headingColor};">ALT-Text for HTML version</h2>
       </div>

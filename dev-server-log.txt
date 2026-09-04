@@ -1,0 +1,731 @@
+
+> Omnichannel catalyst@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.16
+  - Local:        http://localhost:3000
+  - Experiments (use with caution):
+    · missingSuspenseWithCSRBailout
+
+ ✓ Starting...
+ ✓ Ready in 7.7s
+ ○ Compiling /vsb/[templateId] ...
+ ✓ Compiled /vsb/[templateId] in 13.3s (2783 modules)
+ GET /vsb/eHYABsF2S7ouU6O9y98D 200 in 47115ms
+ GET /vsb/eHYABsF2S7ouU6O9y98D 200 in 3522ms
+ ✓ Compiled in 53.1s (1304 modules)
+ ✓ Compiled in 1325ms (1304 modules)
+ ✓ Compiled in 934ms (1304 modules)
+ ✓ Compiled in 1582ms (1304 modules)
+ ✓ Compiled in 1064ms (1304 modules)
+ ✓ Compiled in 1067ms (1304 modules)
+ ✓ Compiled in 1512ms (1304 modules)
+ ✓ Compiled in 1950ms (1304 modules)
+ ✓ Compiled in 1121ms (1304 modules)
+ ✓ Compiled in 1088ms (1304 modules)
+ ✓ Compiled in 901ms (1304 modules)
+ ✓ Compiled in 1201ms (1304 modules)
+ ✓ Compiled in 1446ms (1304 modules)
+ ✓ Compiled in 829ms (1304 modules)
+ ✓ Compiled in 1014ms (1304 modules)
+ ✓ Compiled in 935ms (1304 modules)
+ ✓ Compiled in 1141ms (1304 modules)
+ ✓ Compiled in 1226ms (1304 modules)
+ ✓ Compiled in 1212ms (1304 modules)
+ ✓ Compiled in 1121ms (1304 modules)
+ ✓ Compiled in 1234ms (1304 modules)
+ ✓ Compiled in 907ms (1304 modules)
+ ✓ Compiled in 1179ms (1304 modules)
+ ✓ Compiled in 966ms (1304 modules)
+ ✓ Compiled in 1106ms (1304 modules)
+ ✓ Compiled in 1011ms (1304 modules)
+ ✓ Compiled in 936ms (1304 modules)
+ ✓ Compiled in 829ms (1304 modules)
+ ✓ Compiled in 1044ms (1304 modules)
+ ✓ Compiled in 1110ms (1304 modules)
+ ✓ Compiled in 1230ms (1304 modules)
+ ✓ Compiled in 1119ms (1304 modules)
+ ✓ Compiled in 891ms (1304 modules)
+ ✓ Compiled in 1371ms (1304 modules)
+ ✓ Compiled in 2s (1304 modules)
+ ✓ Compiled in 1062ms (1304 modules)
+ ✓ Compiled in 896ms (1304 modules)
+ ✓ Compiled in 1206ms (1304 modules)
+ ✓ Compiled in 994ms (1304 modules)
+ ✓ Compiled in 1101ms (1304 modules)
+ ✓ Compiled in 1520ms (1304 modules)
+ ✓ Compiled in 1287ms (1304 modules)
+ ✓ Compiled in 860ms (1304 modules)
+ ✓ Compiled in 973ms (1304 modules)
+ ✓ Compiled in 907ms (1304 modules)
+ ✓ Compiled in 871ms (1304 modules)
+ ✓ Compiled in 767ms (1304 modules)
+ ✓ Compiled in 799ms (1304 modules)
+ ✓ Compiled in 853ms (1304 modules)
+ ✓ Compiled in 779ms (1304 modules)
+ ✓ Compiled in 1157ms (1304 modules)
+ ✓ Compiled in 739ms (1304 modules)
+ ✓ Compiled in 470ms (1304 modules)
+ ✓ Compiled in 651ms (1304 modules)
+ ✓ Compiled in 1097ms (1304 modules)
+ ✓ Compiled in 620ms (1304 modules)
+ ✓ Compiled in 700ms (1304 modules)
+ ✓ Compiled in 849ms (1304 modules)
+ ✓ Compiled in 681ms (1304 modules)
+ ✓ Compiled in 660ms (1304 modules)
+ ✓ Compiled in 775ms (1304 modules)
+ ✓ Compiled in 988ms (1304 modules)
+ ✓ Compiled in 703ms (1304 modules)
+ ✓ Compiled in 546ms (1304 modules)
+ ✓ Compiled in 511ms (1304 modules)
+ ✓ Compiled in 576ms (1304 modules)
+ ✓ Compiled in 649ms (1304 modules)
+ ✓ Compiled in 713ms (1304 modules)
+ ✓ Compiled in 1114ms (1304 modules)
+ ✓ Compiled in 691ms (1304 modules)
+ ✓ Compiled in 545ms (1304 modules)
+ ✓ Compiled in 807ms (1304 modules)
+ ✓ Compiled in 907ms (1304 modules)
+ ✓ Compiled in 860ms (1304 modules)
+ ✓ Compiled in 726ms (1304 modules)
+ ✓ Compiled in 737ms (1304 modules)
+ ✓ Compiled in 1127ms (1304 modules)
+ ✓ Compiled in 1060ms (1304 modules)
+ ✓ Compiled in 831ms (1304 modules)
+ ✓ Compiled in 648ms (1304 modules)
+ ✓ Compiled in 631ms (1304 modules)
+ ✓ Compiled in 700ms (1304 modules)
+ ✓ Compiled in 639ms (1304 modules)
+ ✓ Compiled in 936ms (1304 modules)
+ ✓ Compiled in 686ms (1304 modules)
+ ✓ Compiled in 636ms (1304 modules)
+ ✓ Compiled in 882ms (1304 modules)
+ ✓ Compiled in 659ms (1304 modules)
+ ✓ Compiled in 718ms (1304 modules)
+ ✓ Compiled in 847ms (1304 modules)
+ ✓ Compiled in 798ms (1304 modules)
+ ✓ Compiled in 647ms (1304 modules)
+ ✓ Compiled in 738ms (1304 modules)
+ ✓ Compiled in 553ms (1304 modules)
+ ✓ Compiled in 553ms (1304 modules)
+ ✓ Compiled in 571ms (1304 modules)
+ ✓ Compiled in 561ms (1304 modules)
+ ✓ Compiled in 663ms (1304 modules)
+ ✓ Compiled in 1012ms (1304 modules)
+ ✓ Compiled in 794ms (1304 modules)
+ ✓ Compiled in 816ms (1304 modules)
+ ✓ Compiled in 654ms (1304 modules)
+ ✓ Compiled in 1164ms (1304 modules)
+ ✓ Compiled in 602ms (1304 modules)
+ ✓ Compiled in 603ms (1304 modules)
+ ✓ Compiled in 609ms (1304 modules)
+ ✓ Compiled in 509ms (1304 modules)
+ ✓ Compiled in 531ms (1304 modules)
+ ✓ Compiled in 847ms (1304 modules)
+ ✓ Compiled in 805ms (1304 modules)
+ ✓ Compiled in 511ms (1304 modules)
+ ✓ Compiled in 653ms (1304 modules)
+ ✓ Compiled in 683ms (1304 modules)
+ ✓ Compiled in 608ms (1304 modules)
+ ✓ Compiled in 548ms (1304 modules)
+ ✓ Compiled in 504ms (1304 modules)
+ ✓ Compiled in 622ms (1304 modules)
+ ✓ Compiled in 731ms (1304 modules)
+ ✓ Compiled in 656ms (1304 modules)
+ ✓ Compiled in 566ms (1304 modules)
+ ✓ Compiled in 590ms (1304 modules)
+ ✓ Compiled in 617ms (1304 modules)
+ ✓ Compiled in 842ms (1304 modules)
+ ✓ Compiled in 750ms (1304 modules)
+ ✓ Compiled in 772ms (1304 modules)
+ ✓ Compiled in 679ms (1304 modules)
+ ✓ Compiled in 1151ms (1304 modules)
+ ✓ Compiled in 945ms (1304 modules)
+ ✓ Compiled in 937ms (1304 modules)
+ ✓ Compiled in 923ms (1304 modules)
+ ✓ Compiled in 1017ms (1304 modules)
+ ✓ Compiled in 1069ms (1304 modules)
+ ✓ Compiled in 929ms (1304 modules)
+ ✓ Compiled in 825ms (1304 modules)
+ ✓ Compiled in 1782ms (1304 modules)
+ ✓ Compiled in 976ms (1304 modules)
+ ✓ Compiled in 907ms (1304 modules)
+ ✓ Compiled in 859ms (1304 modules)
+ ✓ Compiled in 902ms (1304 modules)
+ ✓ Compiled in 903ms (1304 modules)
+ ✓ Compiled in 1111ms (1304 modules)
+ ✓ Compiled in 941ms (1304 modules)
+ ✓ Compiled in 1452ms (1304 modules)
+ ✓ Compiled in 911ms (1304 modules)
+ ✓ Compiled in 918ms (1304 modules)
+ ✓ Compiled in 875ms (1304 modules)
+ ✓ Compiled in 963ms (1304 modules)
+ ✓ Compiled in 1401ms (1304 modules)
+ ✓ Compiled in 903ms (1304 modules)
+ ✓ Compiled in 889ms (1304 modules)
+ ✓ Compiled in 850ms (1304 modules)
+ ✓ Compiled in 1010ms (1304 modules)
+ ✓ Compiled in 939ms (1304 modules)
+ ✓ Compiled in 760ms (1304 modules)
+ ✓ Compiled in 911ms (1304 modules)
+ ✓ Compiled in 870ms (1304 modules)
+ ✓ Compiled in 738ms (1304 modules)
+ ✓ Compiled in 707ms (1304 modules)
+ ✓ Compiled in 1225ms (1304 modules)
+ ✓ Compiled in 761ms (1304 modules)
+ ✓ Compiled in 808ms (1304 modules)
+ ✓ Compiled in 956ms (1304 modules)
+ ✓ Compiled in 1114ms (1304 modules)
+ ✓ Compiled in 998ms (1304 modules)
+ ✓ Compiled in 652ms (1304 modules)
+ ✓ Compiled in 974ms (1304 modules)
+ ✓ Compiled in 582ms (1304 modules)
+ ✓ Compiled in 597ms (1304 modules)
+ ✓ Compiled in 624ms (1304 modules)
+ ✓ Compiled in 574ms (1304 modules)
+ ✓ Compiled in 537ms (1304 modules)
+ ✓ Compiled in 548ms (1304 modules)
+ ✓ Compiled in 582ms (1304 modules)
+ ✓ Compiled in 631ms (1304 modules)
+ ✓ Compiled in 1275ms (1304 modules)
+ ✓ Compiled in 805ms (1304 modules)
+ ✓ Compiled in 696ms (1304 modules)
+ ✓ Compiled in 762ms (1304 modules)
+ ✓ Compiled in 1111ms (1304 modules)
+ ✓ Compiled in 700ms (1304 modules)
+ ✓ Compiled in 698ms (1304 modules)
+ ✓ Compiled in 730ms (1304 modules)
+ ✓ Compiled in 733ms (1304 modules)
+ ✓ Compiled in 758ms (1304 modules)
+ ✓ Compiled in 692ms (1304 modules)
+ ✓ Compiled in 726ms (1304 modules)
+ ✓ Compiled in 746ms (1304 modules)
+ ✓ Compiled in 727ms (1304 modules)
+ ✓ Compiled in 702ms (1304 modules)
+ ✓ Compiled in 833ms (1304 modules)
+ ✓ Compiled in 1073ms (1304 modules)
+ ✓ Compiled in 696ms (1304 modules)
+ ✓ Compiled in 753ms (1304 modules)
+ ✓ Compiled in 729ms (1304 modules)
+ ✓ Compiled in 1169ms (1304 modules)
+ ✓ Compiled in 567ms (1304 modules)
+ ✓ Compiled in 704ms (1304 modules)
+ ✓ Compiled in 518ms (1304 modules)
+ ✓ Compiled in 472ms (1304 modules)
+ ✓ Compiled in 519ms (1304 modules)
+ ✓ Compiled in 463ms (1304 modules)
+ ✓ Compiled in 617ms (1304 modules)
+ ✓ Compiled in 812ms (1304 modules)
+ ✓ Compiled in 458ms (1304 modules)
+ ✓ Compiled in 551ms (1304 modules)
+ ✓ Compiled in 579ms (1304 modules)
+ ✓ Compiled in 1062ms (1304 modules)
+ ✓ Compiled in 1161ms (1304 modules)
+ ✓ Compiled in 752ms (1304 modules)
+ ✓ Compiled in 791ms (1304 modules)
+ ✓ Compiled in 504ms (1304 modules)
+ ✓ Compiled in 629ms (1304 modules)
+ ✓ Compiled in 756ms (1304 modules)
+ ✓ Compiled in 558ms (1304 modules)
+ ✓ Compiled in 515ms (1304 modules)
+ ✓ Compiled in 669ms (1304 modules)
+ ✓ Compiled in 848ms (1304 modules)
+ ✓ Compiled in 500ms (1304 modules)
+ ✓ Compiled in 620ms (1304 modules)
+ ✓ Compiled in 540ms (1304 modules)
+ ✓ Compiled in 602ms (1304 modules)
+ ✓ Compiled in 579ms (1304 modules)
+ ✓ Compiled in 629ms (1304 modules)
+ ✓ Compiled in 852ms (1304 modules)
+ ✓ Compiled in 676ms (1304 modules)
+ ✓ Compiled in 2.1s (1304 modules)
+ ✓ Compiled in 1282ms (1304 modules)
+ ✓ Compiled in 828ms (1304 modules)
+ ✓ Compiled in 675ms (1304 modules)
+ ✓ Compiled in 872ms (1304 modules)
+ ✓ Compiled in 1513ms (1304 modules)
+ ✓ Compiled in 808ms (1304 modules)
+ ✓ Compiled in 757ms (1304 modules)
+ ✓ Compiled in 725ms (1304 modules)
+ ✓ Compiled in 1023ms (1304 modules)
+ ✓ Compiled in 1114ms (1304 modules)
+ ✓ Compiled in 983ms (1304 modules)
+ ✓ Compiled in 1340ms (1304 modules)
+ ✓ Compiled in 2.3s (1304 modules)
+ ✓ Compiled in 1238ms (1304 modules)
+ ✓ Compiled in 858ms (1304 modules)
+ ✓ Compiled in 771ms (1304 modules)
+ ✓ Compiled in 951ms (1304 modules)
+ ✓ Compiled in 1251ms (1304 modules)
+ ✓ Compiled in 1632ms (1304 modules)
+ ✓ Compiled in 875ms (1304 modules)
+ ✓ Compiled in 782ms (1304 modules)
+ ✓ Compiled in 698ms (1304 modules)
+ ✓ Compiled in 1193ms (1304 modules)
+ ✓ Compiled in 591ms (1304 modules)
+ ✓ Compiled in 716ms (1304 modules)
+ ✓ Compiled in 616ms (1304 modules)
+ ✓ Compiled in 519ms (1304 modules)
+ ✓ Compiled in 527ms (1304 modules)
+ ✓ Compiled in 565ms (1304 modules)
+ ✓ Compiled in 530ms (1304 modules)
+ ✓ Compiled in 982ms (1304 modules)
+ ✓ Compiled in 571ms (1304 modules)
+ ✓ Compiled in 511ms (1304 modules)
+ ✓ Compiled in 512ms (1304 modules)
+ ✓ Compiled in 484ms (1304 modules)
+ ✓ Compiled in 647ms (1304 modules)
+ ✓ Compiled in 525ms (1304 modules)
+ ✓ Compiled in 550ms (1304 modules)
+ ✓ Compiled in 493ms (1304 modules)
+ ✓ Compiled in 529ms (1304 modules)
+ ✓ Compiled in 748ms (1304 modules)
+ ✓ Compiled in 449ms (1304 modules)
+ ✓ Compiled in 862ms (1304 modules)
+ ✓ Compiled in 957ms (1304 modules)
+ ✓ Compiled in 1650ms (1304 modules)
+ ✓ Compiled in 818ms (1304 modules)
+ ✓ Compiled in 698ms (1304 modules)
+ ✓ Compiled in 1183ms (1304 modules)
+ ✓ Compiled in 780ms (1304 modules)
+ ✓ Compiled in 709ms (1304 modules)
+ ✓ Compiled in 829ms (1304 modules)
+ ✓ Compiled in 760ms (1304 modules)
+ ✓ Compiled in 469ms (1304 modules)
+ ✓ Compiled in 514ms (1304 modules)
+ ✓ Compiled in 449ms (1304 modules)
+ ✓ Compiled in 613ms (1304 modules)
+ ✓ Compiled in 539ms (1304 modules)
+ ✓ Compiled in 1219ms (1304 modules)
+ ✓ Compiled in 511ms (1304 modules)
+ ✓ Compiled in 549ms (1304 modules)
+ ✓ Compiled in 495ms (1304 modules)
+ ✓ Compiled in 513ms (1304 modules)
+ ✓ Compiled in 479ms (1304 modules)
+ ✓ Compiled in 600ms (1304 modules)
+ ✓ Compiled in 528ms (1304 modules)
+ ✓ Compiled in 828ms (1304 modules)
+ ✓ Compiled in 588ms (1304 modules)
+ ✓ Compiled in 534ms (1304 modules)
+ ✓ Compiled in 510ms (1304 modules)
+ ✓ Compiled in 413ms (1304 modules)
+ ✓ Compiled in 902ms (1304 modules)
+ ✓ Compiled in 1089ms (1304 modules)
+ ✓ Compiled in 1410ms (1304 modules)
+ ✓ Compiled in 1046ms (1304 modules)
+ ✓ Compiled in 727ms (1304 modules)
+ ✓ Compiled in 656ms (1304 modules)
+ ✓ Compiled in 585ms (1304 modules)
+ ✓ Compiled in 602ms (1304 modules)
+ ✓ Compiled in 530ms (1304 modules)
+ ✓ Compiled in 782ms (1304 modules)
+ ✓ Compiled in 718ms (1304 modules)
+ ✓ Compiled in 690ms (1304 modules)
+ ✓ Compiled in 590ms (1304 modules)
+ ✓ Compiled in 815ms (1304 modules)
+ ✓ Compiled in 761ms (1304 modules)
+ ✓ Compiled in 521ms (1304 modules)
+ ✓ Compiled in 551ms (1304 modules)
+ ✓ Compiled in 466ms (1304 modules)
+ ✓ Compiled in 506ms (1304 modules)
+ ✓ Compiled in 479ms (1304 modules)
+ ✓ Compiled in 712ms (1304 modules)
+ ✓ Compiled in 1339ms (1304 modules)
+ ✓ Compiled in 1036ms (1304 modules)
+ ✓ Compiled in 981ms (1304 modules)
+ ✓ Compiled in 1513ms (1304 modules)
+ ✓ Compiled in 2.5s (2783 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /vsb/eHYABsF2S7ouU6O9y98D 200 in 352ms
+ ✓ Compiled in 522ms (1304 modules)
+ ✓ Compiled in 494ms (1304 modules)
+ ✓ Compiled in 605ms (1304 modules)
+ ✓ Compiled in 1294ms (1304 modules)
+ ✓ Compiled in 1953ms (1304 modules)
+ ✓ Compiled in 894ms (1304 modules)
+ ✓ Compiled in 850ms (1304 modules)
+ ✓ Compiled in 617ms (1304 modules)
+ ✓ Compiled in 952ms (1304 modules)
+ ✓ Compiled in 915ms (1304 modules)
+ ✓ Compiled in 669ms (1304 modules)
+ ✓ Compiled in 746ms (1304 modules)
+ ✓ Compiled in 499ms (1304 modules)
+ ✓ Compiled in 534ms (1304 modules)
+ ✓ Compiled in 973ms (1304 modules)
+ ✓ Compiled in 495ms (1304 modules)
+ ✓ Compiled in 509ms (1304 modules)
+ ✓ Compiled in 482ms (1304 modules)
+ ✓ Compiled in 868ms (1304 modules)
+ ✓ Compiled in 893ms (1304 modules)
+ ✓ Compiled in 894ms (1304 modules)
+ ✓ Compiled in 545ms (1304 modules)
+ ✓ Compiled in 496ms (1304 modules)
+ ✓ Compiled in 1140ms (1304 modules)
+ ✓ Compiled in 609ms (1304 modules)
+ ✓ Compiled in 528ms (1304 modules)
+ ✓ Compiled in 506ms (1304 modules)
+ ✓ Compiled in 1058ms (1304 modules)
+ ✓ Compiled in 561ms (1304 modules)
+ ✓ Compiled in 544ms (1304 modules)
+ ✓ Compiled in 562ms (1304 modules)
+ ✓ Compiled in 711ms (1304 modules)
+ ✓ Compiled in 684ms (1304 modules)
+ ✓ Compiled in 791ms (1304 modules)
+ ✓ Compiled in 668ms (1304 modules)
+ ✓ Compiled in 969ms (1304 modules)
+ ✓ Compiled in 2.2s (2783 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /vsb/eHYABsF2S7ouU6O9y98D 200 in 412ms
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: Array.isArray(content) ? content : [content],
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: Array.isArray(content) ? content : [content],
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ⨯ ./lib/vsb-pdf-export.ts
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+     ,-[[36;1;4mD:\2026\email\email_builder\email_builder_latest\catalyst\lib\vsb-pdf-export.ts[0m:312:1]
+ [2m312[0m |     return node;
+ [2m313[0m |   }
+ [2m314[0m |   const fixedContent = Array.isArray(content) ? content.map(fixLayout) : [fixLayout(content)];
+ [2m315[0m |     pageSize: { width: pageWidthPt, height: Infinity },
+     : [31;1m                       ^^^^^^^^^|^^^^^^^^^[0m[33;1m^[0m
+     :                                 [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m316[0m |     pageMargins: 24,
+ [2m317[0m |     content: fixedContent,
+ [2m317[0m |     defaultStyle: { font: 'Roboto', fontSize: 10 },
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/vsb-pdf-export.ts
+./app/vsb/[templateId]/page.tsx
+ ✓ Compiled in 3.4s (2783 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /vsb/eHYABsF2S7ouU6O9y98D 200 in 296ms
+ ✓ Compiled in 997ms (1304 modules)
+ ✓ Compiled in 1335ms (1304 modules)
+ ✓ Compiled in 583ms (1304 modules)
+ ✓ Compiled in 503ms (1304 modules)
+ ✓ Compiled in 684ms (1304 modules)
+ ✓ Compiled in 510ms (1304 modules)
+ ✓ Compiled in 488ms (1304 modules)
+ ✓ Compiled in 573ms (1304 modules)
+ ✓ Compiled in 953ms (1304 modules)
+ ✓ Compiled in 526ms (1304 modules)
+ ✓ Compiled in 543ms (1304 modules)
+ ✓ Compiled in 827ms (1304 modules)
+ ✓ Compiled in 1050ms (1304 modules)
+ ✓ Compiled in 942ms (1304 modules)
+ ✓ Compiled in 980ms (1304 modules)
+ ✓ Compiled in 847ms (1304 modules)
+ ✓ Compiled in 783ms (1304 modules)
+ ✓ Compiled in 732ms (1304 modules)
+ ✓ Compiled in 685ms (1304 modules)
+ ✓ Compiled in 568ms (1304 modules)
+ ✓ Compiled in 684ms (1304 modules)
+ ✓ Compiled in 600ms (1304 modules)
+ ✓ Compiled in 658ms (1304 modules)
+ ✓ Compiled in 814ms (1304 modules)
+ ✓ Compiled in 1122ms (1304 modules)
+ ✓ Compiled in 730ms (1304 modules)
+ ✓ Compiled in 750ms (1304 modules)
+ ✓ Compiled in 559ms (1304 modules)
+ ✓ Compiled in 577ms (1304 modules)
+ ✓ Compiled in 745ms (1304 modules)
+ ✓ Compiled in 819ms (1304 modules)
+ ✓ Compiled in 794ms (1304 modules)
+ ✓ Compiled in 1031ms (1304 modules)
+ ✓ Compiled in 1747ms (1304 modules)
+ ✓ Compiled in 764ms (1304 modules)
+ ✓ Compiled in 635ms (1304 modules)
+ ✓ Compiled in 552ms (1304 modules)
+ ✓ Compiled in 1172ms (1304 modules)
+ ✓ Compiled in 1006ms (1304 modules)
+ ✓ Compiled in 614ms (1304 modules)
+ ✓ Compiled in 598ms (1304 modules)
+ ✓ Compiled in 600ms (1304 modules)
+ ✓ Compiled in 583ms (1304 modules)
+ ✓ Compiled in 738ms (1304 modules)
+ ✓ Compiled in 631ms (1304 modules)
+ ✓ Compiled in 569ms (1304 modules)
+ ✓ Compiled in 567ms (1304 modules)
+ ✓ Compiled in 593ms (1304 modules)
+ ✓ Compiled in 566ms (1304 modules)
+ ✓ Compiled in 605ms (1304 modules)
+ ✓ Compiled in 598ms (1304 modules)
+ ✓ Compiled in 677ms (1304 modules)
+ ✓ Compiled in 740ms (1304 modules)
+ ✓ Compiled in 752ms (1304 modules)
+ ✓ Compiled in 693ms (1304 modules)
+ ✓ Compiled in 809ms (1304 modules)
+ ✓ Compiled in 685ms (1304 modules)
+ ✓ Compiled in 658ms (1304 modules)
+ ✓ Compiled in 596ms (1304 modules)
+ ✓ Compiled in 688ms (1304 modules)
+ ✓ Compiled in 608ms (1304 modules)
+ ✓ Compiled in 590ms (1304 modules)
+ ✓ Compiled in 975ms (1304 modules)
+ ✓ Compiled in 632ms (1304 modules)
+ ✓ Compiled in 623ms (1304 modules)
+ ✓ Compiled in 578ms (1304 modules)
+ ✓ Compiled in 727ms (1304 modules)
+ ✓ Compiled in 793ms (1304 modules)
+ ✓ Compiled in 647ms (1304 modules)
+ ✓ Compiled in 581ms (1304 modules)
+ ✓ Compiled in 613ms (1304 modules)
+ ✓ Compiled in 563ms (1304 modules)
+ ✓ Compiled in 624ms (1304 modules)
+ ✓ Compiled in 940ms (1304 modules)
+ ✓ Compiled in 594ms (1304 modules)
+ ✓ Compiled in 604ms (1304 modules)
+ ✓ Compiled in 787ms (1304 modules)
