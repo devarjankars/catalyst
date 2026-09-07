@@ -446,7 +446,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
 
   const renderTableSection = (section: any) => `
     <div style="margin:0 0 16px;padding:0;line-height:1;">
-      <div style="font-size:11px;font-weight:bold;line-height:11px;margin:0 0 -5px;padding:0;color:${accent};">${section.heading}</div>
+      <div style="font-size:11px;font-weight:bold;line-height:11px;margin:0 0 20px;padding:0;color:${accent};">${section.heading}</div>
       <table style="width:100%;margin:0;padding:0;border-collapse:collapse;font-size:9px;font-family:'Arial','Helvetica Neue',Helvetica,Arial,sans-serif;">
       <thead>
         <tr>

@@ -87,8 +87,8 @@ export default function VSBPage() {
       pages.push({
         html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor),
         width: 600,
-        // Render as real, editable PDF text (selectable/searchable, links preserved).
-        mode: 'text',
+        // Use the browser layout so spacing matches the Combined View exactly.
+        mode: 'image',
       });
     }
 
