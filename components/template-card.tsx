@@ -25,8 +25,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
 
   // Standard templates (isUserCreated: false) are view/use only — no edit or delete
   const isStandard = !template.isUserCreated
-  // Only explicitly marked read-only blocks edit/delete — standard templates are now editable
-  const isReadOnly = readOnly
+  // Standard templates can only be used as the starting point for a new emailer.
+  const isReadOnly = readOnly || isStandard
 
   useEffect(() => {
     if (!previewRef.current) return
@@ -120,7 +120,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
                 onClick={(e) => { e.stopPropagation(); onUse() }}
               >
                 <Play className="w-3.5 h-3.5 mr-1" />
-                Use Template
+                {isStandard ? 'Use as Template' : 'Use Template'}
               </Button>
             </div>
 

@@ -123,6 +123,7 @@ class FirebaseService {
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
         "Ferring RTE",
+        "Idorsia_RTE",
       ];
 
       const standardTemplates = templates.filter(t => !t.isUserCreated);
@@ -147,7 +148,8 @@ class FirebaseService {
       }
 
       // ── Brand correction + content seeding from existing user emailers ────
-      const SEED_MAP: Record<string, { source: string; brand: string }> = {
+      const SEED_MAP: Record<string, { source: string; brand: string; sourceId?: string }> = {
+        "Orserdu RTE":        { source: "testesr1 (Copy)", sourceId: "i7hzXSuLJNkz2UwDFSbw", brand: "orserdu" },
         "Elzonris RTE":       { source: "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE", brand: "elzonris" },
         "Elzonris Unbranded": { source: "MAT-US-TAG-00334_Speaker-Program-Invite",     brand: "elzonris" },
         "Elzonris SFMC":      { source: "MAT-US-TAG-00291_v2",                         brand: "elzonris" },
@@ -180,6 +182,7 @@ class FirebaseService {
           // Find source emailer using partial name match (case-insensitive)
           const needle = seedConfig.source.toLowerCase().trim();
           const sourceTemplate = templates.find(src => {
+            if (seedConfig.sourceId) return src.id === seedConfig.sourceId;
             const srcName = (src.name ?? "").toLowerCase().trim();
             return srcName === needle || srcName.includes(needle) || needle.includes(srcName);
           });
@@ -191,6 +194,7 @@ class FirebaseService {
                 option2Components: sourceTemplate.option2Components ?? [],
                 option3Components: sourceTemplate.option3Components ?? [],
                 optionMode: sourceTemplate.optionMode ?? "single",
+                optionSubMode: sourceTemplate.optionSubMode ?? "header-only",
                 preheaderText: sourceTemplate.preheaderText ?? "",
                 updatedAt: new Date(),
               });
@@ -202,7 +206,9 @@ class FirebaseService {
       }
 
       // Seed missing canonical templates
-      const missingNames = CANONICAL_NAMES.filter(n => !seen.has(n));
+      // Promoted templates such as Idorsia_RTE use their saved content; only
+      // built-in sample templates can be recreated when missing.
+      const missingNames = CANONICAL_NAMES.filter(n => !seen.has(n) && sampleMap.has(n));
       if (missingNames.length > 0 || legacyToDelete.length > 0 || dupes.length > 0) {
         const toCreate = this.getSampleTemplates().filter(s => missingNames.includes(s.name));
         for (const template of toCreate) {
