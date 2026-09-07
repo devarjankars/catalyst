@@ -788,7 +788,7 @@ class FirebaseService {
   }
 
   async createVSB(data: any): Promise<any> {
-    if (!this.isFirebaseAvailable) return null;
+    if (!this.isFirebaseAvailable) throw new Error('VSB storage is unavailable. Please reload and try again.');
     try {
       const docRef = await addDoc(collection(db, this.vsbsCollection), {
         ...removeUndefinedDeep(data),
@@ -798,7 +798,7 @@ class FirebaseService {
       return { id: docRef.id, ...data };
     } catch (error) {
       console.error("Failed to create VSB:", error);
-      return null;
+      throw error;
     }
   }
 

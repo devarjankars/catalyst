@@ -2466,6 +2466,94 @@ export function PropertiesPanel({
               </div>
             </div>
           )
+
+          case "tryvio-isi":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Padding (left/right)</Label>
+                  <Input
+                    value={(component as any).padding ?? "0 20px"}
+                    onChange={(e) => onUpdateComponent({ padding: e.target.value } as any)}
+                    placeholder="0 20px"
+                  />
+                </div>
+                <div className="pt-2">
+                  <Button
+                    variant="outline" size="sm" className="w-full flex items-center gap-2"
+                    onClick={() => {
+                      const modal = document.createElement('div');
+                      modal.innerHTML = `<div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+                          <p style="font-weight:600;font-size:14px;">Edit TRYVIO ISI HTML</p>
+                          <textarea id="isi-html-editor" style="flex:1;min-height:300px;font-family:monospace;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:vertical;">${((component as any).html || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+                          <div style="display:flex;gap:8px;justify-content:flex-end;">
+                            <button id="isi-cancel" style="padding:6px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;">Cancel</button>
+                            <button id="isi-save" style="padding:6px 16px;background:#BC2030;color:#fff;border:none;border-radius:6px;cursor:pointer;">Save</button>
+                          </div>
+                        </div>
+                      </div>`;
+                      document.body.appendChild(modal);
+                      const ta = modal.querySelector('#isi-html-editor') as HTMLTextAreaElement;
+                      ta.value = (component as any).html || '';
+                      modal.querySelector('#isi-cancel')?.addEventListener('click', () => document.body.removeChild(modal));
+                      modal.querySelector('#isi-save')?.addEventListener('click', () => {
+                        onUpdateComponent({ html: ta.value } as any);
+                        document.body.removeChild(modal);
+                      });
+                    }}
+                  >
+                    <Code className="w-4 h-4" /> Edit ISI HTML
+                  </Button>
+                </div>
+                <p className="text-[11px] text-gray-400">The ISI content is pre-filled with TRYVIO ISI. Use the editor above to customise it.</p>
+              </div>
+            );
+
+          case "tryvio-abbrev-ref":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Abbreviations</Label>
+                  <textarea
+                    className="w-full min-h-[80px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                    value={(component as any).abbreviations ?? ""}
+                    onChange={(e) => onUpdateComponent({ abbreviations: e.target.value } as any)}
+                    placeholder="ALT, alanine aminotransferase; ..."
+                  />
+                </div>
+                <div>
+                  <Label>References</Label>
+                  <textarea
+                    className="w-full min-h-[80px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                    value={(component as any).references ?? ""}
+                    onChange={(e) => onUpdateComponent({ references: e.target.value } as any)}
+                    placeholder="1. Author et al. Journal. 2024;..."
+                  />
+                </div>
+                <div>
+                  <Label>Font Size</Label>
+                  <Input
+                    value={(component as any).fontSize ?? "12px"}
+                    onChange={(e) => onUpdateComponent({ fontSize: e.target.value } as any)}
+                    placeholder="12px"
+                  />
+                </div>
+                <div>
+                  <Label>Text Color</Label>
+                  <ColorInput value={(component as any).color ?? "#646464"} onChange={(v) => onUpdateComponent({ color: v } as any)} />
+                </div>
+                <div>
+                  <Label>Padding</Label>
+                  <Input
+                    value={(component as any).padding ?? "0 30px 10px 30px"}
+                    onChange={(e) => onUpdateComponent({ padding: e.target.value } as any)}
+                    placeholder="0 30px 10px 30px"
+                  />
+                </div>
+              </div>
+            );
+
           case "tryvio-footer":
             return (
               <div className="space-y-4">

@@ -18,12 +18,12 @@ import {
 import { ImageGallery } from "./image-gallery"
 import { BRANDS, type Brand } from "./brand-selection-modal"
 
-/** Category value used in component-types.tsx mapped to a brand key */
-const BRAND_CATEGORY_MAP: Record<Brand, string> = {
-  orserdu: "custom",   // "custom" category = Orserdu components
-  ferring: "ferring",
-  idorsia: "idorsia",
-  elzonris: "elzonris",
+/** Categories shown for each brand — can include multiple categories */
+const BRAND_CATEGORY_MAP: Record<Brand, string[]> = {
+  orserdu:  ["custom"],
+  ferring:  ["ferring"],
+  idorsia:  ["idorsia"],
+  elzonris: ["elzonris"],
 }
 
 interface ComponentPaletteProps {
@@ -155,9 +155,9 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
   // Resolve the active brand config — fallback to Orserdu if none provided
   const activeBrandId: Brand = selectedBrand ?? "orserdu"
   const brandConfig = BRANDS.find((b) => b.id === activeBrandId) ?? BRANDS[0]
-  const brandCategory = BRAND_CATEGORY_MAP[activeBrandId]
+  const brandCategories = BRAND_CATEGORY_MAP[activeBrandId]
   const brandComponents = componentTypes.filter(
-    (type) => type.type !== "section" && type.category === brandCategory
+    (type) => type.type !== "section" && brandCategories.includes(type.category ?? "")
   )
 
   // Pick a brand icon colour class based on the brand

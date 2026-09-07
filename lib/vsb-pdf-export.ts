@@ -72,7 +72,7 @@ async function toDataUri(url: string): Promise<string | null> {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob;
+      reader.readAsDataURL(blob);
     });
   } catch {
     return null;
@@ -85,12 +85,12 @@ async function inlineImagesInHtml(html: string): Promise<string> {
   // Inline <img src="...">
   const imgRe = /(<img\b[^>]*?)(\bsrc=)(["'])(.*?)\3/gi;
   let m: RegExpExecArray | null;
-  const jobs: Array<{ full: string; prefix: string; url: string }> = [];
-  while ((m = imgRe.exec(html)) !== null) jobs.push({ full: m[0], prefix: m[1] + m[2] + m[3], url: m[4] });
-  for ( (const job of jobs) {
-    const abs = resolveUrl(job.url;
-    const uri = await toDataUri(abs;
-    if (uri) out = out.replace(job.full, job.prefix + uri + m[3];
+  const jobs: Array<{ full: string; prefix: string; url: string; quote: string }> = [];
+  while ((m = imgRe.exec(html)) !== null) jobs.push({ full: m[0], prefix: m[1] + m[2] + m[3], url: m[4], quote: m[3] });
+  for (const job of jobs) {
+    const abs = resolveUrl(job.url);
+    const uri = await toDataUri(abs);
+    if (uri) out = out.replace(job.full, job.prefix + uri + job.quote);
   }
 
   // Inline CSS url(...) references inside style attributes
@@ -99,8 +99,8 @@ async function inlineImagesInHtml(html: string): Promise<string> {
   while ((cm = cssRe.exec(html)) !== null) {
     const rawUrl = cm[2];
     if (/^data:/i.test(rawUrl)) continue;
-    const abs = resolveUrl(rawUrl;
-    const uri = await toDataUri(abs;
+    const abs = resolveUrl(rawUrl);
+    const uri = await toDataUri(abs);
     if (uri) out = out.replace(cm[0], 'url("' + uri + '")');
   }
 
@@ -130,59 +130,64 @@ async function captureHtml(html: string, width: number, html2canvas: any): Promi
         body { width: ${width}px; overflow: visible; }
       </style></head><body>${html}</body></html>`;
 
-  document.body.appendChild(frame);
+  try {
+    const iframeDoc = await new Promise<Document>((resolve, reject) => {
+      const timer = window.setTimeout(() => reject(new Error('PDF preview did not load')), 10000);
+      frame.addEventListener('load', () => {
+        window.clearTimeout(timer);
+        const doc = frame.contentDocument;
+        if (doc?.body) resolve(doc);
+        else reject(new Error('PDF preview is unavailable'));
+      }, { once: true });
+      document.body.appendChild(frame);
+    });
 
-  const iframeDoc = await new Promise<Document>((resolve) => {
-    const timer = window.setTimeout(() => {
-      const d = frame.contentDocument || frame.contentWindow?.document;
-      if (d) resolve(d);
-    }, 4000);
-    frame.addEventListener('load', () => {
-      const d = frame.contentDocument || frame.contentWindow?.document;
-      if (d) { window.clearTimeout(timer); resolve(d); }
-    }, { once: true });
-  });
+    const body = iframeDoc.body;
+    Object.assign(body.style, {
+      width: width + 'px', minWidth: width + 'px', margin: '0', padding: '0', overflow: 'visible',
+    });
+    await waitForImages(iframeDoc);
+    await iframeDoc.fonts?.ready;
+    await new Promise(r => setTimeout(r, 120));
 
-  await waitForImages(iframeDoc);
-// Make sure webfonts (if any) are fully loaded before rasterizing.
-
-  const fontReady = (iframeDoc as any).fonts?.ready;
-  if (fontReady) await fontReady.catch(() => undefined);
-  // Let layout settle at the target width before rasterizing.
-  await new Promise(r => setTimeout(r, 120));
-
-  const body = iframeDoc.body as HTMLElement;
-  body.style.width = `${width}px`;
-  body.style.minWidth = `${width}px`;
-  body.style.margin = '0';
-  body.style.padding = '0';
-  body.style.overflow = 'visible';
-
-  const canvas = await html2canvas(body, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    width: width,
-    windowWidth: width,
-    scrollX: 0,
-    scrollY: 0,
-    backgroundColor: '#ffffff',
-  });
-
-  const height = Math.max(body.scrollHeight, Math.ceil(canvas.height / 2)) + 16;
-  frame.remove();
-  return { dataUrl: canvas.toDataURL('image/png'), width, height };
+    // Keep the viewport at the requested desktop/mobile width, but capture all
+    // overflow (including padded tables) and the complete rendered height.
+    const captureWidth = Math.ceil(Math.max(width, body.scrollWidth, iframeDoc.documentElement.scrollWidth));
+    const captureHeight = Math.ceil(Math.max(body.scrollHeight, body.getBoundingClientRect().height, iframeDoc.documentElement.scrollHeight));
+    const scale = captureScale(captureWidth, captureHeight);
+    const canvas = await html2canvas(body, {
+      scale,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width: captureWidth,
+      height: captureHeight,
+      windowWidth: width,
+      scrollX: 0,
+      scrollY: 0,
+      backgroundColor: '#ffffff',
+    });
+    return { dataUrl: canvas.toDataURL('image/png'), width: captureWidth, height: captureHeight };
+  } finally {
+    frame.remove();
+  }
 }
+
+// Bound raster dimensions and area for long emails and multi-option layouts.
+function captureScale(width: number, height: number): number {
+  return Math.min(2, 16384 / width, 16384 / height, Math.sqrt(16777216 / (width * height)));
+}
+
 async function composeColumns(columns: CapturedPage[], gap: number, pageWidth?: number): Promise<CapturedPage> {
   const contentWidth = columns.reduce((sum, col) => sum + col.width, 0) + gap * (columns.length - 1);
   const width = pageWidth && pageWidth > contentWidth ? pageWidth : contentWidth;
   const height = Math.max(...columns.map(col => col.height));
   const canvas = document.createElement('canvas');
-  canvas.width = Math.ceil(width * 2);
-  canvas.height = Math.ceil(height * 2);
+  const scale = captureScale(width, height);
+  canvas.width = Math.floor(width * scale);
+  canvas.height = Math.floor(height * scale);
   const ctx = canvas.getContext('2d');
-  if (!ctx) return columns[0];
+  if (!ctx) throw new Error('Could not compose PDF options');
 
   // Match the background used by the combined desktop / mobile preview wrappers.
   ctx.fillStyle = '#f3f4f6';
@@ -192,8 +197,8 @@ async function composeColumns(columns: CapturedPage[], gap: number, pageWidth?: 
   for (const col of columns) {
     const img = new Image();
     img.src = col.dataUrl;
-    await img.decode().catch(() => undefined);
-    ctx.drawImage(img, x * 2, 0, col.width * 2, col.height * 2);
+    await img.decode();
+    ctx.drawImage(img, x * scale, 0, col.width * scale, col.height * scale);
     x += col.width + gap;
   }
 
@@ -224,18 +229,24 @@ export async function generateVsbPdfBlob(pages: VsbPdfPageSpec[]): Promise<Blob>
   let pdf: any = null;
   for (const spec of pages) {
     const page = await capturePage(spec, html2canvas);
+    // jsPDF caps dimensions at 14,400 pt (19,200 CSS px). Scale the image
+    // and page together to preserve the full content of exceptionally tall emails.
+    const pageScale = Math.min(1, 19200 / Math.max(page.width, page.height));
+    const pdfWidth = page.width * pageScale;
+    const pdfHeight = page.height * pageScale;
+    const orientation = pdfWidth > pdfHeight ? 'landscape' : 'portrait';
     if (!pdf) {
       pdf = new jsPDF({
         unit: 'px',
-        format: [page.width, page.height],
-        orientation: 'portrait',
+        format: [pdfWidth, pdfHeight],
+        orientation,
         hotfixes: ['px_scaling'],
         compress: true,
       });
-      pdf.addImage(page.dataUrl, 'JPEG', 0, 0, page.width, page.height, undefined, 'FAST');
+      pdf.addImage(page.dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
     } else {
-      pdf.addPage([page.width, page.height], 'portrait');
-      pdf.addImage(page.dataUrl, 'JPEG', 0, 0, page.width, page.height, undefined, 'FAST');
+      pdf.addPage([pdfWidth, pdfHeight], orientation);
+      pdf.addImage(page.dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
     }
   }
 
@@ -318,7 +329,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
       </div>`
     : '';
 return `
-    <div style="width:100%;background:#fff;padding:16px;font-family:'Arial','Helvetica Neue',Helvetica,Arial,sans-serif;">
+    <div style="box-sizing:border-box;width:100%;background:#fff;padding:16px;font-family:'Arial','Helvetica Neue',Helvetica,Arial,sans-serif;">
       <h1 style="font-size:13px;color:#006937;font-weight:bold;margin-bottom:8px;">${emailName}</h1>
       <h3 style="font-size:11px;font-weight:bold;margin-bottom:12px;color:${accent};">Variable copy</h3>
       ${(data || []).map((section: any) => {
@@ -337,7 +348,7 @@ export function buildAltNameHtml(data: any, emailName?: string): string {
   const headingColor = (!Array.isArray(data) && data?.headingColor) ? data.headingColor : '#006836';
 
   return `
-    <div style="width:100%;background:#fff;padding:24px;font-family:Arial,sans-serif;color:#000;">
+    <div style="box-sizing:border-box;width:100%;background:#fff;padding:24px;font-family:Arial,sans-serif;color:#000;">
       <div style="margin-bottom:12px;padding-bottom:16px;">
         <h2 style="font-size:18px;text-align:center;font-weight:bold;margin:0;color:${headingColor};">ALT-Text for HTML version</h2>
       </div>

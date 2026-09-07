@@ -57,7 +57,7 @@ export const useVSBStore = create<VSBStoreState>()(
       hasUnsavedChanges: false,
       setHasUnsavedChanges: (val) => set({ hasUnsavedChanges: val }),
       fetchVSBs: async (templateId: string) => {
-        set({ loading: true, error: null })
+        set({ loading: true, error: null, currentVsb: null, hasUnsavedChanges: false })
         try {
           const vsbs = await firebaseService.getVSBs(templateId)
           set({ vsbs, loading: false })
@@ -78,9 +78,8 @@ export const useVSBStore = create<VSBStoreState>()(
         set({ loading: true, error: null })
         try {
           const newVSB = await firebaseService.createVSB(vsb)
-          if (newVSB) {
-            set({ vsbs: [...get().vsbs, newVSB], currentVsb: newVSB, loading: false })
-          }
+          if (!newVSB) throw new Error('Failed to create VSB. Please try again.')
+          set({ vsbs: [...get().vsbs, newVSB], currentVsb: newVSB, loading: false, hasUnsavedChanges: false })
           return newVSB
         } catch (e: any) {
           set({ error: e.message || 'Failed to create VSB', loading: false })

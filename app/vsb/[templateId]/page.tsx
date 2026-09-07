@@ -36,11 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { generateEmailHTML } from '@/lib/email-generator';
-<<<<<<< HEAD
 import { generateVsbPdfBlob, buildVariableCopyHtml, buildAltNameHtml, type VsbPdfPageSpec } from '@/lib/vsb-pdf-export';
-=======
-import { generateVSBPdfClientSide, screenshotEmailHtml } from '@/lib/pdf-client';
->>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
 import { firebaseService } from '@/services/firebase-service';
 import { getVaribleCopyTemplate } from '@/types/variableSectionTemplate';
 
@@ -85,7 +81,6 @@ export default function VSBPage() {
     const includeMV  = options ? options.mobileView   : true;
     const includeANP = options ? options.altNamePage  : true;
 
-<<<<<<< HEAD
     const pages: VsbPdfPageSpec[] = [];
 
     if (includeVC) {
@@ -95,8 +90,6 @@ export default function VSBPage() {
       });
     }
 
-=======
->>>>>>> 03ac4d18da543067c0638619cf15866d88d055fe
     const isThreeMode = currentTemplate?.optionMode === 'three';
     const headerDetails = currentVsb?.headerDetails || [];
 
@@ -130,8 +123,12 @@ export default function VSBPage() {
       );
     };
 
-    // ── Build PDF sections ─────────────────────────────────────────────────
-    const sections: import('@/lib/pdf-client').PdfSection[] = [];
+    const desktopHtmls = includeDV
+      ? optArray.map(opt => buildHtml(opt.components, 600, `Desktop View - ${opt.title}`))
+      : [];
+    const mobileHtmls = includeMV
+      ? optArray.map(opt => buildHtml(opt.components, 375, `Mobile View - ${opt.title}`))
+      : [];
 
     if (includeDV) {
       if (isThreeMode) {
@@ -167,62 +164,6 @@ export default function VSBPage() {
     if (pages.length === 0) throw new Error('No pages selected for PDF generation');
 
     return generateVsbPdfBlob(pages);
-    // 1. Variable Copy
-    if (includeVC) {
-      sections.push({
-        type: 'variableCopy',
-        variableCopyData: {
-          data: currentVsb.variableCopy,
-          emailname: emailName,
-          headingColor: currentVsb.variableCopyHeadingColor,
-        },
-      });
-    }
-
-    // 2. Desktop screenshots (all options)
-    if (includeDV) {
-      for (const opt of optArray) {
-        const html  = buildHtml(opt.components, 600, `Desktop View — ${opt.title}`);
-        const { base64, height } = await screenshotEmailHtml(html, 600, 0.88);
-        if (base64) {
-          sections.push({
-            type: 'emailImage',
-            imageBase64: base64,
-            imageHeight: height,
-            label: `Desktop View — ${opt.title}`,
-            isMobile: false,
-          });
-        }
-      }
-    }
-
-    // 3. Mobile screenshots (all options)
-    if (includeMV) {
-      for (const opt of optArray) {
-        const html  = buildHtml(opt.components, 375, `Mobile View — ${opt.title}`);
-        const { base64, height } = await screenshotEmailHtml(html, 375, 0.88);
-        if (base64) {
-          sections.push({
-            type: 'emailImage',
-            imageBase64: base64,
-            imageHeight: height,
-            label: `Mobile View — ${opt.title}`,
-            isMobile: true,
-          });
-        }
-      }
-    }
-
-    // 4. Alt Name Page (last)
-    if (includeANP) {
-      sections.push({
-        type: 'altName',
-        altNameData: { data: currentVsb.altNamePage, emailName },
-      });
-    }
-
-    // ── Generate PDF entirely in the browser ──────────────────────────────
-    return generateVSBPdfClientSide({ emailName, sections });
   };
 
   const executeDownloadPDF = async (options?: {
@@ -310,8 +251,8 @@ export default function VSBPage() {
   }, [templateId, fetchVSBs, loadTemplateImages]);
 
   const handleCreateVSB = async () => {
-    if (!templateId) return;
-    await createVSB({
+    if (!templateId || loading || currentTemplate?.id !== templateId) return;
+    const newVsb = await createVSB({
       templateId,
       variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
@@ -324,7 +265,7 @@ export default function VSBPage() {
       ],
       
     });
-    setActiveSection('Variable Copy');
+    if (newVsb) setActiveSection('Variable Copy');
   };
 
   const handleEditVSB = (vsb: VSBData) => {
@@ -420,7 +361,7 @@ export default function VSBPage() {
     'Combined Preview'
   ];
 
-  if (currentVsb) {
+  if (currentVsb?.templateId === templateId) {
     const renderActiveSection = () => {
       switch (activeSection) {
         case 'Variable Copy':
@@ -657,7 +598,7 @@ export default function VSBPage() {
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3"><span><ArrowLeft onClick={handleBackNavigation} className='hover:translate-x-1 cursor-pointer'/></span>Visual Story Boards</h1>
           <p className="text-gray-500 mt-1">Manage VSBs for {currentTemplate?.name || 'this template'}</p>
         </div>
-        <Button onClick={handleCreateVSB} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleCreateVSB} disabled={loading || currentTemplate?.id !== templateId} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="mr-2 h-4 w-4" /> Create New VSB
         </Button>
       </div>

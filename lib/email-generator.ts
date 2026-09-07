@@ -1605,7 +1605,8 @@ case "isi": {
       </table>
       `;
 
-    case "elzonris-references": {
+    case "elzonris-references":
+    case "tryvio-references": {
       const fontSize   = component.fontSize   || "10px";
       const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
@@ -1939,6 +1940,28 @@ case "isi": {
     </tr>
   </tbody>
 </table>`.trim();
+    }
+
+    case "tryvio-isi": {
+      // The stored HTML already contains its own padding — emit it directly
+      return (component as any).html || "";
+    }
+
+    case "tryvio-abbrev-ref": {
+      const c   = component as any;
+      const pad = c.padding   || "0 30px 10px 30px";
+      const fs  = c.fontSize  || "12px";
+      const col = c.color     || "#646464";
+      const lh  = c.lineHeight|| "14px";
+      const abbr = c.abbreviations || "";
+      const refs = c.references    || "";
+      return `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+            ${abbr ? `<tr><td style="padding:${pad};font-family:Arial,sans-serif;font-size:${fs};color:${col};line-height:${lh};"><b>Abbreviations: </b>${abbr}</td></tr>` : ""}
+            ${refs ? `<tr><td style="padding:${abbr ? `0 ${pad.split(' ').slice(1).join(' ')}` : pad};font-family:Arial,sans-serif;font-size:${fs};color:${col};line-height:${lh};padding-top:6px;"><b>References: </b>${refs}</td></tr>` : ""}
+          </tbody>
+        </table>`.trim();
     }
 
     case "tryvio-footer": {

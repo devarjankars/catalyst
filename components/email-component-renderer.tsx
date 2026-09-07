@@ -1372,6 +1372,7 @@ export function EmailComponentRenderer({
         );
 
         case "elzonris-references":
+        case "tryvio-references":
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
               {!previewMode && isSelected ? (
@@ -1406,14 +1407,15 @@ export function EmailComponentRenderer({
                   lineHeight: component.lineHeight || "14px",
                   fontWeight: component.fontWeight || "normal",
                   margin: 0
-                }}>
-                  <strong>References:&nbsp;</strong>{component.references}
-                </p>
+                }}
+                  dangerouslySetInnerHTML={{ __html: `<strong>References:&nbsp;</strong>${component.references || ""}` }}
+                />
               )}
             </div>
           );
 
         case "elzonris-abbreviations":
+        case "tryvio-abbreviations":
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px" }}>
               {!previewMode && isSelected ? (
@@ -1448,9 +1450,9 @@ export function EmailComponentRenderer({
                   lineHeight: component.lineHeight || "14px",
                   fontWeight: component.fontWeight || "normal",
                   margin: 0
-                }}>
-                  <strong>Abbreviations:&nbsp;</strong>{component.abbreviations}
-                </p>
+                }}
+                  dangerouslySetInnerHTML={{ __html: `<strong>Abbreviations:&nbsp;</strong>${component.abbreviations || ""}` }}
+                />
               )}
             </div>
           );
@@ -1718,6 +1720,38 @@ export function EmailComponentRenderer({
               </div>
             </div>
           );
+      case "tryvio-isi":
+        return (
+          <div
+            style={baseStyle}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+            dangerouslySetInnerHTML={{ __html: component.html || "" }}
+          />
+        );
+
+      case "tryvio-abbrev-ref": {
+        const c = component as any;
+        return (
+          <div
+            style={{ ...baseStyle, padding: c.padding || "0 30px 10px 30px", fontFamily: "Arial, sans-serif" }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+          >
+            {c.abbreviations && (
+              <p style={{ fontSize: c.fontSize || "12px", color: c.color || "#646464", lineHeight: c.lineHeight || "14px", marginBottom: "6px" }}>
+                <b>Abbreviations: </b>
+                <span dangerouslySetInnerHTML={{ __html: c.abbreviations }} />
+              </p>
+            )}
+            {c.references && (
+              <p style={{ fontSize: c.fontSize || "12px", color: c.color || "#646464", lineHeight: c.lineHeight || "14px", margin: 0 }}>
+                <b>References: </b>
+                <span dangerouslySetInnerHTML={{ __html: c.references }} />
+              </p>
+            )}
+          </div>
+        );
+      }
+
       case "tryvio-footer": {
         const {
           tryvioFooterLogoSrc, tryvioFooterLogoHref, tryvioFooterLogoAlt,

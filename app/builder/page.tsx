@@ -96,6 +96,7 @@ export default function EmailBuilder() {
   const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [awaitingModeSelection, setAwaitingModeSelection] = useState(false);
   const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
+  const [createVsbAfterSave, setCreateVsbAfterSave] = useState(false);
   const [copyToDialogOpen, setCopyToDialogOpen] = useState(false);
   const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -421,7 +422,7 @@ function replaceImagesInComponents(components: any[]): any[] {
 
 
   const handleSaveComponentChanges = async () => {
-    if (!currentTemplate) return;
+    if (!currentTemplate) return false;
 
     setSaving(true);
     try {
@@ -438,14 +439,17 @@ function replaceImagesInComponents(components: any[]): any[] {
         }
       );
 
+      if (!updatedTemplate) throw new Error('Failed to save emailer');
       if (updatedTemplate) {
         setCurrentTemplate(updatedTemplate);
         setOriginalTemplate(updatedTemplate);
         markComponentsSaved();
       }
+      return true;
     } catch (error) {
       console.error("Failed to save component changes:", error);
       alert("Failed to save changes. Please try again.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -506,6 +510,7 @@ function replaceImagesInComponents(components: any[]): any[] {
         });
       }
 
+      if (!savedTemplate) throw new Error('Failed to save emailer');
       if (savedTemplate) {
         setCurrentTemplate(savedTemplate);
         setOriginalTemplate(savedTemplate);
@@ -525,9 +530,10 @@ function replaceImagesInComponents(components: any[]): any[] {
         clearAll();
         router.push(pendingNavigation);
         setPendingNavigation(null);
-      } else if (searchParams.get("createVsb") === "true") {
+      } else if (createVsbAfterSave || searchParams.get("createVsb") === "true") {
         // Auto-navigate to VSB if user chose "Create VSB" at the start
         const id = savedTemplate?.id;
+        setCreateVsbAfterSave(false);
         if (id) router.push(`/vsb/${id}`);
       }
       // Otherwise just stay in builder — no extra prompt
@@ -745,9 +751,16 @@ if (activeSelectedId) {
               variant="outline"
               size="sm"
               className="flex items-center gap-1.5 text-gray-600 rounded-full h-8 px-3 text-xs"
-              onClick={() => {
+              disabled={loading || saving}
+              onClick={async () => {
                 const id = currentTemplate?.id || savedTemplateId;
-                if (id) router.push(`/vsb/${id}`);
+                if (!id || hasUnsavedTemplate || isWorkingCopy || isNewTemplate) {
+                  setCreateVsbAfterSave(true);
+                  setSaveTemplateDialog(true);
+                  return;
+                }
+                if (hasComponentChanges && !(await handleSaveComponentChanges())) return;
+                router.push(`/vsb/${id}`);
               }}
             >
               <LayoutTemplate className="w-3.5 h-3.5" />
@@ -946,7 +959,10 @@ if (activeSelectedId) {
       {/* Save Template Dialog */}
       <SaveTemplateDialog
         open={saveTemplateDialog}
-        onClose={() => setSaveTemplateDialog(false)}
+        onClose={() => {
+          setSaveTemplateDialog(false);
+          setCreateVsbAfterSave(false);
+        }}
         onSave={handleSaveTemplate}
         initialName={
           isWorkingCopy && urlTemplateName
