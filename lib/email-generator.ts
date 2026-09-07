@@ -611,7 +611,7 @@ function generateComponentHTML(component: EmailComponent): string {
                 <tbody><tr>${fl3Tds}</tr></tbody>
               </table>
             </td>
-          </tr>~
+          </tr>
         </tbody>
       </table>`.trim();
     }
@@ -891,7 +891,8 @@ case "isi": {
                                       <tr>
                                         <td class="f_14 black f_normal" align="left" valign="top"
                                           style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             <b style="color:#006937;display:block;font-size:16px;margin-bottom:5px;">INDICATION</b>ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer with disease progression following at least one line of endocrine therapy. </td>
+                                             <b style="color:#006937;display:block;font-size:16px;margin-bottom:5px;">INDICATION</b>
+                                             ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy. </td>
                                       </tr>
                 </tbody>
                </table>

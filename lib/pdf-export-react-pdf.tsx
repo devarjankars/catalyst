@@ -77,14 +77,12 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderStyle: 'solid',
     padding: 6,
-    verticalAlign: 'top',
   },
   tableCellCenter: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderStyle: 'solid',
     padding: 6,
-    verticalAlign: 'middle',
     textAlign: 'center',
   },
   thirdPartyRow: {
@@ -108,7 +106,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderStyle: 'solid',
-    borderCollapse: 'collapse',
   },
   altNameHeader: {
     fontSize: 18,
@@ -123,7 +120,6 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     padding: 12,
     width: '50%',
-    verticalAlign: 'middle',
   },
   altNameImageCell: {
     borderWidth: 1,
@@ -131,7 +127,6 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     padding: 12,
     width: '50%',
-    verticalAlign: 'middle',
     alignItems: 'center',
     justifyContent: 'center',
   },

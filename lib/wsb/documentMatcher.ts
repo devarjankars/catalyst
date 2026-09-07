@@ -17,7 +17,11 @@ export async function matchDocument(
     (doc) => doc.product === productId && doc.type === typeId
   );
 
-  const pool = candidates.length > 0 ? candidates : DOCUMENTS;
+  if (candidates.length === 0) {
+    return { document: null, confidence: 0 };
+  }
+
+  const pool = candidates;
   const promptEmbedding = await embed(prompt);
 
   let best: WsbDocument | null = null;
@@ -34,13 +38,7 @@ export async function matchDocument(
   // If we narrowed to an exact product+type match, trust that pairing
   // regardless of phrasing similarity — the slots already did the hard work.
   // Fall back to the first candidate if no score beat 0 (very short prompt).
-  if (candidates.length > 0) {
-    return { document: best ?? candidates[0], confidence: bestScore };
-  }
-
-  if (best && bestScore >= MIN_DOCUMENT_MATCH_CONFIDENCE) {
-    return { document: best, confidence: bestScore };
-  }
-
-  return { document: null, confidence: bestScore };
+  return best && bestScore >= MIN_DOCUMENT_MATCH_CONFIDENCE
+    ? { document: best, confidence: bestScore }
+    : { document: candidates[0], confidence: bestScore };
 }

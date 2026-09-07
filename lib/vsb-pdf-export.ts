@@ -301,7 +301,9 @@ async function generateTextPageBytes(html: string, widthPx?: number): Promise<Ui
     if (node.table) {
       const rows = node.table.body || [];
       const ncols = rows.reduce((m: number, r: any) => Math.max(m, Array.isArray(r) ? r.length : 0), 0);
-      if (ncols > 0) node.table.widths = Array(ncols).fill('*');
+      // Keep widths parsed from HTML (for example, the compact alt-text
+      // table) and only provide equal widths when the source has none.
+      if (ncols > 0 && !node.table.widths) node.table.widths = Array(ncols).fill('*');
     }
     if (node.image && typeof node.image === 'string') {
       if (node.maxWidth == null && node.width == null) node.maxWidth = '100%';
@@ -443,24 +445,27 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
   };
 
   const renderTableSection = (section: any) => `
-    <table style="width:100%;border-collapse:collapse;font-size:9px;font-family:'Arial','Helvetica Neue',Helvetica,Arial,sans-serif;">
+    <div style="margin:0 0 16px;padding:0;line-height:1;">
+      <div style="font-size:11px;font-weight:bold;line-height:11px;margin:0 0 -5px;padding:0;color:${accent};">${section.heading}</div>
+      <table style="width:100%;margin:0;padding:0;border-collapse:collapse;font-size:9px;font-family:'Arial','Helvetica Neue',Helvetica,Arial,sans-serif;">
       <thead>
         <tr>
-          <th style="border:1px solid #ddd;padding:6px 8px;font-weight:bold;text-align:center;color:#FF66CC;background:#f9f9f9;">Friendly From Name</th>
-          <th style="border:1px solid #ddd;padding:6px 8px;font-weight:bold;text-align:center;color:#FF66CC;background:#f9f9f9;">From Email Address</th>
+          <th bgcolor="#f9f9f9" style="border:1px solid #ddd;padding:6px 8px;font-weight:bold;text-align:center;color:#FF66CC;background-color:#f9f9f9;width:65%;">Friendly From Name</th>
+          <th bgcolor="#f9f9f9" style="border:1px solid #ddd;padding:6px 8px;font-weight:bold;text-align:center;color:#FF66CC;background-color:#f9f9f9;width:35%;">From Email Address</th>
         </tr>
       </thead>
       <tbody>
         ${(section.options || []).map((row: any) => `
           <tr>
-            <td style="border:1px solid #ddd;padding:6px 8px;vertical-align:top;">
+            <td width="65%" style="border:1px solid #ddd;padding:6px 8px;vertical-align:top;width:65%;">
               ${(row.friendlyNames || []).map((name: string, j: number) => `
                 <div style="margin-bottom:3px;"><span style="font-weight:bold;margin-right:4px;">${j + 1}.</span>${name}</div>`).join('')}
             </td>
-            <td style="border:1px solid #ddd;padding:6px 8px;vertical-align:middle;text-align:center;">${row.fromEmail}</td>
+            <td width="35%" style="border:1px solid #ddd;padding:6px 8px;vertical-align:middle;text-align:center;width:35%;">${row.fromEmail}</td>
           </tr>`).join('')}
       </tbody>
-    </table>`;
+      </table>
+    </div>`;
 
   const renderThirdPartySection = (section: any) => (section.options || []).length > 0
     ? `
@@ -506,12 +511,12 @@ export function buildAltNameHtml(data: any, emailName?: string): string {
                 <td style="border:1px solid #d1d5db;padding:12px;width:50%;vertical-align:middle;">
                   <div style="display:flex;justify-content:center;align-items:center;">
                     ${img.name
-                      ? `<img src="${img.name}" style="max-height:120px;max-width:100%;object-fit:contain;" />`
+                      ? `<img src="${img.name}" style="max-height:120px;max-width:100%;object-fit:contain;display:block;" />`
                       : '<div style="width:80px;height:80px;background:#f9fafb;border:1px dashed #d1d5db;display:flex;align-items:center;justify-content:center;color:#d1d5db;font-size:10px;">No Image</div>'}
                   </div>
                 </td>
                 <td style="border:1px solid #d1d5db;padding:16px;width:50%;vertical-align:middle;">
-                  <div style="font-size:13px;color:#000;display:flex;align-items:center;line-height:1.4;min-height:60px;">
+                  <div style="font-size:13px;color:#000;line-height:1.4;min-height:60px;display:flex;align-items:center;">
                     ${img.value || '<span style="color:#d1d5db;font-style:italic;">No description provided</span>'}
                   </div>
                 </td>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,29 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
   const [imageLoading, setImageLoading] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
+  const [previewVisible, setPreviewVisible] = useState(false)
+
+  useEffect(() => {
+    const preview = previewRef.current
+    if (!preview) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setPreviewVisible(true)
+      return
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setPreviewVisible(true)
+        observer.disconnect()
+      }
+    })
+    observer.observe(preview)
+    return () => observer.disconnect()
+  }, [])
+
+  const previewHtml = useMemo(() => {
+    if (!previewVisible || template.thumbnail || !template.components?.length) return undefined
+    return generateEmailHTML(template.components, template.preheaderText)
+  }, [previewVisible, template.thumbnail, template.components, template.preheaderText])
 
   // Standard templates (isUserCreated: false) are view/use only — no edit or delete
   const isStandard = !template.isUserCreated
@@ -66,7 +89,9 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
       <Card className="group flex flex-col h-full transition-all duration-200 border border-gray-200 hover:border-[#BC2030]/30 overflow-hidden">
         <CardHeader className="p-0">
           <div ref={previewRef} className="relative aspect-video bg-gray-100 rounded-t-lg overflow-hidden">
-            {template.thumbnail ? (
+            {!previewVisible ? (
+              <div className="absolute inset-0 bg-gray-100" aria-hidden="true" />
+            ) : template.thumbnail ? (
               <>
                 {imageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -83,7 +108,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete, onDuplicate, r
               </>
             ) : template.components?.length ? (
               <iframe
-                srcDoc={generateEmailHTML(template.components, template.preheaderText)}
+                srcDoc={previewHtml}
+                title={`${template.name} preview`}
                 className="absolute inset-0 border-none"
                 style={{
                   width: "600px",

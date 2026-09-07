@@ -177,8 +177,9 @@ export default function VSBPage() {
       pages.push({
         html: buildAltNameHtml(currentVsb.altNamePage, emailName),
         width: 600,
-        // Render as real, editable PDF text (selectable/searchable, links preserved).
-        mode: 'text',
+        // Capture this page with the browser layout so its output matches the
+        // combined preview and uploaded images keep their CSS dimensions.
+        mode: 'image',
       });
     }
 

@@ -86,8 +86,8 @@ export const DOCUMENTS = [
     ],
   },
   {
-    id: "doc-elzonris-rte",
-    label: "Orserdu — SFMC Work Statement Brief",
+    id: "doc-orserdu-sfmc-treatment-algorithm",
+    label: "Orserdu — SFMC Treatment Algorithm Work Statement Brief",
     file: "/wsb/MAT-US-ELA-00597-v2_SFMC_email_Treatment-Algorithm.docx",
     product: "orserdu",
     type: "sfmc",
@@ -101,8 +101,8 @@ export const DOCUMENTS = [
     ],
   },
   {
-    id: "doc-orserdu-other",
-    label: "Orserdu — SFMC Work Statement Brief",
+    id: "doc-orserdu-sfmc-fulvestrant-comparison",
+    label: "Orserdu — SFMC Fulvestrant Comparison Work Statement Brief",
     file: "/wsb/MAT-US-ELA-00626-v2_SFMC_email_ORSERDU vs. Fulvestrant.docx",
     product: "orserdu",
     type: "sfmc",

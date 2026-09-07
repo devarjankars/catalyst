@@ -3,12 +3,11 @@ export function verifyHtml(html: string): boolean {
 
     // 1. Security: Check for malicious content
     const maliciousPatterns = [
-        /<script\b[^>]*>[\s\S]*?<\/script>/gi,
-        /<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi,
-        /<object\b[^>]*>[\s\S]*?<\/object>/gi,
-        /<embed\b[^>]*>[\s\S]*?<\/embed>/gi,
-        /on\w+\s*=\s*['"][^'"]*['"]/gi, // inline event handlers
-        /javascript:/gi
+        /<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi,
+        /<(?:iframe|object|embed)\b[^>]*>/gi,
+        /\bon[\w-]+\s*=\s*(?:['"][^'"]*['"]|[^\s>]+)/gi,
+        /(?:javascript|vbscript|data\s*:\s*text\/html)\s*:/gi,
+        /\bsrcdoc\s*=/gi,
     ];
 
     for (const pattern of maliciousPatterns) {

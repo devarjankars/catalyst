@@ -111,6 +111,7 @@ export default function Wsb() {
   // 5     = all answers collected, generation in progress
   const [interviewStep, setInterviewStep] = useState<number | null>(null);
   const interviewAnswers = useRef<Record<string, string>>({}); // { goal, concepts, claims, references, images }
+  const interviewSubmittingRef = useRef(false);
 
   // ── Legacy slot-filling fallback (only used when product/type can't be detected
   //    from the initial prompt at all and we need explicit picker UI) ──────────
@@ -204,7 +205,7 @@ export default function Wsb() {
     const fallbackDocument = {
       id: "mock-wsb",
       label: draft.title,
-      file: document?.file || DOCUMENTS[0]?.file || "/documents/WSB_placeholder.txt",
+      file: document?.file || "/documents/WSB_placeholder.txt",
       product: resolvedProduct.id,
       type: resolvedType.id,
       referencePrompts: [],
@@ -226,7 +227,6 @@ export default function Wsb() {
 
     setPreparing(true);
     await pushTrace("preparing WSB…", "neutral", 180);
-    await sleep(10000);
 
     setPreparing(false);
     await pushTrace(`draft ready: ${draft.title}`, "match", 120);
@@ -238,12 +238,16 @@ export default function Wsb() {
   // Called when the user submits a reply during the structured interview.
   async function handleInterviewAnswer(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || interviewStep === null) return;
+    if (!trimmed || interviewStep === null || interviewSubmittingRef.current) return;
+    interviewSubmittingRef.current = true;
 
     addUserMessage(trimmed);
 
     // ── Guard: check for unsupported product/type at every step ─────────────
-    if (checkAndWarnUnsupported(trimmed)) return;
+    if (checkAndWarnUnsupported(trimmed)) {
+      interviewSubmittingRef.current = false;
+      return;
+    }
 
     // Store the answer for the current step
     const currentStepDef = INTERVIEW_STEPS[interviewStep];
@@ -262,6 +266,7 @@ export default function Wsb() {
       await sleep(1000);
       addAiMessage(INTERVIEW_STEPS[nextStep].aiMessage);
       setInterviewStep(nextStep);
+      interviewSubmittingRef.current = false;
     } else {
       // All interview questions answered — kick off generation
       setInterviewStep(null); // hide the interview input
@@ -297,6 +302,7 @@ export default function Wsb() {
     setDraftPhases([]);
     setPhaseIndex(0);
     setInterviewStep(null);
+    interviewSubmittingRef.current = false;
     interviewAnswers.current = {};
 
     // Fresh context every submission
@@ -312,6 +318,16 @@ export default function Wsb() {
     if (product) resolvedRef.current.product = product;
     if (type) resolvedRef.current.type = type;
     if (topic) resolvedRef.current.topic = topic;
+
+    if (
+      product &&
+      type &&
+      !DOCUMENTS.some((document) => document.product === product.id && document.type === type.id)
+    ) {
+      addAiMessage(UNSUPPORTED_MESSAGE);
+      setBusy(false);
+      return;
+    }
 
     await pushTrace(
       resolvedRef.current.product
@@ -398,6 +414,18 @@ export default function Wsb() {
       // Still need the other slot
       setPendingClarification({ slot: otherSlot, options: otherOptions });
     } else {
+      if (
+        !DOCUMENTS.some(
+          (document) =>
+            document.product === resolvedRef.current.product?.id &&
+            document.type === resolvedRef.current.type?.id
+        )
+      ) {
+        addAiMessage(UNSUPPORTED_MESSAGE);
+        setBusy(false);
+        return;
+      }
+
       // Both slots resolved via pickers — start interview
       setBusy(false);
       addAiMessage(INTERVIEW_STEPS[0].aiMessage);
@@ -414,6 +442,7 @@ export default function Wsb() {
     setDraftPhases([]);
     setPhaseIndex(0);
     setInterviewStep(null);
+    interviewSubmittingRef.current = false;
     interviewAnswers.current = {};
     contextRef.current = [];
     resolvedRef.current = { product: null, type: null, topic: null };
