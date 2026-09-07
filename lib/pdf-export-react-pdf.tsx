@@ -433,7 +433,6 @@ export async function generateCombinedPdfReactPdf(params: {
   desktopWidthOverride?: string
   mobileWidthOverride?: string
 }): Promise<Buffer> {
-
   // ── Helper: render a single email image page ──────────────────────────────
   // Page width = 640pt (600pt email + 40pt margins), height = tall enough for full email
   const EMAIL_PAGE_WIDTH  = 640;  // pt — matches 600px email + small margins

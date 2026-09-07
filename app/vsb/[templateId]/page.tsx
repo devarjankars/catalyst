@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 export const dynamic = 'force-dynamic'
 
@@ -87,6 +87,8 @@ export default function VSBPage() {
       pages.push({
         html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor),
         width: 600,
+        // Render as real, editable PDF text (selectable/searchable, links preserved).
+        mode: 'text',
       });
     }
 
@@ -101,34 +103,51 @@ export default function VSBPage() {
         ]
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
-    // Build header HTML block (injected into each email preview)
     const makeHeaderHtml = (label: string) => `
-      <div style="background-color:#fff;padding:10px 20px 20px 20px;">
-        <div style="width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;font-weight:bold;">${label}</div>
-        <div style="border-top:1px solid #000;padding-top:16px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;">
-          ${headerDetails.map(d => `<div style="margin-bottom:2px;"><b>${d.name}: </b><span style="color:${d.value.includes('[') ? '#FF66CC' : 'black'};">${d.value}</span></div>`).join('')}
+      <div style="background-color:#fff; padding-top:10px; padding-bottom:20px;">
+        <div style="margin-left:20px; width:fit-content; border:1px solid #000; padding:5px;
+                    margin-bottom:10px; font-size:13px; color:black; font-weight:bold;">
+          ${label}
+        </div>
+        <div style="border-top:1px solid #000;">
+          <div style="margin-left:20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px;">
+            ${headerDetails.map(detail => `
+              <div style="margin-bottom:2px;">
+                <span style="font-weight:bold; color:black;">${detail.name}: </span>
+                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
+                  ${detail.value}
+                </span>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>`;
 
-    const injectHeader = (raw: string, hdr: string) => {
-      const idx = raw.indexOf('</div>');
-      return idx !== -1 ? raw.slice(0, idx + 6) + hdr + raw.slice(idx + 6) : raw;
+    const injectHeader = (rawHtml: string, headerHtml: string) => {
+      const idx = rawHtml.indexOf('</div>');
+      return idx !== -1
+        ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6)
+        : rawHtml;
     };
 
-    const buildHtml = (comps: any[], w: number, label: string) => {
-      const raw = generateEmailHTML(comps, currentTemplate?.preheaderText || '');
-      return injectHeader(
-        raw.replace(/<body([^>]*)>/i, `<body$1 style="margin:0;padding:0;width:${w}px;">`),
-        makeHeaderHtml(label),
+    const desktopHtmls = optArray.map(opt => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      // Inject body margin reset so email fills the 600px viewport edge-to-edge
+      const normalized = raw.replace(
+        /<body([^>]*)>/i,
+        '<body$1 style="margin:0;padding:0;width:600px;">'
       );
-    };
+      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
+    });
 
-    const desktopHtmls = includeDV
-      ? optArray.map(opt => buildHtml(opt.components, 600, `Desktop View - ${opt.title}`))
-      : [];
-    const mobileHtmls = includeMV
-      ? optArray.map(opt => buildHtml(opt.components, 375, `Mobile View - ${opt.title}`))
-      : [];
+    const mobileHtmls = optArray.map(opt => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      const normalized = raw.replace(
+        /<body([^>]*)>/i,
+        '<body$1 style="margin:0;padding:0;width:375px;">'
+      );
+      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
+    });
 
     if (includeDV) {
       if (isThreeMode) {
@@ -158,6 +177,8 @@ export default function VSBPage() {
       pages.push({
         html: buildAltNameHtml(currentVsb.altNamePage, emailName),
         width: 600,
+        // Render as real, editable PDF text (selectable/searchable, links preserved).
+        mode: 'text',
       });
     }
 
@@ -257,7 +278,7 @@ export default function VSBPage() {
       variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
-        { name: 'To', value: '[HCPâ€™s email address]' },
+        { name: 'To', value: '[HCPÃ¢â‚¬â„¢s email address]' },
         { name: 'From', value: '[Variable From]' },
         { name: 'Friendly From', value: 'Stemline Therapeutics, Inc.' },
         { name: 'Subject Line', value: '[Variable subject line]' },

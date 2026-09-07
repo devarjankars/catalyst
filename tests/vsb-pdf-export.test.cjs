@@ -13,6 +13,10 @@ test('PDF export includes overflowing edges, long content, and all three options
     await page.setContent('<html><body></body></html>');
     await page.addScriptTag({ path: path.join(path.dirname(require.resolve('html2canvas-pro')), 'html2canvas-pro.js') });
     await page.addScriptTag({ path: require.resolve('jspdf/dist/jspdf.umd.min.js') });
+    await page.addScriptTag({ path: require.resolve('pdf-lib/dist/pdf-lib.min.js') });
+    await page.addScriptTag({ path: require.resolve('pdfmake/build/pdfmake.js') });
+    await page.addScriptTag({ path: require.resolve('pdfmake/build/vfs_fonts.js') });
+    await page.addScriptTag({ path: require.resolve('html-to-pdfmake/browser.js') });
     const source = fs.readFileSync(path.join(__dirname, '../lib/vsb-pdf-export.ts'), 'utf8');
     const { outputText } = ts.transpileModule(source, {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -33,6 +37,10 @@ test('PDF export includes overflowing edges, long content, and all three options
       new Function('require', 'exports', code)((name) => {
         if (name === 'html2canvas-pro') return { default: capture };
         if (name === 'jspdf') return window.jspdf;
+        if (name === 'pdf-lib') return window.PDFLib;
+        if (name === 'pdfmake/build/pdfmake') return window.pdfMake;
+        if (name === 'pdfmake/build/vfs_fonts') return {};
+        if (name === 'html-to-pdfmake') return window.htmlToPdfmake;
         throw new Error('Unexpected dependency: ' + name);
       }, exports);
       window.vsbExport = exports;
@@ -76,6 +84,15 @@ test('PDF export includes overflowing edges, long content, and all three options
       return window.captures.map(capture => capture.width);
     });
     assert.deepEqual(widths, [600, 600], 'structured-page padding must fit within the page width');
+    const textBytes = await page.evaluate(async () => {
+      const blob = await window.vsbExport.generateVsbPdfBlob([
+        { html: window.vsbExport.buildVariableCopyHtml([], 'Test'), width: 600, mode: 'text' },
+        { html: window.vsbExport.buildAltNameHtml([], 'Test'), width: 600, mode: 'text' },
+      ]);
+      return Array.from(new Uint8Array(await blob.arrayBuffer()));
+    });
+    const textPdf = await PDFDocument.load(Uint8Array.from(textBytes));
+    assert.equal(textPdf.getPageCount(), 2, 'both remote text-mode pages survive the merge');
   } finally {
     await browser.close();
   }

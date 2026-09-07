@@ -85,7 +85,7 @@ export async function exportToPDF(
 
         try {
             const canvas = await html2canvas(element, {
-                scale: 2,
+                scale: 3,
                 useCORS: true,
                 allowTaint: true,
                 logging: false,
@@ -96,7 +96,9 @@ export async function exportToPDF(
                 backgroundColor: "#ffffff",
             })
 
-            const imgData = canvas.toDataURL("image/jpeg", 0.98)
+            // Lossless PNG keeps text/screenshots crisp (JPEG would add artifacts).
+            // 'FAST' zlib-compresses the raw pixels without any quality loss.
+            const imgData = canvas.toDataURL("image/png")
 
             const pdf = new jsPDF({
                 unit: "px",
@@ -106,7 +108,7 @@ export async function exportToPDF(
                 compress: true,
             })
 
-            pdf.addImage(imgData, "JPEG", 0, 0, width, contentHeight, undefined, "FAST")
+            pdf.addImage(imgData, "PNG", 0, 0, width, contentHeight, undefined, "FAST")
             pdf.save(fileName)
         } finally {
             // Restore everything
