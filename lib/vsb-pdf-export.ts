@@ -341,8 +341,9 @@ async function generateImagePageBytes(page: CapturedPage): Promise<Uint8Array> {
   // 'FAST' zlib-compresses the raw pixels — quality is identical to 'NONE'
   // (PNG/PNG pixels are always lossless here) but keeps the file size sane.
   pdf.addImage(page.dataUrl, 'PNG', 0, 0, page.width, page.height, undefined, 'FAST');
-  const blob = pdf.output('blob') as Blob;
-  return new Uint8Array(await blob.arrayBuffer());
+  // Use arraybuffer (not blob) so the byte extraction is reliable in the browser.
+  const buf = pdf.output('arraybuffer');
+  return new Uint8Array(buf);
 }
 
 /**
