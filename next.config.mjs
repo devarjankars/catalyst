@@ -49,6 +49,6 @@ const nextConfig = {
 
 export default (phase) => ({
   ...nextConfig,
-  // Keep production builds from overwriting a running development server's chunks.
-  distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next' : 'build',
+  // Vercel expects .next; isolate only local production builds from next dev.
+  distDir: process.env.VERCEL === '1' || phase === PHASE_DEVELOPMENT_SERVER ? '.next' : 'build',
 })
