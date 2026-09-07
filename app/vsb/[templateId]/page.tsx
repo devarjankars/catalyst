@@ -104,9 +104,9 @@ export default function VSBPage() {
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
     const makeHeaderHtml = (label: string) => `
-      <div style="background-color:#fff; padding-top:10px; padding-bottom:20px;">
-        <div style="margin-left:20px; width:fit-content; border:1px solid #000; padding:5px;
-                    margin-bottom:10px; font-size:13px; color:black; font-weight:bold;">
+      <div style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
+        <div style="display:inline-block; margin:0 auto 18px; border:1px solid #000; padding:5px 10px;
+                    text-align:center; font-size:13px; color:black; font-weight:bold;">
           ${label}
         </div>
         <div style="border-top:1px solid #000;">
@@ -124,9 +124,9 @@ export default function VSBPage() {
       </div>`;
 
     const injectHeader = (rawHtml: string, headerHtml: string) => {
-      const idx = rawHtml.indexOf('</div>');
+      const idx = rawHtml.search(/<table\s+cellpadding="0"\s+cellspacing="0"\s+border="0"\s+width="100%"\s+style="background-color:\s*#f4f4f4;">/i);
       return idx !== -1
-        ? rawHtml.slice(0, idx + 6) + headerHtml + rawHtml.slice(idx + 6)
+        ? rawHtml.slice(0, idx) + headerHtml + rawHtml.slice(idx)
         : rawHtml;
     };
 
@@ -153,8 +153,8 @@ export default function VSBPage() {
       if (isThreeMode) {
         pages.push({
           columns: desktopHtmls.map(html => ({ html, width: 600 })),
-          gap: 20,
-          pageWidth: 1900,
+          gap: 24,
+          pageWidth: 1848,
         });
       } else {
         pages.push({ html: desktopHtmls[0], width: 600 });
@@ -165,8 +165,8 @@ export default function VSBPage() {
       if (isThreeMode) {
         pages.push({
           columns: mobileHtmls.map(html => ({ html, width: 375 })),
-          gap: 20,
-          pageWidth: 1235,
+          gap: 24,
+          pageWidth: 1173,
         });
       } else {
         pages.push({ html: mobileHtmls[0], width: 375 });
