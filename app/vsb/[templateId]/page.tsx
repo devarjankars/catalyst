@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 export const dynamic = 'force-dynamic'
 
@@ -278,7 +278,7 @@ export default function VSBPage() {
       variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
-        { name: 'To', value: '[HCPâ€™s email address]' },
+        { name: 'To', value: '[HCPÃ¢â‚¬â„¢s email address]' },
         { name: 'From', value: '[Variable From]' },
         { name: 'Friendly From', value: 'Stemline Therapeutics, Inc.' },
         { name: 'Subject Line', value: '[Variable subject line]' },

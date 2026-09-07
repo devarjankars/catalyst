@@ -122,6 +122,7 @@ class FirebaseService {
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
+        "Ferring RTE",
       ];
 
       const standardTemplates = templates.filter(t => !t.isUserCreated);
@@ -146,14 +147,13 @@ class FirebaseService {
       }
 
       // ── Brand correction + content seeding from existing user emailers ────
-      // For Elzonris standard templates, copy components from named user emailers
-      // if the standard template is still blank (only has 2 placeholder components).
-      const ELZONRIS_SEED_MAP: Record<string, string> = {
-        "Elzonris RTE":       "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE",
-        "Elzonris Unbranded": "MAT-US-TAG-00334_Speaker-Program-Invite",
-        "Elzonris SFMC":      "MAT-US-TAG-00291_v2",
+      const SEED_MAP: Record<string, { source: string; brand: string }> = {
+        "Elzonris RTE":       { source: "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE", brand: "elzonris" },
+        "Elzonris Unbranded": { source: "MAT-US-TAG-00334_Speaker-Program-Invite",     brand: "elzonris" },
+        "Elzonris SFMC":      { source: "MAT-US-TAG-00291_v2",                         brand: "elzonris" },
+        "Orserdu Unbranded":  { source: "75.1300",                                     brand: "orserdu"  },
+        "Ferring RTE":        { source: "Ferring RTE",                                 brand: "ferring"  },
       };
-      const FORCE_RESET_NAMES = new Set(["Orserdu Unbranded"]);
       const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
 
       for (const t of canonical) {
@@ -161,14 +161,12 @@ class FirebaseService {
         if (!expected) continue;
 
         const wrongBrand = (t as any).brand !== expected.brand;
-        const forceReset = FORCE_RESET_NAMES.has(t.name);
-
-        // For Elzonris standard templates: if still blank (≤2 components), copy from source emailer
-        const sourceName = ELZONRIS_SEED_MAP[t.name];
+        const seedConfig = SEED_MAP[t.name];
+        // Seed if blank (≤2 components) OR if brand is wrong
         const isBlank = !t.components || t.components.length <= 2;
 
-        if (wrongBrand || forceReset) {
-          // Wrong brand — reset to blank placeholder
+        if (wrongBrand && !seedConfig) {
+          // Wrong brand, no seed source — reset to blank placeholder
           try {
             await updateDoc(doc(db, this.templatesCollection, t.id), {
               brand: expected.brand,
@@ -178,17 +176,17 @@ class FirebaseService {
             (t as any).brand = expected.brand;
             t.components = expected.components;
           } catch {}
-        } else if (sourceName && isBlank) {
-          // Still blank — find the source emailer using partial name match (case-insensitive)
+        } else if (seedConfig && (isBlank || wrongBrand)) {
+          // Find source emailer using partial name match (case-insensitive)
+          const needle = seedConfig.source.toLowerCase().trim();
           const sourceTemplate = templates.find(src => {
             const srcName = (src.name ?? "").toLowerCase().trim();
-            const needle  = sourceName.toLowerCase().trim();
             return srcName === needle || srcName.includes(needle) || needle.includes(srcName);
           });
           if (sourceTemplate && sourceTemplate.components?.length > 0) {
             try {
               await updateDoc(doc(db, this.templatesCollection, t.id), {
-                brand: "elzonris",
+                brand: seedConfig.brand,
                 components: sourceTemplate.components,
                 option2Components: sourceTemplate.option2Components ?? [],
                 option3Components: sourceTemplate.option3Components ?? [],
@@ -197,7 +195,7 @@ class FirebaseService {
                 updatedAt: new Date(),
               });
               t.components = sourceTemplate.components;
-              (t as any).brand = "elzonris";
+              (t as any).brand = seedConfig.brand;
             } catch {}
           }
         }
@@ -691,7 +689,31 @@ class FirebaseService {
         components: placeholderComponents("Orserdu"),
         isUserCreated: false,
       },
-      // ── Elzonris ──────────────────────────────────────────────────────────
+      // ── Ferring ──────────────────────────────────────────────────────────
+      {
+        name: "Ferring RTE",
+        description: "Ferring RTE email template — edit to build your content",
+        category: "rte",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
+      {
+        name: "Ferring SFMC",
+        description: "Ferring SFMC email template — edit to build your content",
+        category: "sfmc",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
+      {
+        name: "Ferring Unbranded",
+        description: "Ferring Unbranded email template — edit to build your content",
+        category: "unbranded",
+        brand: "ferring",
+        components: placeholderComponents("Ferring"),
+        isUserCreated: false,
+      },
       {
         name: "Elzonris RTE",
         description: "Elzonris RTE email template — edit to build your content",
