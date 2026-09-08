@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No pages supplied for PDF generation.' }, { status: 400 });
     }
 
-    const pdfBuffer = await generateVsbPdfBuffer(pages);
+    const pdfBuffer = await generateVsbPdfBuffer(pages, request.nextUrl.origin);
     const fileName = (body.fileName || 'generated.pdf').toLowerCase().endsWith('.pdf')
       ? body.fileName || 'generated.pdf'
       : `${body.fileName || 'generated'}.pdf`;

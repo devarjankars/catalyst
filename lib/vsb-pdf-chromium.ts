@@ -1,5 +1,6 @@
 import serverlessChromium from '@sparticuz/chromium';
-import { chromium } from 'playwright';
+import { chromium as localChromium } from 'playwright';
+import { chromium as serverChromium } from 'playwright-core';
 import { PDFDocument } from 'pdf-lib';
 import type { VsbPdfColumn, VsbPdfPageSpec } from './vsb-pdf-export';
 
@@ -12,18 +13,24 @@ function extractDocumentParts(source: string): { styles: string; body: string } 
   return { styles: head, body };
 }
 
-function buildPageHtml(spec: VsbPdfPageSpec): string {
+function escapeHtmlAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
+  const baseTag = baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : '';
+
   if (spec.columns?.length) {
     const columns = spec.columns.map((column: VsbPdfColumn) => {
       const parts = extractDocumentParts(column.html);
       return `<div class="pdf-column" style="width:${column.width}px;flex:0 0 ${column.width}px;">${parts.styles}${parts.body}</div>`;
     }).join('');
-    return `<!doctype html><html><head><meta charset="utf-8"><style>${printStyles(spec.pageWidth ?? 0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 24}px;">${columns}</main></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8">${baseTag}<style>${printStyles(spec.pageWidth ?? 0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 24}px;">${columns}</main></body></html>`;
   }
 
   const source = spec.html ?? '<div></div>';
   const parts = extractDocumentParts(source);
-  return `<!doctype html><html><head><meta charset="utf-8">${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body>${parts.body}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8">${baseTag}${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body>${parts.body}</body></html>`;
 }
 
 function printStyles(width: number): string {
@@ -41,7 +48,7 @@ function printStyles(width: number): string {
     .pdf-email-meta, .pdf-mobile-email-meta { text-align: center !important; }
     .pdf-email-meta > div:first-child, .pdf-mobile-email-meta > div:first-child { display: inline-block !important; margin-left: auto !important; margin-right: auto !important; text-align: center !important; }
     .pdf-email-meta__details { display: table !important; width: auto !important; margin-left: 20px !important; margin-right: 0 !important; text-align: left !important; }
-    .pdf-mobile-email-meta__details { display: table !important; width: auto !important; margin-left: auto !important; margin-right: auto !important; text-align: left !important; }
+    .pdf-mobile-email-meta__details { display: table !important; width: auto !important; margin-left: 20px !important; margin-right: 0 !important; text-align: left !important; }
     .pdf-email-meta__row, .pdf-mobile-email-meta__row { text-align: left !important; white-space: normal !important; }
     .pdf-email-meta__row > span:first-child, .pdf-mobile-email-meta__row > span:first-child { font-weight: 700 !important; }
     ${mobileEmailStyles}
@@ -50,7 +57,7 @@ function printStyles(width: number): string {
   `;
 }
 
-async function waitForAssets(page: import('playwright').Page): Promise<void> {
+async function waitForAssets(page: import('playwright-core').Page): Promise<void> {
   await page.evaluate(async () => {
     await document.fonts.ready;
     await Promise.all(Array.from(document.images).map((image) => {
@@ -73,7 +80,7 @@ type OverflowEntry = {
   overLeft: number;
 };
 
-async function assertMobileContentFits(page: import('playwright').Page): Promise<void> {
+async function assertMobileContentFits(page: import('playwright-core').Page): Promise<void> {
   const result = await page.evaluate(() => {
     const root = document.querySelector<HTMLElement>('.email-container');
     if (!root) return { error: 'Mobile root .email-container not found', rootWidth: 0, overflowing: [] as OverflowEntry[] };
@@ -104,7 +111,7 @@ async function assertMobileContentFits(page: import('playwright').Page): Promise
   }
 }
 
-async function measureContentHeight(page: import('playwright').Page): Promise<number> {
+async function measureContentHeight(page: import('playwright-core').Page): Promise<number> {
   return page.evaluate(() => {
     const bodyRect = document.body.getBoundingClientRect();
     const bottom = Array.from(document.body.querySelectorAll<HTMLElement>('*')).reduce(
@@ -115,11 +122,12 @@ async function measureContentHeight(page: import('playwright').Page): Promise<nu
   });
 }
 
-export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[]): Promise<Buffer> {
+export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: string): Promise<Buffer> {
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
   const isVercel = process.env.VERCEL === '1';
-  const browser = await chromium.launch({
+  const browserLauncher = isVercel ? serverChromium : localChromium;
+  const browser = await browserLauncher.launch({
     headless: true,
     ...(isVercel
       ? {
@@ -135,7 +143,7 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[]): Promise<Buf
       const width = Math.max(spec.pageWidth ?? spec.width ?? DEFAULT_WIDTH, 1);
       const page = await browser.newPage({ viewport: { width, height: 800 } });
       try {
-        await page.setContent(buildPageHtml(spec), { waitUntil: 'load' });
+        await page.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
         await waitForAssets(page);
         await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
         if (spec.width === 375 && !spec.columns?.length) {
