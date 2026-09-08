@@ -1,3 +1,4 @@
+import serverlessChromium from '@sparticuz/chromium';
 import { chromium } from 'playwright';
 import { PDFDocument } from 'pdf-lib';
 import type { VsbPdfColumn, VsbPdfPageSpec } from './vsb-pdf-export';
@@ -117,7 +118,16 @@ async function measureContentHeight(page: import('playwright').Page): Promise<nu
 export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[]): Promise<Buffer> {
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
-  const browser = await chromium.launch({ headless: true });
+  const isVercel = process.env.VERCEL === '1';
+  const browser = await chromium.launch({
+    headless: true,
+    ...(isVercel
+      ? {
+          args: serverlessChromium.args,
+          executablePath: await serverlessChromium.executablePath(),
+        }
+      : {}),
+  });
   const merged = await PDFDocument.create();
 
   try {

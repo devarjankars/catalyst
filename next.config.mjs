@@ -15,6 +15,9 @@ const nextConfig = {
   // static prerendering entirely so `next build` succeeds.
   experimental: {
     missingSuspenseWithCSRBailout: false,
+    outputFileTracingIncludes: {
+      '/*': ['./node_modules/@sparticuz/chromium/**/*'],
+    },
     serverActions: {
       bodySizeLimit: '50mb',
     },
