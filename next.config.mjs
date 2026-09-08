@@ -18,6 +18,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '/*': ['./node_modules/@sparticuz/chromium/**/*'],
     },
+    serverComponentsExternalPackages: ['@sparticuz/chromium'],
     serverActions: {
       bodySizeLimit: '50mb',
     },
@@ -36,7 +37,7 @@ const nextConfig = {
 
     // sharp uses native binaries that don't exist in Vercel's build environment
     if (isServer) {
-      config.externals = [...(config.externals || []), 'sharp']
+      config.externals = [...(config.externals || []), 'sharp', '@sparticuz/chromium']
     }
 
     config.watchOptions = {
