@@ -63,8 +63,13 @@ async function waitForAssets(page: import('playwright-core').Page): Promise<void
     await Promise.all(Array.from(document.images).map((image) => {
       if (image.complete) return image.decode?.().catch(() => undefined);
       return new Promise<void>((resolve) => {
-        image.addEventListener('load', () => resolve(), { once: true });
-        image.addEventListener('error', () => resolve(), { once: true });
+        const timeout = window.setTimeout(resolve, 10000);
+        const finish = () => {
+          window.clearTimeout(timeout);
+          resolve();
+        };
+        image.addEventListener('load', finish, { once: true });
+        image.addEventListener('error', finish, { once: true });
       });
     }));
   });
