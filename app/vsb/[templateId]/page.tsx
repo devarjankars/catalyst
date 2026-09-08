@@ -103,16 +103,34 @@ export default function VSBPage() {
         ]
       : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
 
-    const makeHeaderHtml = (label: string) => `
-      <div style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
+    const makeHeaderHtml = (label: string, mobile = false) => mobile ? `
+      <div class="pdf-mobile-email-meta" style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
         <div style="display:inline-block; margin:0 auto 18px; border:1px solid #000; padding:5px 10px;
                     text-align:center; font-size:13px; color:black; font-weight:bold;">
           ${label}
         </div>
         <div style="border-top:1px solid #000;">
-          <div style="margin-left:20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px;">
+          <div class="pdf-mobile-email-meta__details" style="display:table; margin:0 auto; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px; text-align:left;">
             ${headerDetails.map(detail => `
-              <div style="margin-bottom:2px;">
+              <div class="pdf-mobile-email-meta__row" style="margin-bottom:2px; text-align:left;">
+                <span style="font-weight:bold; color:black;">${detail.name}: </span>
+                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
+                  ${detail.value}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>` : `
+      <div class="pdf-email-meta" style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
+        <div style="display:inline-block; margin:0 auto 18px; border:1px solid #000; padding:5px 10px;
+                    text-align:center; font-size:13px; color:black; font-weight:bold;">
+          ${label}
+        </div>
+        <div style="border-top:1px solid #000;">
+          <div class="pdf-email-meta__details" style="display:table; margin:0 0 0 20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px; text-align:left;">
+            ${headerDetails.map(detail => `
+              <div class="pdf-email-meta__row" style="margin-bottom:2px; text-align:left;">
                 <span style="font-weight:bold; color:black;">${detail.name}: </span>
                 <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
                   ${detail.value}
@@ -130,29 +148,32 @@ export default function VSBPage() {
         : rawHtml;
     };
 
+    const normalizeEmailHtml = (raw: string, width: number) => raw.replace(
+      /<body([^>]*)>/i,
+      (_match, attributes: string) => {
+        const existingStyle = attributes.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2] || '';
+        const attributesWithoutStyle = attributes.replace(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i, '');
+        const mergedStyle = `${existingStyle};margin:0;padding:0;width:${width}px;`;
+        return `<body${attributesWithoutStyle} style="${mergedStyle}">`;
+      },
+    );
+
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      // Inject body margin reset so email fills the 600px viewport edge-to-edge
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:600px;">'
-      );
+      const normalized = normalizeEmailHtml(raw, 600);
       return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
     });
 
     const mobileHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
-      const normalized = raw.replace(
-        /<body([^>]*)>/i,
-        '<body$1 style="margin:0;padding:0;width:375px;">'
-      );
-      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`));
+      const normalized = normalizeEmailHtml(raw, 375);
+      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`, true));
     });
 
     if (includeDV) {
       if (isThreeMode) {
         pages.push({
-          columns: desktopHtmls.map(html => ({ html, width: 600 })),
+          columns: desktopHtmls.map((html) => ({ html, width: 600 })),
           gap: 24,
           pageWidth: 1848,
         });
@@ -162,15 +183,7 @@ export default function VSBPage() {
     }
 
     if (includeMV) {
-      if (isThreeMode) {
-        pages.push({
-          columns: mobileHtmls.map(html => ({ html, width: 375 })),
-          gap: 24,
-          pageWidth: 1173,
-        });
-      } else {
-        pages.push({ html: mobileHtmls[0], width: 375 });
-      }
+      mobileHtmls.forEach((html) => pages.push({ html, width: 375 }));
     }
 
     if (includeANP) {
