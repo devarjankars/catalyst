@@ -95,57 +95,65 @@ export default function VSBPage() {
     const isThreeMode = currentTemplate?.optionMode === 'three';
     const headerDetails = currentVsb?.headerDetails || [];
 
+    // imageOptionTitle is the label shown centered above each desktop emailer.
+    // No dedicated field exists on EmailTemplate, so it is derived from the
+    // option index.  Format matches the manual reference PDF:
+    //   "Option 1 - Image Option 1", "Option 2 - Image Option 2", etc.
     const optArray = isThreeMode
       ? [
-          { title: 'Option 1', components: currentTemplate?.components        || [] },
-          { title: 'Option 2', components: currentTemplate?.option2Components || [] },
-          { title: 'Option 3', components: currentTemplate?.option3Components || [] },
+          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: currentTemplate?.components        || [] },
+          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: currentTemplate?.option2Components || [] },
+          { title: 'Option 3', imageOptionTitle: 'Option 3 - Image Option 3', components: currentTemplate?.option3Components || [] },
         ]
-      : [{ title: 'Standard View', components: currentTemplate?.components || [] }];
+      : [{ title: 'Standard View', imageOptionTitle: '', components: currentTemplate?.components || [] }];
 
-    const makeHeaderHtml = (label: string, mobile = false) => mobile ? `
-      <div class="pdf-mobile-email-meta" style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
-        <div style="display:inline-block; margin:0 auto 18px; border:1px solid #000; padding:5px 10px;
-                    text-align:center; font-size:13px; color:black; font-weight:bold;">
-          ${label}
+    // ── Header block ──────────────────────────────────────────────────────────
+    // label       : the left-aligned label used for mobile (e.g. "Mobile View - Option 1")
+    //               also used as fallback for desktop when no centerLabel is given.
+    // centerLabel : when provided (desktop three-mode), the title box is
+    //               centered within its column (e.g. "Option 1 - Image Option 1").
+    //               Metadata below it stays left-aligned regardless.
+    // mobile      : switches class names to the pdf-mobile-email-meta BEM tree.
+    const makeHeaderHtml = (label: string, mobile = false, centerLabel?: string) => {
+      const baseClass    = mobile ? 'pdf-mobile-email-meta'          : 'pdf-email-meta';
+      const titleClass   = mobile ? 'pdf-mobile-email-meta__title'   : 'pdf-email-meta__title';
+      const divClass     = mobile ? 'pdf-mobile-email-meta__divider' : 'pdf-email-meta__divider';
+      const detailsClass = mobile ? 'pdf-mobile-email-meta__details' : 'pdf-email-meta__details';
+      const rowClass     = mobile ? 'pdf-mobile-email-meta__row'     : 'pdf-email-meta__row';
+
+      // Title box is always LEFT-ALIGNED at 20px from the column edge.
+      // centerLabel is kept as the display text (e.g. "Option 1 - Image Option 1")
+      // but it is no longer centered — it aligns with the metadata beneath it.
+      const titleStyle = 'display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-size:13px;color:black;font-weight:bold;text-align:left;';
+
+      const titleText = centerLabel && !mobile ? centerLabel : label;
+
+      return `
+      <div class="${baseClass}" style="width:100%;box-sizing:border-box;background-color:#fff;text-align:left;">
+        <div class="${titleClass}" style="${titleStyle}">
+          ${titleText}
         </div>
-        <div style="border-top:1px solid #000;">
-          <div class="pdf-mobile-email-meta__details" style="display:table; margin:0 auto; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px; text-align:left;">
+        <div class="${divClass}" style="border-top:1px solid #000;padding-bottom:10px;">
+          <div class="${detailsClass}" style="display:table;width:auto;margin:0 0 0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
-              <div class="pdf-mobile-email-meta__row" style="margin-bottom:2px; text-align:left;">
-                <span style="font-weight:bold; color:black;">${detail.name}: </span>
-                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
-                  ${detail.value}
-                </span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>` : `
-      <div class="pdf-email-meta" style="width:100%; box-sizing:border-box; background-color:#fff; padding:18px 0 24px; text-align:center;">
-        <div style="display:inline-block; margin:0 auto 18px; border:1px solid #000; padding:5px 10px;
-                    text-align:center; font-size:13px; color:black; font-weight:bold;">
-          ${label}
-        </div>
-        <div style="border-top:1px solid #000;">
-          <div class="pdf-email-meta__details" style="display:table; margin:0 0 0 20px; font-family:Arial,sans-serif; font-size:11px; line-height:1.5; padding-top:20px; text-align:left;">
-            ${headerDetails.map(detail => `
-              <div class="pdf-email-meta__row" style="margin-bottom:2px; text-align:left;">
-                <span style="font-weight:bold; color:black;">${detail.name}: </span>
-                <span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">
-                  ${detail.value}
-                </span>
+              <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
+                <span style="font-weight:bold;color:black;">${detail.name}: </span><span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
               </div>
             `).join('')}
           </div>
         </div>
       </div>`;
+    };
 
+    // Inject header immediately after <body ...> — always present in every
+    // generated email, unlike the specific table selector which can be absent.
     const injectHeader = (rawHtml: string, headerHtml: string) => {
-      const idx = rawHtml.search(/<table\s+cellpadding="0"\s+cellspacing="0"\s+border="0"\s+width="100%"\s+style="background-color:\s*#f4f4f4;">/i);
-      return idx !== -1
-        ? rawHtml.slice(0, idx) + headerHtml + rawHtml.slice(idx)
-        : rawHtml;
+      const bodyTagMatch = rawHtml.match(/<body[^>]*>/i);
+      if (bodyTagMatch) {
+        const idx = rawHtml.indexOf(bodyTagMatch[0]) + bodyTagMatch[0].length;
+        return rawHtml.slice(0, idx) + headerHtml + rawHtml.slice(idx);
+      }
+      return headerHtml + rawHtml;
     };
 
     const normalizeEmailHtml = (raw: string, width: number) => raw.replace(
@@ -161,21 +169,30 @@ export default function VSBPage() {
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
       const normalized = normalizeEmailHtml(raw, 600);
-      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`));
+      // Pass imageOptionTitle as centerLabel so the title box is centered in
+      // its 600px column.  Mobile does not use a centerLabel — its title is
+      // left-aligned like the metadata beneath it.
+      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`, false, opt.imageOptionTitle || `Desktop View - ${opt.title}`));
     });
 
     const mobileHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
       const normalized = normalizeEmailHtml(raw, 375);
+      // Mobile: left-aligned title, no centerLabel.
       return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`, true));
     });
 
     if (includeDV) {
       if (isThreeMode) {
+        // Three options side-by-side on one landscape page.
+        // pageWidth = 3 × 600 + 2 × 24 (gap) + 2 × 24 (outer pad) = 1896px
+        const COL_W   = 600;
+        const GAP     = 24;
+        const PADDING = 24;
         pages.push({
-          columns: desktopHtmls.map((html) => ({ html, width: 600 })),
-          gap: 24,
-          pageWidth: 1848,
+          columns: desktopHtmls.map((html) => ({ html, width: COL_W, variant: 'desktop' as const })),
+          gap:       GAP,
+          pageWidth: COL_W * 3 + GAP * 2 + PADDING * 2,
         });
       } else {
         pages.push({ html: desktopHtmls[0], width: 600 });
@@ -183,7 +200,21 @@ export default function VSBPage() {
     }
 
     if (includeMV) {
-      mobileHtmls.forEach((html) => pages.push({ html, width: 375 }));
+      if (isThreeMode) {
+        // Three mobile options side-by-side on one landscape page.
+        // pageWidth = 3 × 375 + 2 × 16 (gap) + 2 × 20 (outer pad) = 1205px
+        const MOB_W   = 375;
+        const GAP     = 16;
+        const PADDING = 20;
+        pages.push({
+          columns: mobileHtmls.map((html) => ({ html, width: MOB_W, variant: 'mobile' as const })),
+          gap:       GAP,
+          pageWidth: MOB_W * 3 + GAP * 2 + PADDING * 2,
+        });
+      } else {
+        // Single mobile option — centered on its own page.
+        pages.push({ html: mobileHtmls[0], width: 375 });
+      }
     }
 
     if (includeANP) {

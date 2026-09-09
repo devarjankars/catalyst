@@ -170,3 +170,5 @@ export async function warmUp(allReferencePhrases: string[]): Promise<void> {
   await getExtractor();
   await Promise.all(allReferencePhrases.map((phrase) => embed(phrase)));
 }
+
+

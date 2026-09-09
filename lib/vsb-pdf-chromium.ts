@@ -30,38 +30,143 @@ function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
 
   if (spec.columns?.length) {
     const columns = spec.columns.map((column: VsbPdfColumn) => {
+      const variantClass = column.variant === 'mobile'
+        ? 'pdf-column pdf-column--mobile'
+        : 'pdf-column pdf-column--desktop';
       const parts = extractDocumentParts(column.html);
-      return `<div class="pdf-column" style="width:${column.width}px;flex:0 0 ${column.width}px;">${parts.styles}${parts.body}</div>`;
+      return `<div class="${variantClass}" style="width:${column.width}px;flex:0 0 ${column.width}px;">${parts.styles}${parts.body}</div>`;
     }).join('');
-    return `<!doctype html><html><head><meta charset="utf-8">${baseTag}<style>${printStyles(spec.pageWidth ?? 0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 24}px;">${columns}</main></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8">${baseTag}<style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
   }
 
+  // Single-page render — wrap in .pdf-column.pdf-column--single so the same
+  // border and padding rules apply as for multi-column options.
   const source = spec.html ?? '<div></div>';
-  const parts = extractDocumentParts(source);
-  return `<!doctype html><html><head><meta charset="utf-8">${baseTag}${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body>${parts.body}</body></html>`;
+  const parts  = extractDocumentParts(source);
+  const isMobile = (spec.width ?? DEFAULT_WIDTH) === 375;
+  const singleVariant = isMobile ? 'pdf-column--mobile' : 'pdf-column--desktop';
+  return `<!doctype html><html><head><meta charset="utf-8">${baseTag}${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body><div class="pdf-column pdf-column--single ${singleVariant}" style="width:${spec.width ?? DEFAULT_WIDTH}px;">${parts.body}</div></body></html>`;
 }
 
 function printStyles(width: number): string {
-  const mobileEmailStyles = width === 375 ? `
-    .email-container { width: 100% !important; max-width: 100% !important; }
-    .email-container img { max-width: 100% !important; height: auto !important; }
-  ` : '';
+  const isSingleMobilePage = width === 375;
 
   return `
     @page { margin: 0; size: auto; }
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0 !important; padding: 0 !important; width: ${width > 0 ? `${width}px` : '100%'} !important; min-width: 0 !important; background: #fff; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${width > 0 ? `${width}px` : '100%'} !important;
+      min-width: 0 !important;
+      background: #fff;
+    }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     img { max-width: 100%; }
-    .pdf-email-meta, .pdf-mobile-email-meta { text-align: center !important; }
-    .pdf-email-meta > div:first-child, .pdf-mobile-email-meta > div:first-child { display: inline-block !important; margin-left: auto !important; margin-right: auto !important; text-align: center !important; }
-    .pdf-email-meta__details { display: table !important; width: auto !important; margin-left: 20px !important; margin-right: 0 !important; text-align: left !important; }
-    .pdf-mobile-email-meta__details { display: table !important; width: auto !important; margin-left: 20px !important; margin-right: 0 !important; text-align: left !important; }
-    .pdf-email-meta__row, .pdf-mobile-email-meta__row { text-align: left !important; white-space: normal !important; }
-    .pdf-email-meta__row > span:first-child, .pdf-mobile-email-meta__row > span:first-child { font-weight: 700 !important; }
-    ${mobileEmailStyles}
-    .pdf-columns { display: flex; align-items: flex-start; width: max-content; margin: 0; padding: 0; }
-    .pdf-column { flex-shrink: 0; overflow: hidden; }
+
+    /* ── Single-page mobile resets ───────────────────────────────────────── */
+    ${isSingleMobilePage ? `
+      .email-container { width: 100% !important; max-width: 100% !important; }
+      .email-container img { max-width: 100% !important; height: auto !important; }
+    ` : ''}
+
+    /* ── Header meta block — title and metadata both LEFT at 20px ───────────
+       Title box: display:table (shrinks to content), margin-left:20px.
+       No margin:auto, no text-align:center on either title or details.
+       Inline styles in the HTML are primary; these reinforce them.
+    ── */
+    .pdf-email-meta,
+    .pdf-mobile-email-meta {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      text-align: left !important;
+    }
+
+    /* Title — left-aligned at 20px (desktop and mobile share the same rule) */
+    .pdf-email-meta__title,
+    .pdf-mobile-email-meta__title {
+      display: table !important;
+      width: fit-content !important;
+      margin-top: 18px !important;
+      margin-right: 0 !important;
+      margin-bottom: 18px !important;
+      margin-left: 20px !important;
+      text-align: left !important;
+    }
+
+    /* Details + rows — left-aligned for both desktop and mobile */
+    .pdf-email-meta__details,
+    .pdf-mobile-email-meta__details {
+      display: table !important;
+      width: auto !important;
+      margin: 0 0 0 20px !important;
+      padding-top: 20px !important;
+      text-align: left !important;
+    }
+    .pdf-email-meta__row,
+    .pdf-mobile-email-meta__row {
+      text-align: left !important;
+      white-space: normal !important;
+    }
+    .pdf-email-meta__row > span:first-child,
+    .pdf-mobile-email-meta__row > span:first-child {
+      font-weight: 700 !important;
+    }
+
+    /* ── Multi-column page layout ────────────────────────────────────────── */
+    .pdf-columns {
+      display: flex;
+      align-items: flex-start;
+      padding: 0 24px;
+      box-sizing: border-box;
+    }
+
+    /* ── .pdf-column — the complete option wrapper with visible border ───────
+       outline rather than border so it does not affect layout/width.
+       overflow:hidden is the final guard against content painting into the
+       adjacent column; content must reflow first (see --mobile rules).
+       No fixed height — height is determined by the complete email content.
+    ── */
+    .pdf-column {
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      background: #ffffff;
+      outline: 1px solid #e5e7eb;
+      outline-offset: -1px;
+    }
+
+    /* Single-page wrapper: body padding so border is visible on all sides */
+    .pdf-column--single {
+      box-sizing: border-box;
+    }
+
+    /* ── Mobile column — responsive reflow ──────────────────────────────────
+       Scoped to .pdf-column--mobile so desktop columns are never affected.
+       Forces the outer 600px wrapper table to fit the 375px column.
+       Inner tables (buttons, icons, cards) are NOT globally forced to 100%.
+    ── */
+    .pdf-column--mobile {
+      width: 375px !important;
+      max-width: 375px !important;
+      flex: 0 0 375px !important;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .pdf-column--mobile .email-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+    .pdf-column--mobile .email-container > table,
+    .pdf-column--mobile .email-container > div > table {
+      width: 100% !important;
+      max-width: 375px !important;
+    }
+    .pdf-column--mobile img {
+      max-width: 100% !important;
+      height: auto !important;
+    }
   `;
 }
 
@@ -204,6 +309,8 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
         await page.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
         await waitForAssets(page);
         await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+        // Only run the mobile overflow check for single-column mobile pages.
+        // Multi-column (3-option) mobile uses the columns layout — skip it there.
         if (spec.width === 375 && !spec.columns?.length) {
           await assertMobileContentFits(page);
         }

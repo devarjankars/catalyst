@@ -1,6 +1,8 @@
 ﻿export interface VsbPdfColumn {
   html: string;
   width: number;
+  /** Rendering variant — controls whether mobile responsive CSS is scoped to this column. */
+  variant?: 'desktop' | 'mobile';
 }
 
 export interface VsbPdfPageSpec {
@@ -46,29 +48,66 @@ export async function exportVsbPdf(pages: VsbPdfPageSpec[], fileName: string): P
 
 export function buildVariableCopyHtml(data: any, emailName: string, headingColor?: string): string {
   const accent = headingColor || '#FF66CC';
+
+  // Returns true only for values that are real image URLs/data-URIs.
+  // Scoped to http(s) URLs and data:image/ URIs — never matches plain text.
+  const isImageValue = (v: unknown): v is string => {
+    if (typeof v !== 'string') return false;
+    const t = v.trim();
+    return t.startsWith('data:image/') || /^https?:\/\/.+/i.test(t);
+  };
+
+  // Escape a string for safe use inside an HTML attribute value.
+  const escAttr = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   const renderNormalSection = (section: any) => {
     const listLabel = section.listText ?? 'Option';
-    const options = Array.isArray(section.options) ? section.options : [];
+    const options   = Array.isArray(section.options) ? section.options : [];
+    // Only "[Variable Header Image]" sections render images.
+    // All other normal sections print values as plain text — unchanged.
+    const isImageSection = typeof section.heading === 'string' &&
+      section.heading.trim() === '[Variable Header Image]';
+
+    // ── Image section: vertical stack, one row per option ───────────────────
+    // Each row: label on the left (fixed 55px), image immediately to its right.
+    // Rows are stacked vertically with 12px gap between them.
+    if (isImageSection) {
+      const items = options.map((opt: any, i: number) => {
+        const safeSrc = typeof opt === 'string' && isImageValue(opt)
+          ? escAttr(opt.trim())
+          : null;
+        const safeAlt = escAttr(`Variable Header Image Option ${i + 1}`);
+        const imgOrFallback = safeSrc
+          ? `<img class="pdf-variable-header-image" src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:calc(100% - 65px);max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=&quot;font-size:9px;color:#9ca3af;font-style:italic;&quot;>Image unavailable</span>');"/>`
+          : `<span style="font-size:9px;color:#9ca3af;font-style:italic;">No image</span>`;
+        return `<div class="pdf-variable-header-image-option" style="display:flex;flex-direction:row;align-items:center;width:100%;gap:10px;box-sizing:border-box;"><span class="pdf-variable-header-image-label" style="flex:0 0 55px;width:55px;font-size:10px;font-weight:bold;color:#111827;white-space:nowrap;text-align:left;">${listLabel} ${i + 1}:</span>${imgOrFallback}</div>`;
+      }).join('');
+
+      return `
+      <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;color:${accent};">${section.heading}</div>
+        <div class="pdf-variable-header-images" style="display:flex;flex-direction:column;width:100%;gap:12px;box-sizing:border-box;">${items}</div>
+      </div>`;
+    }
+
+    // ── Normal text section ───────────────────────────────────────────────────
     return `
       <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
-        ${section.structure !== 'third-party-placeholder' ? `<div style="font-size:11px;font-weight:bold;margin-bottom:4px;color:${accent};">${section.heading}</div>` : ''}
+        ${section.structure !== 'third-party-placeholder'
+          ? `<div style="font-size:11px;font-weight:bold;margin-bottom:4px;color:${accent};">${section.heading}</div>`
+          : ''}
         ${options.map((opt: any, i: number) => {
-          const value = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
-          return `
-            <div style="font-size:10px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;">
-              <span style="font-weight:bold;margin-right:6px;">${listLabel} ${i + 1}:</span>
-              <span>${value}</span>
-            </div>
-          `;
+          const rawValue = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
+          return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;"><span style="font-weight:bold;margin-right:6px;">${listLabel} ${i + 1}:</span><span>${rawValue}</span></div>`;
         }).join('')}
-      </div>
-    `;
+      </div>`;
   };
 
   const renderTableSection = (section: any) => `
     <div style="width:100%;box-sizing:border-box;margin:0 0 16px;">
       <div style="font-size:11px;font-weight:bold;margin:0 0 12px;color:${accent};">${section.heading}</div>
-      <table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
+      <table class="pdf-friendly-from-table" style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
         <thead>
           <tr>
             <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-weight:bold;color:#FF66CC;text-align:left;width:60%;">Friendly From Name</th>
@@ -78,14 +117,14 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
         <tbody>
           ${(section.options || []).map((row: any) => `
             <tr>
-              <td style="border:1px solid #d1d5db;padding:6px;vertical-align:top;">
+              <td class="pdf-friendly-from-table__names" style="border:1px solid #d1d5db;padding:6px;vertical-align:top;font-size:12px;text-align:left;">
                 ${(row.friendlyNames || []).map((name: string, j: number) => `
                   <div style="margin-bottom:3px;">
                     <span style="font-weight:bold;margin-right:4px;">${j + 1}.</span>${name}
                   </div>
                 `).join('')}
               </td>
-              <td style="border:1px solid #d1d5db;padding:6px;vertical-align:top;">${row.fromEmail}</td>
+              <td class="pdf-friendly-from-table__email" style="border:1px solid #d1d5db;padding:6px;font-size:12px;text-align:center;vertical-align:middle;">${row.fromEmail}</td>
             </tr>
           `).join('')}
         </tbody>
