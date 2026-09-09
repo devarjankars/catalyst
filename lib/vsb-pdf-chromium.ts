@@ -1,8 +1,16 @@
-import serverlessChromium from '@sparticuz/chromium';
-import { chromium as localChromium } from 'playwright';
-import { chromium as serverChromium } from 'playwright-core';
+// Use chromium-min so the binary is NOT bundled into the Lambda package.
+// On Vercel it is downloaded at cold-start from the CDN URL below; locally
+// Playwright manages its own browser and the import is never invoked.
+import serverlessChromium from '@sparticuz/chromium-min';
+import { chromium as playwrightChromium } from 'playwright-core';
 import { PDFDocument } from 'pdf-lib';
 import type { VsbPdfColumn, VsbPdfPageSpec } from './vsb-pdf-export';
+
+// ── Chromium remote package URL ───────────────────────────────────────────────
+// Must match the exact version of @sparticuz/chromium-min installed.
+// Update this URL whenever you bump the chromium-min version.
+const CHROMIUM_REMOTE_EXEC_URL =
+  'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar';
 
 const DEFAULT_WIDTH = 600;
 const MAX_PAGE_HEIGHT = 20000;
@@ -131,22 +139,67 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
   const isVercel = process.env.VERCEL === '1';
-  const browserLauncher = isVercel ? serverChromium : localChromium;
-  const browser = await browserLauncher.launch({
-    headless: true,
-    ...(isVercel
-      ? {
-          args: serverlessChromium.args,
-          executablePath: await serverlessChromium.executablePath(),
-        }
-      : {}),
-  });
-  const merged = await PDFDocument.create();
+  // Render sets RENDER=true in its environment
+  const isRender = process.env.RENDER === 'true';
 
+  // ── Resolve executable path ────────────────────────────────────────────────
+  // Vercel  → chromium-min downloads the binary from CDN into /tmp at cold-start
+  // Render  → Playwright installed the browser during build; let it auto-locate
+  //           via PLAYWRIGHT_BROWSERS_PATH or the default cache location.
+  //           We pass executablePath=undefined so Playwright resolves it itself.
+  // Local   → same as Render (Playwright manages its own browser)
+  const executablePath = isVercel
+    ? await serverlessChromium.executablePath(CHROMIUM_REMOTE_EXEC_URL)
+    : undefined;
+
+  console.log('[PDF] environment:', isVercel ? 'vercel' : isRender ? 'render' : 'local');
+  console.log('[PDF] Chromium executable:', executablePath || 'Playwright-managed (auto-locate)');
+
+  // On Render the browser cache lives at /opt/render/.cache/ms-playwright.
+  // Setting PLAYWRIGHT_BROWSERS_PATH tells Playwright exactly where to look
+  // so it doesn't fall back to a path that doesn't exist.
+  if (isRender && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
+  }
+
+  let browser: Awaited<ReturnType<typeof playwrightChromium.launch>> | undefined;
   try {
+    browser = await playwrightChromium.launch({
+      headless: true,
+      // On Render/local: no extra args needed — Playwright handles everything.
+      // On Vercel: must pass sparticuz args + explicit executablePath.
+      ...(isVercel
+        ? {
+            args: serverlessChromium.args,
+            executablePath,
+          }
+        : {
+            // Render needs --no-sandbox because it runs in a container without
+            // kernel-level sandboxing support.
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+          }),
+    });
+    console.log('[PDF] browser launched');
+    console.log('[PDF] connected:', browser.isConnected());
+    browser.on('disconnected', () => console.error('[PDF] BROWSER DISCONNECTED'));
+
+    if (isVercel) {
+      console.log('[PDF] before newPage', { connected: browser.isConnected() });
+      const diagnosticPage = await browser.newPage();
+      console.log('[PDF] page created');
+      await diagnosticPage.setContent('<html><body>Hello</body></html>');
+      const testPdf = await diagnosticPage.pdf({ printBackground: true });
+      console.log('[PDF] minimal PDF success', testPdf.length);
+      await diagnosticPage.close();
+    }
+
+    const merged = await PDFDocument.create();
+
     for (const spec of pages) {
       const width = Math.max(spec.pageWidth ?? spec.width ?? DEFAULT_WIDTH, 1);
+      console.log('[PDF] before newPage', { connected: browser.isConnected(), width });
       const page = await browser.newPage({ viewport: { width, height: 800 } });
+      console.log('[PDF] page created');
       try {
         await page.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
         await waitForAssets(page);
@@ -174,6 +227,8 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
 
     return Buffer.from(await merged.save());
   } finally {
-    await browser.close();
+    if (browser?.isConnected()) {
+      await browser.close().catch(() => undefined);
+    }
   }
 }

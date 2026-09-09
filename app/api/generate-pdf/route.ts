@@ -3,7 +3,10 @@ import { generateVsbPdfBuffer } from '@/lib/vsb-pdf-chromium';
 import type { VsbPdfPageSpec } from '@/lib/vsb-pdf-export';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+// 300s for Vercel Pro / Enterprise; Hobby plan caps at 60s automatically.
+// Complex multi-page PDFs (especially 3-column desktop view) can take 60-120s.
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
