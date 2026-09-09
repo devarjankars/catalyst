@@ -381,7 +381,7 @@ function generateComponentHTML(component: EmailComponent): string {
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tbody>
                 <tr>
-                  <td align="left" style="color: ${color}; font-size: ${fontSize}; line-height: ${fontSize};">
+                  <td align="left" style="color: ${color}; font-size: ${fontSize}; line-height: 1.4;">
                     ${linksHTML}
                   </td>
                 </tr>

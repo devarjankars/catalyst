@@ -110,8 +110,8 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
       <table class="pdf-friendly-from-table" style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
         <thead>
           <tr>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-weight:bold;color:#FF66CC;text-align:left;width:60%;">Friendly From Name</th>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-weight:bold;color:#FF66CC;text-align:left;width:40%;">From Email Address</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:13px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:60%;">Friendly From Name</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:13px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:40%;">From Email Address</th>
           </tr>
         </thead>
         <tbody>

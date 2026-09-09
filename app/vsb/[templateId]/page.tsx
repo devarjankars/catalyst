@@ -124,7 +124,7 @@ export default function VSBPage() {
       // Title box is always LEFT-ALIGNED at 20px from the column edge.
       // centerLabel is kept as the display text (e.g. "Option 1 - Image Option 1")
       // but it is no longer centered — it aligns with the metadata beneath it.
-      const titleStyle = 'display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-size:13px;color:black;font-weight:bold;text-align:left;';
+      const titleStyle = 'display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:black;font-weight:bold;text-align:left;';
 
       const titleText = centerLabel && !mobile ? centerLabel : label;
 
@@ -178,8 +178,38 @@ export default function VSBPage() {
     const mobileHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
       const normalized = normalizeEmailHtml(raw, 375);
+
+      // ── Force mobile media-query rules unconditionally ──────────────────────
+      // When three mobile columns are rendered side-by-side, the Playwright
+      // viewport is ~1205px wide. The @media (max-width:480px) in the email
+      // <head> never fires, so mobile-only components stay hidden and
+      // desktop-only components stay visible — wrong images, wrong layout.
+      //
+      // Fix: inject a <style> block that applies the same show/hide rules as
+      // the media query, but without the media query condition. Each column
+      // gets its own <style> so it renders as if it were in a 375px viewport.
+      const mobileOverrideStyle = `<style>
+        .mbl-show-table { display: table !important; }
+        .mbl-show-tr    { display: table-row !important; }
+        .mbl-show-cell  { display: table-cell !important; }
+        .desk-show-table { display: none !important; }
+        .desk-show-tr    { display: none !important; }
+        .desk-show-cell  { display: none !important; }
+        .mobile  { display: inline-block !important; }
+        .desktop { display: none !important; }
+        .deskDisp { display: none !important; }
+        .mbDisp   { display: table !important; }
+      </style>`;
+
+      // Inject the override into <head> so it has higher specificity than the
+      // original stylesheet but is still overridable by inline styles.
+      const withMobileStyles = normalized.replace(
+        /<\/head>/i,
+        `${mobileOverrideStyle}</head>`,
+      );
+
       // Mobile: left-aligned title, no centerLabel.
-      return injectHeader(normalized, makeHeaderHtml(`Mobile View - ${opt.title}`, true));
+      return injectHeader(withMobileStyles, makeHeaderHtml(`Mobile View - ${opt.title}`, true));
     });
 
     if (includeDV) {

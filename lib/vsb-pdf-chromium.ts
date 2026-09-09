@@ -91,6 +91,7 @@ function printStyles(width: number): string {
       margin-right: 0 !important;
       margin-bottom: 18px !important;
       margin-left: 20px !important;
+      font-family: Arial, Helvetica, sans-serif !important;
       text-align: left !important;
     }
 
@@ -136,9 +137,13 @@ function printStyles(width: number): string {
       outline-offset: -1px;
     }
 
-    /* Single-page wrapper: body padding so border is visible on all sides */
+    /* Single-page wrapper: body padding so border is visible on all sides.
+       height:auto + min-height:0 ensures the wrapper shrinks to its content
+       and is not inflated by any inherited height rule from the email HTML. */
     .pdf-column--single {
       box-sizing: border-box;
+      height: auto !important;
+      min-height: 0 !important;
     }
 
     /* ── Mobile column — responsive reflow ──────────────────────────────────
@@ -231,6 +236,43 @@ async function assertMobileContentFits(page: import('playwright-core').Page): Pr
 
 async function measureContentHeight(page: import('playwright-core').Page): Promise<number> {
   return page.evaluate(() => {
+    // ── Step 1: collapse CSS height/min-height on the outer wrappers.
+    // Percentage heights resolve against the viewport (800px), not content.
+    const collapseHeights = (el: HTMLElement | null) => {
+      if (!el) return;
+      el.style.setProperty('height',     'auto', 'important');
+      el.style.setProperty('min-height', '0',    'important');
+    };
+    collapseHeights(document.documentElement);
+    collapseHeights(document.body);
+    const singleRoot = document.querySelector<HTMLElement>('.pdf-column--single');
+    collapseHeights(singleRoot);
+
+    // ── Step 2: remove HTML height= attributes from tables inside the email
+    // body. These are set as presentational attributes (e.g. height="800") and
+    // cannot be overridden by CSS alone — they cause tables to reserve pixel
+    // heights far beyond their content, inflating the page.
+    // Only remove from elements inside .pdf-column--single (the email body),
+    // never from elements outside it.
+    if (singleRoot) {
+      singleRoot.querySelectorAll<HTMLElement>('[height]').forEach((el) => {
+        const tag = el.tagName.toLowerCase();
+        // Only strip height attributes from table-related elements.
+        // Preserve height on <img> elements — those are intentional dimensions.
+        if (tag === 'table' || tag === 'td' || tag === 'tr' || tag === 'tbody') {
+          el.removeAttribute('height');
+        }
+      });
+    }
+
+    // ── Step 3: measure the single-page wrapper.
+    if (singleRoot) {
+      const rect = singleRoot.getBoundingClientRect();
+      // 10px intentional bottom margin so the outer border is fully visible.
+      return Math.ceil(Math.max(1, rect.height + 10));
+    }
+
+    // ── Step 4: multi-column pages — body-scan fallback.
     const bodyRect = document.body.getBoundingClientRect();
     const bottom = Array.from(document.body.querySelectorAll<HTMLElement>('*')).reduce(
       (max, element) => Math.max(max, element.getBoundingClientRect().bottom),
