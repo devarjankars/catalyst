@@ -59,6 +59,8 @@ export default function VSBPage() {
   // Download dialog state
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress]   = useState(0);
+  const [pdfStage,    setPdfStage]      = useState('');
   const [isUpVersioning, setIsUpVersioning] = useState(false);
   const [selectedPages, setSelectedPages] = useState({
     variableCopy: true,
@@ -269,11 +271,46 @@ export default function VSBPage() {
     altNamePage:  boolean;
   }) => {
     if (!currentVsb) return;
-    
+
     setIsGeneratingPdf(true);
     setDownloadDialogOpen(false);
+    setPdfProgress(0);
+    setPdfStage('Preparing pages…');
+
+    // ── Simulated progress ────────────────────────────────────────────────
+    // The server gives no incremental progress signal, so we advance through
+    // realistic stages while waiting.  Each stage has a target % and a delay.
+    // When the real call resolves we jump to 100%.
+    let cancelled = false;
+    const stages: { pct: number; label: string; delay: number }[] = [
+      { pct:  8, label: 'Preparing pages…',          delay:  300 },
+      { pct: 20, label: 'Rendering HTML…',           delay:  800 },
+      { pct: 38, label: 'Launching browser…',        delay: 1200 },
+      { pct: 55, label: 'Capturing email layout…',   delay: 2000 },
+      { pct: 70, label: 'Building PDF pages…',       delay: 2500 },
+      { pct: 82, label: 'Merging document…',         delay: 1500 },
+      { pct: 91, label: 'Finalising…',               delay: 1000 },
+      { pct: 95, label: 'Almost done…',              delay: 2000 },
+    ];
+
+    (async () => {
+      for (const stage of stages) {
+        if (cancelled) break;
+        await new Promise(r => setTimeout(r, stage.delay));
+        if (cancelled) break;
+        setPdfProgress(stage.pct);
+        setPdfStage(stage.label);
+      }
+    })();
+
     try {
       const pdfBlob = await generatePDFBlob(options);
+      cancelled = true;
+      setPdfProgress(100);
+      setPdfStage('Download ready!');
+      // Brief pause so the user sees 100%
+      await new Promise(r => setTimeout(r, 400));
+
       const url  = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href     = url;
@@ -283,10 +320,13 @@ export default function VSBPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
+      cancelled = true;
       console.error('Failed to download PDF:', error);
       alert(`Failed to download PDF.\n\n${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsGeneratingPdf(false);
+      setPdfProgress(0);
+      setPdfStage('');
     }
   };
 
@@ -608,7 +648,7 @@ export default function VSBPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <Dialog open={downloadDialogOpen} onOpenChange={setDownloadDialogOpen}>
+        <Dialog open={downloadDialogOpen} onOpenChange={(open) => { if (!isGeneratingPdf) setDownloadDialogOpen(open); }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Download Selective Pages</DialogTitle>
@@ -647,6 +687,42 @@ export default function VSBPage() {
                 {'Download PDF'}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── PDF generation progress dialog ── */}
+        <Dialog open={isGeneratingPdf} onOpenChange={() => {}}>
+          <DialogContent
+            className="sm:max-w-[400px]"
+            /* Prevent the user closing it mid-generation */
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-[#006937]" />
+                Generating PDF
+              </DialogTitle>
+              <DialogDescription>{pdfStage || 'Starting…'}</DialogDescription>
+            </DialogHeader>
+
+            {/* Progress bar */}
+            <div className="py-4 space-y-2">
+              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#006937] rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${pdfProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>{pdfStage}</span>
+                <span>{pdfProgress}%</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 text-center pb-1">
+              Please wait — this may take up to a minute for large emails.
+            </p>
           </DialogContent>
         </Dialog>
 
