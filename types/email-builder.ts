@@ -67,7 +67,7 @@ export interface EmailComponent {
   linkColor?: string
 
   //footer-links properties
-  links?: { text: string; href: string; title?: string; color?: string }[]
+  links?: { text: string; href: string; title?: string; color?: string; fontSize?: string }[]
   logoA: { altTex: string; href: string; imgSrc: string }
   logoB: { altTex: string; href: string; imgSrc: string }
   jobCode?: string

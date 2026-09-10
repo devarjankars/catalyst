@@ -537,8 +537,10 @@ export function EmailComponentRenderer({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: component.color || "#007bff",
+                      color: link.color || component.color || "#007bff",
+                      fontSize: link.fontSize || component.fontSize || "14px",
                       textDecoration: "underline",
+                      fontFamily: "Arial, sans-serif",
                     }}
                     onClick={(e) => {
                       if (!previewMode) {
@@ -551,7 +553,7 @@ export function EmailComponentRenderer({
                   </a>
 
                   {linkIndex < component.links!.length - 1 && (
-                    <span className="text-gray-500">
+                    <span style={{ color: "#000000", fontSize: component.fontSize || "14px" }}>
                       |
                     </span>
                   )}
@@ -669,7 +671,7 @@ export function EmailComponentRenderer({
                 title={link.title || undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: component.color || "#009877", textDecoration: "underline", fontSize: component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
+                style={{ color: link.color || component.color || "#009877", textDecoration: "underline", fontSize: link.fontSize || component.fontSize || "12px", fontFamily: "Arial, sans-serif", whiteSpace: "nowrap" }}
                 onClick={(e) => { if (!previewMode) { e.preventDefault(); if (!isLockedMode) onSelect(); } }}
               >
                 {link.text}
@@ -706,7 +708,7 @@ export function EmailComponentRenderer({
                       style={{
                         color: linkColor,
                         textDecoration: "underline",
-                        fontSize: component.fontSize || "12px",
+                        fontSize: link.fontSize || component.fontSize || "12px",
                         fontFamily: "Arial, sans-serif",
                       }}
                       onClick={(e) => {
@@ -749,9 +751,9 @@ export function EmailComponentRenderer({
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            color: component.color || "#0563C1",
+            color: link.color || component.color || "#0563C1",
             textDecoration: "underline",
-            fontSize: component.fontSize || "12px",
+            fontSize: link.fontSize || component.fontSize || "12px",
             fontFamily: "Arial, sans-serif",
             whiteSpace: "nowrap",
           }}

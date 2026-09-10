@@ -366,7 +366,7 @@ function generateComponentHTML(component: EmailComponent): string {
           }
         }
 
-        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${linkColor}; font-size: ${fontSize}; font-family: Arial, sans-serif; text-decoration: underline;">${link.text.trim()}</a>${separator}`;
+        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${linkColor}; font-size: ${link.fontSize || fontSize}; font-family: Arial, sans-serif; text-decoration: underline;">${link.text.trim()}</a>${separator}`;
       }).join("");
 
       return `
@@ -401,9 +401,9 @@ function generateComponentHTML(component: EmailComponent): string {
         .map(
           (link, index) => `
       <a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${
-        component.color || "#0463c1"
+        link.color || component.color || "#0463c1"
       }; text-decoration: underline; font-size: ${
-        component.fontSize || "12px"
+        link.fontSize || component.fontSize || "12px"
       }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
         ${link.text || "Link"}
       </a>
@@ -412,8 +412,8 @@ function generateComponentHTML(component: EmailComponent): string {
       ${
         index < component.links!.length - 1
           ? index == 1
-            ? `<span class='desktop'  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
-            : `<span  style="color:#000000; font-size:14px; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+            ? `<span class='desktop'  style="color:#000000; font-size:${component.fontSize || "14px"}; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
+            : `<span  style="color:#000000; font-size:${component.fontSize || "14px"}; margin-right:5px;">&nbsp;|&nbsp;&nbsp;</span>`
           : ""
       }
     `,
@@ -591,7 +591,7 @@ function generateComponentHTML(component: EmailComponent): string {
       const fl3Tds = fl3Links.map((link, index) => {
         const align = index === 0 ? "left" : index === fl3Links.length - 1 ? "right" : "center";
         return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fl3FontSize}; line-height:1.4; white-space:nowrap;">
-          <a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${fl3Color}; text-decoration:underline; font-size:${fl3FontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
+          <a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${link.color || fl3Color}; text-decoration:underline; font-size:${link.fontSize || fl3FontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
         </td>`;
       }).join("\n          ");
 
@@ -1279,7 +1279,7 @@ case "isi": {
       const linkTds = links.map((link, index) => {
         const align = index === 0 ? "left" : index === links.length - 1 ? "right" : "center";
         return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fontSize}; line-height:1.4; white-space:nowrap;">
-          <a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${color}; text-decoration:underline; font-size:${fontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
+          <a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${link.color || color}; text-decoration:underline; font-size:${link.fontSize || fontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
         </td>`;
       }).join("\n          ");
 

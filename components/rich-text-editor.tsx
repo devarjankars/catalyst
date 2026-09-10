@@ -380,6 +380,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
             title="Font Size"
           >
             <option value="" disabled>Size</option>
+            <option value="10px">10</option>
             <option value="12px">12</option>
             <option value="14px">14</option>
             <option value="16px">16</option>

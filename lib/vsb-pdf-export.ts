@@ -80,13 +80,13 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
         const safeAlt = escAttr(`Variable Header Image Option ${i + 1}`);
         const imgOrFallback = safeSrc
           ? `<img class="pdf-variable-header-image" src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:calc(100% - 65px);max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=&quot;font-size:9px;color:#9ca3af;font-style:italic;&quot;>Image unavailable</span>');"/>`
-          : `<span style="font-size:9px;color:#9ca3af;font-style:italic;">No image</span>`;
+          : `<span style="font-size:12px;color:#9ca3af;font-style:italic;line-height:1.4 ">No image</span>`;
         return `<div class="pdf-variable-header-image-option" style="display:flex;flex-direction:row;align-items:center;width:100%;gap:10px;box-sizing:border-box;"><span class="pdf-variable-header-image-label" style="flex:0 0 55px;width:55px;font-size:10px;font-weight:bold;color:#111827;white-space:nowrap;text-align:left;">${listLabel} ${i + 1}:</span>${imgOrFallback}</div>`;
       }).join('');
 
       return `
       <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
-        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;color:${accent};">${section.heading}</div>
+        <div style="font-size:12px;font-weight:bold;margin-bottom:8px;color:${accent};">${section.heading}</div>
         <div class="pdf-variable-header-images" style="display:flex;flex-direction:column;width:100%;gap:12px;box-sizing:border-box;">${items}</div>
       </div>`;
     }
@@ -95,7 +95,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
     return `
       <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
         ${section.structure !== 'third-party-placeholder'
-          ? `<div style="font-size:11px;font-weight:bold;margin-bottom:4px;color:${accent};">${section.heading}</div>`
+          ? `<div style="font-size:12px;font-weight:bold;margin-bottom:4px;color:${accent};">${section.heading}</div>`
           : ''}
         ${options.map((opt: any, i: number) => {
           const rawValue = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
@@ -106,12 +106,12 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
 
   const renderTableSection = (section: any) => `
     <div style="width:100%;box-sizing:border-box;margin:0 0 16px;">
-      <div style="font-size:11px;font-weight:bold;margin:0 0 12px;color:${accent};">${section.heading}</div>
+      <div style="font-size:12px;font-weight:bold;margin:0 0 12px;color:${accent};">${section.heading}</div>
       <table class="pdf-friendly-from-table" style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
         <thead>
           <tr>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:13px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:60%;">Friendly From Name</th>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:13px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:40%;">From Email Address</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:60%;">Friendly From Name</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:40%;">From Email Address</th>
           </tr>
         </thead>
         <tbody>
@@ -150,7 +150,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
   return `
     <div style="box-sizing:border-box;width:100%;max-width:100%;padding:32px;margin:0 auto;background:#fff;font-family:Arial, Helvetica, sans-serif;">
       <div style="font-size:13px;color:#006937;font-weight:bold;margin:0 0 8px;">${emailName}</div>
-      <div style="font-size:11px;font-weight:bold;margin:0 0 12px;color:${accent};">Variable copy</div>
+      <div style="font-size:12px;font-weight:bold;margin:0 0 12px;color:${accent};">Variable copy</div>
       ${(data || []).map((section: any) => {
         if (section.structure === 'table') return renderTableSection(section);
         if (section.structure === 'third-party-placeholder') return renderThirdPartySection(section);

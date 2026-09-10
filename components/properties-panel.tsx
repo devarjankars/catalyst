@@ -32,35 +32,70 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 
-// Reusable FontSizeInput component with dropdown + slider + custom input
+// ── Shared CSS-size helpers ────────────────────────────────────────────────
+// Used by FontSizeInput and per-link font-size inputs throughout this file.
+// Reuse these instead of duplicating validation logic.
+
+/** Normalise a raw user input to a valid CSS size string.
+ *  "10" → "10px", "1rem" → "1rem", "14px" → "14px", "" → "" */
+export function normalizeCssSize(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "";
+  // If it's a plain positive number, append px
+  if (/^\d+(\.\d+)?$/.test(t)) return `${t}px`;
+  return t;
+}
+
+/** Returns true for valid CSS size values (px, rem, em, %, pt) with positive value. */
+export function isValidCssSize(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return false;
+  // Reject dangerous characters
+  if (/[;{}]/.test(t)) return false;
+  // Positive number-only (will be normalised to px)
+  if (/^\d+(\.\d+)?$/.test(t)) {
+    const n = parseFloat(t);
+    return n > 0;
+  }
+  // px / pt / rem / em / %
+  const m = t.match(/^(\d+(\.\d+)?)(px|pt|rem|em|%)$/i);
+  if (!m) return false;
+  return parseFloat(m[1]) > 0;
+}
+
+// ── FontSizeInput ──────────────────────────────────────────────────────────
+// Pure custom text input — no dropdown.  The user types any valid CSS size.
+// "10" is normalised to "10px" on blur/Enter.
+// Invalid values show an inline message and are not committed.
 function FontSizeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const commonSizes = ["10px", "12px", "13px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "36px", "48px"];
-  const isCustom = !commonSizes.includes(value);
+  const [local, setLocal] = useState(value);
+  const [error, setError] = useState("");
+
+  // Keep local state in sync when the prop changes from outside
+  useEffect(() => { setLocal(value); }, [value]);
+
+  const commit = (raw: string) => {
+    const normalised = normalizeCssSize(raw);
+    if (!normalised || !isValidCssSize(normalised)) {
+      setError("Enter a valid size e.g. 10px, 1rem, 120%");
+      return;
+    }
+    setError("");
+    setLocal(normalised);
+    onChange(normalised);
+  };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Select value={isCustom ? "custom" : value} onValueChange={(v) => v !== "custom" && onChange(v)}>
-          <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Font size" />
-          </SelectTrigger>
-          <SelectContent>
-            {commonSizes.map((size) => (
-              <SelectItem key={size} value={size}>{size}</SelectItem>
-            ))}
-            <SelectItem value="custom">Custom...</SelectItem>
-          </SelectContent>
-        </Select>
-        {isCustom && (
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={(e) => { const v = e.target.value; if (/^\d+px?$/i.test(v)) onChange(v.replace('px','')+'px'); }}
-            className="w-[80px] font-mono text-xs"
-            placeholder="px"
-          />
-        )}
-      </div>
+    <div className="space-y-1">
+      <Input
+        value={local}
+        className="font-mono text-xs"
+        placeholder="e.g. 10px"
+        onChange={(e) => { setLocal(e.target.value); setError(""); }}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(local); } }}
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
@@ -1188,61 +1223,32 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label>Font Size</Label>
+              <Label>Default Font Size</Label>
               <FontSizeInput value={component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />  
             </div>
             <div>
-              <Label htmlFor="color">Text Color</Label>
+              <Label htmlFor="color">Default Link Color</Label>
               <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
-            
-            
             <div className="mt-3">
               <Label className="text-md mb-2">Links</Label>
               {component.links?.map((link, index) => (
-                <div key={index} className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2">
-                  <Label>Link text</Label>
-                  <Input
-                    value={link.text}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, text: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link text"
-                  />
-                  <Label>Link url</Label>
-                  <Input
-                    value={link.href}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, href: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link URL"
-                  />
-                  <Label>Link title</Label>
-                  <Input
-                    value={link.title || ""}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder='title="…" tooltip on hover'
-                  />
+                <div key={index} className="flex flex-col border-2 rounded-md p-2 gap-2 mb-2">
+                  <Label className="text-xs text-gray-500 font-semibold">Link {index + 1}</Label>
+                  <Label className="text-xs">Text</Label>
+                  <Input value={link.text} onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l) })} placeholder="Link text" />
+                  <Label className="text-xs">URL</Label>
+                  <Input value={link.href} onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, href: e.target.value } : l) })} placeholder="Link URL" />
+                  <Label className="text-xs">Title</Label>
+                  <Input value={link.title || ""} onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, title: e.target.value } : l) })} placeholder='title="…" tooltip on hover' />
+                  <Label className="text-xs">Color</Label>
+                  <ColorInput value={link.color || component.color || "#007bff"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })} />
+                  <Label className="text-xs">Font Size</Label>
+                  <FontSizeInput value={(link as any).fontSize || component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } as any : l) })} />
                 </div>
               ))}
-              
-            </div>  
-
-           </div>
+            </div>
+          </div>
         );   
         case "footer-link-2":  
         return (
@@ -2122,6 +2128,16 @@ export function PropertiesPanel({
                     onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, title: e.target.value } : l) })}
                     placeholder="Link title (HTML title attribute)"
                   />
+                  <Label className="text-xs">Color</Label>
+                  <ColorInput
+                    value={link.color || component.color || "#009877"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })}
+                  />
+                  <Label className="text-xs">Font Size</Label>
+                  <FontSizeInput
+                    value={link.fontSize || component.fontSize || "12px"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } : l) })}
+                  />
                 </div>
               ))}
             </div>
@@ -2196,6 +2212,16 @@ export function PropertiesPanel({
                       })
                     }
                     placeholder="HTML title attribute (tooltip)"
+                  />
+                  <Label className="text-xs">Color</Label>
+                  <ColorInput
+                    value={link.color || component.color || "#0563C1"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })}
+                  />
+                  <Label className="text-xs">Font Size</Label>
+                  <FontSizeInput
+                    value={link.fontSize || component.fontSize || "12px"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } : l) })}
                   />
                 </div>
               ))}
@@ -2278,6 +2304,16 @@ export function PropertiesPanel({
                       })
                     }
                     placeholder='title="…" tooltip on hover'
+                  />
+                  <Label className="text-xs">Color</Label>
+                  <ColorInput
+                    value={link.color || component.color || "#0563C1"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })}
+                  />
+                  <Label className="text-xs">Font Size</Label>
+                  <FontSizeInput
+                    value={link.fontSize || component.fontSize || "12px"}
+                    onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } : l) })}
                   />
                 </div>
               ))}
