@@ -3079,6 +3079,8 @@ export function PropertiesPanel({
       case "elzonris-references":
       case "elzonris-abbreviations":
       case "elzonris-ref-abbr":
+      case "tryvio-references":
+      case "tryvio-abbreviations":
         return (
           <div className="space-y-3">
             <div>

@@ -93,6 +93,16 @@ export default function Dashboard() {
     try {
       const loadedTemplates = await firebaseService.getAllTemplates()
       setTemplates(loadedTemplates)
+      // ── Temporary debug: print all templates to browser console ──
+      console.table(
+        loadedTemplates.map(t => ({
+          id: t.id,
+          name: t.name,
+          brand: (t as any).brand ?? '(no brand)',
+          isUserCreated: t.isUserCreated ?? false,
+          category: t.category,
+        }))
+      )
     } catch (error) {
       console.error("Failed to load templates:", error)
     } finally {

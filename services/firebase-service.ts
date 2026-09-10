@@ -155,31 +155,30 @@ class FirebaseService {
         "Elzonris SFMC":      { source: "MAT-US-TAG-00291_v2",                         brand: "elzonris" },
         "Orserdu Unbranded":  { source: "75.1300",                                     brand: "orserdu"  },
         "Ferring RTE":        { source: "Ferring RTE",                                 brand: "ferring"  },
+        "Idorsia_RTE":        { source: "US-AP-00135_Idorsia_RTE_Tryvio",              brand: "idorsia"  },
       };
       const sampleMap = new Map(this.getSampleTemplates().map(s => [s.name, s]));
 
       for (const t of canonical) {
         const expected = sampleMap.get(t.name);
-        if (!expected) continue;
-
-        const wrongBrand = (t as any).brand !== expected.brand;
         const seedConfig = SEED_MAP[t.name];
-        // Seed if blank (≤2 components) OR if brand is wrong
+
+        // Skip if neither a sample definition nor a seed config exists for this name
+        if (!expected && !seedConfig) continue;
+
+        const currentBrand = (t as any).brand;
+        const expectedBrand = seedConfig?.brand ?? expected?.brand;
+        const wrongBrand = expectedBrand ? currentBrand !== expectedBrand : false;
+
+        // forcedResync: templates that should always re-sync from their source.
+        // After confirming the Idorsia_RTE standard template shows the correct
+        // content, remove "Idorsia_RTE" from this set to avoid re-copying on
+        // every dashboard load.
+        const forcedResync = new Set(["Idorsia_RTE"]);
         const isBlank = !t.components || t.components.length <= 2;
 
-        if (wrongBrand && !seedConfig) {
-          // Wrong brand, no seed source — reset to blank placeholder
-          try {
-            await updateDoc(doc(db, this.templatesCollection, t.id), {
-              brand: expected.brand,
-              components: expected.components,
-              updatedAt: new Date(),
-            });
-            (t as any).brand = expected.brand;
-            t.components = expected.components;
-          } catch {}
-        } else if (seedConfig && (isBlank || wrongBrand)) {
-          // Find source emailer using partial name match (case-insensitive)
+        if (seedConfig && (isBlank || wrongBrand || forcedResync.has(t.name))) {
+          // Find source emailer by name match (case-insensitive) or explicit ID
           const needle = seedConfig.source.toLowerCase().trim();
           const sourceTemplate = templates.find(src => {
             if (seedConfig.sourceId) return src.id === seedConfig.sourceId;
@@ -202,6 +201,17 @@ class FirebaseService {
               (t as any).brand = seedConfig.brand;
             } catch {}
           }
+        } else if (!seedConfig && expected && wrongBrand) {
+          // Wrong brand, no seed source — reset to blank placeholder
+          try {
+            await updateDoc(doc(db, this.templatesCollection, t.id), {
+              brand: expected.brand,
+              components: expected.components,
+              updatedAt: new Date(),
+            });
+            (t as any).brand = expected.brand;
+            t.components = expected.components;
+          } catch {}
         }
       }
 
@@ -742,6 +752,15 @@ class FirebaseService {
         category: "unbranded",
         brand: "elzonris",
         components: placeholderComponents("Elzonris"),
+        isUserCreated: false,
+      },
+      // ── Idorsia ───────────────────────────────────────────────────────────
+      {
+        name: "Idorsia_RTE",
+        description: "Idorsia RTE email template — TRYVIO",
+        category: "rte",
+        brand: "idorsia",
+        components: placeholderComponents("Idorsia"),
         isUserCreated: false,
       },
     ];

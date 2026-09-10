@@ -1630,7 +1630,8 @@ case "isi": {
       `.trim();
     }
 
-    case "elzonris-abbreviations": {
+    case "elzonris-abbreviations":
+    case "tryvio-abbreviations": {
       const fontSize   = component.fontSize   || "10px";
       const color      = component.color      || "#000000";
       const lineHeight = component.lineHeight || "14px";
