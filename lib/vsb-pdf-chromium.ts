@@ -1,3 +1,6 @@
+// This file runs ONLY on the server (Node.js). Never import it from client components.
+import 'server-only';
+
 // Use chromium-min so the binary is NOT bundled into the Lambda package.
 // On Vercel it is downloaded at cold-start from the CDN URL below; locally
 // Playwright manages its own browser and the import is never invoked.
@@ -25,6 +28,24 @@ function escapeHtmlAttribute(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+/**
+ * Remove target="_blank" from all anchor tags in the HTML string.
+ *
+ * WHY: Chromium's headless PDF print pipeline suppresses link annotations
+ * for anchors that have target="_blank". The renderer treats those as
+ * "open in new tab" navigation events — which have no equivalent in a PDF —
+ * so it silently drops the annotation rectangle. Removing (or replacing with
+ * target="_self") restores the annotation so the link is clickable in the PDF.
+ *
+ * The visible text, colour, underline and href are all preserved — only the
+ * target attribute is stripped.
+ */
+function stripTargetBlank(html: string): string {
+  // Match target="_blank", target='_blank', or target=_blank (no quotes)
+  // case-insensitively, with optional whitespace around the = sign.
+  return html.replace(/\s+target\s*=\s*["']?_blank["']?/gi, '');
+}
+
 function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
   const baseTag = baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : '';
 
@@ -33,7 +54,7 @@ function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
       const variantClass = column.variant === 'mobile'
         ? 'pdf-column pdf-column--mobile'
         : 'pdf-column pdf-column--desktop';
-      const parts = extractDocumentParts(column.html);
+      const parts = extractDocumentParts(stripTargetBlank(column.html));
       return `<div class="${variantClass}" style="width:${column.width}px;flex:0 0 ${column.width}px;">${parts.styles}${parts.body}</div>`;
     }).join('');
     return `<!doctype html><html><head><meta charset="utf-8">${baseTag}<style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
@@ -41,7 +62,7 @@ function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
 
   // Single-page render — wrap in .pdf-column.pdf-column--single so the same
   // border and padding rules apply as for multi-column options.
-  const source = spec.html ?? '<div></div>';
+  const source = stripTargetBlank(spec.html ?? '<div></div>');
   const parts  = extractDocumentParts(source);
   const isMobile = (spec.width ?? DEFAULT_WIDTH) === 375;
   const singleVariant = isMobile ? 'pdf-column--mobile' : 'pdf-column--desktop';
@@ -123,15 +144,19 @@ function printStyles(width: number): string {
     }
 
     /* ── .pdf-column — the complete option wrapper with visible border ───────
-       outline rather than border so it does not affect layout/width.
-       overflow:hidden is the final guard against content painting into the
-       adjacent column; content must reflow first (see --mobile rules).
+       IMPORTANT: overflow must NOT be hidden here. Chromium's PDF renderer
+       clips link annotation rectangles to the nearest overflow:hidden ancestor,
+       causing all <a href> links (CTA buttons, "view in browser", etc.) to
+       lose their clickable annotations in the exported PDF.
+       Instead we use clip-path for visual containment — clip-path clips the
+       painted pixels but does NOT affect PDF annotation rectangles, so links
+       remain fully clickable in the PDF.
        No fixed height — height is determined by the complete email content.
     ── */
     .pdf-column {
       position: relative;
       flex-shrink: 0;
-      overflow: hidden;
+      overflow: visible;
       background: #ffffff;
       outline: 1px solid #e5e7eb;
       outline-offset: -1px;
@@ -150,13 +175,14 @@ function printStyles(width: number): string {
        Scoped to .pdf-column--mobile so desktop columns are never affected.
        Forces the outer 600px wrapper table to fit the 375px column.
        Inner tables (buttons, icons, cards) are NOT globally forced to 100%.
+       overflow: visible — see .pdf-column comment above; hidden clips PDF links.
     ── */
     .pdf-column--mobile {
       width: 375px !important;
       max-width: 375px !important;
       flex: 0 0 375px !important;
       min-width: 0;
-      overflow: hidden;
+      overflow: visible;
     }
     .pdf-column--mobile .email-container {
       width: 100% !important;
@@ -286,15 +312,8 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
   const isVercel = process.env.VERCEL === '1';
-  // Render sets RENDER=true in its environment
   const isRender = process.env.RENDER === 'true';
 
-  // ── Resolve executable path ────────────────────────────────────────────────
-  // Vercel  → chromium-min downloads the binary from CDN into /tmp at cold-start
-  // Render  → Playwright installed the browser during build; let it auto-locate
-  //           via PLAYWRIGHT_BROWSERS_PATH or the default cache location.
-  //           We pass executablePath=undefined so Playwright resolves it itself.
-  // Local   → same as Render (Playwright manages its own browser)
   const executablePath = isVercel
     ? await serverlessChromium.executablePath(CHROMIUM_REMOTE_EXEC_URL)
     : undefined;
@@ -302,9 +321,6 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
   console.log('[PDF] environment:', isVercel ? 'vercel' : isRender ? 'render' : 'local');
   console.log('[PDF] Chromium executable:', executablePath || 'Playwright-managed (auto-locate)');
 
-  // On Render the browser cache lives at /opt/render/.cache/ms-playwright.
-  // Setting PLAYWRIGHT_BROWSERS_PATH tells Playwright exactly where to look
-  // so it doesn't fall back to a path that doesn't exist.
   if (isRender && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
     process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
   }
@@ -313,68 +329,322 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
   try {
     browser = await playwrightChromium.launch({
       headless: true,
-      // On Render/local: no extra args needed — Playwright handles everything.
-      // On Vercel: must pass sparticuz args + explicit executablePath.
       ...(isVercel
-        ? {
-            args: serverlessChromium.args,
-            executablePath,
-          }
-        : {
-            // Render needs --no-sandbox because it runs in a container without
-            // kernel-level sandboxing support.
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-          }),
+        ? { args: serverlessChromium.args, executablePath }
+        : { args: ['--no-sandbox', '--disable-setuid-sandbox'] }),
     });
     console.log('[PDF] browser launched');
-    console.log('[PDF] connected:', browser.isConnected());
     browser.on('disconnected', () => console.error('[PDF] BROWSER DISCONNECTED'));
 
     if (isVercel) {
-      console.log('[PDF] before newPage', { connected: browser.isConnected() });
       const diagnosticPage = await browser.newPage();
-      console.log('[PDF] page created');
       await diagnosticPage.setContent('<html><body>Hello</body></html>');
       const testPdf = await diagnosticPage.pdf({ printBackground: true });
       console.log('[PDF] minimal PDF success', testPdf.length);
       await diagnosticPage.close();
     }
 
-    const merged = await PDFDocument.create();
+    // ── Strategy: render all pages in ONE browser tab ──────────────────────
+    // Each spec becomes a <section> with its own @page size rule.
+    // CSS page-break-after ensures each section starts on a new PDF page.
+    // Because there is no pdf-lib merging, link annotations survive intact.
+    //
+    // For each page we measure content height first (in a temporary tab),
+    // then embed the correct @page size in the combined document.
+    // ────────────────────────────────────────────────────────────────────────
+
+    // Step 1: measure each page's natural content height
+    const pageMeasurements: Array<{ width: number; height: number }> = [];
 
     for (const spec of pages) {
       const width = Math.max(spec.pageWidth ?? spec.width ?? DEFAULT_WIDTH, 1);
-      console.log('[PDF] before newPage', { connected: browser.isConnected(), width });
-      const page = await browser.newPage({ viewport: { width, height: 800 } });
-      console.log('[PDF] page created');
+      const measureTab = await browser.newPage({ viewport: { width, height: 800 } });
       try {
-        await page.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
-        await waitForAssets(page);
-        await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-        // Only run the mobile overflow check for single-column mobile pages.
-        // Multi-column (3-option) mobile uses the columns layout — skip it there.
+        await measureTab.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
+        await waitForAssets(measureTab);
+        await measureTab.evaluate(() => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ));
         if (spec.width === 375 && !spec.columns?.length) {
-          await assertMobileContentFits(page);
+          await assertMobileContentFits(measureTab);
         }
-        const contentHeight = spec.pageHeight ?? await measureContentHeight(page);
+        const contentHeight = spec.pageHeight ?? await measureContentHeight(measureTab);
         const height = Math.min(Math.max(contentHeight, 1), MAX_PAGE_HEIGHT);
-        const pdfBuffer = await page.pdf({
-          width: `${width}px`,
-          height: `${height}px`,
-          margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
-          printBackground: true,
-          preferCSSPageSize: false,
-          displayHeaderFooter: false,
-        });
-        const rendered = await PDFDocument.load(pdfBuffer);
-        const copiedPages = await merged.copyPages(rendered, rendered.getPageIndices());
-        copiedPages.forEach((copiedPage) => merged.addPage(copiedPage));
+        pageMeasurements.push({ width, height });
       } finally {
-        await page.close();
+        await measureTab.close();
       }
     }
 
-    return Buffer.from(await merged.save());
+    // Step 2: render each section at its own measured page size, then merge.
+    // ── How link annotations work in Playwright PDFs ──────────────────────
+    // Playwright's page.pdf() generates a PDF via Chromium's print pipeline.
+    // Chromium DOES embed link annotations for <a href> elements — but only
+    // when the links are reachable (not clipped by overflow:hidden, not
+    // behind a pointer-events:none layer, and not stripped by CSS).
+    //
+    // A single Chromium print operation forces every page to use one page size.
+    // Printing each section separately avoids blank space on shorter pages.
+    //
+    // VSB PDF pages are typically:
+    //   Page 1: Variable Copy  (600px wide)
+    //   Page 2: Desktop View   (1896px wide for 3-option, 600px for single)
+    //   Page 3: Mobile View    (1205px wide for 3-option, 375px for single)
+    //   Page 4: Alt-text       (600px wide)
+    //
+    // Each section gets a PDF page whose dimensions match its own content.
+
+    const pageSections = pages.map((spec, i) => {
+      const { width, height } = pageMeasurements[i];
+      const html = buildPageHtml(spec, baseUrl);
+
+      const bodyContent = (html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1] ?? html);
+
+      // ── Hoist per-page <style> blocks out of the body div ──────────────────
+      // In the combined document, <style> tags injected inside <div> elements
+      // are invalid HTML. Chromium may process them, but the display:none rules
+      // they contain (for .desk-show-table, .mbl-show-table etc.) bleed across
+      // pages in unpredictable ways — hiding elements that contain links and
+      // thus preventing Chromium from generating PDF link annotations for them.
+      //
+      // Instead we extract the <style> blocks from the bodyContent and collect
+      // them separately to be hoisted into the combined <head>.
+      const rawHead = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? '';
+      // Strip @page rules (we have a single combined @page rule in the outer head)
+      const cleanedPageStyles = rawHead.replace(/@page[^{]*\{[^}]*\}/gi, '');
+
+      return { cleanedPageStyles, width, height, bodyContent };
+    });
+
+    const mergedPdf = await PDFDocument.create();
+
+    for (const section of pageSections) {
+      const { width, height, bodyContent, cleanedPageStyles } = section;
+      const styleTexts: string[] = [];
+      const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      let match: RegExpExecArray | null;
+      while ((match = styleRegex.exec(cleanedPageStyles)) !== null) {
+        styleTexts.push(match[1]);
+      }
+      const pageHtml = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  ${baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : ''}
+  <style>
+    @page { margin: 0; size: ${width}px ${height}px; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: ${width}px;
+      height: ${height}px;
+      background: #fff;
+    }
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    /*
+     * LINK ANNOTATION RULES
+     * ─────────────────────────────────────────────────────────────────────────
+     * 1. overflow must NOT be hidden on any ancestor — Chromium clips link
+     *    annotation rectangles to the nearest overflow:hidden ancestor.
+     * 2. target="_blank" is stripped from all <a> tags by stripTargetBlank()
+     *    because Chromium's headless PDF pipeline suppresses annotations on
+     *    target="_blank" anchors (treats them as "new tab" with no PDF analog).
+     * 3. Ensure links are always on top via z-index so no sibling element
+     *    can paint over the annotation rectangle.
+     */
+    a {
+      cursor: pointer !important;
+      pointer-events: auto !important;
+    }
+    a[href] {
+      position: relative;
+      z-index: 10;
+    }
+    /* Image-only anchor overlay — injected by the DOM pass below.
+       Must be absolute within a relative anchor, cover the full image,
+       and use a font-size that fills the bounding box so Chromium generates
+       a correctly-sized annotation rectangle. */
+    .pdf-link-overlay {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      background: transparent !important;
+      color: transparent !important;
+      pointer-events: none !important;
+      z-index: 11 !important;
+    }
+    /*
+     * DISPLAY RESET FOR PDF
+     * ─────────────────────────────────────────────────────────────────────────
+     * The email CSS contains @media rules that toggle .desk-show-table /
+     * .mbl-show-table / .deskDisp / .mbDisp etc. When the combined document
+     * is wider than the media query breakpoint these rules don't fire, but
+     * the base display:none rules DO fire, hiding whole sections (and their
+     * links). Force all such visibility-toggle classes to visible so every
+     * element that contains a link is visible to Chromium's PDF renderer.
+     * This only affects the PDF output — the email HTML itself is not changed.
+     */
+    .desk-show-table,
+    .mbl-show-table  { display: table  !important; }
+    .desk-show-tr,
+    .mbl-show-tr     { display: table-row  !important; }
+    .desk-show-cell,
+    .mbl-show-cell   { display: table-cell !important; }
+    .deskDisp        { display: table  !important; }
+    .mbDisp          { display: table  !important; }
+    .desktop         { display: inline-block !important; }
+    .mobile          { display: inline-block !important; }
+  </style>
+  ${styleTexts.length ? `<style>${styleTexts.join('\n')}</style>` : ''}
+</head>
+<body>
+${bodyContent}
+</body>
+</html>`;
+
+      const page = await browser.newPage({ viewport: { width, height } });
+      let pagePdf!: Buffer;
+
+    try {
+      await page.setContent(pageHtml, { waitUntil: 'load' });
+      await waitForAssets(page);
+      await page.evaluate(() => new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      ));
+
+      // ── Final DOM pass: make every <a href> visible and annotation-ready ──
+      // Chromium's headless PDF renderer generates link annotations based on
+      // the text runs inside an <a>. An <a> that wraps ONLY an <img> (no text)
+      // gets NO annotation rectangle because there is no text to annotate.
+      //
+      // Fix for image-only anchors (CTA images, header logos, image-with-link):
+      //   1. Inject a zero-width space as a text node so Chromium has a text
+      //      run to attach the annotation to.
+      //   2. Overlay an absolutely-positioned transparent <span> that covers
+      //      the full anchor bounding box — this gives Chromium a large enough
+      //      text run to generate a correctly-sized annotation rectangle.
+      //   3. Set anchor display:block + match width/height of the image.
+      //
+      // For text anchors (view-in-browser, ISI links): ensure visibility and
+      // remove any stray target="_blank".
+      await page.evaluate(() => {
+        const allAnchors = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href]'));
+        allAnchors.forEach((anchor) => {
+          // ── 1. Remove target="_blank" at DOM level (safety net) ───────────
+          if (anchor.getAttribute('target') === '_blank') {
+            anchor.removeAttribute('target');
+          }
+
+          // ── 2. Un-hide entire ancestor chain ─────────────────────────────
+          let el: HTMLElement | null = anchor.parentElement;
+          while (el && el !== document.body) {
+            const cs = window.getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.01) {
+              el.style.setProperty('display',    'block',   'important');
+              el.style.setProperty('visibility', 'visible', 'important');
+              el.style.setProperty('opacity',    '1',       'important');
+            }
+            el = el.parentElement;
+          }
+
+          // ── 3. Detect image-only anchors ──────────────────────────────────
+          // An anchor is "image-only" if it has no direct text node content
+          // (only whitespace) and contains at least one <img>.
+          const hasDirectText = Array.from(anchor.childNodes).some(
+            (node) => node.nodeType === Node.TEXT_NODE && (node.textContent || '').trim().length > 0
+          );
+          const containsImg = anchor.querySelector('img') !== null;
+          const isImageOnlyAnchor = !hasDirectText && containsImg;
+
+          if (isImageOnlyAnchor) {
+            // Get the image's rendered dimensions for the overlay
+            const img = anchor.querySelector<HTMLImageElement>('img');
+            const rect = anchor.getBoundingClientRect();
+            const w = rect.width  || (img ? img.offsetWidth  : 0);
+            const h = rect.height || (img ? img.offsetHeight : 0);
+
+            // Make anchor block-level covering the image
+            anchor.style.setProperty('display',        'block',   'important');
+            anchor.style.setProperty('position',       'relative','important');
+            anchor.style.setProperty('width',          w ? `${w}px` : '100%', 'important');
+            anchor.style.setProperty('height',         h ? `${h}px` : 'auto', 'important');
+            anchor.style.setProperty('visibility',     'visible', 'important');
+            anchor.style.setProperty('opacity',        '1',       'important');
+            anchor.style.setProperty('pointer-events', 'auto',    'important');
+            anchor.style.setProperty('z-index',        '10',      'important');
+
+            // Inject a transparent overlay span that covers the full anchor
+            // area. Chromium uses text-run bounding boxes to size annotations,
+            // so this span gives it a large enough bounding box.
+            if (!anchor.querySelector('.pdf-link-overlay')) {
+              const overlay = document.createElement('span');
+              overlay.className = 'pdf-link-overlay';
+              overlay.setAttribute('aria-hidden', 'true');
+              overlay.style.cssText = [
+                'position:absolute',
+                'top:0',
+                'left:0',
+                `width:${w ? w + 'px' : '100%'}`,
+                `height:${h ? h + 'px' : '100%'}`,
+                'display:block',
+                'background:transparent',
+                // A single space character — invisible but gives Chromium a
+                // text run with the correct bounding box for the annotation
+                'font-size:' + (h ? Math.max(h, 1) + 'px' : '1px'),
+                'line-height:' + (h ? Math.max(h, 1) + 'px' : '1px'),
+                'color:transparent',
+                'overflow:hidden',
+                'pointer-events:none',
+                'z-index:11',
+              ].join(';');
+              overlay.textContent = '\u00A0'; // non-breaking space
+              anchor.appendChild(overlay);
+            }
+          } else {
+            // Text anchor — just ensure visibility
+            anchor.style.setProperty('display',        'inline',  'important');
+            anchor.style.setProperty('visibility',     'visible', 'important');
+            anchor.style.setProperty('opacity',        '1',       'important');
+            anchor.style.setProperty('pointer-events', 'auto',    'important');
+            anchor.style.setProperty('position',       'relative','important');
+            anchor.style.setProperty('z-index',        '10',      'important');
+          }
+        });
+
+        // Extra wait for layout recalc after DOM mutations
+        return new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+      });
+
+      // Use preferCSSPageSize: true so Playwright honours the named @page
+      // size rules we defined per section.
+      // tagged: true tells Chromium to include link annotations in the output.
+      pagePdf = Buffer.from(await page.pdf({
+        printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
+        tagged: true,
+      }));
+    } finally {
+      await page.close();
+    }
+
+      // pdf-lib's page copier carries each page's link annotation dictionaries
+      // into the final document along with the page contents.
+      const sourcePdf = await PDFDocument.load(pagePdf);
+      const [copiedPage] = await mergedPdf.copyPages(sourcePdf, [0]);
+      mergedPdf.addPage(copiedPage);
+    }
+
+    return Buffer.from(await mergedPdf.save());
   } finally {
     if (browser?.isConnected()) {
       await browser.close().catch(() => undefined);

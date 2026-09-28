@@ -70,6 +70,8 @@ interface EmailBuilderState {
   previewMode: boolean
   customComponents: EmailComponent[]
   templateImages: string[]
+  /** Named images: url → human-readable label (e.g. "CTA Button", "Logo A") */
+  namedTemplateImages: Record<string, string>
 
   // Change tracking - separate component changes from template saving
   hasComponentChanges: boolean // Changes to components (add/edit/delete/move)
@@ -136,7 +138,7 @@ interface EmailBuilderState {
   setTemplateImages: (images: string[]) => void
   loadTemplateImages: (templateId: string) => Promise<void>
   loadTemplate: (templateId: string) => Promise<void>
-  addTemplateImage: (imageUrl: string) => void
+  addTemplateImage: (imageUrl: string, label?: string) => void
   removeTemplateImage: (imageUrl: string) => void
 
   // State management
@@ -192,6 +194,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         saving: false,
         preheaderText: "",
         templateImages: [],
+        namedTemplateImages: {},
 
         // Template actions
         setCurrentTemplate: (template) => {
@@ -687,7 +690,10 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         loadTemplateImages: async (templateId) => {
           if (!templateId) return
           const images = await firebaseService.getTemplateImages(templateId)
-          set({ templateImages: images })
+          // Merge storage images with any already registered (don't overwrite named labels)
+          const { templateImages } = get()
+          const merged = [...new Set([...templateImages, ...images])]
+          set({ templateImages: merged })
         },
 
         loadTemplate: async (templateId: string) => {
@@ -708,10 +714,37 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
                 option3Components: template.option3Components || [],
                 originalOption2Components: template.option2Components || [],
                 originalOption3Components: template.option3Components || [],
-                preheaderText: template.preheaderText || ''
+                preheaderText: template.preheaderText || '',
+                // Reset image galleries so stale data from a previous template
+                // doesn't bleed into this one
+                templateImages: [],
+                namedTemplateImages: {},
               })
               if ((template.optionMode || "single") === "three") {
                 get().ensureThreeOptions()
+              }
+
+              // ── Scan every component for image URLs and labels ────────────
+              // Done here (after set) so components are guaranteed in the store.
+              // This populates both templateImages and namedTemplateImages with
+              // CTA images, Menarini/Stemline logos, footer logos, etc.
+              const allComps = [
+                ...(template.components || []),
+                ...(template.option2Components || []),
+                ...(template.option3Components || []),
+              ]
+              allComps.forEach((c) => get().collectImagesFromComponent(c))
+
+              // ── Also load any images uploaded directly to Firebase Storage ─
+              // (uploaded via the image-upload panel — not embedded in components)
+              try {
+                const storageImages = await firebaseService.getTemplateImages(templateId)
+                if (storageImages.length > 0) {
+                  const { templateImages } = get()
+                  set({ templateImages: [...new Set([...templateImages, ...storageImages])] })
+                }
+              } catch {
+                // Non-critical — gallery still works with component-scanned images
               }
             }
           } finally {
@@ -719,11 +752,16 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           }
         },
 
-        addTemplateImage: (imageUrl) => {
-          const { templateImages } = get()
-          if (!templateImages.includes(imageUrl)) {
-            set({ templateImages: [...templateImages, imageUrl] })
-          }
+        addTemplateImage: (imageUrl, label?) => {
+          const { templateImages, namedTemplateImages } = get()
+          const nextImages = templateImages.includes(imageUrl)
+            ? templateImages
+            : [...templateImages, imageUrl]
+          // Always update the label if one is provided, even if URL already exists
+          const nextNamed = label
+            ? { ...namedTemplateImages, [imageUrl]: label }
+            : namedTemplateImages
+          set({ templateImages: nextImages, namedTemplateImages: nextNamed })
         },
 
         removeTemplateImage: (imageUrl) => {
@@ -892,28 +930,56 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           const urls: string[] = []
           const traverse = (comp: any) => {
             if (!comp) return
-            // Common image fields
-            const imageFields = [
-              "src",
-              "imageSrc",
-              "logoA?.imgSrc",
-              "logoB?.imgSrc",
-              "logo?.logoSrc",
-              "tryvioFooterLogoSrc",
-              "tryvioFooterLinkedinSrc",
-              "tryvioFooterIdorsiaLogoSrc",
-              "emeraldLeftIconSrc",
-            ]
-            // Simple direct field checks
-            if (comp.src && typeof comp.src === "string") urls.push(comp.src)
-            if (comp.imageSrc && typeof comp.imageSrc === "string") urls.push(comp.imageSrc)
-            if (comp.logoA?.imgSrc && typeof comp.logoA.imgSrc === "string") urls.push(comp.logoA.imgSrc)
-            if (comp.logoB?.imgSrc && typeof comp.logoB.imgSrc === "string") urls.push(comp.logoB.imgSrc)
-            if (comp.logo?.logoSrc && typeof comp.logo.logoSrc === "string") urls.push(comp.logo.logoSrc)
-            if (comp.tryvioFooterLogoSrc && typeof comp.tryvioFooterLogoSrc === "string") urls.push(comp.tryvioFooterLogoSrc)
-            if (comp.tryvioFooterLinkedinSrc && typeof comp.tryvioFooterLinkedinSrc === "string") urls.push(comp.tryvioFooterLinkedinSrc)
-            if (comp.tryvioFooterIdorsiaLogoSrc && typeof comp.tryvioFooterIdorsiaLogoSrc === "string") urls.push(comp.tryvioFooterIdorsiaLogoSrc)
-            if (comp.emeraldLeftIconSrc && typeof comp.emeraldLeftIconSrc === "string") urls.push(comp.emeraldLeftIconSrc)
+
+            const push = (url: string, label?: string) => {
+              if (!url || typeof url !== "string" || url.startsWith("/")) return
+              urls.push(url)
+              get().addTemplateImage(url, label)
+            }
+
+            // ── Generic image fields ──────────────────────────────────────
+            // src — image, header-image, chevron-divider, image-with-link,
+            //       orsedu-footer (Menarini+Stemline combined logo image)
+            if (comp.src) {
+              const label = comp.type === "orsedu-footer"
+                ? "Menarini & Stemline Logo"
+                : comp.type === "elzonris-divider"
+                  ? undefined   // decorative divider — no alt needed
+                  : undefined
+              push(comp.src, label)
+            }
+
+            // imageSrc — cta-button
+            if (comp.imageSrc) push(comp.imageSrc,
+              comp.type === "cta-button" ? "Secondary CTA Button" : undefined)
+
+            // ── Brand logo (elzonris-brand-logo) ─────────────────────────
+            if (comp.logoA?.imgSrc) push(comp.logoA.imgSrc, "Menarini Logo")
+            if (comp.logoB?.imgSrc) push(comp.logoB.imgSrc, "Stemline Logo")
+
+            // ── ferring-footer: main logo ─────────────────────────────────
+            if (comp.logo?.logoSrc) push(comp.logo.logoSrc, "Footer Logo")
+
+            // ── ferring-footer: social media icon array ───────────────────
+            if (Array.isArray(comp.socialMediaLinks)) {
+              comp.socialMediaLinks.forEach((link: any) => {
+                if (link?.iconSrc) push(link.iconSrc, link.altText || "Social Icon")
+              })
+            }
+
+            // ── tryvio-footer ─────────────────────────────────────────────
+            if (comp.tryvioFooterLogoSrc)        push(comp.tryvioFooterLogoSrc,        "Footer Logo")
+            if (comp.tryvioFooterLinkedinSrc)     push(comp.tryvioFooterLinkedinSrc,    "LinkedIn Icon")
+            if (comp.tryvioFooterIdorsiaLogoSrc)  push(comp.tryvioFooterIdorsiaLogoSrc, "Idorsia Logo")
+
+            // ── orserdu-emerald-stats ─────────────────────────────────────
+            if (comp.emeraldLeftIconSrc) push(comp.emeraldLeftIconSrc, "Stat Icon")
+
+            // ── image-text-block (orserdu / elzonris) ─────────────────────
+            if (comp.imageTextImageSrc) push(comp.imageTextImageSrc, "Image Text Block")
+
+            // ── footer-tokens user photo (token, not a real URL — skip) ──
+
             // Recurse children
             if (Array.isArray(comp.children)) {
               comp.children.forEach(traverse)

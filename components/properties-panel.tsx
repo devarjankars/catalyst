@@ -100,6 +100,69 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
+// ── CtaWidthInput ──────────────────────────────────────────────────────────
+// Commit-on-blur so the CTA image doesn't glitch on every keystroke.
+// Accepts px values ("470", "470px") or percentages ("100%").
+function CtaWidthInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+  const commit = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    // plain number → keep as-is (table width attribute doesn't need px)
+    onChange(t);
+  };
+  return (
+    <Input
+      value={local}
+      className="font-mono text-xs"
+      placeholder="470 or 100%"
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={(e) => commit(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(local); } }}
+    />
+  );
+}
+
+// ── DeferredInput ──────────────────────────────────────────────────────────
+// Like CtaWidthInput but generic — commits only on blur or Enter.
+// While the user is typing the local value doesn't propagate, so clearing
+// the field mid-edit no longer causes the canvas to glitch back to the
+// fallback value on every keystroke.
+function DeferredInput({
+  id,
+  value,
+  fallback,
+  placeholder,
+  onCommit,
+}: {
+  id?: string;
+  value: string;
+  fallback: string;
+  placeholder?: string;
+  onCommit: (v: string) => void;
+}) {
+  const [local, setLocal] = useState(value);
+  // Keep in sync when the store value changes from outside (e.g. undo/redo)
+  useEffect(() => { setLocal(value); }, [value]);
+  const commit = (raw: string) => {
+    const trimmed = raw.trim();
+    // Commit whatever the user typed; fall back only when truly empty
+    onCommit(trimmed || fallback);
+  };
+  return (
+    <Input
+      id={id}
+      className="font-mono text-xs"
+      placeholder={placeholder}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={(e) => commit(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(local); (e.target as HTMLInputElement).blur(); } }}
+    />
+  );
+}
+
 function LineHeightInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const commonValues = ["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"];
   const [customValue, setCustomValue] = useState(value || "14px");
@@ -963,6 +1026,26 @@ export function PropertiesPanel({
                 }
               />
             </div>
+            <div>
+              <Label htmlFor="fontFamily">Font Family</Label>
+              <Select
+                value={component.fontFamily || "Arial, Helvetica, sans-serif"}
+                onValueChange={(v) => onUpdateComponent({ fontFamily: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Arial, Helvetica, sans-serif">Arial</SelectItem>
+                  <SelectItem value="'Times New Roman', Times, serif">Times New Roman</SelectItem>
+                  <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                  <SelectItem value="Verdana, Geneva, sans-serif">Verdana</SelectItem>
+                  <SelectItem value="Trebuchet MS, sans-serif">Trebuchet MS</SelectItem>
+                  <SelectItem value="'Courier New', Courier, monospace">Courier New</SelectItem>
+                  <SelectItem value="Tahoma, Geneva, sans-serif">Tahoma</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="pt-2">
               <Button
                 variant="outline"
@@ -1050,29 +1133,50 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="width">Width</Label>
-              <Input
+              <DeferredInput
                 id="width"
                 value={component.width ?? ""}
-                onChange={(e) => onUpdateComponent({ width: e.target.value || "100%" })}
+                fallback="100%"
                 placeholder="100% or 400px"
+                onCommit={(v) => onUpdateComponent({ width: v })}
               />
             </div>
             <div>
               <Label htmlFor="height">Height</Label>
-              <Input
+              <DeferredInput
                 id="height"
                 value={component.height ?? ""}
-                onChange={(e) => onUpdateComponent({ height: e.target.value || "auto" })}
+                fallback="auto"
                 placeholder="auto or 200px"
+                onCommit={(v) => onUpdateComponent({ height: v })}
               />
             </div>
             <div>
               <Label htmlFor="maxWidth">Max Width</Label>
-              <Input
+              <DeferredInput
                 id="maxWidth"
                 value={component.maxWidth ?? ""}
-                onChange={(e) => onUpdateComponent({ maxWidth: e.target.value || "100%" })}
+                fallback="100%"
                 placeholder="100%"
+                onCommit={(v) => onUpdateComponent({ maxWidth: v })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="imgHref">Link URL (optional)</Label>
+              <Input
+                id="imgHref"
+                value={component.href || ""}
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="imgLinkTitle">Link Title (tooltip)</Label>
+              <Input
+                id="imgLinkTitle"
+                value={component.linkTitle || ""}
+                onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
+                placeholder="Optional tooltip text"
               />
             </div>
           </div>
@@ -1190,12 +1294,10 @@ export function PropertiesPanel({
               />
             </div>
             <div>
-              <Label htmlFor="width">Width</Label>
-              <Input
-                id="width"
-                value={component.width || "100%"}
-                onChange={(e) => onUpdateComponent({ width: e.target.value })}
-                placeholder="100% or 400px"
+              <Label htmlFor="ctaWidth">Width (px or %)</Label>
+              <CtaWidthInput
+                value={component.width || "470"}
+                onChange={(v) => onUpdateComponent({ width: v })}
               />
             </div>
             </div>
@@ -1601,62 +1703,106 @@ export function PropertiesPanel({
       case "bullet-list":
         return (
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="bulletColor">Disc Color</Label>
-              <ColorInput value={component.markerColor || "#000000"} onChange={(v) => onUpdateComponent({ markerColor: v })} />
-            </div>
-            <div>
-              <Label htmlFor="discSize">Disc Size</Label>
-              <Input
-                id="discSize"
-                value={component.discSize || "16px"}
-                onChange={(e) =>
-                  onUpdateComponent({ discSize: e.target.value })
-                }
-                placeholder="16px"
-              />
-            </div>
-            <div>
-              <Label htmlFor="spaceBetweenItems">Space Between Items</Label>
-              <Input
-                id="spaceBetweenItems"
-                value={component.spaceBetweenItems || "8px"}
-                onChange={(e) =>
-                  onUpdateComponent({ spaceBetweenItems: e.target.value })
-                }
-                placeholder="8px"
-              />
-            </div>
+
+            {/* ── Typography ── */}
             <div>
               <Label htmlFor="text-color">Text Color</Label>
               <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "16px"}
-                onChange={(e) =>
-                  onUpdateComponent({ fontSize: e.target.value })
-                }
-                placeholder="16px"
-              />
+              <Label>Font Size</Label>
+              <FontSizeInput value={component.fontSize || "12px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
             </div>
             <div>
-              <Label htmlFor="backgroundColor">Background color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+              <Label htmlFor="fontFamily">Font Family</Label>
+              <Select
+                value={component.fontFamily || "Arial, sans-serif"}
+                onValueChange={(v) => onUpdateComponent({ fontFamily: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Arial, Helvetica, sans-serif">Arial</SelectItem>
+                  <SelectItem value="'Times New Roman', Times, serif">Times New Roman</SelectItem>
+                  <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                  <SelectItem value="Verdana, Geneva, sans-serif">Verdana</SelectItem>
+                  <SelectItem value="Trebuchet MS, sans-serif">Trebuchet MS</SelectItem>
+                  <SelectItem value="'Courier New', Courier, monospace">Courier New</SelectItem>
+                  <SelectItem value="Tahoma, Geneva, sans-serif">Tahoma</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="lineHeight">Line Height</Label>
               <Input
                 id="lineHeight"
-                type="text"
-                value={component.lineHeight || "18px"}
-                onChange={(e) =>
-                  onUpdateComponent({ lineHeight: e.target.value })
-                }
+                type="number"
+                min={0}
+                value={(component.lineHeight || "18px").replace(/px$/i, "")}
+                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value ? `${e.target.value}px` : "18px" })}
+                placeholder="18"
               />
             </div>
+
+            {/* ── Marker ── */}
+            <div className="border-t pt-3">
+              <Label>Marker Type</Label>
+              <Select
+                value={(component as any).markerType || "bullet"}
+                onValueChange={(v) => onUpdateComponent({ markerType: v } as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bullet">• Bullet</SelectItem>
+                  <SelectItem value="dash">– Dash</SelectItem>
+                  <SelectItem value="arrow">→ Arrow</SelectItem>
+                  <SelectItem value="check">✓ Check</SelectItem>
+                  <SelectItem value="square">▪ Square</SelectItem>
+                  <SelectItem value="number">1. Numbers</SelectItem>
+                  <SelectItem value="roman">i. Roman</SelectItem>
+                  <SelectItem value="alpha">a. Alpha</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="bulletColor">Marker Color</Label>
+              <ColorInput value={component.markerColor || "#000000"} onChange={(v) => onUpdateComponent({ markerColor: v })} />
+            </div>
+            <div>
+              <Label htmlFor="discSize">Marker Size</Label>
+              <FontSizeInput value={component.discSize || "16px"} onChange={(v) => onUpdateComponent({ discSize: v })} />
+            </div>
+            <div>
+              <Label htmlFor="spaceBetweenItems">Space Between Items (px)</Label>
+              <Input
+                id="spaceBetweenItems"
+                type="number"
+                min={0}
+                value={(component.spaceBetweenItems || "5px").replace(/px$/i, "")}
+                onChange={(e) => onUpdateComponent({ spaceBetweenItems: e.target.value ? `${e.target.value}px` : "5px" })}
+                placeholder="5"
+              />
+            </div>
+
+            {/* ── Background ── */}
+            <div className="border-t pt-3">
+              <Label htmlFor="backgroundColor">Background Color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+            </div>
+
+            {/* ── Margin — 4-field ── */}
+            <div className="border-t pt-3">
+              <Label className="mb-1.5 block">Margin</Label>
+              <PaddingInput
+                value={(component as any).margin || "0px 0px 0px 0px"}
+                onChange={(margin) => onUpdateComponent({ margin } as any)}
+              />
+              <p className="text-xs text-gray-400 mt-1">Space outside the bullet list (top right bottom left).</p>
+            </div>
+
           </div>
         )
       case "header-image":
@@ -1679,6 +1825,24 @@ export function PropertiesPanel({
                 value={component.imageAlt || ""}
                 onChange={(e) => onUpdateComponent({ imageAlt: e.target.value })}
                 placeholder="Image alt text"
+              />
+            </div>
+            <div>
+              <Label htmlFor="headerHref">Link URL (optional)</Label>
+              <Input
+                id="headerHref"
+                value={component.href || ""}
+                onChange={(e) => onUpdateComponent({ href: e.target.value })}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="headerLinkTitle">Link Title (tooltip)</Label>
+              <Input
+                id="headerLinkTitle"
+                value={component.linkTitle || ""}
+                onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
+                placeholder="Optional tooltip text"
               />
             </div>
 
@@ -1965,6 +2129,7 @@ export function PropertiesPanel({
             </div>
             </div>);
             
+      case "orserdu-view-in-browser":
       case "elzonris-view-in-browser":
         return (
           <div className="space-y-4">

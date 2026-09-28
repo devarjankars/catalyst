@@ -84,10 +84,17 @@ export function EmailComponentRenderer({
   // --- Image drag-and-drop state (declared at component level to satisfy Rules of Hooks) ---
   const [imgDragOver, setImgDragOver] = useState(false);
   const [imgUploading, setImgUploading] = useState(false);
+  // --- CTA button image drag-and-drop state ---
+  const [ctaDragOver, setCtaDragOver] = useState(false);
+  const [ctaUploading, setCtaUploading] = useState(false);
   // --- Emerald icon upload state ---
   const [emeraldIconDragOver, setEmeraldIconDragOver] = useState(false);
   const [emeraldIconUploading, setEmeraldIconUploading] = useState(false);
   const { currentTemplate, addTemplateImage } = useEmailBuilderStore();
+
+  // Returns true only when the drag payload contains real files (not react-dnd component drags)
+  const isFileDrag = (e: React.DragEvent) =>
+    Array.from(e.dataTransfer?.types || []).includes("Files");
 
   const handleImageFileDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     const file = e.dataTransfer.files?.[0];
@@ -107,6 +114,28 @@ export function EmailComponentRenderer({
       toast.error("Upload failed. Please try again.");
     } finally {
       setImgUploading(false);
+    }
+  }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
+
+  // CTA button — uploads to imageSrc (not src)
+  const handleCtaFileDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setCtaDragOver(false);
+    if (previewMode || isLockedMode) return;
+    setCtaUploading(true);
+    try {
+      const url = await firebaseService.uploadImage(file, currentTemplate?.id);
+      if (url === "PATH_NOT_FOUND") { toast.warning("Please save the email first!"); return; }
+      onUpdate({ imageSrc: url });
+      addTemplateImage(url);
+      toast.success("CTA image updated");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setCtaUploading(false);
     }
   }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
 
@@ -371,6 +400,7 @@ export function EmailComponentRenderer({
                 fontWeight: component.fontWeight || "normal",
                 backgroundColor: component.backgroundColor || "transparent",
                 lineHeight: component.lineHeight || "18px",
+                fontFamily: component.fontFamily || "Arial, Helvetica, sans-serif",
               }}
             />
           </div>
@@ -379,9 +409,12 @@ export function EmailComponentRenderer({
       case "image": {
         return (
           <div
-            style={baseStyle}
+            style={{
+              ...baseStyle,
+              padding: component.padding || "0 20px 0 20px",
+            }}
             className={`flex flex-col items-${ImageAlimentMap[component?.textAlign || "center"] || "center"} mt-2 relative`}
-            onDragOver={(e) => { e.preventDefault(); if (!previewMode && !isLockedMode && Array.from(e.dataTransfer?.types || []).includes("Files")) setImgDragOver(true); }}
+            onDragOver={(e) => { if (!isFileDrag(e)) return; e.preventDefault(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
             onDragLeave={(e) => { setImgDragOver(false); }}
             onDrop={handleImageFileDrop}
           >
@@ -485,46 +518,59 @@ export function EmailComponentRenderer({
           ></div>
         );
 
-      case "cta-button":
+      case "cta-button": {
+        // Normalise width for CSS: "470" → "470px", "100%" → "100%", "470px" → "470px"
+        const ctaRawWidth = component.width || "100%";
+        const ctaCssWidth = ctaRawWidth.endsWith("%")
+          ? ctaRawWidth
+          : ctaRawWidth.replace(/px$/i, "") + "px";
+
         return (
           <div
             style={baseStyle}
-            className="flex align-center justify-center mt-2"
+            className="flex items-center justify-center mt-2"
           >
-            <a
-              href={component.href || "#"}
-              title={component.linkTitle || undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-block",
-                color: component.color || "#ffffff",
-                padding: component.buttonPadding || "12px 24px",
-                borderRadius: component.borderRadius || "4px",
-                textDecoration: "none",
-                fontWeight: "bold",
-              }}
-              onClick={(e) => {
-                if (!previewMode) {
-                  e.preventDefault();
-                  if (!isLockedMode) onSelect();
-                }
-              }}
+            {/* Constrain to the declared width so the canvas reflects changes */}
+            <div
+              className="relative"
+              onDragOver={(e) => { if (!isFileDrag(e)) return; e.preventDefault(); if (!previewMode && !isLockedMode) setCtaDragOver(true); }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setCtaDragOver(false); }}
+              onDrop={handleCtaFileDrop}
+              onClick={(e) => { e.stopPropagation(); if (!previewMode && !isLockedMode) onSelect(); }}
+              style={{ cursor: previewMode ? "default" : "pointer", width: ctaCssWidth, maxWidth: "100%" }}
             >
               <img
                 src={component.imageSrc || "/cta-placeholder.png"}
                 alt={component.imageAlt || "CTA Image"}
                 style={{
-                  width: component.width || "100%",
-                  height: component.height || "15%",
+                  width: "100%",
+                  height: component.height || "auto",
                   display: "block",
-                  maxWidth: "100%",
-                  margin: "0 auto",
+                  opacity: ctaUploading ? 0.4 : 1,
+                  transition: "opacity 0.2s",
                 }}
               />
-            </a>
+
+              {/* Drop overlay */}
+              {ctaDragOver && !ctaUploading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-50/80 border-2 border-dashed border-blue-400 rounded pointer-events-none z-10">
+                  <svg className="w-8 h-8 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs font-medium text-blue-500">Drop to replace CTA image</span>
+                </div>
+              )}
+
+              {/* Upload spinner */}
+              {ctaUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded z-10">
+                  <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
         );
+      }
       case "footer-links":
         return (
           <div style={baseStyle} className="flex flex-col gap-2 mt-2">
@@ -605,6 +651,7 @@ export function EmailComponentRenderer({
           </div>
         )  
 
+      case "orserdu-view-in-browser":
       case "elzonris-view-in-browser":
         return (
           <div style={{
@@ -951,7 +998,7 @@ export function EmailComponentRenderer({
         return (
           <div
             className="mt-2 z-50 flex justify-center relative"
-            onDragOver={(e) => { e.preventDefault(); if (!previewMode && !isLockedMode && Array.from(e.dataTransfer?.types || []).includes("Files")) setImgDragOver(true); }}
+            onDragOver={(e) => { if (!isFileDrag(e)) return; e.preventDefault(); if (!previewMode && !isLockedMode) setImgDragOver(true); }}
             onDragLeave={(e) => { setImgDragOver(false); }}
             onDrop={handleImageFileDrop}
           >

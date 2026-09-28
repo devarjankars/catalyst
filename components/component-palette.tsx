@@ -63,27 +63,36 @@ function DraggableComponent({
     end: (item, monitor) => {
       const dropResult = monitor.getDropResult() as { dropZone: string; dropIndex?: number; handled?: boolean } | null
 
-      // Only handle if the canvas didn't already handle it
-      if (dropResult && !dropResult.handled) {
-        // Generate unique IDs for children if they exist
-        const componentData = {
-          id: "",
-          type: componentType.type,
-          ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
-        } as unknown as EmailComponent
-        // Always regenerate the top-level id so dropped instances never collide
-        componentData.id = ""
+      // The canvas drop() handler inserts the component and returns handled:true.
+      // If handled is true, or there is no result at all, do nothing — the canvas
+      // already took care of it (or the drag was cancelled).
+      // Only proceed when there IS a result but it wasn't handled (e.g. a custom
+      // drop target that doesn't know about our component system).
+      if (!dropResult || dropResult.handled) return
 
-        // Generate unique IDs for nested components
-        if (componentData.children) {
-          componentData.children = componentData.children.map((child: any) => ({
-            ...child,
-            id: `${child.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          }))
-        }
+      // If we reach here we have a result without handled:true but also without
+      // a dropIndex — that means the section-drop-zone fired without a computed
+      // index. Don't append to the bottom; bail out.
+      if (dropResult.dropIndex === undefined) return
 
-        onAddComponent(componentData, dropResult.dropIndex)
+      // Generate unique IDs for children if they exist
+      const componentData = {
+        id: "",
+        type: componentType.type,
+        ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
+      } as unknown as EmailComponent
+      // Always regenerate the top-level id so dropped instances never collide
+      componentData.id = ""
+
+      // Generate unique IDs for nested components
+      if (componentData.children) {
+        componentData.children = componentData.children.map((child: any) => ({
+          ...child,
+          id: `${child.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        }))
       }
+
+      onAddComponent(componentData, dropResult.dropIndex)
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),

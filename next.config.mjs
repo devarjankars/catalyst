@@ -12,17 +12,23 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // ── Externalize heavy native packages so they are NOT bundled ──────────────
-  // (moved out of experimental — this is the correct key in Next.js 14+)
-  serverExternalPackages: ['@sparticuz/chromium-min', '@sparticuz/chromium', 'playwright-core'],
-
   // All pages use client-side APIs (sessionStorage, DnD, router) — skip
   // static prerendering entirely so `next build` succeeds.
   experimental: {
+    // ── Externalize heavy native packages so they are NOT bundled ──────────
+    // Next.js 14 uses experimental.serverComponentsExternalPackages (not the
+    // top-level serverExternalPackages key which belongs to Next.js 15+).
+    serverComponentsExternalPackages: [
+      '@sparticuz/chromium-min',
+      '@sparticuz/chromium',
+      'playwright-core',
+      'playwright',
+    ],
+
     missingSuspenseWithCSRBailout: false,
+
     // Target the exact API route so only that Lambda gets the chromium files
-    // traced into its output bundle.  '/*' is not a valid route pattern and
-    // caused the binary to be silently dropped on Vercel.
+    // traced into its output bundle.
     outputFileTracingIncludes: {
       '/api/generate-pdf': ['./node_modules/@sparticuz/chromium-min/**/*'],
     },
@@ -30,10 +36,10 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+
   webpack(config, { isServer, dev }) {
     // Stabilise module IDs so chunk references are consistent across
-    // parallel build workers — fixes intermittent
-    // "Cannot find module for page" errors.
+    // parallel build workers — fixes intermittent chunk-not-found errors.
     if (!dev) {
       config.optimization = {
         ...config.optimization,
@@ -42,15 +48,21 @@ const nextConfig = {
       }
     }
 
-    // sharp uses native binaries that don't exist in Vercel's build environment
+    // These packages use native Node.js binaries — must NOT be bundled into
+    // any webpack chunk. Required at runtime by the API route only.
+    const nativeExternals = [
+      'sharp',
+      '@sparticuz/chromium',
+      '@sparticuz/chromium-min',
+      'playwright-core',
+      'playwright',
+    ];
+
     if (isServer) {
       config.externals = [
-        ...(config.externals || []),
-        'sharp',
-        '@sparticuz/chromium',
-        '@sparticuz/chromium-min',
-        'playwright-core',
-      ]
+        ...(Array.isArray(config.externals) ? config.externals : [config.externals].filter(Boolean)),
+        ...nativeExternals,
+      ];
     }
 
     config.watchOptions = {
@@ -60,12 +72,16 @@ const nextConfig = {
         '**/tmp/**',
       ],
     }
+
     return config
   },
 }
 
-export default (phase) => ({
-  ...nextConfig,
-  // Vercel expects .next; isolate only local production builds from next dev.
-  distDir: process.env.VERCEL === '1' || phase === PHASE_DEVELOPMENT_SERVER ? '.next' : 'build',
-})
+export default (phase) => {
+  const distDir =
+    process.env.VERCEL === '1' || phase === PHASE_DEVELOPMENT_SERVER
+      ? '.next'
+      : 'build'
+
+  return { ...nextConfig, distDir }
+}

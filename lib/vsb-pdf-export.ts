@@ -72,16 +72,20 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
     // ── Image section: vertical stack, one row per option ───────────────────
     // Each row: label on the left (fixed 55px), image immediately to its right.
     // Rows are stacked vertically with 12px gap between them.
+    // Options with no real image URL are skipped entirely — no "No image" placeholder
+    // that creates unwanted whitespace.
     if (isImageSection) {
-      const items = options.map((opt: any, i: number) => {
-        const safeSrc = typeof opt === 'string' && isImageValue(opt)
-          ? escAttr(opt.trim())
-          : null;
+      const validOptions = options.filter((opt: any) =>
+        typeof opt === 'string' && isImageValue(opt)
+      );
+
+      // If no valid image options, render nothing — no whitespace block
+      if (validOptions.length === 0) return '';
+
+      const items = validOptions.map((opt: any, i: number) => {
+        const safeSrc = escAttr(opt.trim());
         const safeAlt = escAttr(`Variable Header Image Option ${i + 1}`);
-        const imgOrFallback = safeSrc
-          ? `<img class="pdf-variable-header-image" src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:calc(100% - 65px);max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=&quot;font-size:9px;color:#9ca3af;font-style:italic;&quot;>Image unavailable</span>');"/>`
-          : `<span style="font-size:12px;color:#9ca3af;font-style:italic;line-height:1.4 ">No image</span>`;
-        return `<div class="pdf-variable-header-image-option" style="display:flex;flex-direction:row;align-items:center;width:100%;gap:10px;box-sizing:border-box;"><span class="pdf-variable-header-image-label" style="flex:0 0 55px;width:55px;font-size:10px;font-weight:bold;color:#111827;white-space:nowrap;text-align:left;">${listLabel} ${i + 1}:</span>${imgOrFallback}</div>`;
+        return `<div class="pdf-variable-header-image-option" style="display:flex;flex-direction:row;align-items:center;width:100%;gap:10px;box-sizing:border-box;"><span class="pdf-variable-header-image-label" style="flex:0 0 55px;width:55px;font-size:10px;font-weight:bold;color:#111827;white-space:nowrap;text-align:left;">${section.listText ?? 'Option'} ${i + 1}:</span><img class="pdf-variable-header-image" src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:calc(100% - 65px);max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';"/></div>`;
       }).join('');
 
       return `

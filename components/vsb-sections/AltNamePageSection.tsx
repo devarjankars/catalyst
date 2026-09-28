@@ -1,4 +1,4 @@
-import { PlusCircle, Trash2, Image as ImageIcon, Check, Upload, RefreshCw, MousePointer2 } from 'lucide-react';
+import { PlusCircle, Trash2, Image as ImageIcon, Check, Upload, RefreshCw, MousePointer2, Star } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { firebaseService } from '@/services/firebase-service';
@@ -15,6 +15,7 @@ interface Props {
 const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
   const images = Array.isArray(data.images) ? data.images : [];
   const templateImages = useEmailBuilderStore(state => state.templateImages);
+  const namedTemplateImages = useEmailBuilderStore(state => state.namedTemplateImages);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeIdxRef = useRef<number | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -129,6 +130,48 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
           )}
         </div>
         <p className="text-sm text-gray-500 mb-4">Select images from the template to add alt text.</p>
+
+        {/* ── Pinned / labeled images (CTA, Menarini Logo, Stemline Logo) ── */}
+        {Object.keys(namedTemplateImages).length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Pinned Images</span>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 bg-amber-50 p-3 rounded-xl border border-amber-200">
+              {Object.entries(namedTemplateImages).map(([url, label], i) => {
+                const isSelected = images.some((img: any) => img.name === url);
+                return (
+                  <div
+                    key={i}
+                    className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all group ${isSelected ? 'border-amber-500 ring-2 ring-amber-100' : 'border-amber-200 hover:border-amber-400'} ${selectionIndex !== null ? 'hover:scale-105 active:scale-95' : ''}`}
+                    onClick={() => toggleImageFromGallery(url)}
+                  >
+                    <div className="aspect-square">
+                      <img src={url} alt={label} className="w-full h-full object-contain" />
+                    </div>
+                    {/* Label badge */}
+                    <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] font-semibold text-center py-1 truncate px-1">
+                      {label}
+                    </div>
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 bg-amber-500 text-white rounded-full p-0.5 shadow-sm">
+                        <Check className="h-3 w-3" />
+                      </div>
+                    )}
+                    {selectionIndex !== null && (
+                      <div className="absolute inset-0 bg-amber-500/10 flex items-center justify-center opacity-0 hover:opacity-100">
+                        <MousePointer2 className="text-amber-600 h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── All template images ── */}
         <div className='grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed'>
           {templateImages.length === 0 && (
             <div className="col-span-full py-8 text-center text-gray-400 text-sm italic">
@@ -137,6 +180,7 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
           )}
           {templateImages.map((url, i) => {
             const isSelected = images.some((img: any) => img.name === url);
+            const label = namedTemplateImages[url];
             return (
               <div
                 key={i}
@@ -145,9 +189,15 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
               >
                 <img
                   src={url}
-                  alt='gallery-img'
+                  alt={label || 'gallery-img'}
                   className="w-full h-full object-contain"
                 />
+                {/* Show label for named images */}
+                {label && (
+                  <div className="absolute bottom-0 inset-x-0 bg-black/55 text-white text-[8px] font-semibold text-center py-0.5 truncate px-0.5">
+                    {label}
+                  </div>
+                )}
                 {isSelected && (
                   <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-0.5 shadow-sm">
                     <Check className="h-3 w-3" />

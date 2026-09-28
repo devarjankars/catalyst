@@ -379,12 +379,17 @@ export default function VSBPage() {
 
   // Fetch VSBs and template data on mount
   useEffect(() => {
-    if (templateId) {
+    if (!templateId) return;
+
+    const init = async () => {
+      // loadTemplate now handles: component scan, namedTemplateImages,
+      // AND merging Firebase Storage images — all in the correct order.
+      await useEmailBuilderStore.getState().loadTemplate(templateId);
       fetchVSBs(templateId);
-      loadTemplateImages(templateId);
-      useEmailBuilderStore.getState().loadTemplate(templateId);
-    }
-  }, [templateId, fetchVSBs, loadTemplateImages]);
+    };
+
+    init();
+  }, [templateId, fetchVSBs]);
 
   const handleCreateVSB = async () => {
     if (!templateId || loading || currentTemplate?.id !== templateId) return;

@@ -211,8 +211,19 @@ export const componentTypes = [
   category : "basic",
   icon: List,
   defaultProps: {
-    listItems: [`List Item`],   // array of strings
+    listItems: ["List Item"],
     fontSize: "12px",
+    color: "#000000",
+    fontFamily: "Arial, sans-serif",
+    lineHeight: "18px",
+    markerType: "bullet",
+    markerColor: "#000000",
+    discSize: "16px",
+    spaceBetweenItems: "5px",
+    backgroundColor: "#ffffff",
+    margin: "0px 0px 0px 0px",
+    fontWeight: "normal",
+    textAlign: "left",
   },
 },
 {
@@ -249,7 +260,7 @@ export const componentTypes = [
     fontSize: "12px",
     color: "#0563C1",
     backgroundColor: "#ffffff",
-    padding: "0 20px 10px 20px",
+
   },
 },
 {

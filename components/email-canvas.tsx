@@ -93,14 +93,20 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                 clientOffset.y >= rect.top &&
                 clientOffset.y <= rect.bottom
               ) {
-                // Drop is over a section - let the section-drop-zone handle it
-                return { dropZone: "canvas" }
+                // Drop is inside a section — let the section-drop-zone handle it.
+                // Mark as handled so the palette end() callback does NOT fire
+                // a second insertion with an undefined index (which would append
+                // the component to the bottom of the emailer).
+                return { dropZone: "section", handled: true }
               }
             }
           }
 
-          // Re-compute the exact drop index from the final cursor position
-          let finalIndex = components.length
+          // Re-compute the exact drop index from the final cursor position.
+          // Fall back to dropIndexRef.current (last hover-computed index) when
+          // clientOffset is null (fast drop at canvas edge) so we never silently
+          // append to the bottom.
+          let finalIndex = dropIndexRef.current ?? components.length
 
           if (clientOffset && canvasEl) {
             finalIndex = computeDropIndex(clientOffset.y, canvasEl)

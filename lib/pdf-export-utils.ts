@@ -1,16 +1,26 @@
 "use client"
 
+/**
+ * exportToPDF — Email Preview PDF export
+ *
+ * Previously used html2canvas + jsPDF which rendered a flat PNG image inside
+ * the PDF, making every link completely dead (no PDF annotations possible).
+ *
+ * Now uses the same /api/generate-pdf Playwright/Chromium pipeline that the
+ * VSB download uses. This means:
+ *   • All <a href> links become real, clickable PDF annotations.
+ *   • The PDF is vector text, not a rasterised screenshot.
+ *   • The same mobile/desktop widths are honoured.
+ *
+ * The only change visible to the user is that clicking "Export PDF" in the
+ * preview modal now produces a PDF with working links.
+ */
 export async function exportToPDF(
     iframeElement: HTMLIFrameElement,
     fileName: string = "email-preview",
     viewMode: "desktop" | "mobile" = "desktop"
-) {
+): Promise<boolean> {
     try {
-        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-            import("html2canvas-pro"),
-            import("jspdf"),
-        ])
-
         const iframeDoc = iframeElement.contentDocument || iframeElement.contentWindow?.document
         if (!iframeDoc || !iframeDoc.documentElement) {
             throw new Error("Unable to access iframe content")
@@ -20,105 +30,44 @@ export async function exportToPDF(
 
         const width = viewMode === "desktop" ? 600 : 375
 
-        // ── Resize the iframe viewport itself so @media queries fire correctly ──
-        const originalIframeWidth = iframeElement.style.width
-        const originalIframeMinWidth = iframeElement.style.minWidth
-        iframeElement.style.width = `${width}px`
-        iframeElement.style.minWidth = `${width}px`
+        // Serialise the current iframe HTML — this already has the correct
+        // mobile/desktop CSS injected by the preview modal's buildHtml().
+        const rawHtml = iframeDoc.documentElement.outerHTML
 
-        // Give the browser a frame to reflow at the new viewport width
-        await new Promise(r => setTimeout(r, 200))
+        // Normalise the body tag so the server-side renderer knows the exact
+        // pixel width to use.  This mirrors what the VSB path does.
+        const normalizedHtml = rawHtml.replace(
+            /<body([^>]*)>/i,
+            (_match: string, attrs: string) => {
+                const existingStyle = attrs.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2] || ''
+                const attrsNoStyle  = attrs.replace(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i, '')
+                const merged        = `${existingStyle};margin:0;padding:0;width:${width}px;`
+                return `<body${attrsNoStyle} style="${merged}">`
+            }
+        )
 
-        const element = iframeDoc.body
+        const pages = [{ html: normalizedHtml, width }]
 
-        const originalBodyWidth = element.style.width
-        const originalBodyOverflow = element.style.overflow
-        const originalMinWidth = element.style.minWidth
-
-        element.style.width = `${width}px`
-        element.style.minWidth = `${width}px`
-        element.style.overflow = "visible"
-
-        // Inject head styles into body so html2canvas picks them up
-        const styles = iframeDoc.head.querySelectorAll('style, link[rel="stylesheet"]')
-        const injectedStyles: Element[] = []
-        styles.forEach(style => {
-            const clone = style.cloneNode(true) as Element
-            element.prepend(clone)
-            injectedStyles.push(clone)
+        const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pages, fileName }),
         })
 
-        // Force body + email container to exact width
-        const centeringStyle = iframeDoc.createElement('style')
-        centeringStyle.textContent = `
-            body {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: ${width}px !important;
-                min-width: ${width}px !important;
-            }
-            .email-container {
-                width: ${width}px !important;
-                max-width: ${width}px !important;
-            }
-            * { box-sizing: border-box !important; }
-            img { max-width: 100% !important; height: auto !important; }
-        `
-        element.prepend(centeringStyle)
-        injectedStyles.push(centeringStyle)
-
-        // Wait for images to load
-        await new Promise<void>(resolve => {
-            const imgs = Array.from(iframeDoc.images)
-            if (!imgs.length) { resolve(); return }
-            let done = 0
-            const tick = () => { if (++done >= imgs.length) resolve() }
-            imgs.forEach(img => img.complete ? tick() : (img.onload = img.onerror = tick))
-            setTimeout(resolve, 3000)
-        })
-
-        // Let layout fully settle at new width
-        await new Promise(r => setTimeout(r, 150))
-
-        const emailContainer = iframeDoc.querySelector<HTMLElement>('.email-container')
-        const contentHeight = (emailContainer ? emailContainer.scrollHeight : element.scrollHeight) + 40
-
-        try {
-            const canvas = await html2canvas(element, {
-                scale: 3,
-                useCORS: true,
-                allowTaint: true,
-                logging: false,
-                width: width,
-                windowWidth: width,
-                scrollX: 0,
-                scrollY: 0,
-                backgroundColor: "#ffffff",
-            })
-
-            // Lossless PNG keeps text/screenshots crisp (JPEG would add artifacts).
-            // 'FAST' zlib-compresses the raw pixels without any quality loss.
-            const imgData = canvas.toDataURL("image/png")
-
-            const pdf = new jsPDF({
-                unit: "px",
-                format: [width, contentHeight],
-                orientation: "portrait",
-                hotfixes: ["px_scaling"],
-                compress: true,
-            })
-
-            pdf.addImage(imgData, "PNG", 0, 0, width, contentHeight, undefined, "FAST")
-            pdf.save(fileName)
-        } finally {
-            // Restore everything
-            injectedStyles.forEach(s => s.remove())
-            element.style.width = originalBodyWidth
-            element.style.minWidth = originalMinWidth
-            element.style.overflow = originalBodyOverflow
-            iframeElement.style.width = originalIframeWidth
-            iframeElement.style.minWidth = originalIframeMinWidth
+        if (!response.ok) {
+            const errBody = await response.json().catch(() => null) as { error?: string } | null
+            throw new Error(errBody?.error || `PDF generation failed (${response.status})`)
         }
+
+        const blob   = await response.blob()
+        const url    = URL.createObjectURL(blob)
+        const link   = document.createElement('a')
+        link.href     = url
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
 
         return true
     } catch (error) {

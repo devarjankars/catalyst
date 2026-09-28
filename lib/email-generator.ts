@@ -98,7 +98,7 @@ function generateComponentHTML(component: EmailComponent): string {
         color: ${component.color || "#000000"};
         text-align: ${component.textAlign || "left"};
         font-weight: ${component.fontWeight || "normal"};
-        font-family: Arial, sans-serif;
+        font-family: ${component.fontFamily || "Arial, Helvetica, sans-serif"};
         line-height: ${component.lineHeight || "16px"};
         background-color: ${component.backgroundColor || "transparent"};
        
@@ -344,29 +344,53 @@ function generateComponentHTML(component: EmailComponent): string {
       const padding = component.padding || "10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
-      // Pattern: 2 links per row on mobile, all inline on desktop
-      // After every 2nd link: <br class="mobile"> twice + separator with .desktop class
-      // Last separator gets both .desktop and .mobile (mobile hidden)
-      const linksHTML = links.map((link, index) => {
-        const isLast = index === links.length - 1;
-        const isEven = (index + 1) % 2 === 0;
-        const linkColor = link.color || color;
-        const pipeColor = !isLast ? (links[index + 1].color || "#000000") : "#000000";
-        
-        let separator = "";
-        if (!isLast) {
-          // Not the last link
-          if (isEven && links.length - index > 2) {
-            // After 2nd, 4th link: mobile line break + desktop-only separator
-            // (skip the break before the last link so it stays on the same mobile row)
-            separator = `<br class="mobile" style="display: none;"><br class="mobile" style="display: none;"><span class="desktop" style="color:${pipeColor}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-          } else {
-            // After 1st, 3rd link: normal separator (visible on both)
-            separator = `<span style="color:${pipeColor}; font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-          }
-        }
+      // ── Desktop: all links inline on one row ──────────────────────────────
+      // ── Mobile: 2 links per row, with a hard break after "Unsubscribe" ───
+      //
+      // Approach: render TWO versions and toggle visibility with CSS classes.
+      //   .desk-show-table / .mbl-show-table — media-query driven in the <head>
+      //
+      // This gives perfectly consistent row spacing on mobile because each
+      // mobile row is its own <tr> — no <br> hacks, no unequal line heights.
 
-        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${linkColor}; font-size: ${link.fontSize || fontSize}; font-family: Arial, sans-serif; text-decoration: underline;">${link.text.trim()}</a>${separator}`;
+      // ── Build desktop inline HTML ─────────────────────────────────────────
+      const desktopLinksHTML = links.map((link, index) => {
+        const isLast = index === links.length - 1;
+        const linkColor = link.color || color;
+        const pipeColor = !isLast ? (links[index + 1]?.color || "#000000") : "#000000";
+        const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+      }).join("");
+
+      // ── Build mobile rows ─────────────────────────────────────────────────
+      // Group links into rows: 2 per row, but always break after "Unsubscribe"
+      const mobileRows: Array<typeof links> = [];
+      let currentRow: typeof links = [];
+      links.forEach((link) => {
+        currentRow.push(link);
+        const isUnsubscribe = link.text.trim().toLowerCase() === "unsubscribe";
+        const rowFull = currentRow.length === 2;
+        if (rowFull || isUnsubscribe) {
+          mobileRows.push(currentRow);
+          currentRow = [];
+        }
+      });
+      if (currentRow.length > 0) mobileRows.push(currentRow);
+
+      const mobileRowsHTML = mobileRows.map((row) => {
+        const cellContent = row.map((link, i) => {
+          const isLast = i === row.length - 1;
+          const linkColor = link.color || color;
+          const pipeColor = !isLast ? (row[i + 1]?.color || "#000000") : "#000000";
+          const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+          return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+        }).join("");
+        // Each row is a <tr> — consistent spacing controlled by line-height alone
+        return `<tr class="mbl-show-tr" style="display:none;">
+          <td align="left" style="color:${color};font-size:${fontSize};line-height:1.8;padding-bottom:2px;">
+            ${cellContent}
+          </td>
+        </tr>`;
       }).join("");
 
       return `
@@ -376,15 +400,18 @@ function generateComponentHTML(component: EmailComponent): string {
       <tbody>
         <tr>
           <td bgcolor="${bgColor}"
-            style="padding:${padding}; text-align:left; background-color:${bgColor};"
+            style="padding:${padding};text-align:left;background-color:${bgColor};"
             ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}>
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tbody>
-                <tr>
-                  <td align="left" style="color: ${color}; font-size: ${fontSize}; line-height: 1.4;">
-                    ${linksHTML}
+                <!-- Desktop: single inline row -->
+                <tr class="desk-show-tr">
+                  <td align="left" style="color:${color};font-size:${fontSize};line-height:1.4;">
+                    ${desktopLinksHTML}
                   </td>
                 </tr>
+                <!-- Mobile: one <tr> per row, consistent spacing -->
+                ${mobileRowsHTML}
               </tbody>
             </table>
           </td>
@@ -537,6 +564,7 @@ function generateComponentHTML(component: EmailComponent): string {
       `.trim();
     }
 
+    case "orserdu-view-in-browser":
     case "elzonris-view-in-browser": {
       const align = component.textAlign || "center";
       const padding = component.padding || "10px 20px";
@@ -908,38 +936,83 @@ case "isi": {
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
-      const bulletStyle = `
-       color: ${component.markerColor || "#000000"};
-       font-size: ${component.discSize || "16px"};
-       line-height: ${component.lineHeight || "18px"};
-      ${innerStyle ? innerStyle : ""}
-      background-color: ${component.backgroundColor}
-      `.trim();
+      const bg         = component.backgroundColor || "#ffffff";
+      const fontFamily = component.fontFamily || "Arial, sans-serif";
+      const markerType = (component as any).markerType || "bullet";
 
-      const itemStyle = `
-        color: ${component.color || "#000000"};
-        font-size: ${component.fontSize || "12px"};
-        font-weight: ${component.fontWeight || "normal"};
-        text-align: ${component.textAlign || "left"};
-        line-height: ${component.lineHeight || "18px"};
-        padding-left: 5px;
-        font-family: Arial, sans-serif;
-        background-color : ${component.backgroundColor || "#ffffff"}
-      `.trim();
+      // Parse spaceBetweenItems — strip "px" for the HTML height= attribute
+      const spacePx = parseInt((component.spaceBetweenItems || "5px").replace(/px$/i, ""), 10) || 5;
+
+      // Margin — only emit when it is set to something other than all-zeros
+      const rawMargin = (component as any).margin || "";
+      const marginStyle = rawMargin && rawMargin !== "0px 0px 0px 0px" && rawMargin !== "0"
+        ? `margin:${rawMargin};`
+        : "";
+
+      // ── Marker symbol resolver ───────────────────────────────────────────
+      // Returns the marker string for a given 0-based index.
+      // Fixed symbols (bullet, dash, arrow, check, square) ignore the index.
+      // Counter types (number, roman, alpha) derive from the index.
+      const toRoman = (n: number): string => {
+        const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+        const syms = ['m','cm','d','cd','c','xc','l','xl','x','ix','v','iv','i'];
+        let result = '';
+        let num = n;
+        for (let i = 0; i < vals.length; i++) {
+          while (num >= vals[i]) { result += syms[i]; num -= vals[i]; }
+        }
+        return result;
+      };
+
+      const getMarker = (index: number): string => {
+        switch (markerType) {
+          case "dash":   return '&ndash;';
+          case "arrow":  return '&#8594;';
+          case "check":  return '&#10003;';
+          case "square": return '&#9642;';
+          case "number": return `${index + 1}.`;
+          case "roman":  return `${toRoman(index + 1)}.`;
+          case "alpha":  return `${String.fromCharCode(97 + index % 26)}.`;
+          default:       return '&bull;';
+        }
+      };
+
+      // Counter types need a wider marker column so "viii." doesn't clip
+      const isCounter = ["number", "roman", "alpha"].includes(markerType);
+
+      const bulletStyle = [
+        `color:${component.markerColor || "#000000"}`,
+        `font-size:${component.discSize || "16px"}`,
+        `line-height:${component.lineHeight || "18px"}`,
+        `font-family:${fontFamily}`,
+        `background-color:${bg}`,
+        isCounter ? "white-space:nowrap" : "",
+        innerStyle || "",
+      ].filter(Boolean).join(";");
+
+      const itemStyle = [
+        `color:${component.color || "#000000"}`,
+        `font-size:${component.fontSize || "12px"}`,
+        `font-weight:${component.fontWeight || "normal"}`,
+        `text-align:${component.textAlign || "left"}`,
+        `line-height:${component.lineHeight || "18px"}`,
+        `font-family:${fontFamily}`,
+        "padding-left:5px",
+        `background-color:${bg}`,
+        innerStyle || "",
+      ].filter(Boolean).join(";");
+
+      const markerWidth = isCounter ? "5%" : "2%";
 
       const listItemsHTML = (component.listItems || [])
-        .map(
-          (item) => `
-        <tr >
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" align="left" valign="top" width="2%" style="${bulletStyle}">&bull;</td>
-          
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" align="left" valign="middle" style="${itemStyle}">
-            ${item}
-          </td>
+        .map((item, idx) => `
+        <tr>
+          <td bgcolor="${bg}" align="left" valign="top" width="${markerWidth}" style="${bulletStyle}">${getMarker(idx)}</td>
+          <td bgcolor="${bg}" align="left" valign="middle" style="${itemStyle}">${item}</td>
         </tr>
-        <tr><td bgcolor="${component.backgroundColor || "#ffffff"}" height="${component.spaceBetweenItems?.slice(0, 3) || 5}" style=" font-size: 0px; line-height: ${component.spaceBetweenItems || 5}px; mso-line-height-rule: exactly;background-color:${component.backgroundColor || "#ffffff"} ">&nbsp; </td></tr>
-      `,
-        )
+        <tr>
+          <td colspan="2" bgcolor="${bg}" height="${spacePx}" style="font-size:0px;line-height:${spacePx}px;mso-line-height-rule:exactly;background-color:${bg};">&nbsp;</td>
+        </tr>`)
         .join("");
 
       return `
@@ -949,14 +1022,26 @@ case "isi": {
       cellspacing="0"
       cellpadding="0"
       border="0"
-      bgcolor="${component.backgroundColor || "#ffffff"}"
-      style="background-color:${component.backgroundColor || "#ffffff"};${innerStyle ? innerStyle : ""}"
-      ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""}
+      bgcolor="${bg}"
+      style="background-color:${bg};${marginStyle}${innerStyle ? innerStyle : ""}"
+      ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
     >
       <tbody>
         <tr>
-          <td bgcolor="${component.backgroundColor || "#ffffff"}" ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "0 20px 0 20px"}; background-color: ${component.backgroundColor || "transparent"};${innerStyle ? innerStyle : ""}">
-            <table bgcolor="${component.backgroundColor || "#ffffff"}" style="background-color:${component.backgroundColor || "#ffffff"};${innerStyle ? innerStyle : ""}" ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0" width="100%" >
+          <td
+            bgcolor="${bg}"
+            ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+            style="padding:${component.padding || "0px 20px 0px 20px"};background-color:${bg};${innerStyle ? innerStyle : ""}"
+          >
+            <table
+              bgcolor="${bg}"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+              width="100%"
+              style="background-color:${bg};"
+              ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
+            >
               <tbody>
                 ${listItemsHTML}
               </tbody>

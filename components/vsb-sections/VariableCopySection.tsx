@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { PlusCircle, Upload, X, Link, Image as ImageIcon, Check, MousePointer2 } from 'lucide-react';
+import { PlusCircle, X, Link, Image as ImageIcon, MousePointer2 } from 'lucide-react';
 import SenderTable from './friendlyFromTable';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import {
@@ -24,10 +24,7 @@ interface NormalSection {
 
 interface TableSection {
   heading: string;
-  options: Array<{
-    fromEmail: string;
-    friendlyNames: string[];
-  }>;
+  options: Array<{ fromEmail: string; friendlyNames: string[] }>;
   structure: 'table';
   listText?: null;
 }
@@ -48,9 +45,45 @@ interface Props {
   onChange: (data: Section[]) => void;
 }
 
-// ─── Sub-renderers ────────────────────────────────────────────────────────────────
+// ── Mandatory field detection ─────────────────────────────────────────────────
+// These headings are required — marked with * and cannot be removed
+const MANDATORY_PATTERN = /subject line|preheader|header image|friendly from/i
 
-/** "normal" structure — plain text options (with optional image gallery) */
+const isMandatorySection = (heading: string) => MANDATORY_PATTERN.test(heading)
+
+// ── Shared heading row ────────────────────────────────────────────────────────
+const HeadingRow: React.FC<{
+  heading: string;
+  mandatory: boolean;
+  color?: string;
+  onChange: (v: string) => void;
+  onRemove: () => void;
+}> = ({ heading, mandatory, color, onChange, onRemove }) => (
+  <div className="flex items-center mb-4 gap-2">
+    <label className={`text-sm font-semibold w-24 shrink-0 flex items-center gap-0.5 ${color ?? 'text-gray-600'}`}>
+      Heading
+      {mandatory && <span className="text-red-500 font-bold ml-0.5" title="Required field">*</span>}
+    </label>
+    <Input
+      value={heading}
+      onChange={(e) => onChange(e.target.value)}
+      className="flex-1 bg-white"
+      placeholder="Section heading"
+    />
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onRemove}
+      title={mandatory ? 'Mandatory field — cannot be removed' : 'Remove section'}
+      disabled={mandatory}
+      className={mandatory ? 'opacity-30 cursor-not-allowed' : ''}
+    >
+      <X size={16} />
+    </Button>
+  </div>
+)
+
+// ─── Normal section ───────────────────────────────────────────────────────────
 const NormalSectionRenderer: React.FC<{
   section: NormalSection;
   idx: number;
@@ -58,62 +91,43 @@ const NormalSectionRenderer: React.FC<{
   onRemove: () => void;
 }> = ({ section, idx, onUpdate, onRemove }) => {
   const templateImages = useEmailBuilderStore(state => state.templateImages);
+  const namedTemplateImages = useEmailBuilderStore(state => state.namedTemplateImages);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryOptionIdx, setGalleryOptionIdx] = useState<number | null>(null);
+
   const isImageSection = section.heading.toLowerCase().includes('image');
-
-  const updateHeading = (value: string) =>
-    onUpdate({ ...section, heading: value });
-
-  const addOption = () =>
-    onUpdate({ ...section, options: [...section.options, ''] });
-
-  const removeOption = (optIdx: number) =>
-    onUpdate({ ...section, options: section.options.filter((_, j) => j !== optIdx) });
+  const mandatory = isMandatorySection(section.heading);
+  const listLabel = section.listText ?? 'Option';
 
   const updateOption = (optIdx: number, value: string) =>
-    onUpdate({
-      ...section,
-      options: section.options.map((o, j) => (j === optIdx ? value : o)),
-    });
+    onUpdate({ ...section, options: section.options.map((o, j) => j === optIdx ? value : o) });
 
-  const openGallery = (optIdx: number) => {
-    setGalleryOptionIdx(optIdx);
-    setGalleryOpen(true);
-  };
+  const openGallery = (optIdx: number) => { setGalleryOptionIdx(optIdx); setGalleryOpen(true); };
 
   const selectImageFromGallery = (url: string) => {
-    if (galleryOptionIdx !== null) {
-      updateOption(galleryOptionIdx, url);
-    }
+    if (galleryOptionIdx !== null) updateOption(galleryOptionIdx, url);
     setGalleryOpen(false);
     setGalleryOptionIdx(null);
   };
 
-  const listLabel = section.listText ?? 'Option';
-
   return (
-    <div className="border rounded-lg p-4 relative bg-gray-50">
-      {/* Heading row */}
-      <div className="flex items-center mb-4 gap-2">
-        <label className="text-sm font-semibold text-gray-600 w-20 shrink-0">Heading</label>
-        <Input
-          value={section.heading}
-          onChange={(e) => updateHeading(e.target.value)}
-          className="flex-1 bg-white"
-          placeholder="Section heading"
-        />
-        <Button variant="ghost" size="icon" onClick={onRemove} title="Remove section">
-          <X size={16} />
-        </Button>
-      </div>
+    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-gray-50'}`}>
+      {mandatory && (
+        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
+          Required
+        </span>
+      )}
 
-      {/* Options */}
+      <HeadingRow
+        heading={section.heading}
+        mandatory={mandatory}
+        onChange={(v) => onUpdate({ ...section, heading: v })}
+        onRemove={onRemove}
+      />
+
       <div className="space-y-3 ml-4">
         {section.options.map((opt, optIdx) => {
-          const hasPreview =
-            isImageSection && (opt.startsWith('data:image') || opt.startsWith('http'));
-
+          const hasPreview = isImageSection && (opt.startsWith('data:image') || opt.startsWith('http'));
           return (
             <div key={optIdx} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
@@ -124,136 +138,92 @@ const NormalSectionRenderer: React.FC<{
                   value={opt}
                   onChange={(e) => updateOption(optIdx, e.target.value)}
                   className="flex-1 bg-white"
-                  placeholder={
-                    isImageSection ? 'Image URL or select from gallery' : `${listLabel} ${optIdx + 1}`
-                  }
+                  placeholder={isImageSection ? 'Image URL or select from gallery' : `${listLabel} ${optIdx + 1}`}
                 />
-
                 {isImageSection && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0 h-9 w-9 bg-white"
-                      onClick={() => openGallery(optIdx)}
-                      title="Select from gallery"
-                    >
-                      <ImageIcon size={14} />
-                    </Button>
-                  </>
+                  <Button variant="outline" size="icon" className="shrink-0 h-9 w-9 bg-white" onClick={() => openGallery(optIdx)} title="Select from gallery">
+                    <ImageIcon size={14} />
+                  </Button>
                 )}
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeOption(optIdx)}
-                  title="Remove option"
-                  className="shrink-0"
-                >
+                <Button variant="ghost" size="icon" onClick={() => onUpdate({ ...section, options: section.options.filter((_, j) => j !== optIdx) })} className="shrink-0">
                   <X size={14} />
                 </Button>
               </div>
-
               {hasPreview && (
                 <div className="ml-24 mb-1">
-                  <img
-                    src={opt}
-                    alt="Preview"
-                    className="h-16 w-auto rounded border border-gray-200"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  />
+                  <img src={opt} alt="Preview" className="h-16 w-auto rounded border border-gray-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                 </div>
               )}
             </div>
           );
         })}
-
-        <Button variant="ghost" size="sm" onClick={addOption} className="mt-1 ml-20 text-gray-500">
+        <Button variant="ghost" size="sm" onClick={() => onUpdate({ ...section, options: [...section.options, ''] })} className="mt-1 ml-20 text-gray-500">
           <PlusCircle className="mr-1" size={15} /> Add option
         </Button>
       </div>
 
       {/* Image Gallery Dialog */}
-      {galleryOpen && templateImages.length > 0 && (
-        <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] p-0">
-            <DialogHeader className="p-4 border-b">
-              <DialogTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" /> Template Images Gallery
-                </span>
-                <Button variant="ghost" size="icon" onClick={() => setGalleryOpen(false)}>
-                  <X size={20} />
-                </Button>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="p-4 overflow-y-auto max-h-[60vh]">
-              <p className="text-sm text-gray-500 mb-4">Click an image to select it for {listLabel} {galleryOptionIdx !== null ? galleryOptionIdx + 1 : ''}</p>
-              <div className='grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3'>
-                {templateImages.map((url, i) => (
-                  <div
-                    key={i}
-                    className="relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 active:scale-95 border-transparent hover:border-gray-300"
-                    onClick={() => selectImageFromGallery(url)}
-                  >
-                    <img
-                      src={url}
-                      alt='gallery-img'
-                      className="w-full h-full object-contain"
-                    />
-                    <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center opacity-0 hover:opacity-100">
-                      <MousePointer2 className="text-blue-600 h-6 w-6" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {galleryOpen && templateImages.length === 0 && (
-        <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
-          <DialogContent className="max-w-md p-6 text-center">
-            <DialogHeader>
-              <DialogTitle>No Template Images</DialogTitle>
-            </DialogHeader>
-            <p className="text-gray-500 mb-4">No images found in this template. Please upload images to the template first.</p>
-            <Button variant="outline" onClick={() => setGalleryOpen(false)}>Close</Button>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] p-0">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" /> Template Images Gallery
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
+            {templateImages.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-8">No images found in this template.</p>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 mb-4">Click an image to select it for {listLabel} {galleryOptionIdx !== null ? galleryOptionIdx + 1 : ''}</p>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                  {templateImages.map((url, i) => {
+                    const label = namedTemplateImages[url];
+                    return (
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 border-transparent hover:border-blue-300" onClick={() => selectImageFromGallery(url)}>
+                        <img src={url} alt={label || 'gallery-img'} className="w-full h-full object-contain" />
+                        {label && (
+                          <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[8px] font-semibold text-center py-0.5 truncate px-0.5">
+                            {label}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center opacity-0 hover:opacity-100">
+                          <MousePointer2 className="text-blue-600 h-6 w-6" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-/** "table" structure — friendly-from table via SenderTable */
+// ─── Table section ─────────────────────────────────────────────────────────────
 const TableSectionRenderer: React.FC<{
   section: TableSection;
   idx: number;
   onUpdate: (updated: TableSection) => void;
   onRemove: () => void;
 }> = ({ section, idx, onUpdate, onRemove }) => {
-  const updateHeading = (value: string) =>
-    onUpdate({ ...section, heading: value });
-
+  const mandatory = isMandatorySection(section.heading);
   return (
-    <div className="border rounded-lg p-4 relative bg-gray-50">
-      {/* Heading row */}
-      <div className="flex items-center mb-4 gap-2">
-        <label className="text-sm font-semibold text-gray-600 w-20 shrink-0">Heading</label>
-        <Input
-          value={section.heading}
-          onChange={(e) => updateHeading(e.target.value)}
-          className="flex-1 bg-white"
-          placeholder="Section heading"
-        />
-        <Button variant="ghost" size="icon" onClick={onRemove} title="Remove section">
-          <X size={16} />
-        </Button>
-      </div>
-
-      {/* Delegate to SenderTable for editing */}
+    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-gray-50'}`}>
+      {mandatory && (
+        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
+          Required
+        </span>
+      )}
+      <HeadingRow
+        heading={section.heading}
+        mandatory={mandatory}
+        onChange={(v) => onUpdate({ ...section, heading: v })}
+        onRemove={onRemove}
+      />
       <div className="ml-4">
         <SenderTable
           data={section.options}
@@ -264,50 +234,38 @@ const TableSectionRenderer: React.FC<{
   );
 };
 
-/** "third-party-placeholder" structure — a single external URL / embed field */
+// ─── Third-party placeholder section ──────────────────────────────────────────
 const ThirdPartyPlaceholderRenderer: React.FC<{
   section: ThirdPartySection;
   idx: number;
   onUpdate: (updated: ThirdPartySection) => void;
   onRemove: () => void;
 }> = ({ section, onUpdate, onRemove }) => {
-  const updateHeading = (value: string) =>
-    onUpdate({ ...section, heading: value });
-
-  const updatePlaceholder = (value: string) =>
-    onUpdate({ ...section, options: [value] });
-
+  const mandatory = isMandatorySection(section.heading);
   return (
-    <div className="border rounded-lg p-4 relative bg-amber-50 border-amber-200">
-      {/* Heading row */}
-      <div className="flex items-center mb-4 gap-2">
-        <label className="text-sm font-semibold text-amber-700 w-20 shrink-0">Heading</label>
-        <Input
-          value={section.heading}
-          onChange={(e) => updateHeading(e.target.value)}
-          className="flex-1 bg-white"
-          placeholder="Placeholder label"
-        />
-        <Button variant="ghost" size="icon" onClick={onRemove} title="Remove section">
-          <X size={16} />
-        </Button>
-      </div>
-
-      {/* Badge */}
+    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+      {mandatory && (
+        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
+          Required
+        </span>
+      )}
+      <HeadingRow
+        heading={section.heading}
+        mandatory={mandatory}
+        color="text-amber-700"
+        onChange={(v) => onUpdate({ ...section, heading: v })}
+        onRemove={onRemove}
+      />
       <div className="flex items-center gap-2 mb-3 ml-4">
         <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
           <Link size={11} /> Third-party placeholder
         </span>
       </div>
-
-      {/* Single placeholder value */}
       <div className="flex items-center gap-2 ml-4">
-        <label className="text-xs text-amber-500 w-20 shrink-0 uppercase tracking-wide">
-          Value
-        </label>
+        <label className="text-xs text-amber-500 w-20 shrink-0 uppercase tracking-wide">Value</label>
         <Input
           value={section.options[0] ?? ''}
-          onChange={(e) => updatePlaceholder(e.target.value)}
+          onChange={(e) => onUpdate({ ...section, options: [e.target.value] })}
           className="flex-1 bg-white"
           placeholder="External placeholder value or URL"
         />
@@ -317,19 +275,11 @@ const ThirdPartyPlaceholderRenderer: React.FC<{
 };
 
 // ─── Main component ────────────────────────────────────────────────────────────
-
 const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onChange }) => {
   const variableCopy: Section[] = Array.isArray(data) ? data : [];
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  const addSection = () => {
-    const updated: Section[] = [
-      ...variableCopy,
-      { heading: '', options: [''], structure: 'normal', listText: 'Option' },
-    ];
-    onChange(updated);
-  };
+  const addSection = () =>
+    onChange([...variableCopy, { heading: '', options: [''], structure: 'normal', listText: 'Option' }]);
 
   const removeSection = (idx: number) =>
     onChange(variableCopy.filter((_, i) => i !== idx));
@@ -337,13 +287,16 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onCh
   const updateSection = (idx: number, updated: Section) =>
     onChange(variableCopy.map((s, i) => (i === idx ? updated : s)));
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Variable Copy</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold">Variable Copy</h2>
+          <span className="text-xs text-gray-400 flex items-center gap-1">
+            <span className="text-red-500 font-bold">*</span> = Required field
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-500 font-medium">Theme Color:</label>
           <input
@@ -362,18 +315,17 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onCh
       ) : (
         <div className="space-y-4">
           {variableCopy.map((section, idx) => {
-            console.log(section)
             switch (section.structure) {
               case 'table':
                 return (
-                  <SenderTable
-                  key={idx}
-  data={section.options}
-  onChange={(updated) => updateSection(idx, { ...section, options: updated })}
-/>
-
+                  <TableSectionRenderer
+                    key={idx}
+                    section={section as TableSection}
+                    idx={idx}
+                    onUpdate={(updated) => updateSection(idx, updated)}
+                    onRemove={() => removeSection(idx)}
+                  />
                 );
-
               case 'third-party-placeholder':
                 return (
                   <ThirdPartyPlaceholderRenderer
@@ -384,7 +336,6 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onCh
                     onRemove={() => removeSection(idx)}
                   />
                 );
-
               case 'normal':
               default:
                 return (
