@@ -1156,7 +1156,7 @@ export function EmailComponentRenderer({
           <div style={baseStyle} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">
             <img
               src={component.src || "/footer-logo-a.png"}
-              alt={component.alt || "Header Image"}
+              alt={component.imageAlt || component.alt || "Footer Image"}
               style={{
                 width: component.width || "100%",
                 height: component.height || "auto",
@@ -1168,24 +1168,13 @@ export function EmailComponentRenderer({
                 !previewMode && !isLockedMode && onSelect()
               }}
             />
-            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.reg}</div>
-            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.year}</div>
-            <div style={{fontSize: component.fontSize || "12px"}}>{component.footerText?.address}</div>
-            <div style={{fontSize: component.fontSize || "12px",display : "grid",gap : 2, width : "100%",gridTemplateColumns : "100px 1fr",alignItems : "center"}}>{component.footerText?.rights}  <RichTextEditor
-              isSelected={isSelected}
-              value={component.footerText?.jobcode || ""}
-              onChange={(content) => onUpdate({ footerText: { ...component.footerText, jobcode: content } })}
-              style={{
-                fontSize: component.fontSize || "12px",
-                color: component.color || "#000000",
-                textAlign: component.textAlign || "left",
-                fontWeight: component.fontWeight || "normal",
-                backgroundColor: component.backgroundColor || "transparent",
-                lineHeight: component.lineHeight || "14px",
-                padding: "0px",
-              }}
-            /></div>
-            
+            <div style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 8px 20px"}}>{component.footerText?.reg}</div>
+            <div style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 2px 20px"}}>{component.footerText?.year}</div>
+            <div style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 0px 20px"}}>{component.footerText?.address}</div>
+            <div
+              style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 8px 20px"}}
+              dangerouslySetInnerHTML={{ __html: `${component.footerText?.rights || ""} ${component.footerText?.jobcode || ""}` }}
+            />
           </div>
         );
         case "orserdu-emerald-stats": {

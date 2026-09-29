@@ -68,6 +68,8 @@ function BulletList({
   const isCounter  = ['number', 'roman', 'alpha'].includes(markerType)
   const bg         = component.backgroundColor || 'transparent'
   const spacePx    = parseInt((component.spaceBetweenItems || '5px').replace(/px$/i, ''), 10) || 5
+  // Mirror the outer padding the email-generator applies so canvas matches the email output
+  const outerPadding = (component as any).padding || '0px 20px 0px 20px'
 
   const markerStyle: React.CSSProperties = {
     color:       component.markerColor || '#000000',
@@ -98,6 +100,8 @@ function BulletList({
         marginTop: '5px',
         backgroundColor: bg,
         margin: (component as any).margin || undefined,
+        padding: outerPadding,
+        boxSizing: 'border-box',
       }}
     >
       <table

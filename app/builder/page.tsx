@@ -4,24 +4,69 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { EmailCanvas } from "@/components/email-canvas";
-import { ComponentPalette } from "@/components/component-palette";
-import { PropertiesPanel } from "@/components/properties-panel";
-import { ExportPanel } from "@/components/export-panel";
-import { SaveTemplateDialog } from "@/components/save-template-dialog";
-import { UnsavedChangesDialog } from "@/components/unsaved-changes-dialog";
+import nextDynamic from "next/dynamic";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2, HistoryIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
-import EmailPreviewModal from "@/components/email-previw-dalog";
-import { EditorModeDialog } from "@/components/editor-mode-dialog";
 import { toast } from "sonner";
 import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import { matchesBrand } from "@/lib/brand-filter";
+
+// ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
+const EmailCanvas = nextDynamic(
+  () => import("@/components/email-canvas").then((m) => ({ default: m.EmailCanvas })),
+  { ssr: false, loading: () => <BuilderPanelShimmer className="flex-1" /> }
+);
+const ComponentPalette = nextDynamic(
+  () => import("@/components/component-palette").then((m) => ({ default: m.ComponentPalette })),
+  { ssr: false, loading: () => <BuilderPanelShimmer className="w-72" /> }
+);
+const PropertiesPanel = nextDynamic(
+  () => import("@/components/properties-panel").then((m) => ({ default: m.PropertiesPanel })),
+  { ssr: false, loading: () => <BuilderPanelShimmer className="w-80" /> }
+);
+const ExportPanel = nextDynamic(
+  () => import("@/components/export-panel").then((m) => ({ default: m.ExportPanel })),
+  { ssr: false }
+);
+const SaveTemplateDialog = nextDynamic(
+  () => import("@/components/save-template-dialog").then((m) => ({ default: m.SaveTemplateDialog })),
+  { ssr: false }
+);
+const UnsavedChangesDialog = nextDynamic(
+  () => import("@/components/unsaved-changes-dialog").then((m) => ({ default: m.UnsavedChangesDialog })),
+  { ssr: false }
+);
+const EmailPreviewModal = nextDynamic(
+  () => import("@/components/email-previw-dalog"),
+  { ssr: false }
+);
+const EditorModeDialog = nextDynamic(
+  () => import("@/components/editor-mode-dialog").then((m) => ({ default: m.EditorModeDialog })),
+  { ssr: false }
+);
+
+// ── Shimmer placeholder for panels while they load ────────────────────────
+function BuilderPanelShimmer({ className = "" }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-white border-r border-gray-200 ${className}`}>
+      <div className="p-4 border-b border-gray-100">
+        <div className="h-3 w-24 bg-gray-200 rounded" />
+      </div>
+      <div className="p-3 space-y-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-10 bg-gray-100 rounded-lg" style={{ opacity: 1 - i * 0.09 }} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function EmailBuilder() {
   const router = useRouter();
@@ -629,8 +674,51 @@ if (activeSelectedId) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner message="Loading template..." />
+      <div className="h-full flex flex-col bg-gray-50 animate-pulse">
+        {/* Header shimmer */}
+        <div className="bg-white border-b border-gray-200 h-14 flex items-center px-5 gap-3">
+          <div className="h-8 w-20 bg-gray-200 rounded-full" />
+          <div className="h-4 w-px bg-gray-200" />
+          <div className="h-4 w-40 bg-gray-200 rounded" />
+          <div className="ml-auto flex items-center gap-2">
+            <div className="h-8 w-16 bg-gray-200 rounded-full" />
+            <div className="h-8 w-16 bg-gray-200 rounded-full" />
+            <div className="h-8 w-24 bg-gray-100 rounded-full" />
+            <div className="h-8 w-20 bg-[#BC2030]/20 rounded-full" />
+          </div>
+        </div>
+        {/* Panel area shimmer */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left panel */}
+          <div className="w-72 bg-white border-r border-gray-200 p-3 space-y-2">
+            <div className="h-3 w-24 bg-gray-200 rounded mb-4" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded-lg" style={{ opacity: 1 - i * 0.07 }} />
+            ))}
+          </div>
+          {/* Canvas */}
+          <div className="flex-1 bg-[#f0f2f5] flex items-start justify-center p-8">
+            <div className="w-[600px] bg-white rounded-lg shadow-sm space-y-3 p-4">
+              <div className="h-24 bg-gray-200 rounded" />
+              <div className="h-6 w-3/4 bg-gray-200 rounded" />
+              <div className="h-4 w-full bg-gray-100 rounded" />
+              <div className="h-4 w-5/6 bg-gray-100 rounded" />
+              <div className="h-32 bg-gray-200 rounded" />
+              <div className="h-4 w-2/3 bg-gray-100 rounded" />
+              <div className="h-10 w-32 bg-gray-200 rounded-full mx-auto" />
+            </div>
+          </div>
+          {/* Right panel */}
+          <div className="w-80 bg-white border-l border-gray-200 p-3 space-y-3">
+            <div className="h-3 w-20 bg-gray-200 rounded mb-4" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i}>
+                <div className="h-3 w-16 bg-gray-200 rounded mb-1" />
+                <div className="h-8 bg-gray-100 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -659,7 +747,8 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
+      <>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {showRestoreBanner && (
@@ -1056,6 +1145,7 @@ if (activeSelectedId) {
         </DialogContent>
       </Dialog>
     </>
+    </DndProvider>
   );
 }
 

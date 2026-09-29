@@ -442,6 +442,136 @@ function OrserduIsiSelectPanel({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// OrseduFooterPanel — fully local state so every keystroke is instant.
+// The store is only updated on blur or Enter, not on every character.
+// ─────────────────────────────────────────────────────────────────────────────
+function OrseduFooterPanel({
+  component,
+  onUpdateComponent,
+}: {
+  component: any;
+  onUpdateComponent: (updates: any) => void;
+}) {
+  const [imageAlt,   setImageAlt]   = useState<string>(component.imageAlt   ?? "");
+  const [reg,        setReg]        = useState<string>(component.footerText?.reg     ?? "");
+  const [year,       setYear]       = useState<string>(component.footerText?.year    ?? "");
+  const [address,    setAddress]    = useState<string>(component.footerText?.address ?? "");
+  const [rights,     setRights]     = useState<string>(component.footerText?.rights  ?? "");
+  const [jobcode,    setJobcode]    = useState<string>(component.footerText?.jobcode ?? "");
+
+  // Sync local state when a different component is selected
+  const compId = component.id;
+  useEffect(() => {
+    setImageAlt(component.imageAlt   ?? "");
+    setReg(component.footerText?.reg     ?? "");
+    setYear(component.footerText?.year    ?? "");
+    setAddress(component.footerText?.address ?? "");
+    setRights(component.footerText?.rights  ?? "");
+    setJobcode(component.footerText?.jobcode ?? "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compId]);
+
+  const commitFooterText = useCallback((field: string, value: string) => {
+    onUpdateComponent({
+      footerText: { ...component.footerText, [field]: value },
+    });
+  }, [component.footerText, onUpdateComponent]);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Upload Image</Label>
+        <ImageUpload
+          currentImage={component.src}
+          onImageUpload={(imageUrl) => onUpdateComponent({ src: imageUrl })}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="orsedu-alt">Alt Text</Label>
+        <Input
+          id="orsedu-alt"
+          value={imageAlt}
+          placeholder="Image description"
+          onChange={(e) => setImageAlt(e.target.value)}
+          onBlur={(e) => onUpdateComponent({ imageAlt: e.target.value })}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onUpdateComponent({ imageAlt: imageAlt }); } }}
+        />
+      </div>
+
+      <div>
+        <Label>Font Size</Label>
+        <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
+      </div>
+
+      <div>
+        <Label>Padding</Label>
+        <PaddingInput value={component.padding || "0 20px 8px 20px"} onChange={(padding) => onUpdateComponent({ padding })} />
+      </div>
+
+      <div className="border rounded-md p-3 space-y-3">
+        <h4 className="font-semibold text-sm text-gray-700">Footer Text</h4>
+
+        <div>
+          <Label className="text-xs text-gray-500">Reg Line</Label>
+          <Input
+            value={reg}
+            placeholder="ORSERDU is a registered trademark..."
+            onChange={(e) => setReg(e.target.value)}
+            onBlur={(e) => commitFooterText("reg", e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitFooterText("reg", reg); } }}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs text-gray-500">Year / Copyright</Label>
+          <Input
+            value={year}
+            placeholder="© 2026 Stemline..."
+            onChange={(e) => setYear(e.target.value)}
+            onBlur={(e) => commitFooterText("year", e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitFooterText("year", year); } }}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs text-gray-500">Address</Label>
+          <Input
+            value={address}
+            placeholder="750 Lexington Ave..."
+            onChange={(e) => setAddress(e.target.value)}
+            onBlur={(e) => commitFooterText("address", e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitFooterText("address", address); } }}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs text-gray-500">Rights</Label>
+          <Input
+            value={rights}
+            placeholder="All rights reserved."
+            onChange={(e) => setRights(e.target.value)}
+            onBlur={(e) => commitFooterText("rights", e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitFooterText("rights", rights); } }}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs text-gray-500">Job Code</Label>
+          <Input
+            value={jobcode}
+            placeholder="0X/2X MAT-US-ELA-00XXX"
+            onChange={(e) => setJobcode(e.target.value)}
+            onBlur={(e) => commitFooterText("jobcode", e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitFooterText("jobcode", jobcode); } }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Ensures value is always a valid 7-char hex string for <input type="color">
 function toHex(value: string): string {
   const cleaned = value?.trim() ?? "";
@@ -1793,6 +1923,16 @@ export function PropertiesPanel({
               <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
 
+            {/* ── Padding (outer — matches email output indentation) ── */}
+            <div className="border-t pt-3">
+              <Label className="mb-1.5 block">Padding</Label>
+              <PaddingInput
+                value={(component as any).padding || "0px 20px 0px 20px"}
+                onChange={(padding) => onUpdateComponent({ padding } as any)}
+              />
+              <p className="text-xs text-gray-400 mt-1">Outer spacing — controls left/right indent (matches email output).</p>
+            </div>
+
             {/* ── Margin — 4-field ── */}
             <div className="border-t pt-3">
               <Label className="mb-1.5 block">Margin</Label>
@@ -2107,27 +2247,11 @@ export function PropertiesPanel({
 
       case "orsedu-footer":
         return (
-          <div className="space-y-4">
-            <div>
-              <Label>Upload Image</Label>
-              <ImageUpload
-                currentImage={component.src}
-                onImageUpload={(imageUrl) =>
-                  onUpdateComponent({ src: imageUrl })
-                }
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="alt">Alt Text</Label>
-              <Input
-                id="alt"
-                value={component.imageAlt || ""}
-                onChange={(e) => onUpdateComponent({ imageAlt: e.target.value })}
-                placeholder="Image description"
-              />
-            </div>
-            </div>);
+          <OrseduFooterPanel
+            component={component}
+            onUpdateComponent={onUpdateComponent}
+          />
+        );
             
       case "orserdu-view-in-browser":
       case "elzonris-view-in-browser":
