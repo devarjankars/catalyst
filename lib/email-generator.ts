@@ -3,13 +3,13 @@ import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 
-function generateComponentHTML(component: EmailComponent): string {
+function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
   switch (component.type) {
     case "section":
       const childrenHTML = (component.children || [])
         .filter((child) => !!child) // Filter out undefined children
-        .map((child) => generateComponentHTML(child))
+        .map((child) => generateComponentHTML(child, pdfMode))
         .join("");
 
       const display = (component.displayType ||
@@ -344,74 +344,75 @@ function generateComponentHTML(component: EmailComponent): string {
       const padding = component.padding || "10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
-      // ── Desktop: all links inline on one row ──────────────────────────────
-      // ── Mobile: 2 links per row, with a hard break after "Unsubscribe" ───
-      //
-      // Approach: render TWO versions and toggle visibility with CSS classes.
-      //   .desk-show-table / .mbl-show-table — media-query driven in the <head>
-      //
-      // This gives perfectly consistent row spacing on mobile because each
-      // mobile row is its own <tr> — no <br> hacks, no unequal line heights.
+      const outerClass = footerDisplay === "mobile-only"
+        ? 'class="mbl-show-table"'
+        : footerDisplay === "desktop-only"
+        ? 'class="desk-show-table"'
+        : "";
+      const cellClass = footerDisplay === "mobile-only"
+        ? 'class="mbl-show-cell"'
+        : footerDisplay === "desktop-only"
+        ? 'class="desk-show-cell"'
+        : "";
 
-      // ── Build desktop inline HTML ─────────────────────────────────────────
-      const desktopLinksHTML = links.map((link, index) => {
+      // ── Mobile layout: 2 links per row ────────────────────────────────────
+      const mobileRows: string[] = [];
+      for (let i = 0; i < links.length; i += 2) {
+        const row = links.slice(i, i + 2);
+        const rowHTML = row.map((link, j) => {
+          const isLast = j === row.length - 1;
+          const linkColor = link.color || color;
+          const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+          return `<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+        }).join("");
+        mobileRows.push(`<tr><td style="padding-bottom:4px;font-family:Arial,sans-serif;">${rowHTML}</td></tr>`);
+      }
+      const mobileHTML = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tbody>${mobileRows.join("")}</tbody></table>`;
+
+      // ── Desktop layout: all links inline ──────────────────────────────────
+      const desktopHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
         const linkColor = link.color || color;
-        const pipeColor = !isLast ? (links[index + 1]?.color || "#000000") : "#000000";
-        const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-        return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+        const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+        return `<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
       }).join("");
 
-      // ── Build mobile rows ─────────────────────────────────────────────────
-      // Group links into rows: 2 per row, but always break after "Unsubscribe"
-      const mobileRows: Array<typeof links> = [];
-      let currentRow: typeof links = [];
-      links.forEach((link) => {
-        currentRow.push(link);
-        const isUnsubscribe = link.text.trim().toLowerCase() === "unsubscribe";
-        const rowFull = currentRow.length === 2;
-        if (rowFull || isUnsubscribe) {
-          mobileRows.push(currentRow);
-          currentRow = [];
-        }
-      });
-      if (currentRow.length > 0) mobileRows.push(currentRow);
+      // In pdfMode we skip show/hide CSS classes entirely and just render
+      // the correct version directly — no dual tables, no toggling needed.
+      if (pdfMode) {
+        const content = pdfMode === 'mobile' ? mobileHTML : desktopHTML;
+        return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${bgColor}"
+      style="background-color:${bgColor};">
+      <tbody><tr>
+        <td bgcolor="${bgColor}" style="padding:${padding};text-align:left;background-color:${bgColor};">
+          <div style="color:${color};font-size:${fontSize};line-height:1.8;font-family:Arial,sans-serif;">
+            ${content}
+          </div>
+        </td>
+      </tr></tbody>
+    </table>`.trim();
+      }
 
-      const mobileRowsHTML = mobileRows.map((row) => {
-        const cellContent = row.map((link, i) => {
-          const isLast = i === row.length - 1;
-          const linkColor = link.color || color;
-          const pipeColor = !isLast ? (row[i + 1]?.color || "#000000") : "#000000";
-          const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-          return `<a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
-        }).join("");
-        // Each row is a <tr> — consistent spacing controlled by line-height alone
-        return `<tr class="mbl-show-tr" style="display:none;">
-          <td align="left" style="color:${color};font-size:${fontSize};line-height:1.8;padding-bottom:2px;">
-            ${cellContent}
-          </td>
-        </tr>`;
-      }).join("");
+      // ── Normal email client output: dual-version with CSS toggling ─────────
+      const mobileRowsCSS = mobileRows
+        .map(r => r.replace('<tr>', '<tr class="mbl-show-tr" style="display:none;">'))
+        .join("\n");
 
       return `
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${bgColor}"
-      style="background-color:${bgColor};${innerStyle ? innerStyle : ""}"
-      ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}>
+      style="background-color:${bgColor};${innerStyle || ""}" ${outerClass}>
       <tbody>
         <tr>
-          <td bgcolor="${bgColor}"
-            style="padding:${padding};text-align:left;background-color:${bgColor};"
-            ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}>
+          <td bgcolor="${bgColor}" style="padding:${padding};text-align:left;background-color:${bgColor};" ${cellClass}>
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tbody>
-                <!-- Desktop: single inline row -->
-                <tr class="desk-show-tr">
-                  <td align="left" style="color:${color};font-size:${fontSize};line-height:1.4;">
-                    ${desktopLinksHTML}
+                <tr class="desk-show-tr" style="display:table-row;">
+                  <td style="font-family:Arial,sans-serif;color:${color};font-size:${fontSize};line-height:1.8;">
+                    ${desktopHTML}
                   </td>
                 </tr>
-                <!-- Mobile: one <tr> per row, consistent spacing -->
-                ${mobileRowsHTML}
+                ${mobileRowsCSS}
               </tbody>
             </table>
           </td>
@@ -1022,16 +1023,14 @@ case "isi": {
       cellspacing="0"
       cellpadding="0"
       border="0"
-      bgcolor="${bg}"
-      style="background-color:${bg};${marginStyle}${innerStyle ? innerStyle : ""}"
+      style="${marginStyle}${innerStyle ? innerStyle : ""}"
       ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
     >
       <tbody>
         <tr>
           <td
-            bgcolor="${bg}"
             ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
-            style="padding:${component.padding || "0px 20px 0px 20px"};background-color:${bg};${innerStyle ? innerStyle : ""}"
+            style="padding:${component.padding || "0px 20px 0px 20px"};${innerStyle ? innerStyle : ""}"
           >
             <table
               bgcolor="${bg}"
@@ -2221,9 +2220,10 @@ return `
 export function generateEmailHTML(
   components: EmailComponent[],
   preHeaderText?: string,
+  pdfMode?: 'desktop' | 'mobile',
 ): string {
   const componentHTML = components
-    .map((component) => generateComponentHTML(component))
+    .map((component) => generateComponentHTML(component, pdfMode))
     .join("");
 
   return `

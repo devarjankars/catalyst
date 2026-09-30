@@ -5,8 +5,6 @@ export const dynamic = 'force-dynamic';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2, HistoryIcon } from "lucide-react";
@@ -747,8 +745,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <>
+    <>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {showRestoreBanner && (
@@ -976,6 +973,22 @@ if (activeSelectedId) {
                     <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
                       {optionSubMode === "header-only" ? "Header only different" : "Completely different"}
                     </span>
+                    {optionSubMode === "completely-different" && (() => {
+                      const { syncFooterFromOption1 } = useEmailBuilderStore.getState()
+                      const FOOTER_TYPES = new Set(['email-footer','footer-with-Preferences','footer-links','footer-links(3)','footer-link-2','footer-link-3','orsedu-footer','footer-tokens'])
+                      const opt2Missing = !option2Components.some((c: any) => FOOTER_TYPES.has(c.type))
+                      const opt3Missing = !option3Components.some((c: any) => FOOTER_TYPES.has(c.type))
+                      if (!opt2Missing && !opt3Missing) return null
+                      return (
+                        <button
+                          onClick={() => { syncFooterFromOption1(); toast.success("Footer copied to missing options") }}
+                          className="text-[11px] text-[#BC2030] hover:underline font-medium"
+                          title="Copy footer components from Option 1 into options that are missing them"
+                        >
+                          + Copy footer from Opt 1
+                        </button>
+                      )
+                    })()}
                   </div>
                   {isHeaderOnlyLocked && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-t border-amber-100 text-xs text-amber-700">
@@ -1145,7 +1158,6 @@ if (activeSelectedId) {
         </DialogContent>
       </Dialog>
     </>
-    </DndProvider>
   );
 }
 

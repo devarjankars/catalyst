@@ -50,8 +50,20 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [activeTab, setActiveTab] = useState<"1" | "2" | "3">("1");
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { currentTemplate, preheaderText, optionMode, option2Components, option3Components } = useEmailBuilderStore();
+  const { currentTemplate, preheaderText, optionMode, option2Components, option3Components, activeOption } = useEmailBuilderStore();
   const isThreeMode = optionMode === "three";
+
+  // When the dialog opens, snap the preview tab to whichever option
+  // the editor is currently on. Manual tab changes while the dialog
+  // is open are preserved — they only reset on the next open.
+  const prevOpen = useRef(false);
+  useEffect(() => {
+    const justOpened = open && !prevOpen.current;
+    prevOpen.current = open;
+    if (justOpened && isThreeMode) {
+      setActiveTab(String(activeOption) as "1" | "2" | "3");
+    }
+  }, [open, isThreeMode, activeOption]);
 
   const getActiveComponents = () => {
     if (!isThreeMode) return components;

@@ -131,7 +131,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         if (!item.fromPalette || isLockedMode) return
 
         const clientOffset = monitor.getClientOffset()
-        const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
+        const canvasEl = (ref as React.RefObject<HTMLDivElement> | null)?.current
         if (!clientOffset || !canvasEl) return
 
         const canvasRect = canvasEl.getBoundingClientRect()

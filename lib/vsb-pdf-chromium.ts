@@ -46,18 +46,44 @@ function stripTargetBlank(html: string): string {
   return html.replace(/\s+target\s*=\s*["']?_blank["']?/gi, '');
 }
 
+/**
+ * Remove any <base href="..."> tags from the HTML.
+ *
+ * WHY: A <base href="http://localhost:3000"> tag silently rewrites every
+ * relative/token href in the document to a localhost URL when Chromium
+ * resolves anchor.href for PDF link annotations. All email links are
+ * already absolute; the base tag is only harmful here.
+ */
+function stripBaseTags(html: string): string {
+  return html.replace(/<base[^>]*>/gi, '');
+}
+
 function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
-  const baseTag = baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : '';
+  // ── No <base href> ────────────────────────────────────────────────────────
+  // A <base href="http://localhost:3000"> would silently rewrite every relative
+  // href (SFMC tokens, "#", path-only URLs) to a localhost dead-link in the PDF.
+  // All email links are absolute — we don't need a base tag.
+  // baseUrl is kept as a parameter for future image-loading use only.
 
   if (spec.columns?.length) {
     const columns = spec.columns.map((column: VsbPdfColumn) => {
       const variantClass = column.variant === 'mobile'
         ? 'pdf-column pdf-column--mobile'
         : 'pdf-column pdf-column--desktop';
-      const parts = extractDocumentParts(stripTargetBlank(column.html));
-      return `<div class="${variantClass}" style="width:${column.width}px;flex:0 0 ${column.width}px;">${parts.styles}${parts.body}</div>`;
+      const parts = extractDocumentParts(stripBaseTags(stripTargetBlank(column.html)));
+      return `<div class="${variantClass}" style="width:${column.width}px;flex:0 0 ${column.width}px;overflow:visible;">${parts.styles}${parts.body}</div>`;
     }).join('');
-    return `<!doctype html><html><head><meta charset="utf-8">${baseTag}<style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
+    const pageHtml = `<!doctype html><html><head><meta charset="utf-8"><style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
+    // Write debug HTML to disk (server-side only)
+    try {
+      const { writeFileSync } = require('fs');
+      const debugPath = process.platform === 'win32' 
+        ? 'C:\\Users\\Public\\vsb-page-debug.html'
+        : '/tmp/vsb-page-debug.html';
+      writeFileSync(debugPath, pageHtml);
+      console.log('[PDF DEBUG] wrote debug HTML to', debugPath);
+    } catch(e) { console.log('[PDF DEBUG] could not write debug file:', e); }
+    return pageHtml;
   }
 
   // Single-page render — wrap in .pdf-column.pdf-column--single so the same
@@ -66,7 +92,7 @@ function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
   const parts  = extractDocumentParts(source);
   const isMobile = (spec.width ?? DEFAULT_WIDTH) === 375;
   const singleVariant = isMobile ? 'pdf-column--mobile' : 'pdf-column--desktop';
-  return `<!doctype html><html><head><meta charset="utf-8">${baseTag}${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body><div class="pdf-column pdf-column--single ${singleVariant}" style="width:${spec.width ?? DEFAULT_WIDTH}px;">${parts.body}</div></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8">${parts.styles}<style>${printStyles(spec.width ?? DEFAULT_WIDTH)}</style></head><body><div class="pdf-column pdf-column--single ${singleVariant}" style="width:${spec.width ?? DEFAULT_WIDTH}px;">${parts.body}</div></body></html>`;
 }
 
 function printStyles(width: number): string {
@@ -138,7 +164,7 @@ function printStyles(width: number): string {
     /* ── Multi-column page layout ────────────────────────────────────────── */
     .pdf-columns {
       display: flex;
-      align-items: flex-start;
+      align-items: stretch;
       padding: 0 24px;
       box-sizing: border-box;
     }
@@ -294,11 +320,33 @@ async function measureContentHeight(page: import('playwright-core').Page): Promi
     // ── Step 3: measure the single-page wrapper.
     if (singleRoot) {
       const rect = singleRoot.getBoundingClientRect();
-      // 10px intentional bottom margin so the outer border is fully visible.
-      return Math.ceil(Math.max(1, rect.height + 10));
+      // 60px safety margin so the outer border and last content row are fully visible.
+      return Math.ceil(Math.max(1, rect.height + 60));
     }
 
-    // ── Step 4: multi-column pages — body-scan fallback.
+    // ── Step 4: multi-column pages — measure each column individually ─────
+    // align-items:stretch means the container grows to the tallest column,
+    // but getBoundingClientRect().bottom on the body may still under-report
+    // if content overflows. Measure each .pdf-column separately and use max.
+    const columns = Array.from(document.querySelectorAll<HTMLElement>('.pdf-column'));
+    if (columns.length > 0) {
+      const colBottoms = columns.map((col) =>
+        Array.from(col.querySelectorAll<HTMLElement>('*')).reduce(
+          (colMax, el) => Math.max(colMax, el.getBoundingClientRect().bottom),
+          col.getBoundingClientRect().bottom
+        )
+      );
+      // Store per-column data for server-side logging
+      (window as any).__pdfColBottoms = colBottoms;
+      const maxBottom = Math.max(...colBottoms);
+      const bodyTop = document.body.getBoundingClientRect().top;
+      // Add 80px safety margin — Chromium clips at the exact @page height,
+      // rounding errors and font metrics can push content slightly below
+      // the measured bottom.
+      return Math.ceil(Math.max(1, maxBottom - bodyTop + 80));
+    }
+
+    // fallback: full body scan
     const bodyRect = document.body.getBoundingClientRect();
     const bottom = Array.from(document.body.querySelectorAll<HTMLElement>('*')).reduce(
       (max, element) => Math.max(max, element.getBoundingClientRect().bottom),
@@ -358,7 +406,10 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
 
     for (const spec of pages) {
       const width = Math.max(spec.pageWidth ?? spec.width ?? DEFAULT_WIDTH, 1);
-      const measureTab = await browser.newPage({ viewport: { width, height: 800 } });
+      // Use a very tall viewport so ALL content is within bounds during measurement.
+      // getBoundingClientRect() returns incorrect bottom values for elements
+      // that are below the viewport fold — using 20000px ensures everything renders.
+      const measureTab = await browser.newPage({ viewport: { width, height: MAX_PAGE_HEIGHT } });
       try {
         await measureTab.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
         await waitForAssets(measureTab);
@@ -370,6 +421,9 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
         }
         const contentHeight = spec.pageHeight ?? await measureContentHeight(measureTab);
         const height = Math.min(Math.max(contentHeight, 1), MAX_PAGE_HEIGHT);
+        // Log per-column heights if available
+        const colBottoms = await measureTab.evaluate(() => (window as any).__pdfColBottoms as number[] | undefined);
+        console.log(`[PDF] page ${pageMeasurements.length + 1}: ${width}×${height}px (${spec.columns?.length ?? 1} col(s)) colBottoms=${JSON.stringify(colBottoms)}`);
         pageMeasurements.push({ width, height });
       } finally {
         await measureTab.close();
@@ -430,14 +484,12 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
 <html>
 <head>
   <meta charset="utf-8">
-  ${baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : ''}
   <style>
     @page { margin: 0; size: ${width}px ${height}px; }
     html, body {
       margin: 0;
       padding: 0;
       width: ${width}px;
-      height: ${height}px;
       background: #fff;
     }
     body {
@@ -486,20 +538,21 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
      * .mbl-show-table / .deskDisp / .mbDisp etc. When the combined document
      * is wider than the media query breakpoint these rules don't fire, but
      * the base display:none rules DO fire, hiding whole sections (and their
-     * links). Force all such visibility-toggle classes to visible so every
-     * element that contains a link is visible to Chromium's PDF renderer.
-     * This only affects the PDF output — the email HTML itself is not changed.
+     * links). Force desk-show-* classes visible (desktop PDF), keep mbl-show-*
+     * hidden so mobile-only rows don't duplicate on desktop.
+     * Mobile columns inject their own override via mobileOverrideStyle in the
+     * VSB page builder which is already in each column's <head>.
      */
-    .desk-show-table,
-    .mbl-show-table  { display: table  !important; }
-    .desk-show-tr,
-    .mbl-show-tr     { display: table-row  !important; }
-    .desk-show-cell,
-    .mbl-show-cell   { display: table-cell !important; }
-    .deskDisp        { display: table  !important; }
-    .mbDisp          { display: table  !important; }
+    .desk-show-table { display: table       !important; }
+    .desk-show-tr    { display: table-row   !important; }
+    .desk-show-cell  { display: table-cell  !important; }
+    .mbl-show-table  { display: none        !important; }
+    .mbl-show-tr     { display: none        !important; }
+    .mbl-show-cell   { display: none        !important; }
+    .deskDisp        { display: table       !important; }
+    .mbDisp          { display: none        !important; }
     .desktop         { display: inline-block !important; }
-    .mobile          { display: inline-block !important; }
+    .mobile          { display: none        !important; }
   </style>
   ${styleTexts.length ? `<style>${styleTexts.join('\n')}</style>` : ''}
 </head>
@@ -508,7 +561,7 @@ ${bodyContent}
 </body>
 </html>`;
 
-      const page = await browser.newPage({ viewport: { width, height } });
+      const page = await browser.newPage({ viewport: { width, height: MAX_PAGE_HEIGHT } });
       let pagePdf!: Buffer;
 
     try {
@@ -534,6 +587,36 @@ ${bodyContent}
       // For text anchors (view-in-browser, ISI links): ensure visibility and
       // remove any stray target="_blank".
       await page.evaluate(() => {
+        // ── Determine which responsive variant each column uses ──────────────
+        // For single-page exports the wrapper is .pdf-column--single plus
+        // either .pdf-column--mobile or .pdf-column--desktop.
+        // For multi-column VSB pages every column has one of those two classes.
+        // We use this to decide which show/hide class to treat as "intentionally
+        // hidden" — the inactive variant must never be un-hidden by the link pass.
+        //
+        // hiddenClassSets maps each column element → the set of class substrings
+        // that are intentionally hidden IN THAT COLUMN.
+        const columns = Array.from(document.querySelectorAll<HTMLElement>('.pdf-column'));
+        const hiddenClassMap = new Map<HTMLElement, string[]>();
+        columns.forEach((col) => {
+          const isMobileCol = col.classList.contains('pdf-column--mobile');
+          // In a mobile column the desktop rows are intentionally hidden;
+          // in a desktop column the mobile rows are intentionally hidden.
+          hiddenClassMap.set(col, isMobileCol
+            ? ['desk-show-tr', 'desk-show-table', 'desk-show-cell', 'deskDisp']
+            : ['mbl-show-tr',  'mbl-show-table',  'mbl-show-cell',  'mbDisp']);
+        });
+
+        // Returns the column ancestor of el, or null if not inside a .pdf-column.
+        function getColumn(el: HTMLElement): HTMLElement | null {
+          let cur: HTMLElement | null = el;
+          while (cur && cur !== document.body) {
+            if (cur.classList.contains('pdf-column')) return cur;
+            cur = cur.parentElement;
+          }
+          return null;
+        }
+
         const allAnchors = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href]'));
         allAnchors.forEach((anchor) => {
           // ── 1. Remove target="_blank" at DOM level (safety net) ───────────
@@ -541,11 +624,51 @@ ${bodyContent}
             anchor.removeAttribute('target');
           }
 
+          // ── 1b. Normalize href ────────────────────────────────────────────
+          // Chromium uses the DOM-resolved href (anchor.href) for annotations,
+          // not the raw attribute. Without a <base> tag, relative URLs become
+          // "about:blank" references. We normalise in-place on the attribute so
+          // Chromium picks up the correct destination.
+          const rawHref = anchor.getAttribute('href') || '';
+          const normalizedHref = (() => {
+            // SFMC merge tags (%%...%%) — keep verbatim, Chromium will preserve
+            // them as opaque strings in the annotation URI.
+            if (rawHref.includes('%%') || rawHref.includes('{{')) return rawHref;
+            // Already a recognised absolute protocol — keep as-is
+            if (/^(https?|mailto|tel|ftp):\/\//i.test(rawHref)) return rawHref;
+            // Placeholder — skip annotation (no useful destination)
+            if (rawHref === '#' || rawHref === '' || rawHref === 'javascript:void(0)') return null;
+            // Protocol-relative (//example.com) → https
+            if (rawHref.startsWith('//')) return 'https:' + rawHref;
+            // www. without protocol → https://
+            if (/^www\./i.test(rawHref)) return 'https://' + rawHref;
+            // Absolute path (/page) — leave as-is; without a base tag Chromium
+            // will treat it as relative to about:blank. Flag with a comment but
+            // don't guess the host.
+            return rawHref;
+          })();
+          if (normalizedHref === null) {
+            // Remove the href so Chromium doesn't create a dead annotation
+            anchor.removeAttribute('href');
+            return; // skip further processing for this anchor
+          }
+          if (normalizedHref !== rawHref) {
+            anchor.setAttribute('href', normalizedHref);
+          }
+
           // ── 2. Un-hide entire ancestor chain ─────────────────────────────
+          // Skip elements that are intentionally hidden for this render mode
+          // (the inactive responsive variant must stay hidden).
+          const col = getColumn(anchor);
+          const hiddenClasses = col ? (hiddenClassMap.get(col) ?? []) : [];
+
           let el: HTMLElement | null = anchor.parentElement;
           while (el && el !== document.body) {
             const cs = window.getComputedStyle(el);
-            if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.01) {
+            const cls = typeof el.className === 'string' ? el.className : '';
+            // Skip if this element belongs to the inactive responsive variant
+            const isInactiveVariant = hiddenClasses.some((c) => cls.includes(c));
+            if (!isInactiveVariant && (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.01)) {
               el.style.setProperty('display',    'block',   'important');
               el.style.setProperty('visibility', 'visible', 'important');
               el.style.setProperty('opacity',    '1',       'important');

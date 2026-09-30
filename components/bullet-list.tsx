@@ -98,7 +98,6 @@ function BulletList({
     <div
       style={{
         marginTop: '5px',
-        backgroundColor: bg,
         margin: (component as any).margin || undefined,
         padding: outerPadding,
         boxSizing: 'border-box',

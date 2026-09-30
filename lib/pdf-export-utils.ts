@@ -34,9 +34,15 @@ export async function exportToPDF(
         // mobile/desktop CSS injected by the preview modal's buildHtml().
         const rawHtml = iframeDoc.documentElement.outerHTML
 
+        // Remove any <base href> from the serialised HTML.
+        // A base tag pointing to the app origin (e.g. http://localhost:3000)
+        // causes Chromium to rewrite all email link hrefs to localhost,
+        // making every link a dead annotation in the PDF.
+        const htmlWithoutBase = rawHtml.replace(/<base[^>]*>/gi, '')
+
         // Normalise the body tag so the server-side renderer knows the exact
         // pixel width to use.  This mirrors what the VSB path does.
-        const normalizedHtml = rawHtml.replace(
+        const normalizedHtml = htmlWithoutBase.replace(
             /<body([^>]*)>/i,
             (_match: string, attrs: string) => {
                 const existingStyle = attrs.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2] || ''

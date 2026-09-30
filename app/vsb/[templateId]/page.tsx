@@ -48,6 +48,10 @@ export default function VSBPage() {
   const templateId = params.templateId as string;
   const { vsbs, currentVsb, fetchVSBs, createVSB, updateVSB, deleteVSB, duplicateVSB, setCurrentVsb, loading, error, hasUnsavedChanges, saveVSB } = useVSBStore();
   const { currentTemplate, loadTemplateImages } = useEmailBuilderStore();
+  // Read live option components from store state — these may differ from
+  // currentTemplate.option2/3Components if ensureThreeOptions has run
+  const storeOpt2 = useEmailBuilderStore(s => s.option2Components);
+  const storeOpt3 = useEmailBuilderStore(s => s.option3Components);
 
   const [activeSection, setActiveSection] = useState<SectionType>('Variable Copy');
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -97,17 +101,39 @@ export default function VSBPage() {
     const isThreeMode = currentTemplate?.optionMode === 'three';
     const headerDetails = currentVsb?.headerDetails || [];
 
-    // imageOptionTitle is the label shown centered above each desktop emailer.
-    // No dedicated field exists on EmailTemplate, so it is derived from the
-    // option index.  Format matches the manual reference PDF:
-    //   "Option 1 - Image Option 1", "Option 2 - Image Option 2", etc.
+    // Link-footer types — the ones that carry the 5-link row.
+    const LINK_FOOTER_TYPES = new Set([
+      'email-footer', 'footer-with-Preferences', 'footer-links',
+      'footer-links(3)', 'footer-link-2', 'footer-link-3', 'footer-link',
+    ]);
+
+    const opt1Components  = currentTemplate?.components || [];
+    const opt1LinkFooters = opt1Components.filter((c: any) => LINK_FOOTER_TYPES.has(c.type));
+
+    const ensureFooters = (comps: any[]): any[] => {
+      if (!opt1LinkFooters.length) return comps;
+      const withoutLinkFooter = comps.filter((c: any) => !LINK_FOOTER_TYPES.has(c.type));
+      const cloned = opt1LinkFooters.map((c: any) => ({
+        ...c,
+        displayType: 'all',
+        id: `${c.id}-pdf-${Math.random().toString(36).slice(2, 8)}`,
+      }));
+      return [...withoutLinkFooter, ...cloned];
+    };
+
+    // Use live store state for option 2/3 — currentTemplate.option2Components
+    // may be stale (raw Firebase data) while the store may have been updated by
+    // ensureThreeOptions. Prefer store state, fall back to currentTemplate.
+    const live2 = storeOpt2.length > 0 ? storeOpt2 : (currentTemplate?.option2Components || []);
+    const live3 = storeOpt3.length > 0 ? storeOpt3 : (currentTemplate?.option3Components || []);
+
     const optArray = isThreeMode
       ? [
-          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: currentTemplate?.components        || [] },
-          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: currentTemplate?.option2Components || [] },
-          { title: 'Option 3', imageOptionTitle: 'Option 3 - Image Option 3', components: currentTemplate?.option3Components || [] },
+          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: ensureFooters(opt1Components) },
+          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: ensureFooters(live2) },
+          { title: 'Option 3', imageOptionTitle: 'Option 3 - Image Option 3', components: ensureFooters(live3) },
         ]
-      : [{ title: 'Standard View', imageOptionTitle: '', components: currentTemplate?.components || [] }];
+      : [{ title: 'Standard View', imageOptionTitle: '', components: ensureFooters(opt1Components) }];
 
     // ── Header block ──────────────────────────────────────────────────────────
     // label       : the left-aligned label used for mobile (e.g. "Mobile View - Option 1")
@@ -169,16 +195,24 @@ export default function VSBPage() {
     );
 
     const desktopHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'desktop');
       const normalized = normalizeEmailHtml(raw, 600);
-      // Pass imageOptionTitle as centerLabel so the title box is centered in
-      // its 600px column.  Mobile does not use a centerLabel — its title is
-      // left-aligned like the metadata beneath it.
       return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`, false, opt.imageOptionTitle || `Desktop View - ${opt.title}`));
     });
 
-    const mobileHtmls = optArray.map(opt => {
-      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '');
+    const mobileHtmls = optArray.map((opt, idx) => {
+      const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'mobile');
+      // Write each option's raw HTML for debugging
+      if (typeof window === 'undefined') {
+        try {
+          const fs = require('fs');
+          const path = process.platform === 'win32'
+            ? `C:\\Users\\Public\\mobile-opt${idx+1}.html`
+            : `/tmp/mobile-opt${idx+1}.html`;
+          fs.writeFileSync(path, raw);
+          console.log(`[PDF] wrote ${path}`);
+        } catch(e) {}
+      }
       const normalized = normalizeEmailHtml(raw, 375);
 
       // ── Force mobile media-query rules unconditionally ──────────────────────

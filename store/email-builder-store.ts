@@ -100,6 +100,7 @@ interface EmailBuilderState {
   setActiveComponents: (components: EmailComponent[]) => void
   initializeOptions: (base: EmailComponent[]) => void
   syncBodyFromOption1: () => void
+  syncFooterFromOption1: () => void
   ensureThreeOptions: () => void
   markComponentsSaved: () => void
   applyOptionConfiguration: (config: {
@@ -342,6 +343,40 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           set({ 
             option2Components: syncBody(option2Components),
             option3Components: syncBody(option3Components)
+          })
+          get().checkForChanges()
+        },
+
+        // Copies only footer/shared components from Option 1 into whichever
+        // option is currently missing them. "Footer" types are components that
+        // appear after the last body section — email-footer, footer-with-Preferences,
+        // footer-links, footer-links(3), footer-link-2, footer-link-3, orsedu-footer, etc.
+        syncFooterFromOption1: () => {
+          const FOOTER_TYPES = new Set([
+            'email-footer', 'footer-with-Preferences', 'footer-links',
+            'footer-links(3)', 'footer-link-2', 'footer-link-3',
+            'footer-with-preferences', 'orsedu-footer', 'footer-link',
+            'footer-tokens', 'footer-with-Preferences',
+          ])
+          const { components, option2Components, option3Components } = get()
+
+          const cloneComp = (c: EmailComponent): EmailComponent => ({
+            ...c,
+            id: `${c.id}-copy-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            children: c.children ? c.children.map(cloneComp) : undefined,
+          })
+
+          const footersFromOption1 = components.filter(c => FOOTER_TYPES.has(c.type))
+
+          const addMissingFooters = (target: EmailComponent[]) => {
+            const hasFooter = target.some(c => FOOTER_TYPES.has(c.type))
+            if (hasFooter) return target
+            return [...target, ...footersFromOption1.map(cloneComp)]
+          }
+
+          set({
+            option2Components: addMissingFooters(option2Components),
+            option3Components: addMissingFooters(option3Components),
           })
           get().checkForChanges()
         },
