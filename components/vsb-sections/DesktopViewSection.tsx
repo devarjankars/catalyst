@@ -1,6 +1,7 @@
 "use client"
 
 import { generateEmailHTML } from '@/lib/email-generator';
+import { normalizeHtmlImageSrcs } from '@/lib/asset-url';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { useVSBStore } from '@/store/vsb-store';
 import React, { useState } from 'react';
@@ -36,6 +37,8 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   // Generate HTML and insert header for each option
   const htmls = options.map(opt => {
     const rawHtml = generateEmailHTML(opt.components, preheader);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const normalizedHtml = origin ? normalizeHtmlImageSrcs(rawHtml, origin) : rawHtml;
     
     const headerHtml = `
       <div>
@@ -57,10 +60,10 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
       </div>
     `;
 
-    let finalHtml = rawHtml;
-    const firstDivEnd = rawHtml.indexOf('</div>');
+    let finalHtml = normalizedHtml;
+    const firstDivEnd = normalizedHtml.indexOf('</div>');
     if (firstDivEnd !== -1) {
-      finalHtml = rawHtml.slice(0, firstDivEnd + 6) + headerHtml + rawHtml.slice(firstDivEnd + 6);
+      finalHtml = normalizedHtml.slice(0, firstDivEnd + 6) + headerHtml + normalizedHtml.slice(firstDivEnd + 6);
     }
     return finalHtml;
   });

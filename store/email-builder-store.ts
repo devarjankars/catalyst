@@ -145,6 +145,7 @@ interface EmailBuilderState {
   // State management
   setLoading: (loading: boolean) => void
   setSaving: (saving: boolean) => void
+  renameTemplate: (name: string) => void
   markAsNewTemplate: () => void
   resetComponentChanges: () => void
   clearAll: () => void
@@ -807,6 +808,11 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         // State management
         setLoading: (loading) => set({ loading }),
         setSaving: (saving) => set({ saving }),
+        renameTemplate: (name) => {
+          const { currentTemplate } = get()
+          if (!currentTemplate) return
+          set({ currentTemplate: { ...currentTemplate, name }, hasComponentChanges: true })
+        },
 
         markAsNewTemplate: () => {
           set({

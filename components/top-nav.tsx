@@ -1,12 +1,12 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLoggedInUserStore } from "@/store/logged-in-user";
 import { FileText, LogOut, Home, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BrandSelectionModal, type Brand } from "./brand-selection-modal";
+import { BrandSelectionModal, BRANDS, type Brand } from "./brand-selection-modal";
 
 const menus = [
   { name: "Home", href: "/", icon: Home },
@@ -22,6 +22,9 @@ export default function TopNav() {
   const [mlrDialogStep, setMlrDialogStep] = useState<'idle' | 'connecting' | 'redirecting' | 'success' | 'error'>('idle');
   const [mlrDialogMessage, setMlrDialogMessage] = useState('Preparing the MLR connection...');
   const [brandModalOpen, setBrandModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const rawBrand = searchParams.get("brand") ?? "";
+  const currentBrand = (BRANDS.some((b) => b.id === rawBrand) ? rawBrand : "orserdu") as Brand;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -88,6 +91,10 @@ export default function TopNav() {
     router.push(`/dashboard?brand=${brand}`);
   }
 
+  function handleEmailBuilderClick() {
+    setBrandModalOpen(true);
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
@@ -120,7 +127,7 @@ export default function TopNav() {
 
           <button
             type="button"
-            onClick={() => setBrandModalOpen(true)}
+            onClick={handleEmailBuilderClick}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
               isDashboardActive ? "bg-[#BC2030] text-white" : "text-slate-700 hover:bg-gray-100"
             }`}
@@ -197,6 +204,7 @@ export default function TopNav() {
         open={brandModalOpen}
         onOpenChange={setBrandModalOpen}
         onSelect={handleBrandSelect}
+        currentBrand={currentBrand}
       />
     </>
   );

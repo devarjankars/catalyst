@@ -765,6 +765,70 @@ class FirebaseService {
       },
     ];
   }
+  private versionsCollection = "email-versions";
+
+  // ── Version History ────────────────────────────────────────────────────────
+
+  async getVersions(templateId: string): Promise<import("@/types/template").EmailVersion[]> {
+    if (!this.isFirebaseAvailable) return [];
+    try {
+      const q = query(
+        collection(db, this.versionsCollection),
+        orderBy("versionNumber", "asc")
+      );
+      const snap = await getDocs(q);
+      const all: import("@/types/template").EmailVersion[] = [];
+      snap.forEach((d) => {
+        const data = d.data();
+        if (data.templateId === templateId) {
+          all.push({
+            id: d.id,
+            ...data,
+            createdAt: parseDate(data.createdAt),
+          } as import("@/types/template").EmailVersion);
+        }
+      });
+      return all;
+    } catch (e) {
+      console.error("getVersions failed:", e);
+      return [];
+    }
+  }
+
+  async createVersion(
+    version: Omit<import("@/types/template").EmailVersion, "id">
+  ): Promise<import("@/types/template").EmailVersion | null> {
+    if (!this.isFirebaseAvailable) return null;
+    try {
+      const clean = removeUndefinedDeep({ ...version, createdAt: new Date() });
+      const ref2 = await addDoc(collection(db, this.versionsCollection), clean);
+      // Also stamp currentVersionId on the parent template
+      await updateDoc(doc(db, this.templatesCollection, version.templateId), {
+        currentVersionId: ref2.id,
+        updatedAt: new Date(),
+      });
+      return { id: ref2.id, ...version, createdAt: new Date() };
+    } catch (e) {
+      console.error("createVersion failed:", e);
+      return null;
+    }
+  }
+
+  async getVersion(
+    versionId: string
+  ): Promise<import("@/types/template").EmailVersion | null> {
+    if (!this.isFirebaseAvailable) return null;
+    try {
+      const snap = await getDoc(doc(db, this.versionsCollection, versionId));
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      return { id: snap.id, ...data, createdAt: parseDate(data.createdAt) } as import("@/types/template").EmailVersion;
+    } catch (e) {
+      console.error("getVersion failed:", e);
+      return null;
+    }
+  }
+
   // VSB Operations
   async getVSBs(templateId: string): Promise<any[]> {
     if (!this.isFirebaseAvailable) return [];

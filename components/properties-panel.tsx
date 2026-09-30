@@ -12,7 +12,7 @@ import {
 import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers } from "lucide-react";
 import PaddingInput from "./padding -inputs";
@@ -85,6 +85,24 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
     onChange(normalised);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") {
+      if (e.key === "Enter") { e.preventDefault(); commit(local); }
+      return;
+    }
+    e.preventDefault();
+    const m = local.trim().match(/^(-?[\d.]+)(px|pt|rem|em|%)?$/i);
+    if (!m) return;
+    const num = parseFloat(m[1]);
+    const unit = m[2] || "px";
+    const step = e.shiftKey ? 10 : 1;
+    const next = Math.max(0, num + (e.key === "ArrowUp" ? step : -step));
+    const formatted = `${next}${unit}`;
+    setLocal(formatted);
+    setError("");
+    onChange(formatted);
+  };
+
   return (
     <div className="space-y-1">
       <Input
@@ -93,7 +111,7 @@ function FontSizeInput({ value, onChange }: { value: string; onChange: (v: strin
         placeholder="e.g. 10px"
         onChange={(e) => { setLocal(e.target.value); setError(""); }}
         onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(local); } }}
+        onKeyDown={handleKeyDown}
       />
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
@@ -196,6 +214,15 @@ function LineHeightInput({ value, onChange }: { value: string; onChange: (v: str
             const nextValue = event.target.value;
             setCustomValue(nextValue ? `${nextValue}px` : "");
             if (nextValue) onChange(`${nextValue}px`);
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+            e.preventDefault();
+            const cur = parseInt(customValue, 10) || 0;
+            const step = e.shiftKey ? 10 : 1;
+            const next = Math.max(8, cur + (e.key === "ArrowUp" ? step : -step));
+            setCustomValue(`${next}px`);
+            onChange(`${next}px`);
           }}
           className="w-[90px]"
           placeholder="px"
@@ -1082,13 +1109,9 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="salutationLineHeight">Line Height</Label>
-              <Input
-                id="salutationLineHeight"
-                type="text"
+              <FontSizeInput
                 value={component.lineHeight || "18px"}
-                onChange={(e) =>
-                  onUpdateComponent({ lineHeight: e.target.value })
-                }
+                onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
             </div>
           </div>
@@ -1147,13 +1170,9 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="lineHeight">Line Height</Label>
-              <Input
-                id="lineHeight"
-                type="text"
+              <FontSizeInput
                 value={component.lineHeight || "18px"}
-                onChange={(e) =>
-                  onUpdateComponent({ lineHeight: e.target.value })
-                }
+                onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
             </div>
             <div>

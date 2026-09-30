@@ -2,6 +2,7 @@ import type { EmailComponent } from "@/types/email-builder";
 import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
+import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 
 function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
@@ -1274,6 +1275,31 @@ case "isi": {
         font-family: Arial, sans-serif;
         
       `.trim();
+
+      // Resolve the footer logo to an absolute URL.
+      // DEFAULT_ORSERDU_FOOTER_LOGO is the canonical fallback (/menarini-stemline-logos.png).
+      // resolveEmailAssetUrl converts root-relative paths to absolute using
+      // NEXT_PUBLIC_EMAIL_ASSET_BASE_URL (production) or leaves them root-relative
+      // for canvas/preview (where the browser resolves them against the app origin).
+      const rawSrc = component.src || DEFAULT_ORSERDU_FOOTER_LOGO;
+      const imgSrc = resolveEmailAssetUrl(rawSrc);
+      const imgRow = imgSrc ? `
+        <tr>
+          <td 
+         ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+          align="left"  
+          style="padding: ${component.padding || "0 0 0 17px"}; ${innerStyle || ""}; mso-line-height-rule: exactly;" 
+          width="${(component.width || "200").toString().replace("px", "")}">
+            <img
+              width="${(component.width || "200").toString().replace("px", "")}"
+              src="${imgSrc}"
+              alt="${component.imageAlt || ""}"
+              border="0"
+              style="width: ${component.width || "200px"}; height: ${component.height || "auto"}; display: block; max-width: 100%;"
+            />
+          </td>
+        </tr>` : "";
+
       return `
         <table
           role="presentation"
@@ -1290,26 +1316,7 @@ case "isi": {
           <tr>
             <td width="100%" height="20" style=" font-size: 0px; line-height: 20px; mso-line-height-rule: exactly; ">&nbsp; </td>
         </tr>
-            <tr>
-          <td 
-         ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""}
-          align="left"  
-          style="padding: ${component.padding || "0 0 0 17px"}; ${innerStyle || ""}; mso-line-height-rule: exactly;" 
-          width="${(component.width || "200").toString().replace("px", "")}">
-            <img
-              width="${(component.width || "200").toString().replace("px", "")}"
-              src="${component.src || "/header-placeholder.png"}"
-              alt="${component.imageAlt || "Header Image"}"
-              border="0"
-              style="
-                width: ${component.width || "200px"};
-                height: ${component.height || "auto"};
-                display: block;
-                max-width: 100%;
-                "
-            />
-          </td>
-        </tr>
+            ${imgRow}
         <tr>
             <td width="100%" height="15" style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">&nbsp; </td>
         </tr>

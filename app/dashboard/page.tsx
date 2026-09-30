@@ -1,381 +1,403 @@
-﻿"use client"
+"use client"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-import { useState, useEffect, useMemo , lazy , Suspense, use } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Filter, Calendar, ChevronRight, PlusCircle, PlusIcon, Users } from "lucide-react"
-import { TemplateCard } from "@/components/template-card"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import type { EmailTemplate, BrandId } from "@/types/template"
-import { firebaseService } from "@/services/firebase-service"
-import CreateProjectDialog from "@/components/create-project"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useMemo } from "react"
 import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card"
-import {useClientStore} from "@/store/client-store"
-import Link from "next/link"
-import Tasktable from "@/components/task-table"
-import { useLoggedInUserStore } from "@/store/logged-in-user"
-import dummyTasks from "@/data/dummy-tasks.json"
+  Plus, ChevronDown, Mail, Layers, LayoutTemplate,
+  Clock, ArrowRight, Loader2, Check,
+} from "lucide-react"
 import { BrandSelectionModal, BRANDS, type Brand } from "@/components/brand-selection-modal"
+import { useClient } from "@/lib/use-client"
+import { firebaseService } from "@/services/firebase-service"
+import type { EmailTemplate } from "@/types/template"
 import { matchesBrand } from "@/lib/brand-filter"
+import { useLoggedInUserStore } from "@/store/logged-in-user"
 
-const RecentTemplates = lazy(() => import("@/components/recent-templates"));
-const StandardTemplates = lazy(() => import("@/components/standard-templates"))
-export default function Dashboard() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  // Brand selected on the landing page is forwarded as ?brand=<id>
-  const selectedBrand = (searchParams.get("brand") || "orserdu") as BrandId
-  const activeBrandConfig = BRANDS.find(b => b.id === selectedBrand)
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
-  const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [userName , setUserName] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedclients, setSelectedclients] = useState<string>("elzonris");
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
-    open: false,
-    template: null,
-  })
-  const [showAll, setShowAll] = useState(false);
-  const [openCreate , setCreate] = useState(false);
-  const [brandModalOpen, setBrandModalOpen] = useState(false);
- const {clientsFolders} = useClientStore(); 
- const displayedFolders = showAll ? clientsFolders : clientsFolders.slice(0, 6);
+// ── Category metadata ────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: "rte",       label: "RTE",       description: "Ready-to-execute emailers",           color: "#BC2030", bg: "#fff5f5" },
+  { id: "sfmc",      label: "SFMC",      description: "Salesforce Marketing Cloud",          color: "#7e22ce", bg: "#faf5ff" },
+  { id: "unbranded", label: "Unbranded", description: "Disease-state / unbranded emails",    color: "#1a56db", bg: "#eff6ff" },
+  { id: "other",     label: "Other",     description: "Miscellaneous emailers",              color: "#374151", bg: "#f9fafb" },
+] as const
 
-  // const categories = [
-  //   { id: "all", label: "All Templates", count: 0 },
-  //   { id: "rte", label: "RTE", count: 0 },
-  //   { id: "sfmc", label: "SFMC", count: 0 },
-  //   { id: "unbranded", label: "Unbranded", count: 0 },
-  //   { id: "other", label: "Other", count: 0 },
-  // ]
+type CategoryId = typeof CATEGORIES[number]["id"]
 
-
-  const {userEmail , userRole, userPermissions} = useLoggedInUserStore();
-  // console.log("khdhwjh "  + userEmail);
-  
-// console.log(templates)
-  useEffect(() => {
-    loadTemplates();
-    setUserName(() => getFirstNameFromEmail(userEmail));
-  }, [])
-
-  useEffect(() => {
-    filterTemplates();
-  }, [templates, searchQuery, selectedCategory, selectedBrand])
-
-
-  function getFirstNameFromEmail(email : string | null): string {
-  if (!email || !email.includes("@")) return "";
-
-  const localPart = email.split("@")[0];
-
-  const firstName = localPart
-    .split(/[._-]/)[0]
-    .replace(/[^a-zA-Z]/g, "");
-
-  return firstName.charAt(0).toUpperCase() + firstName.slice(1);
+// ── Greeting helper ──────────────────────────────────────────────────────────
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return "Good morning"
+  if (h < 17) return "Good afternoon"
+  return "Good evening"
 }
 
-  const loadTemplates = async () => {
-    setLoading(true)
-    try {
-      const loadedTemplates = await firebaseService.getAllTemplates()
-      setTemplates(loadedTemplates)
-      // ── Temporary debug: print all templates to browser console ──
-      console.table(
-        loadedTemplates.map(t => ({
-          id: t.id,
-          name: t.name,
-          brand: (t as any).brand ?? '(no brand)',
-          isUserCreated: t.isUserCreated ?? false,
-          category: t.category,
-        }))
+// ── Mini template card ───────────────────────────────────────────────────────
+function MiniCard({
+  template,
+  accent,
+  onEdit,
+  onUse,
+}: {
+  template: EmailTemplate
+  accent: string
+  onEdit: () => void
+  onUse: () => void
+}) {
+  const cat = CATEGORIES.find((c) => c.id === template.category)
+  const updated = template.updatedAt
+    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+        template.updatedAt instanceof Date ? template.updatedAt : new Date(template.updatedAt)
       )
-    } catch (error) {
-      console.error("Failed to load templates:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    : "—"
 
-  
-  
-
-  const filterTemplates = () => {
-    let filtered = templates.filter((template) => matchesBrand(template, selectedBrand))
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((template) => template.category === selectedCategory)
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(
-        (template) =>
-          template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          template.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    }
-
-    setFilteredTemplates(filtered)
-  }
-
-  const getCategoryCount = (categoryId: string) => {
-    const brandTemplates = templates.filter((template) => matchesBrand(template, selectedBrand))
-    if (categoryId === "all") return brandTemplates.length
-    return brandTemplates.filter((template) => template.category === categoryId).length
-  }
-
-  const handleCreateBlank = () => {
-    router.push(`/builder?selectMode=true&brand=${selectedBrand}`);
-  }
-
-  const handleBrandSelect = (brand: Brand) => {
-    setBrandModalOpen(false);
-    router.push(`/dashboard?brand=${brand}`);
-  };
-
-  const handleUseTemplate = async (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&copy=true&keepImages=true&name=${encodeURIComponent(template.name)}&selectMode=true&brand=${selectedBrand}`)
-  }
-
-  const handleEditTemplate = (template: EmailTemplate) => {
-    router.push(`/builder?template=${template.id}&edit=true&brand=${selectedBrand}`)
-  }
-
-  const handleDeleteTemplate = async (template: EmailTemplate) => {
-    try {
-      await firebaseService.deleteTemplate(template.id)
-      setTemplates((prev) => prev.filter((t) => t.id !== template.id))
-      setDeleteDialog({ open: false, template: null })
-    } catch (error) {
-      console.error("Failed to delete template:", error)
-      alert("Failed to delete template. Please try again.")
-    }
-  }
-
-  const handleDuplicateTemplate = async (template: EmailTemplate) => {
-    try {
-      const duplicated = await firebaseService.duplicateTemplate(template.id)
-      setTemplates((prev) => [duplicated, ...prev])
-    } catch (error) {
-      console.error("Failed to duplicate template:", error)
-      alert("Failed to duplicate template. Please try again.")
-    }
-  }
-
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-  //       <LoadingSpinner message="Loading your email templates..." />
-  //     </div>
-  //   )
-  // }
-   const handleCreate = () => {
-    setCreate(true)
-  };
-  const handleFolderView = () => {
-    router.push('/dashboard/folders');
-  }
-  const handlestandardTemps = () => {
-    router.push('/dashboard/standard-templates');
-  }
-  const handleRecentTemps = () => {
-    router.push(`/dashboard/templates?brand=${selectedBrand}`);
-  }
-  const handleTaskview = () => {
-    router.push('/dashboard/tasks');
-  }
   return (
-    <div className="max-h-screen bg-gray-50 grid grid-rows-[auto 1fr]">
+    <div
+      className="group relative flex flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:border-gray-200"
+      style={{ ["--accent" as any]: accent }}
+    >
+      {/* Accent top bar */}
+      <div className="h-1 w-full" style={{ backgroundColor: accent }} />
 
-      {/* <div className="sticky top-4 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border rounded-lg bg-[linear-gradient(168deg,rgba(255,160,162,1)_0%,rgba(255,239,239,1)_100%)]" >
-          <div className="flex flex-col items-start">
-            <div className="mb-5">
-             
-              <p className="text-lg text-[#101828] font-semibold">Create and manage your email templates</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-8 w-full">
-              <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search by client name, category, type etc"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-2/3 rounded-full"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Filter by category</span>
-            </div>
-           
-           {(userRole === "superadmin" || userRole === "admin") && <Button onClick={handleCreate}  className="flex items-center gap-2 rounded-full px-6">
-              <Plus className="w-4 h-4" />
-              Create Project
-            </Button>}
-          </div>
-            
-          </div>
-        </div>
-      </div> */}
-    <div className="overflow-y-auto">
-      <div className="max-w-7xl h-full mx-auto py-8">
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          {/* <div className="tasksList">
-            <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">My Tasks</h1>
-              <span role="button" className="text-sm text-[#155DFC]" onClick={handleTaskview}>view all</span>
-            </div>
-            <div className="tasks">
-              <Tasktable tasks={dummyTasks.tasks.slice(0,2)}/>
-            </div>
-          </div> */}
-          {/* <div className="projectFolders">
-            <div className="header flex justify-between">
-              <h1 className="font-bold mb-4">Project Folders</h1>
-              <span role="button" className="text-sm text-[#155DFC]" onClick={handleFolderView}>view all</span>
-            </div>
-             <div className="projects grid grid-cols-3 gap-4">
-              {displayedFolders.map(client =>
-                  <Link key={client.id} className="inline-block rounded-2xl" href={`/dashboard/folders/${client.id}`}>
-                  <Card className="relative">
-                  <CardContent className="flex items-center gap-3 py-3">
-                    <div className="logo w-12 h-12 rounded-full shadow-md"><img className="w-full h-auto" src={client.clientlogo} alt="" /></div>
-                    <div className="title font-bold">{client.label}</div>
-                  </CardContent>
-                  <CardFooter className="text-[#717182] text-xs flex gap-2 items-center py-3">
-                   <Calendar className="w-3" /> Created {client.createddate}
-                  </CardFooter>
-                  <ChevronRight className="absolute h-[20px] top-[calc(50%-10px)] right-2 text-[#717182]" />
-                </Card>
-                </Link> )}  
-             </div>
+      <div className="p-4 flex flex-col flex-1 gap-3">
+        {/* Category chip */}
+        {cat && (
+          <span
+            className="self-start text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: cat.bg, color: cat.color }}
+          >
+            {cat.label}
+          </span>
+        )}
 
-             
-          </div> */}
-          
-          <div className="StandardTemps">
-          <div className="header flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <h1 className="font-bold">Standard Templates</h1>
-                {activeBrandConfig && (
-                  <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: activeBrandConfig.iconBg, color: activeBrandConfig.accentColor }}
-                  >
-                    <span
-                      className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
-                      style={{ backgroundColor: activeBrandConfig.accentColor, color: "#fff" }}
-                    >
-                      {activeBrandConfig.symbol}
-                    </span>
-                    {activeBrandConfig.label}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setBrandModalOpen(true)}
-                  className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  <Users className="h-4 w-4" />
-                  Switch Client
-                </button>
-                <button onClick={handleCreateBlank} className="flex items-center gap-2 bg-[#BC2030] text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-black transition-colors">
-                  Create New Email
-                  <PlusIcon className="w-4 h-4" />
-                </button>
-                <span role="button" className="text-sm text-[#155DFC]" onClick={handlestandardTemps}>View all</span>
-              </div>
-            </div>
-          <div className="templates">
-            <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
-              <StandardTemplates
-                temps={templates}
-                handleUseTemplate={handleUseTemplate}
-                handleEditTemplate={handleEditTemplate}
-                setDeleteDialog={setDeleteDialog}
-                handleDuplicateTemplate={handleDuplicateTemplate}
-                handleCreateBlank={handleCreateBlank}
-                loading={loading}
-                selectedBrand={selectedBrand}
-              />
-          </Suspense>
-            </div> 
-          </div>
-
-          <div className="recentTemps">
-          <div className="header flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <h1 className="font-bold">Recent Emailers</h1>
-                {activeBrandConfig && (
-                  <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: activeBrandConfig.iconBg, color: activeBrandConfig.accentColor }}
-                  >
-                    <span
-                      className="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold"
-                      style={{ backgroundColor: activeBrandConfig.accentColor, color: "#fff" }}
-                    >
-                      {activeBrandConfig.symbol}
-                    </span>
-                    {activeBrandConfig.label}
-                  </span>
-                )}
-              </div>
-              <span role="button" className="text-sm text-[#155DFC]" onClick={handleRecentTemps}>View all</span>
-            </div>
-          <div className="templates">
-           <Suspense fallback={<LoadingSpinner message="Loading your email templates..." />}>
-           <RecentTemplates
-             temps={templates}
-             handleUseTemplate={handleUseTemplate}
-             handleEditTemplate={handleEditTemplate}
-             setDeleteDialog={setDeleteDialog}
-             handleDuplicateTemplate={handleDuplicateTemplate}
-             handleCreateBlank={handleCreateBlank}
-             loading={loading}
-             selectedBrand={selectedBrand}
-           />
-           </Suspense>
-            </div> 
-          </div>
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">
+            {template.name}
+          </h4>
+          {template.description && (
+            <p className="text-xs text-gray-400 mt-1 line-clamp-2">{template.description}</p>
+          )}
         </div>
 
-        
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+          <span className="text-[11px] text-gray-400 flex items-center gap-1">
+            <Clock className="w-3 h-3" /> {updated}
+          </span>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            {template.isUserCreated && (
+              <button
+                onClick={onEdit}
+                className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              onClick={onUse}
+              className="text-[11px] font-medium px-2.5 py-1 rounded-lg text-white transition-colors"
+              style={{ backgroundColor: accent }}
+            >
+              Open
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmDialog
-        open={deleteDialog.open}
-        template={deleteDialog.template}
-        onConfirm={() => deleteDialog.template && handleDeleteTemplate(deleteDialog.template)}
-        onCancel={() => setDeleteDialog({ open: false, template: null })}
-      />
-     <CreateProjectDialog onOpen={openCreate} onClose={() => setCreate(false)}/>
-     <BrandSelectionModal
-       open={brandModalOpen}
-       onOpenChange={setBrandModalOpen}
-       onSelect={handleBrandSelect}
-     />
     </div>
   )
 }
 
+// ── Empty state ──────────────────────────────────────────────────────────────
+function EmptyState({
+  label,
+  accent,
+  onCreateNew,
+}: {
+  label: string
+  accent: string
+  onCreateNew: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ backgroundColor: accent + "15" }}
+      >
+        <Mail className="w-7 h-7" style={{ color: accent }} />
+      </div>
+      <h3 className="text-base font-semibold text-gray-800 mb-1">
+        No {label} emailers yet
+      </h3>
+      <p className="text-sm text-gray-400 mb-5 max-w-xs">
+        Create your first email for this client to get started.
+      </p>
+      <button
+        onClick={onCreateNew}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+        style={{ backgroundColor: accent }}
+      >
+        <Plus className="w-4 h-4" /> Create first emailer
+      </button>
+    </div>
+  )
+}
+
+// ── Main dashboard ───────────────────────────────────────────────────────────
+export default function Dashboard() {
+  const router = useRouter()
+  const { clientId, client } = useClient()
+  const { userEmail } = useLoggedInUserStore()
+
+  const [brandModalOpen, setBrandModalOpen] = useState(false)
+  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Load all user-created templates once; filter client-side
+  useEffect(() => {
+    setLoading(true)
+    firebaseService
+      .getAllTemplates()
+      .then((all) =>
+        setTemplates(
+          all
+            .filter((t) => t.isUserCreated)
+            .sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0))
+        )
+      )
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Re-filter whenever the client changes (no extra fetch needed)
+  const clientTemplates = useMemo(
+    () => templates.filter((t) => matchesBrand(t, clientId)),
+    [templates, clientId]
+  )
+
+  const recentTemplates = useMemo(() => clientTemplates.slice(0, 8), [clientTemplates])
+
+  const countByCategory = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const t of clientTemplates) {
+      map[t.category] = (map[t.category] ?? 0) + 1
+    }
+    return map
+  }, [clientTemplates])
+
+  const handleBrandSelect = (brand: Brand) => {
+    setBrandModalOpen(false)
+    router.push(`/dashboard?brand=${brand}`)
+  }
+
+  const handleCreateNew = () =>
+    router.push(`/builder?selectMode=true&brand=${clientId}`)
+
+  const handleEdit = (t: EmailTemplate) =>
+    router.push(`/builder?template=${t.id}&edit=true&brand=${clientId}`)
+
+  const handleUse = (t: EmailTemplate) =>
+    router.push(
+      `/builder?template=${t.id}&copy=true&keepImages=true&name=${encodeURIComponent(t.name)}&selectMode=true&brand=${clientId}`
+    )
+
+  const handleViewAll = () =>
+    router.push(`/dashboard/templates?brand=${clientId}`)
+
+  const handleViewCategory = (catId: string) =>
+    router.push(`/dashboard/templates/category/${catId}?brand=${clientId}`)
+
+  const name = userEmail?.split("@")[0] ?? "there"
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: "#f7f7f5" }}>
+      {/* ── Workspace header ──────────────────────────────────────────── */}
+      <div className="bg-white border-b border-gray-100 px-6 py-5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Greeting */}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              {greeting()}, {name}.
+            </h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              Manage approved email experiences for your client.
+            </p>
+          </div>
+
+          {/* Right: client switcher + create */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Client pill */}
+            <button
+              onClick={() => setBrandModalOpen(true)}
+              className="flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-semibold transition-all hover:shadow-md active:scale-95"
+              style={{
+                borderColor: client.accentColor,
+                backgroundColor: client.iconBg,
+                color: client.accentColor,
+              }}
+              aria-label="Switch client"
+            >
+              <span
+                className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                style={{ backgroundColor: client.accentColor }}
+              >
+                {client.symbol}
+              </span>
+              {client.label}
+              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+            </button>
+
+            {/* Create new email */}
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 shadow-sm"
+              style={{ backgroundColor: client.accentColor }}
+            >
+              <Plus className="h-4 w-4" />
+              Create New Email
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Body ──────────────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+        {/* ── Standard templates shortcut ───────────────────────────── */}
+        <section>
+          <button
+            onClick={() => router.push(`/dashboard/standard-templates?brand=${clientId}`)}
+            className="w-full flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-6 py-5 transition-all duration-200 hover:shadow-md hover:border-gray-200 group"
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: client.iconBg }}
+              >
+                <LayoutTemplate className="w-5 h-5" style={{ color: client.accentColor }} />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Standard Templates</p>
+                <p className="text-xs text-gray-400">
+                  Pre-built starting points for new emailers
+                </p>
+              </div>
+            </div>
+            <ArrowRight
+              className="w-4 h-4 text-gray-300 transition-transform duration-150 group-hover:translate-x-0.5"
+              style={{ color: client.accentColor }}
+            />
+          </button>
+        </section>
+
+        {/* ── Category modules ──────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Layers className="w-4 h-4 text-gray-400" />
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+              Categories
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {CATEGORIES.map(({ id, label, description, color, bg }) => {
+              const count = countByCategory[id] ?? 0
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleViewCategory(id)}
+                  className="group text-left rounded-2xl border border-gray-100 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-200 focus:outline-none focus-visible:ring-2"
+                  style={{ ["--ring-color" as any]: color }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                    style={{ backgroundColor: bg }}
+                  >
+                    <Mail className="w-4 h-4" style={{ color }} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 mb-3">{description}</p>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: bg, color }}
+                    >
+                      {count} email{count !== 1 ? "s" : ""}
+                    </span>
+                    <ArrowRight
+                      className="w-3.5 h-3.5 text-gray-300 transition-transform duration-150 group-hover:translate-x-0.5"
+                      style={{ color }}
+                    />
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── Recent emailers ───────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                Recent Emailers
+              </h2>
+              {!loading && (
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: client.iconBg, color: client.accentColor }}
+                >
+                  {clientTemplates.length}
+                </span>
+              )}
+            </div>
+            {clientTemplates.length > 0 && (
+              <button
+                onClick={handleViewAll}
+                className="flex items-center gap-1 text-xs font-semibold transition-colors hover:opacity-80"
+                style={{ color: client.accentColor }}
+              >
+                View all <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-gray-400">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              <span className="text-sm">Loading emailers…</span>
+            </div>
+          ) : clientTemplates.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100">
+              <EmptyState
+                label={client.label}
+                accent={client.accentColor}
+                onCreateNew={handleCreateNew}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {recentTemplates.map((t) => (
+                <MiniCard
+                  key={t.id}
+                  template={t}
+                  accent={client.accentColor}
+                  onEdit={() => handleEdit(t)}
+                  onUse={() => handleUse(t)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+      </div>
+
+      {/* ── Client selector modal ─────────────────────────────────────── */}
+      <BrandSelectionModal
+        open={brandModalOpen}
+        onOpenChange={setBrandModalOpen}
+        onSelect={handleBrandSelect}
+        currentBrand={clientId}
+      />
+    </div>
+  )
+}

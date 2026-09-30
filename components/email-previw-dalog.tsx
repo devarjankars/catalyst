@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { EmailComponent } from "@/types/email-builder";
 import { generateEmailHTML } from "@/lib/email-generator";
-import { Monitor, Smartphone, Upload, Sun, Moon } from "lucide-react";
+import { Monitor, Smartphone, Upload, Sun, Moon, Loader2 } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +38,11 @@ const MOBILE_CSS = `
 
 function buildHtml(components: EmailComponent[], preheaderText: string | undefined, dark: boolean, mobile = false): string {
   const base = generateEmailHTML(components, preheaderText);
-  let result = base;
+  // Inject a <base href> so relative /public-folder image paths resolve
+  // correctly inside the sandboxed preview iframe.
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseTag = origin ? `<base href="${origin}/">` : '';
+  let result = base.replace('<head>', `<head>${baseTag}`);
   if (mobile) result = result.replace("</head>", `<style>${MOBILE_CSS}</style></head>`);
   if (dark)   result = result.replace("</head>", `<style>${DARK_CSS}</style></head>`);
   return result;
@@ -168,7 +172,9 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
 
               {!dark && (
                 <Button variant="default" onClick={handlePDFExport} disabled={isExportingPDF}>
-                  <Upload className={`h-4 w-4 mr-1.5 ${isExportingPDF ? "animate-pulse" : ""}`} />
+                  {isExportingPDF
+                    ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    : <Upload className="h-4 w-4 mr-1.5" />}
                   {isExportingPDF ? "Exporting..." : "Export PDF"}
                 </Button>
               )}
@@ -188,7 +194,14 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
           </div>
         )}
 
-        <div className={`w-full flex-1 flex items-start justify-center overflow-auto p-6 ${dark ? "bg-[#1e1e1e]" : "bg-gray-100"}`}>
+        <div className={`relative w-full flex-1 flex items-start justify-center overflow-auto p-6 ${dark ? "bg-[#1e1e1e]" : "bg-gray-100"}`}>
+          {isExportingPDF && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+              <Loader2 className="h-10 w-10 animate-spin text-gray-700 mb-3" />
+              <p className="text-sm font-medium text-gray-700">Generating PDF…</p>
+              <p className="text-xs text-gray-400 mt-1">This may take a few seconds</p>
+            </div>
+          )}
           <iframe
             ref={iframeRef}
             title="Email Preview"

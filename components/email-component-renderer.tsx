@@ -20,6 +20,7 @@ import { se } from "date-fns/locale";
 import { firebaseService } from "@/services/firebase-service";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { toast } from "sonner";
+import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -1155,7 +1156,7 @@ export function EmailComponentRenderer({
         return (
           <div style={baseStyle} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">
             <img
-              src={component.src || "/footer-logo-a.png"}
+              src={component.src || DEFAULT_ORSERDU_FOOTER_LOGO}
               alt={component.imageAlt || component.alt || "Footer Image"}
               style={{
                 width: component.width || "100%",

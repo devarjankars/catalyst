@@ -7,14 +7,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2, HistoryIcon } from "lucide-react";
+import { Eye, ArrowLeft, Save, FileText, RotateCcw, Lock, LayoutTemplate, Undo2, Redo2, HistoryIcon, Pencil, Check, X, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import { toast } from "sonner";
 import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
-import { matchesBrand } from "@/lib/brand-filter";
+import { matchesBrand } from "@/lib/brand-filter"
+import type { EmailVersion } from "@/types/template"
+import { useLoggedInUserStore } from "@/store/logged-in-user";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
 const EmailCanvas = nextDynamic(
@@ -132,6 +134,39 @@ export default function EmailBuilder() {
   } = useEmailBuilderStore();
 
   const addComponentToOption = useEmailBuilderStore((s) => s.addComponentToOption);
+  const renameTemplate = useEmailBuilderStore((s) => s.renameTemplate);
+
+  // ── Inline rename state ───────────────────────────────────────────────────
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const startRename = () => {
+    setRenameValue(currentTemplate?.name || workingCopySource?.name || "Untitled");
+    setIsRenaming(true);
+    setTimeout(() => renameInputRef.current?.select(), 0);
+  };
+
+  const commitRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== currentTemplate?.name) {
+      renameTemplate(trimmed);
+      toast.success("Project renamed");
+    }
+    setIsRenaming(false);
+  };
+
+  const cancelRename = () => setIsRenaming(false);
+
+  // ── Version history state ─────────────────────────────────────────────────
+  const [showVersionPanel, setShowVersionPanel] = useState(false);
+  const [rightTab, setRightTab] = useState<'properties' | 'versions'>('properties');
+  const [versions, setVersions] = useState<EmailVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [activeVersionId, setActiveVersionId] = useState<string | null>(null);
+  const [showCreateVersionModal, setShowCreateVersionModal] = useState(false);
+  const [versionChangeNote, setVersionChangeNote] = useState("");
+  const [savingVersion, setSavingVersion] = useState(false);
 
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
   const [unsavedDialog, setUnsavedDialog] = useState(false);
@@ -186,6 +221,54 @@ export default function EmailBuilder() {
       | "header-only"
       | "completely-different"
       | null;
+    const restoreVersionId = searchParams.get("restoreVersion");
+
+    // ── Restore a specific saved version into the editor ─────────────────
+    if (restoreVersionId && templateId) {
+      (async () => {
+        setLoading(true);
+        try {
+          const [template, version] = await Promise.all([
+            firebaseService.getTemplate(templateId),
+            firebaseService.getVersion(restoreVersionId),
+          ]);
+          if (template && version) {
+            // Load the live template as the working context but override
+            // its components with the version snapshot
+            setCurrentTemplate(template);
+            setOriginalTemplate(template);
+            setComponents(version.components || []);
+            setOriginalComponents(version.components || []);
+            if (version.optionMode === "three") {
+              // Apply option config from version
+              applyOptionConfiguration({
+                mode: "three",
+                subMode: version.optionSubMode || "header-only",
+              });
+              // Load option2 and option3 components from version
+              useEmailBuilderStore.setState({
+                option2Components: version.option2Components || [],
+                option3Components: version.option3Components || [],
+                originalOption2Components: version.option2Components || [],
+                originalOption3Components: version.option3Components || [],
+              });
+            }
+            toast.success(`v${version.versionNumber} loaded — save to create a new version`);
+            // Load version list for this template
+            loadVersions(templateId);
+          }
+        } finally {
+          setLoading(false);
+        }
+        const getCustomComponents = async () => {
+          const cc = await firebaseService.getCustomComponents();
+          loadCustomComponents(cc);
+        };
+        getCustomComponents();
+        loadTemplateImages(templateId);
+      })();
+      return;
+    }
 
     if (selectMode && !isEdit) {
       setModeDialogOpen(true);
@@ -340,6 +423,8 @@ function replaceImagesInComponents(components: any[]): any[] {
               subMode: optionOverrides.optionSubMode,
             });
           }
+          // Load version history for edit mode
+          loadVersions(template.id);
         } else {
           startWorkingCopy(templateWithPlaceholders, optionOverrides);
         }
@@ -368,6 +453,75 @@ function replaceImagesInComponents(components: any[]): any[] {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── Version history functions ─────────────────────────────────────────────
+  const loadVersions = useCallback(async (tId: string) => {
+    setVersionsLoading(true);
+    const vlist = await firebaseService.getVersions(tId);
+    setVersions(vlist);
+    setVersionsLoading(false);
+  }, []);
+
+  const handleCreateVersion = async () => {
+    if (!currentTemplate) return;
+    setSavingVersion(true);
+    try {
+      const { generateEmailHTML } = await import("@/lib/email-generator");
+      const html1 = generateEmailHTML(components, preheaderText);
+      const html2 = optionMode === "three" ? generateEmailHTML(option2Components, preheaderText) : undefined;
+      const html3 = optionMode === "three" ? generateEmailHTML(option3Components, preheaderText) : undefined;
+      const nextNum = (versions.length || 0) + 1;
+      const userEmail = useLoggedInUserStore.getState().userEmail;
+      const v = await firebaseService.createVersion({
+        templateId: currentTemplate.id,
+        versionNumber: nextNum,
+        changeNote: versionChangeNote.trim() || `Version ${nextNum}`,
+        createdBy: userEmail || "",
+        components: components,
+        option2Components: option2Components || [],
+        option3Components: option3Components || [],
+        optionMode: optionMode || "single",
+        optionSubMode: optionSubMode || "header-only",
+        preheaderText: preheaderText || "",
+        name: currentTemplate.name,
+        description: currentTemplate.description || "",
+        category: currentTemplate.category,
+        brand: currentTemplate.brand,
+        sourceHtml: html1,
+        sourceHtml2: html2,
+        sourceHtml3: html3,
+      });
+      if (v) {
+        setVersions((prev) => [...prev, v]);
+        setActiveVersionId(v.id);
+        toast.success(`v${nextNum} saved`);
+        setShowCreateVersionModal(false);
+        setVersionChangeNote("");
+      }
+    } finally {
+      setSavingVersion(false);
+    }
+  };
+
+  const handleViewVersion = (v: EmailVersion) => {
+    setActiveVersionId(v.id);
+    // Load version components onto the canvas (read-only preview)
+    setComponents(v.components || []);
+    if (v.optionMode === "three") {
+      useEmailBuilderStore.setState({
+        option2Components: v.option2Components || [],
+        option3Components: v.option3Components || [],
+      });
+    }
+    toast.info(`Viewing v${v.versionNumber}`);
+  };
+
+  const handleBackToCurrentDraft = () => {
+    if (!currentTemplate) return;
+    setActiveVersionId(null);
+    // Restore current template state
+    setCurrentTemplate(currentTemplate);
   };
 
   const handleBackToDashboard = () => {
@@ -775,135 +929,152 @@ if (activeSelectedId) {
           </div>
         )}
         {/* Header - sticky */}
-        <div className="bg-white border-b border-gray-200 shadow-sm px-5 py-0 flex items-center justify-between sticky top-0 z-30 h-14">
-          <div className="flex items-center gap-3">
+        <div className="bg-white border-b border-gray-200 shadow-sm px-4 py-0 flex items-center justify-between sticky top-0 z-30 h-12 gap-3">
+          {/* Left: back + breadcrumb */}
+          <div className="flex items-center gap-1.5 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBackToDashboard}
-              className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full px-3"
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md h-7 px-2 text-xs shrink-0"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Back</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
             </Button>
-            <div className="h-5 w-px bg-gray-200" />
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold text-gray-900 max-w-[260px] truncate">
-                {getHeaderTitle()}
-              </h1>
-              {hasComponentChanges && (
-                <span className="text-[11px] bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full font-medium">
-                  Unsaved changes
+
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+
+            {/* Category breadcrumb */}
+            <span className="text-xs text-gray-400 shrink-0 capitalize">
+              {selectedBrand === "elzonris" ? "Elzonris" : selectedBrand === "ferring" ? "Ferring" : selectedBrand === "idorsia" ? "Idorsia" : "Orserdu"}
+            </span>
+
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+
+            {/* Inline rename */}
+            {isRenaming ? (
+              <div className="flex items-center gap-1">
+                <input
+                  ref={renameInputRef}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitRename();
+                    if (e.key === "Escape") cancelRename();
+                  }}
+                  onBlur={commitRename}
+                  className="h-6 rounded border border-blue-400 bg-white px-2 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-400 min-w-[140px] max-w-[260px]"
+                  autoFocus
+                />
+                <button onClick={commitRename} className="text-green-600 hover:text-green-700 p-0.5"><Check className="w-3.5 h-3.5" /></button>
+                <button onClick={cancelRename} className="text-gray-400 hover:text-gray-600 p-0.5"><X className="w-3.5 h-3.5" /></button>
+              </div>
+            ) : (
+              <button
+                onClick={startRename}
+                className="group flex items-center gap-1.5 rounded px-1.5 py-0.5 hover:bg-gray-100 transition-colors min-w-0"
+                title="Rename project"
+              >
+                <span className="text-xs font-semibold text-gray-800 truncate max-w-[200px]">
+                  {currentTemplate?.name || workingCopySource?.name || "Untitled"}
                 </span>
-              )}
-              {hasUnsavedTemplate && !hasComponentChanges && (
-                <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
-                  Draft
-                </span>
-              )}
-              {isWorkingCopy && (
-                <span className="text-[11px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-medium">
-                  Working copy
-                </span>
-              )}
-            </div>
+                <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </button>
+            )}
+
+            {/* Status badges */}
+            {hasComponentChanges && (
+              <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">Unsaved</span>
+            )}
+            {isWorkingCopy && (
+              <span className="text-[10px] bg-purple-50 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">Copy</span>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => undo()}
-              disabled={past.length === 0}
-              title="Undo (Ctrl+Z)"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs disabled:opacity-40"
-            >
+          {/* Right: actions */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => undo()} disabled={past.length === 0}
+              title="Undo (Ctrl+Z)" className="h-7 w-7 p-0 text-gray-500 hover:text-gray-800 disabled:opacity-30">
               <Undo2 className="w-3.5 h-3.5" />
-              Undo
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => redo()}
-              disabled={future.length === 0}
-              title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs disabled:opacity-40"
-            >
+            <Button variant="ghost" size="sm" onClick={() => redo()} disabled={future.length === 0}
+              title="Redo (Ctrl+Shift+Z)" className="h-7 w-7 p-0 text-gray-500 hover:text-gray-800 disabled:opacity-30">
               <Redo2 className="w-3.5 h-3.5" />
-              Redo
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1.5 text-gray-600 rounded-full h-8 px-3 text-xs"
+            <div className="h-4 w-px bg-gray-200" />
+
+            {/* Version history toggle */}
+            {currentTemplate && isEdit && (
+              <>
+                <Button
+                  variant={showVersionPanel ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setShowVersionPanel((v) => !v)}
+                  title="Version History"
+                  className={`h-7 px-2.5 text-xs rounded-md flex items-center gap-1.5 ${
+                    showVersionPanel
+                      ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  <HistoryIcon className="w-3.5 h-3.5" />
+                  History
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowCreateVersionModal(true)}
+                  className="h-7 px-2.5 text-xs rounded-md border-amber-300 text-amber-700 hover:bg-amber-50 flex items-center gap-1.5">
+                  <Save className="w-3 h-3" />
+                  Save Version
+                </Button>
+                <div className="h-4 w-px bg-gray-200" />
+              </>
+            )}
+
+            <Button variant="outline" size="sm"
+              className="h-7 px-2.5 text-xs rounded-md flex items-center gap-1.5 text-gray-600"
               disabled={loading || saving}
               onClick={async () => {
                 const id = currentTemplate?.id || savedTemplateId;
                 if (!id || hasUnsavedTemplate || isWorkingCopy || isNewTemplate) {
-                  setCreateVsbAfterSave(true);
-                  setSaveTemplateDialog(true);
-                  return;
+                  setCreateVsbAfterSave(true); setSaveTemplateDialog(true); return;
                 }
                 if (hasComponentChanges && !(await handleSaveComponentChanges())) return;
                 router.push(`/vsb/${id}`);
               }}
             >
               <LayoutTemplate className="w-3.5 h-3.5" />
-              Create VSB
+              VSB
             </Button>
 
             {hasComponentChanges && !isWorkingCopy && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={resetComponentChanges}
-                className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 rounded-full h-8 px-3 text-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" onClick={resetComponentChanges}
+                className="h-7 px-2.5 text-xs rounded-md text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+                <RotateCcw className="w-3 h-3" />
                 Reset
               </Button>
             )}
 
             {canSaveComponentChanges && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSaveComponentChanges}
-                disabled={saving}
-                className="flex items-center gap-1.5 rounded-full h-8 px-3 text-xs border-gray-300"
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600" />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" />
-                    Save changes
-                  </>
-                )}
+              <Button variant="outline" size="sm" onClick={handleSaveComponentChanges} disabled={saving}
+                className="h-7 px-2.5 text-xs rounded-md border-gray-300 flex items-center gap-1.5">
+                {saving ? <><div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600" />Saving…</> : <><Save className="w-3 h-3" />Save</>}
               </Button>
             )}
 
-            <Button
-              size="sm"
+            <Button size="sm"
               variant={needsTemplateSave ? "default" : "outline"}
               onClick={() => setSaveTemplateDialog(true)}
-              className={`flex items-center gap-1.5 rounded-full h-8 px-3 text-xs ${needsTemplateSave ? "bg-[#BC2030] hover:bg-[#a01c29] text-white border-0" : "border-gray-300"}`}
+              className={`h-7 px-2.5 text-xs rounded-md flex items-center gap-1.5 ${
+                needsTemplateSave ? "bg-[#BC2030] hover:bg-[#a01c29] text-white border-0" : "border-gray-300"
+              }`}
             >
-              <FileText className="w-3.5 h-3.5" />
-              {currentTemplate && !isNewTemplate && !isWorkingCopy ? "Update email" : "Save email"}
+              <FileText className="w-3 h-3" />
+              {currentTemplate && !isNewTemplate && !isWorkingCopy ? "Update" : "Save"}
             </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setOpenPreview(true)}
-              className="flex items-center gap-1.5 rounded-full h-8 px-3 text-xs border-gray-300"
-            >
-              <Eye className="w-3.5 h-3.5" />
+            <Button size="sm" variant="outline" onClick={() => setOpenPreview(true)}
+              className="h-7 px-2.5 text-xs rounded-md border-gray-300 flex items-center gap-1.5">
+              <Eye className="w-3 h-3" />
               Preview
             </Button>
 
@@ -945,6 +1116,21 @@ if (activeSelectedId) {
               e.stopPropagation()
               setSelectedComponent(null)
             }}>
+
+            {/* Version indicator banner */}
+            {activeVersionId && currentTemplate && (
+              <div className="w-full max-w-[600px] mb-3 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm">
+                <span className="text-amber-800 font-medium">
+                  {currentTemplate.name} &nbsp;·&nbsp; Viewing v{versions.find((v) => v.id === activeVersionId)?.versionNumber ?? "?"}
+                </span>
+                <button
+                  onClick={handleBackToCurrentDraft}
+                  className="text-amber-700 hover:text-amber-900 hover:underline text-xs font-medium"
+                >
+                  ← Back to current
+                </button>
+              </div>
+            )}
 
             {optionMode === "three" && (
               <div className="mb-5 w-full max-w-[600px] sticky top-0 z-20 pt-4 pb-3 bg-[#f0f2f5]">
@@ -1021,7 +1207,7 @@ if (activeSelectedId) {
                 previewMode={previewMode}
                 duplicateComponent={duplicateComponent}
                 addComponent={addComponent}
-                isLockedMode={isHeaderOnlyLocked}
+                isLockedMode={isHeaderOnlyLocked || !!activeVersionId}
                 showCopyToOption={
                   optionMode === "three" && optionSubMode === "completely-different" && !!selectedComponent
                 }
@@ -1037,26 +1223,218 @@ if (activeSelectedId) {
             </div>
           </div>
 
-          {/* Right Panel: Properties */}
-          {!previewMode && selectedComponent && (
-            <div className="w-72 bg-white border-l border-gray-200 flex flex-col overflow-y-auto">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Properties</h4>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3">
-                <PropertiesPanel
-                  component={selectedComponentData}
-                  onUpdateComponent={(updates) => {
-                    if (!activeSelectedId) return;
-                    debouncedUpdateComponent(updates);
-                  }}
-                  onSaveAsCustom={(name) => saveAsCustomComponent(name)}
-                />
-              </div>
+          {/* Right Panel: unified Properties + Versions */}
+          {!previewMode && (selectedComponent || showVersionPanel) && (
+            <div className="w-[272px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
+
+              {/* Tab bar â€” only when version panel toggled on */}
+              {showVersionPanel ? (
+                <div className="flex border-b border-gray-100 shrink-0">
+                  {(["properties", "versions"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setRightTab(tab)}
+                      className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                        rightTab === tab
+                          ? "text-gray-900 border-b-2 border-blue-500"
+                          : "text-gray-400 hover:text-gray-700"
+                      }`}
+                    >
+                      {tab === "properties" ? "Properties" : "Versions"}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
+                  <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
+                </div>
+              )}
+
+              {/* Properties tab */}
+              {(!showVersionPanel || rightTab === "properties") && (
+                <div className="flex-1 overflow-y-auto">
+                  {/* File Details */}
+                  {currentTemplate && (
+                    <div className="px-3 pt-3 pb-2 border-b border-gray-100">
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">File</p>
+                      <div className="flex items-center gap-1.5">
+                        {isRenaming ? (
+                          <>
+                            <input
+                              ref={renameInputRef}
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") cancelRename(); }}
+                              onBlur={commitRename}
+                              className="flex-1 h-6 rounded border border-blue-400 bg-white px-2 text-xs font-medium text-gray-900 focus:outline-none"
+                              autoFocus
+                            />
+                            <button onClick={commitRename} className="text-green-600 p-0.5"><Check className="w-3 h-3" /></button>
+                            <button onClick={cancelRename} className="text-gray-400 p-0.5"><X className="w-3 h-3" /></button>
+                          </>
+                        ) : (
+                          <button onClick={startRename} className="group flex items-center gap-1 min-w-0 flex-1">
+                            <span className="text-xs font-medium text-gray-800 truncate">{currentTemplate.name}</span>
+                            <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 shrink-0" />
+                          </button>
+                        )}
+                      </div>
+                      {currentTemplate.category && (
+                        <p className="text-[10px] text-gray-400 mt-1 capitalize">{currentTemplate.category} Â· {currentTemplate.brand || "â€”"}</p>
+                      )}
+                    </div>
+                  )}
+                  {selectedComponent ? (
+                    <div className="p-3">
+                      <PropertiesPanel
+                        component={selectedComponentData}
+                        onUpdateComponent={(updates) => {
+                          if (!activeSelectedId) return;
+                          debouncedUpdateComponent(updates);
+                        }}
+                        onSaveAsCustom={(name) => saveAsCustomComponent(name)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 ring-1 ring-gray-200 flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <p className="text-xs text-gray-400">Select a component to edit its properties</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Versions tab */}
+              {showVersionPanel && rightTab === "versions" && (
+                <div className="flex-1 overflow-y-auto">
+                  {versionsLoading ? (
+                    <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500" />
+                      <span className="text-xs">Loadingâ€¦</span>
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <HistoryIcon className="w-7 h-7 mx-auto mb-2 text-gray-300" />
+                      <p className="text-xs text-gray-400">No versions yet.</p>
+                      <p className="text-[11px] text-gray-400 mt-1">Click "Save Version" to snapshot the current state.</p>
+                    </div>
+                  ) : (
+                    <div className="p-2 space-y-1.5">
+                      {[...versions].reverse().map((v, i) => {
+                        const isActive = activeVersionId === v.id;
+                        const isCurrent = i === 0;
+                        return (
+                          <div
+                            key={v.id}
+                            className={`rounded-lg border p-2.5 cursor-pointer transition-all ${
+                              isActive ? "border-amber-400 bg-amber-50" : "border-gray-200 hover:border-gray-300 bg-white"
+                            }`}
+                            onClick={() => handleViewVersion(v)}
+                          >
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                isActive ? "bg-amber-200 text-amber-800" : "bg-gray-100 text-gray-600"
+                              }`}>v{v.versionNumber}</span>
+                              {isCurrent && (
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-green-700 bg-green-100 px-1.5 py-0.5 rounded">CURRENT</span>
+                              )}
+                              <span className="text-[11px] font-medium text-gray-800 truncate flex-1">
+                                {v.changeNote || `Version ${v.versionNumber}`}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              {v.createdAt ? new Date(v.createdAt as any).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "â€”"}
+                              {v.createdBy && <> Â· {v.createdBy}</>}
+                            </div>
+                            {isActive && (
+                              <div className="mt-2 pt-2 border-t border-amber-200 flex flex-wrap gap-1">
+                                <button className="text-[10px] px-2 py-0.5 rounded border border-gray-300 hover:bg-gray-50 text-gray-600"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const { generateEmailHTML } = await import("@/lib/email-generator");
+                                    const html = generateEmailHTML(v.components || [], v.preheaderText);
+                                    const win = window.open("", "_blank");
+                                    if (win) { win.document.write(html); win.document.close(); }
+                                  }}>Preview</button>
+                                <button className="text-[10px] px-2 py-0.5 rounded border border-gray-300 hover:bg-gray-50 text-gray-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const blob = new Blob([v.sourceHtml], { type: "text/html" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url; a.download = `${v.name || "email"}_v${v.versionNumber}.html`;
+                                    a.click(); URL.revokeObjectURL(url);
+                                  }}>Export HTML</button>
+                                <button
+                                  className="text-[10px] px-2 py-0.5 rounded bg-[#006937] hover:bg-[#005229] text-white"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (currentTemplate) {
+                                      router.push(`/builder?template=${currentTemplate.id}&edit=true&brand=${selectedBrand}&restoreVersion=${v.id}`);
+                                    }
+                                  }}>Restore as Draft</button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Create Version Modal */}
+      <Dialog open={showCreateVersionModal} onOpenChange={setShowCreateVersionModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Version</DialogTitle>
+            <DialogDescription>
+              Saves an immutable snapshot of the current email state.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Change note</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder="e.g. Updated CTA and ISI copy"
+              value={versionChangeNote}
+              onChange={(e) => setVersionChangeNote(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !savingVersion && handleCreateVersion()}
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setShowCreateVersionModal(false); setVersionChangeNote(""); }}
+              disabled={savingVersion}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateVersion}
+              disabled={savingVersion || !currentTemplate}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {savingVersion ? (
+                <>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-2" />
+                  Saving…
+                </>
+              ) : (
+                "Create Version"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Save Template Dialog */}
       <SaveTemplateDialog

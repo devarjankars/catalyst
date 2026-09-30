@@ -13,6 +13,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { useSearchParams } from "next/navigation"
 import type { BrandId } from "@/types/template"
 import { matchesBrand } from "@/lib/brand-filter"
+import { useClient } from "@/lib/use-client"
 
 
 export default function ManageTemplates() {
@@ -22,8 +23,7 @@ export default function ManageTemplates() {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const selectedBrand = (searchParams.get("brand") || "orserdu") as BrandId;
+    const { clientId: selectedBrand } = useClient();
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
     open: false,
     template: null,

@@ -97,6 +97,7 @@ class TemplateService {
       name: `${template.name} (Copy)`,
       description: template.description,
       category: template.category,
+      brand: template.brand,
       components: this.deepCloneComponents(template.components),
       isUserCreated: true,
     })

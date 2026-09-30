@@ -1,5 +1,7 @@
 "use client"
 
+import { normalizeHtmlImageSrcs } from "@/lib/asset-url"
+
 /**
  * exportToPDF — Email Preview PDF export
  *
@@ -40,9 +42,14 @@ export async function exportToPDF(
         // making every link a dead annotation in the PDF.
         const htmlWithoutBase = rawHtml.replace(/<base[^>]*>/gi, '')
 
+        // Convert relative public-folder image paths to absolute URLs so
+        // Chromium can load them (it has no app origin to resolve /foo from).
+        const origin = typeof window !== 'undefined' ? window.location.origin : ''
+        const htmlNormalized = origin ? normalizeHtmlImageSrcs(htmlWithoutBase, origin) : htmlWithoutBase
+
         // Normalise the body tag so the server-side renderer knows the exact
         // pixel width to use.  This mirrors what the VSB path does.
-        const normalizedHtml = htmlWithoutBase.replace(
+        const normalizedHtml = htmlNormalized.replace(
             /<body([^>]*)>/i,
             (_match: string, attrs: string) => {
                 const existingStyle = attrs.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2] || ''
