@@ -164,6 +164,7 @@ export default function EmailBuilder() {
   const [versions, setVersions] = useState<EmailVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [activeVersionId, setActiveVersionId] = useState<string | null>(null);
+  const preVersionComponentsRef = useRef<any[] | null>(null);
   const [showCreateVersionModal, setShowCreateVersionModal] = useState(false);
   const [versionChangeNote, setVersionChangeNote] = useState("");
   const [savingVersion, setSavingVersion] = useState(false);
@@ -505,8 +506,11 @@ function replaceImagesInComponents(components: any[]): any[] {
   };
 
   const handleViewVersion = (v: EmailVersion) => {
+    // Snapshot current components so we can restore them on exit
+    if (!activeVersionId) {
+      preVersionComponentsRef.current = getActiveComponents();
+    }
     setActiveVersionId(v.id);
-    // Load version components onto the canvas (read-only preview)
     setComponents(v.components || []);
     if (v.optionMode === "three") {
       useEmailBuilderStore.setState({
@@ -518,10 +522,12 @@ function replaceImagesInComponents(components: any[]): any[] {
   };
 
   const handleBackToCurrentDraft = () => {
-    if (!currentTemplate) return;
     setActiveVersionId(null);
-    // Restore current template state
-    setCurrentTemplate(currentTemplate);
+    // Restore the components that were on canvas before entering version view
+    if (preVersionComponentsRef.current) {
+      setComponents(preVersionComponentsRef.current);
+      preVersionComponentsRef.current = null;
+    }
   };
 
   const handleBackToDashboard = () => {

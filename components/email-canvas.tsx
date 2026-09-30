@@ -41,10 +41,10 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     ref,
   ) => {
     const [dropIndex, setDropIndex] = useState<number | null>(null)
-    // Always-current ref — drop handler reads this directly, no stale closure
     const dropIndexRef = useRef<number | null>(null)
-    // Track if we're over a section drop zone to avoid conflicting with canvas drop indicator
     const overSectionRef = useRef(false)
+    // Stable inner ref used by drop/hover handlers — avoids stale forwardRef reads
+    const canvasInnerRef = useRef<HTMLDivElement | null>(null)
 
     const setDropIndexBoth = (idx: number | null) => {
       dropIndexRef.current = idx
@@ -73,16 +73,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const [{ isOver }, drop] = useDrop({
       accept: "component",
       drop: (item: any, monitor) => {
-        // For palette items: never bail on didDrop() — child drop targets
-        // (EmailComponentRenderer) absorb the hover but don't handle palette drops,
-        // so we must always process palette drops here regardless of didDrop().
         if (!item.fromPalette && monitor.didDrop()) return
         if (isLockedMode) return
 
         if (item.fromPalette) {
-          // Check if the drop is over a section drop zone
           const clientOffset = monitor.getClientOffset()
-          const canvasEl = (ref as React.RefObject<HTMLDivElement> | null)?.current
+          const canvasEl = canvasInnerRef.current
           if (clientOffset && canvasEl) {
             const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
             for (const el of sectionElements) {
@@ -93,21 +89,14 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
                 clientOffset.y >= rect.top &&
                 clientOffset.y <= rect.bottom
               ) {
-                // Drop is inside a section — let the section-drop-zone handle it.
-                // Mark as handled so the palette end() callback does NOT fire
-                // a second insertion with an undefined index (which would append
-                // the component to the bottom of the emailer).
                 return { dropZone: "section", handled: true }
               }
             }
           }
 
-          // Re-compute the exact drop index from the final cursor position.
-          // Fall back to dropIndexRef.current (last hover-computed index) when
-          // clientOffset is null (fast drop at canvas edge) so we never silently
-          // append to the bottom.
+          // Always recompute from live cursor position at drop time.
+          // dropIndexRef is the fallback for the rare case clientOffset is null.
           let finalIndex = dropIndexRef.current ?? components.length
-
           if (clientOffset && canvasEl) {
             finalIndex = computeDropIndex(clientOffset.y, canvasEl)
           }
@@ -129,14 +118,15 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       },
       hover: (item: any, monitor) => {
         if (!item.fromPalette || isLockedMode) return
+        // Only update indicator when the cursor is directly over the canvas,
+        // not when it is over a nested child drop target.
+        if (!monitor.isOver({ shallow: true })) return
 
         const clientOffset = monitor.getClientOffset()
-        const canvasEl = (ref as React.RefObject<HTMLDivElement> | null)?.current
+        const canvasEl = canvasInnerRef.current
         if (!clientOffset || !canvasEl) return
 
         const canvasRect = canvasEl.getBoundingClientRect()
-
-        // Ignore if cursor is well outside the canvas
         if (
           clientOffset.y < canvasRect.top - 50 ||
           clientOffset.y > canvasRect.bottom + 50
@@ -146,7 +136,6 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           return
         }
 
-        // Check if cursor is over a section drop zone
         const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
         let overSection = false
         for (const el of sectionElements) {
@@ -163,16 +152,12 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         }
 
         overSectionRef.current = overSection
-
-        // If over a section, don't update canvas drop index (let section handle it)
         if (overSection) {
           setDropIndexBoth(null)
           return
         }
 
         const newIndex = computeDropIndex(clientOffset.y, canvasEl)
-
-        // Skip redundant updates
         if (dropIndexRef.current !== newIndex) {
           setDropIndexBoth(newIndex)
         }
@@ -241,12 +226,10 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       <div className="flex justify-center">
         <div
           ref={(node) => {
+            canvasInnerRef.current = node
             drop(node)
-            if (ref && typeof ref === "function") {
-              ref(node)
-            } else if (ref) {
-              ref.current = node
-            }
+            if (ref && typeof ref === "function") ref(node)
+            else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
           }}
           className={`bg-white shadow-sm ring-1 ring-gray-200 w-full max-w-[600px] min-h-[600px] relative pb-10 rounded-md transition-shadow ${isOver ? "ring-2 ring-blue-400 shadow-lg" : ""}`}
           onClick={() => !previewMode && onSelectComponent(null)}
