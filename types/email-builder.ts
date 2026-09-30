@@ -65,6 +65,7 @@ export interface EmailComponent {
   piTitle?: string
   isiTitle?: string
   linkColor?: string
+  statePricingHref?: string
 
   //footer-links properties
   links?: { text: string; href: string; title?: string; color?: string; fontSize?: string }[]

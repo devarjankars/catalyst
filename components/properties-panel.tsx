@@ -3337,6 +3337,30 @@ export function PropertiesPanel({
                 />
               </div>
             ) : null}
+
+            {component.type === "sisi" && (
+              <div className="border rounded-md p-3 space-y-2">
+                <h4 className="font-semibold text-xs text-gray-500 uppercase tracking-wide">PDF Link URLs</h4>
+                <p className="text-xs text-gray-400">These URLs are used to make the "here" / "HERE" links clickable in exported PDFs.</p>
+                <div>
+                  <Label className="text-xs">Prescribing Information URL ("here")</Label>
+                  <Input
+                    value={component.piHref || ""}
+                    onChange={(e) => onUpdateComponent({ piHref: e.target.value })}
+                    placeholder="https://rxmenarinistemline.com/ORSERDU_..."
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">State Pricing URL ("HERE")</Label>
+                  <Input
+                    value={component.statePricingHref || ""}
+                    onChange={(e) => onUpdateComponent({ statePricingHref: e.target.value })}
+                    placeholder="https://www.orserdu.com/state-pricing"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <Label>Font Size</Label>
               <FontSizeInput

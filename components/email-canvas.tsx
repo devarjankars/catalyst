@@ -82,7 +82,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
         if (item.fromPalette) {
           // Check if the drop is over a section drop zone
           const clientOffset = monitor.getClientOffset()
-          const canvasEl = (ref as React.RefObject<HTMLDivElement>).current
+          const canvasEl = (ref as React.RefObject<HTMLDivElement> | null)?.current
           if (clientOffset && canvasEl) {
             const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
             for (const el of sectionElements) {
