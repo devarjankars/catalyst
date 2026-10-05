@@ -1,4 +1,4 @@
-import type { EmailComponent } from "@/types/email-builder";
+﻿import type { EmailComponent } from "@/types/email-builder";
 import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
@@ -356,7 +356,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         ? 'class="desk-show-cell"'
         : "";
 
-      // ── Mobile layout: 2 links per row ────────────────────────────────────
+      // ΓöÇΓöÇ Mobile layout: 2 links per row ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       const mobileRows: string[] = [];
       for (let i = 0; i < links.length; i += 2) {
         const row = links.slice(i, i + 2);
@@ -370,7 +370,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       }
       const mobileHTML = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tbody>${mobileRows.join("")}</tbody></table>`;
 
-      // ── Desktop layout: all links inline ──────────────────────────────────
+      // ΓöÇΓöÇ Desktop layout: all links inline ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       const desktopHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
         const linkColor = link.color || color;
@@ -379,7 +379,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       }).join("");
 
       // In pdfMode we skip show/hide CSS classes entirely and just render
-      // the correct version directly — no dual tables, no toggling needed.
+      // the correct version directly ΓÇö no dual tables, no toggling needed.
       if (pdfMode) {
         const content = pdfMode === 'mobile' ? mobileHTML : desktopHTML;
         return `
@@ -395,7 +395,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
     </table>`.trim();
       }
 
-      // ── Normal email client output: dual-version with CSS toggling ─────────
+      // ΓöÇΓöÇ Normal email client output: dual-version with CSS toggling ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       const mobileRowsCSS = mobileRows
         .map(r => r.replace('<tr>', '<tr class="mbl-show-tr" style="display:none;">'))
         .join("\n");
@@ -674,8 +674,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.
                                </td>
                             </tr></tbody>
@@ -689,8 +689,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Embryo-Fetal Toxicity:&nbsp;</span>Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise pregnant women and females of reproductive potential of the potential risk to a fetus. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose. Advise male patients with female partners of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.
                                </td>
                             </tr></tbody>
@@ -712,8 +712,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Serious adverse reactions&nbsp;</span>occurred in 12% of patients who received ORSERDU. Serious adverse reactions in &gt;1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).
                                </td>
                             </tr></tbody>
@@ -727,8 +727,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">The most common adverse reactions&nbsp;</span>(&#8805;10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).
                                </td>
                             </tr></tbody>
@@ -750,8 +750,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Concomitant use with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.
                                </td>
                             </tr></tbody>
@@ -773,8 +773,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Lactation:&nbsp;</span>Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.
                                </td>
                             </tr></tbody>
@@ -788,8 +788,8 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
-                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 5px;">
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Hepatic Impairment:&nbsp;</span>Avoid use of ORSERDU in patients with severe hepatic impairment (Child-Pugh C). Reduce the dose of ORSERDU in patients with moderate hepatic impairment (Child-Pugh B).
                                </td>
                             </tr></tbody>
@@ -838,6 +838,88 @@ case "isi": {
           `;
     }
 
+    case "orserdu-isi-animated": {
+      const {
+        bannerBgColor = "#006937",
+        indicationImgSrc = "/orserdu-logo.png",
+        indicationImgAlt = "ORSERDU (elacestrant) indication",
+        indicationImgWidth = 135,
+        doctorImgSrc = "/dr-iyengar.png",
+        doctorImgAlt = "Dr. Iyengar",
+        doctorImgWidth = 160,
+        bannerSlideDuration = 600,
+        doctorSlideDuration = 700,
+        copyFadeDuration = 800,
+        copyFadeDelay = 500,
+        backgroundColor = "#ffffff",
+      } = component as any;
+
+      return `
+<style>
+  @keyframes isiSlideIn { from { transform:translateX(-120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  @keyframes isiFadeIn  { from { opacity:0; } to { opacity:1; } }
+  .isi-banner { animation: isiSlideIn ${bannerSlideDuration}ms ease-out both; }
+  .isi-doctor { animation: isiSlideIn ${doctorSlideDuration}ms ease-out both; }
+  .isi-copy   { animation: isiFadeIn  ${copyFadeDuration}ms ease-out ${copyFadeDelay}ms both; }
+</style>
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color:${backgroundColor};overflow:hidden;">
+<tbody>
+  <tr>
+    <td style="background-color:${bannerBgColor};padding:14px 20px;overflow:hidden;">
+      <div class="isi-banner" style="display:inline-block;">
+        <img src="${indicationImgSrc}" alt="${indicationImgAlt}" width="${indicationImgWidth}" style="display:block;border:0;" />
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0;overflow:hidden;">
+      <div class="isi-doctor" style="display:inline-block;line-height:0;">
+        <img src="${doctorImgSrc}" alt="${doctorImgAlt}" width="${doctorImgWidth}" style="display:block;border:0;" />
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td class="isi-copy" style="padding:20px 20px 10px 20px;background-color:${backgroundColor};">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tbody>
+        <tr><td style="font-weight:600;color:#006937;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">IMPORTANT SAFETY INFORMATION</td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:700;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:14px;">Warnings and Precautions</td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.</td></tr></tbody></table></td></tr>
+        <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Embryo-Fetal Toxicity:&nbsp;</span>Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.</td></tr></tbody></table></td></tr>
+        <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:700;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Adverse Reactions</td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Serious adverse reactions&nbsp;</span>occurred in 12% of patients who received ORSERDU. Serious adverse reactions in &gt;1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).</td></tr></tbody></table></td></tr>
+        <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">The most common adverse reactions&nbsp;</span>(&#8805;10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).</td></tr></tbody></table></td></tr>
+        <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:700;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Drug Interactions</td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Concomitant use with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.</td></tr></tbody></table></td></tr>
+        <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:700;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Use in Specific Populations</td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Lactation:&nbsp;</span>Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.</td></tr></tbody></table></td></tr>
+        <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
+        <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Hepatic Impairment:&nbsp;</span>Avoid use of ORSERDU in patients with severe hepatic impairment (Child-Pugh C). Reduce the dose of ORSERDU in patients with moderate hepatic impairment (Child-Pugh B).</td></tr></tbody></table></td></tr>
+        <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">The safety and effectiveness of ORSERDU in pediatric patients have not been established.</td></tr>
+        <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU is available as 345 mg tablets and 86 mg tablets.</td></tr>
+        <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;"><b style="color:#006937;display:block;font-size:16px;">INDICATION</b></td></tr>
+        <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, &lt;i&gt;ESR1&lt;/i&gt;-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy.</td></tr>
+        <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
+      </tbody></table>
+    </td>
+  </tr>
+</tbody>
+</table>
+      `;
+    }
     case "bullet-list": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -847,16 +929,16 @@ case "isi": {
       const fontFamily = component.fontFamily || "Arial, sans-serif";
       const markerType = (component as any).markerType || "bullet";
 
-      // Parse spaceBetweenItems — strip "px" for the HTML height= attribute
+      // Parse spaceBetweenItems ΓÇö strip "px" for the HTML height= attribute
       const spacePx = parseInt((component.spaceBetweenItems || "5px").replace(/px$/i, ""), 10) || 5;
 
-      // Margin — only emit when it is set to something other than all-zeros
+      // Margin ΓÇö only emit when it is set to something other than all-zeros
       const rawMargin = (component as any).margin || "";
       const marginStyle = rawMargin && rawMargin !== "0px 0px 0px 0px" && rawMargin !== "0"
         ? `margin:${rawMargin};`
         : "";
 
-      // ── Marker symbol resolver ───────────────────────────────────────────
+      // ΓöÇΓöÇ Marker symbol resolver ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       // Returns the marker string for a given 0-based index.
       // Fixed symbols (bullet, dash, arrow, check, square) ignore the index.
       // Counter types (number, roman, alpha) derive from the index.
@@ -1271,7 +1353,7 @@ case "isi": {
       const padding = component.padding || "0 20px 10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
-      // One <td> per link, spread edge-to-edge — same structure as footer-link-3
+      // One <td> per link, spread edge-to-edge ΓÇö same structure as footer-link-3
       const linkTds = links.map((link, index) => {
         const align = index === 0 ? "left" : index === links.length - 1 ? "right" : "center";
         return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fontSize}; line-height:1.4; white-space:nowrap;">
@@ -1784,9 +1866,9 @@ case "isi": {
     <tr>
       <td style="padding:${pad};">
 
-        <!-- ═══════════════════════════════════════ -->
+        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
         <!-- DESKTOP layout (hidden on mobile)       -->
-        <!-- ═══════════════════════════════════════ -->
+        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
         <table class="deskDisp" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tbody>
             <tr>
@@ -1851,9 +1933,9 @@ case "isi": {
           </tbody>
         </table>
 
-        <!-- ═══════════════════════════════════════ -->
+        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
         <!-- MOBILE layout (hidden on desktop)       -->
-        <!-- ═══════════════════════════════════════ -->
+        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
         <!--[if !mso]><!-->
         <table class="mbDisp" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
           style="display:none;">
@@ -1944,7 +2026,7 @@ case "isi": {
     }
 
     case "tryvio-isi": {
-      // The stored HTML already contains its own padding — emit it directly
+      // The stored HTML already contains its own padding ΓÇö emit it directly
       return (component as any).html || "";
     }
 
@@ -1979,7 +2061,7 @@ case "isi": {
       const liSrc          = component.tryvioFooterLinkedinSrc  || "/linkedin.png";
       const liHref         = component.tryvioFooterLinkedinHref || "https://www.linkedin.com/company/tryvio-aprocitentan/";
       const liAlt          = component.tryvioFooterLinkedinAlt  || "LinkedIn";
-      const copyText       = component.tryvioFooterCopyrightText || "©2026 Idorsia Pharmaceuticals, Ltd.";
+      const copyText       = component.tryvioFooterCopyrightText || "┬⌐2026 Idorsia Pharmaceuticals, Ltd.";
       const copyHref       = component.tryvioFooterCopyrightHref || "https://www.idorsia.us/";
       const jobCode        = component.tryvioFooterJobCode      || "US-AP-00162 04/26";
       const idorsiaLogoSrc = component.tryvioFooterIdorsiaLogoSrc  || "/Idorsia.png";
