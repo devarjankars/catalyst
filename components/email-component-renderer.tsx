@@ -390,7 +390,7 @@ export function EmailComponentRenderer({
 
       case "text":
         return (
-          <div className="mt-2 z-50">
+          <div style={{ padding: component.padding || "0 20px 10px 20px" }} className="mt-2 z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
@@ -693,6 +693,54 @@ export function EmailComponentRenderer({
             </p>
           </div>
         );
+
+      case "orserdu-report-links": {
+        const {
+          linkItems = [],
+          fontSize = "14px",
+          color = "#000000",
+          lineHeight = "16px",
+          fontFamily = "Arial, sans-serif",
+          paddingTop = "15",
+          paddingBottom = "15",
+        } = component as any;
+
+        return (
+          <div
+            style={{ ...baseStyle, padding: 0 }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+          >
+            <div style={{ height: `${parseInt(String(paddingTop), 10) || 15}px` }} />
+            {linkItems.map((item: any, i: number) => (
+              <div
+                key={i}
+                style={{
+                  fontSize,
+                  color,
+                  lineHeight,
+                  fontFamily,
+                  padding: "0 15px 10px 20px",
+                  fontWeight: item.bold ? "bold" : "normal",
+                  textAlign: "left",
+                }}
+              >
+                <span dangerouslySetInnerHTML={{ __html: item.prefixText || "" }} />
+                <a
+                  href={item.linkHref || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: item.linkColor || "#368eec", textDecoration: "underline" }}
+                  onClick={(e) => !previewMode && e.preventDefault()}
+                >
+                  {item.linkText}
+                </a>
+                <span dangerouslySetInnerHTML={{ __html: item.suffixText || "" }} />
+              </div>
+            ))}
+            <div style={{ height: `${parseInt(String(paddingBottom), 10) || 15}px` }} />
+          </div>
+        );
+      }
 
       case "elzonris-brand-logo":
         return (

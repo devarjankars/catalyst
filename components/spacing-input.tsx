@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link2, Unlink2 } from "lucide-react";
 import { PropertyNumberInput } from "./property-number-input";
 import { cn } from "@/lib/utils";
@@ -30,10 +30,19 @@ function serialize(s: Sides): string {
 export function SpacingInput({ value = "0px 0px 0px 0px", onChange, label, className }: SpacingInputProps) {
   const [sides, setSides] = useState<Sides>(() => parse(value));
   const [linked, setLinked] = useState(false);
+  // Track whether the last change originated internally so we don't fight
+  // against our own onChange echo coming back as a new value prop.
+  const internalRef = useRef(false);
 
-  // Sync from outside
+  // Only sync from outside when the incoming value genuinely differs from
+  // what we last emitted — prevents the input from resetting mid-edit.
   useEffect(() => {
-    setSides(parse(value));
+    if (internalRef.current) {
+      internalRef.current = false;
+      return;
+    }
+    const incoming = parse(value);
+    setSides(incoming);
   }, [value]);
 
   const update = (side: keyof Sides, v: string) => {
@@ -41,6 +50,7 @@ export function SpacingInput({ value = "0px 0px 0px 0px", onChange, label, class
       ? { top: v, right: v, bottom: v, left: v }
       : { ...sides, [side]: v };
     setSides(next);
+    internalRef.current = true;
     onChange(serialize(next));
   };
 

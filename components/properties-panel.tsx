@@ -2354,6 +2354,115 @@ export function PropertiesPanel({
           </div>
         );
 
+      case "orserdu-report-links": {
+        const comp = component as any;
+        const linkItems = (comp.linkItems || []) as any[];
+        const updateLinkItem = (index: number, updates: any) => {
+          const newItems = [...linkItems];
+          newItems[index] = { ...newItems[index], ...updates };
+          onUpdateComponent({ linkItems: newItems } as any);
+        };
+        const addLinkItem = () => {
+          onUpdateComponent({
+            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: "#368eec", suffixText: "", bold: false }],
+          } as any);
+        };
+        const removeLinkItem = (index: number) => {
+          onUpdateComponent({ linkItems: linkItems.filter((_, i) => i !== index) } as any);
+        };
+
+        // paddingTop / paddingBottom control above+below the whole block
+        const paddingTop = parseInt(comp.paddingTop ?? "15", 10);
+        const paddingBottom = parseInt(comp.paddingBottom ?? "15", 10);
+
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Font Size</Label>
+              <FontSizeInput value={component.fontSize || "14px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
+            </div>
+            <div>
+              <Label>Text Color</Label>
+              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <LineHeightInput value={component.lineHeight || "16px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label>Space above (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={paddingTop}
+                  onChange={(e) => onUpdateComponent({ paddingTop: e.target.value } as any)}
+                />
+              </div>
+              <div className="flex-1">
+                <Label>Space below (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={paddingBottom}
+                  onChange={(e) => onUpdateComponent({ paddingBottom: e.target.value } as any)}
+                />
+              </div>
+            </div>
+
+            <div className="border-t pt-3 mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold">Link Items</span>
+                <Button size="sm" variant="outline" onClick={addLinkItem}>+ Add Link</Button>
+              </div>
+              {linkItems.map((item: any, i: number) => (
+                <div key={i} className="border rounded-lg p-3 space-y-2 mb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-500">Link {i + 1}</span>
+                    <Button size="sm" variant="ghost" onClick={() => removeLinkItem(i)} className="h-6 px-2 text-xs text-red-500 hover:text-red-700">Remove</Button>
+                  </div>
+                  <div>
+                    <Label>Text before link</Label>
+                    <Input value={item.prefixText || ""} onChange={(e) => updateLinkItem(i, { prefixText: e.target.value })} placeholder="Text before the link" />
+                  </div>
+                  <div>
+                    <Label>Link text</Label>
+                    <Input value={item.linkText || ""} onChange={(e) => updateLinkItem(i, { linkText: e.target.value })} placeholder="Clickable text" />
+                  </div>
+                  <div>
+                    <Label>Link URL</Label>
+                    <Input value={item.linkHref || ""} onChange={(e) => updateLinkItem(i, { linkHref: e.target.value })} placeholder="https://..." />
+                  </div>
+                  <div>
+                    <Label>Text after link</Label>
+                    <Input value={item.suffixText || ""} onChange={(e) => updateLinkItem(i, { suffixText: e.target.value })} placeholder="Text after the link" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label>Link Color</Label>
+                      <ColorInput value={item.linkColor || "#368eec"} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
+                    </div>
+                    <div className="flex-1">
+                      <Label>Bold</Label>
+                      <Select
+                        value={item.bold ? "yes" : "no"}
+                        onValueChange={(v) => updateLinkItem(i, { bold: v === "yes" })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Bold</SelectItem>
+                          <SelectItem value="no">Normal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       case "elzonris-pi":
         return (
           <div className="space-y-4">

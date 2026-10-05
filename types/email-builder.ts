@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated" | "orserdu-report-links"
 
   category: "basic" | "custom" | "orserdu" | "ferring" | "user-created" | "idorsia"
 
@@ -157,4 +157,15 @@ export interface EmailComponent {
   emeraldRightDesc?: string
   emeraldRightStat?: string
   emeraldRightHR?: string
+
+  // orserdu-report-links properties
+  linkItems?: Array<{
+    prefixText?: string
+    linkText?: string
+    linkHref?: string
+    linkColor?: string
+    suffixText?: string
+    bold?: boolean
+    padding?: string
+  }>
 }

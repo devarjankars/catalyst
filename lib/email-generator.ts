@@ -582,6 +582,52 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       </table>`.trim();
     }
 
+    case "orserdu-report-links": {
+      const linkItems = (component as any).linkItems || [];
+      const fontSize = (component as any).fontSize || "14px";
+      const color = (component as any).color || "#000000";
+      const lineHeight = (component as any).lineHeight || "16px";
+      const fontFamily = (component as any).fontFamily || "Arial, sans-serif";
+      const paddingTop = (component as any).paddingTop ?? "15";
+      const paddingBottom = (component as any).paddingBottom ?? "15";
+      // Fixed left/right padding matching Orserdu ISI style
+      const itemPadding = `0 15px 10px 20px`;
+
+      const spacerTop = parseInt(String(paddingTop), 10) || 15;
+      const spacerBottom = parseInt(String(paddingBottom), 10) || 15;
+
+      const rows = linkItems.map((item: any) => {
+        const bold = item.bold ? "bold" : "normal";
+        const linkColor = item.linkColor || "#368eec";
+        return `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+            <tr>
+              <td style="padding:${itemPadding};background-color:transparent;">
+                <div style="font-size:${fontSize};color:${color};text-align:left;font-weight:${bold};font-family:${fontFamily};line-height:${lineHeight};background-color:transparent;">
+                  ${item.prefixText || ""}<a href="${item.linkHref || "#"}" target="_blank" rel="noopener noreferrer" style="color:${linkColor};text-decoration:underline;">${item.linkText || ""}</a>${item.suffixText || ""}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>`;
+      }).join("");
+
+      return `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+            <tr><td height="${spacerTop}" style="font-size:0;line-height:${spacerTop}px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+          </tbody>
+        </table>
+        ${rows}
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+            <tr><td height="${spacerBottom}" style="font-size:0;line-height:${spacerBottom}px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+          </tbody>
+        </table>
+      `.trim();
+    }
+
     case "elzonris-brand-logo": {      const display = (component.displayType || "all") as EmailComponent["displayType"];
       const { innerStyle } = getDisplayAttributes(display);
       return `
