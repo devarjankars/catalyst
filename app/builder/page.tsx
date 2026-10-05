@@ -19,10 +19,11 @@ import type { EmailVersion } from "@/types/template"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
-const EmailCanvas = nextDynamic(
-  () => import("@/components/email-canvas").then((m) => ({ default: m.EmailCanvas })),
-  { ssr: false, loading: () => <BuilderPanelShimmer className="flex-1" /> }
-);
+import React from "react";
+// EmailCanvas uses forwardRef internally, so we import it directly to preserve
+// ref forwarding. next/dynamic's LoadableComponent wrapper drops refs even with
+// the React.forwardRef workaround, causing the console warning.
+import { EmailCanvas } from "@/components/email-canvas";
 const ComponentPalette = nextDynamic(
   () => import("@/components/component-palette").then((m) => ({ default: m.ComponentPalette })),
   { ssr: false, loading: () => <BuilderPanelShimmer className="w-72" /> }
@@ -546,7 +547,7 @@ function replaceImagesInComponents(components: any[]): any[] {
   };
 
   const handleModeSelect = async (
-    mode: "single" | "three",
+    mode: "single" | "two" | "three",
     subMode?: "header-only" | "completely-different",
   ) => {
     const shouldLoadTemplateFirst = Boolean(templateId && awaitingModeSelection);
@@ -554,15 +555,15 @@ function replaceImagesInComponents(components: any[]): any[] {
     setAwaitingModeSelection(false);
 
     const optionOverrides =
-      mode === "three"
+      mode === "three" || mode === "two"
         ? {
-            optionMode: "three" as const,
+            optionMode: mode as "two" | "three",
             optionSubMode: subMode || ("header-only" as const),
           }
         : { optionMode: "single" as const };
 
     if (shouldLoadTemplateFirst && templateId) {
-      await loadTemplate(templateId, optionOverrides);
+      await loadTemplate(templateId, optionOverrides as any);
       await loadTemplateImages(templateId);
     } else {
       applyOptionConfiguration({ mode, subMode });
@@ -570,8 +571,8 @@ function replaceImagesInComponents(components: any[]): any[] {
 
     const params = new URLSearchParams(window.location.search);
     params.delete("selectMode");
-    if (mode === "three") {
-      params.set("mode", "three");
+    if (mode === "three" || mode === "two") {
+      params.set("mode", mode);
       if (subMode) {
         params.set("subMode", subMode);
       } else {
@@ -898,7 +899,7 @@ if (activeSelectedId) {
   };
 
   const isHeaderOnlyLocked =
-    optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1;
+    (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1;
 
   const canSaveComponentChanges =
     currentTemplate && hasComponentChanges && !isWorkingCopy && !isNewTemplate;
@@ -1138,15 +1139,15 @@ if (activeSelectedId) {
               </div>
             )}
 
-            {optionMode === "three" && (
+            {(optionMode === "two" || optionMode === "three") && (
               <div className="mb-5 w-full max-w-[600px] sticky top-0 z-20 pt-4 pb-3 bg-[#f0f2f5]">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   {/* Tab row */}
                   <div className="flex border-b border-gray-100">
-                    {([1, 2, 3] as const).map((opt) => (
+                    {(optionMode === "two" ? [1, 2] : [1, 2, 3] as const).map((opt) => (
                       <button
                         key={opt}
-                        onClick={() => setActiveOption(opt)}
+                        onClick={() => setActiveOption(opt as 1 | 2 | 3)}
                         className={`flex-1 py-2.5 text-sm font-medium transition-colors relative ${
                           activeOption === opt
                             ? "text-[#BC2030] bg-red-50"
@@ -1169,7 +1170,7 @@ if (activeSelectedId) {
                       const { syncFooterFromOption1 } = useEmailBuilderStore.getState()
                       const FOOTER_TYPES = new Set(['email-footer','footer-with-Preferences','footer-links','footer-links(3)','footer-link-2','footer-link-3','orsedu-footer','footer-tokens'])
                       const opt2Missing = !option2Components.some((c: any) => FOOTER_TYPES.has(c.type))
-                      const opt3Missing = !option3Components.some((c: any) => FOOTER_TYPES.has(c.type))
+                      const opt3Missing = optionMode === "three" && !option3Components.some((c: any) => FOOTER_TYPES.has(c.type))
                       if (!opt2Missing && !opt3Missing) return null
                       return (
                         <button
@@ -1198,7 +1199,7 @@ if (activeSelectedId) {
                 components={getActiveComponents()}
                 selectedComponent={selectedComponent}
                 onSelectComponent={(id) => {
-                  if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) {
+                  if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) {
                      // Check if it's a header-image component
                      const comp = findComponentWithParentById(getActiveComponents(), id || "");
                      if (comp && comp.component.type !== "header-image") {
@@ -1215,10 +1216,10 @@ if (activeSelectedId) {
                 addComponent={addComponent}
                 isLockedMode={isHeaderOnlyLocked || !!activeVersionId}
                 showCopyToOption={
-                  optionMode === "three" && optionSubMode === "completely-different" && !!selectedComponent
+                  (optionMode === "three" || optionMode === "two") && optionSubMode === "completely-different" && !!selectedComponent
                 }
                 onCopyToOptions={
-                  optionMode === "three" && optionSubMode === "completely-different" && selectedComponent
+                  (optionMode === "three" || optionMode === "two") && optionSubMode === "completely-different" && selectedComponent
                     ? () => {
                         setCopyToTargets([]);
                         setCopyToDialogOpen(true);
@@ -1499,7 +1500,7 @@ if (activeSelectedId) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-2">
-            {([1, 2, 3] as const).filter((o) => o !== activeOption).map((opt) => (
+            {(optionMode === "two" ? [1, 2] : [1, 2, 3] as const).filter((o) => o !== activeOption).map((opt) => (
               <label key={opt} className="flex items-center gap-3 cursor-pointer rounded-md border p-3 hover:bg-gray-50">
                 <input
                   type="checkbox"

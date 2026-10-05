@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDrag, useDrop } from "react-dnd";
@@ -21,6 +21,7 @@ import { firebaseService } from "@/services/firebase-service";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { toast } from "sonner";
 import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
+import { generateEmailHTML } from "@/lib/email-generator";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -820,40 +821,37 @@ export function EmailComponentRenderer({
 }
     
       case "isi":
+        // Render via the same generator used for preview/PDF so spacing
+        // is identical on canvas, in preview, and in exported PDFs.
         return (
-          <div style={{ ...baseStyle, backgroundColor: '#ffffff' }} className="flex flex-col gap-2">
-            <h2 style={{ color: '#006937', fontSize: '16px', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
-              IMPORTANT SAFETY INFORMATION
-            </h2>
-            {component.importantSafetyInformation?.sections?.map((section, sectionIndex) =>
-              section.title ? (
-                <div key={sectionIndex} className="mb-4">
-                  <h3 style={{ color: '#2B2E34', fontSize: '14px', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>{section.title}</h3>
-                  {section.items && section.items.length > 0 && (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
-                      <tbody>
-                        {section.items.map((subsection, subIndex) => (
-                          <tr key={subIndex}>
-                            <td style={{ color: '#69D6B5', fontSize: '16px', lineHeight: '16px', verticalAlign: 'top', width: '12px', paddingTop: '2px' }}>&#8226;</td>
-                            <td style={{ color: '#2B2E34', fontSize: '14px', lineHeight: '18px', fontFamily: 'Arial, sans-serif', paddingLeft: '5px' }}
-                              dangerouslySetInnerHTML={{ __html: subsection.content }} />
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              ) : (
-                <div key={sectionIndex}>
-                  {section.items?.map((subsection, subIndex) => (
-                    <div key={subIndex} style={{ color: '#2B2E34', fontSize: '14px', fontFamily: 'Arial, sans-serif', marginTop: '8px' }}
-                      dangerouslySetInnerHTML={{ __html: subsection.content }} />
-                  ))}
-                </div>
-              )
-            )}
-          </div>
+          <div
+            style={{ ...baseStyle, backgroundColor: '#ffffff' }}
+            dangerouslySetInnerHTML={{
+              __html: generateEmailHTML([component])
+                // Strip the outer html/head/body wrapper — we only want the component HTML
+                .replace(/^[\s\S]*?<body[^>]*>/i, '')
+                .replace(/<\/body>[\s\S]*$/i, '')
+                .trim()
+            }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+          />
         );
+
+      case "orserdu-isi-animated": {
+        // Rendered through the HTML generator so canvas preview matches the exported HTML.
+        return (
+          <div
+            style={{ ...baseStyle, backgroundColor: (component as any).backgroundColor || "#ffffff" }}
+            dangerouslySetInnerHTML={{
+              __html: generateEmailHTML([component])
+                .replace(/^[\s\S]*?<body[^>]*>/i, "")
+                .replace(/<\/body>[\s\S]*$/i, "")
+                .trim()
+            }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+          />
+        );
+      }
 
       case "sisi":
         return (
@@ -1649,7 +1647,11 @@ export function EmailComponentRenderer({
                     <td style={{ padding: "0 20px 0 20px", backgroundColor: "transparent" }}>
                       <table cellPadding={0} cellSpacing={0} border={0} width="100%" style={{ backgroundColor }}>
                         <tbody>
-                          {(bulletItems as any[]).map((item: any, i: number) => (
+                          {(bulletItems as any[]).map((item: any, i: number) => {
+                            // Respect the spaceBetweenBullets property (strip 'px' for numeric height)
+                            const spacingRaw = (component as any).spaceBetweenBullets ?? "5";
+                            const spacingPx = parseInt(String(spacingRaw).replace(/px$/i, ""), 10) || 5;
+                            return (
                             <React.Fragment key={i}>
                               <tr>
                                 <td align="left" valign="top" width="2%" style={{ color: bulletColor, fontSize: "16px", lineHeight, paddingBottom: "3px", backgroundColor: "transparent" }}>
@@ -1661,10 +1663,11 @@ export function EmailComponentRenderer({
                                 </td>
                               </tr>
                               {i < bulletItems.length - 1 && (
-                                <tr><td colSpan={2} height="5px" style={{ fontSize: "0px", lineHeight: "5px", backgroundColor }} />  </tr>
+                                <tr><td colSpan={2} height={spacingPx} style={{ fontSize: "0px", lineHeight: `${spacingPx}px`, backgroundColor }} /></tr>
                               )}
                             </React.Fragment>
-                          ))}
+                          );
+                          })}
                         </tbody>
                       </table>
                     </td>

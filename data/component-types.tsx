@@ -205,7 +205,31 @@ export const componentTypes = [
     }
    
   },
-  {
+    {
+    type: "orserdu-isi-animated",
+    label: "ISI Animated (Orserdu)",
+    category: "custom",
+    icon: NotepadText,
+    defaultProps: {
+      // ── Intro banner (green, slides in from left) ─────────────────────
+      bannerBgColor: "#006937",
+      indicationImgSrc: "/orserdu-logo.png",
+      indicationImgAlt: "ORSERDU® (elacestrant) indication",
+      indicationImgWidth: 135,
+      // ── Doctor image (slides in from left, stays static) ──────────────
+      doctorImgSrc: "/dr-iyengar.png",
+      doctorImgAlt: "Dr. Iyengar",
+      doctorImgWidth: 160,
+      // ── Animation durations (ms) ──────────────────────────────────────
+      bannerSlideDuration: 600,
+      doctorSlideDuration: 700,
+      copyFadeDuration: 800,
+      copyFadeDelay: 500,
+      // ── Background ────────────────────────────────────────────────────
+      backgroundColor: "#ffffff",
+    },
+  },
+{
   type: "bullet-list",
   label: "Bullet Point",
   category : "basic",
@@ -601,12 +625,12 @@ export const componentTypes = [
                     </td>
                 </tr>
                 <tr>
-                    <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
+                    <td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;
                     </td>
                 </tr>
                 <tr>
                     <td align="left" valign="middle"
-                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:18px;">
+                        style="color:#009877;font-family:Arial,sans-serif;font-weight:600;font-size:14px;line-height:16px;">
                         WARNINGS AND PRECAUTIONS</td>
                 </tr>
                 <tr>
@@ -995,7 +1019,7 @@ export const componentTypes = [
       backgroundColor: "#ffffff",
       // Footer line
       footerLine: "Please see additional Important Safety Information below.",
-      footerPadding: "15px 20px 12px 20px",
+      footerPadding: "15px 20px 10px 20px",
       // Trial design paragraph (supports basic HTML: <b>, <i>, <sup>, <a>)
       trialDesignHtml: `<b>TRIAL DESIGN:</b> EMERALD was an open-label, global, phase 3 trial of postmenopausal women or men with confirmed ER+/HER2- advanced or metastatic breast cancer (N=478) who had progressed after 1-2 lines of ET, at least one in combination with a CDK4/6i, randomized (1:1) to receive ORSERDU or endocrine therapy (fulvestrant) or an aromatase inhibitor (anastrozole, letrozole, or exemestane). A major efficacy endpoint was PFS by BIRC in patients with <i>ESR1</i>m (n=228). An exploratory post hoc analysis evaluated efficacy and safety in patients with <i>ESR1</i>m treated with prior ET + CDK4/6i for ≥12 months (n=159).<sup>1,2</sup>`,
       trialDesignPadding: "0 20px 10px 20px",

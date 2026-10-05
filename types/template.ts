@@ -12,7 +12,7 @@ export interface EmailTemplate {
   components: EmailComponent[]
   
   // Multi-option support
-  optionMode?: "single" | "three"
+  optionMode?: "single" | "two" | "three"
   optionSubMode?: "header-only" | "completely-different"
   option2Components?: EmailComponent[]
   option3Components?: EmailComponent[]
@@ -44,7 +44,7 @@ export interface EmailVersion {
   components: EmailComponent[]
   option2Components: EmailComponent[]
   option3Components: EmailComponent[]
-  optionMode: "single" | "three"
+  optionMode: "single" | "two" | "three"
   optionSubMode: "header-only" | "completely-different"
   preheaderText: string
 

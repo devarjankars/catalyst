@@ -4,7 +4,7 @@ import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 
-function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
+export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
   switch (component.type) {
     case "section":
@@ -655,275 +655,180 @@ case "isi": {
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
-                                          <td class="f_14 green f_bold" align="left" valign="top"
-                                             style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 18px; ">
-                                             IMPORTANT SAFETY INFORMATION </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="15"
-                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_bold" align="left" valign="top"
-                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
-                                             Warnings and Precautions </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
-                                                         <span class="f_bold"
-                                                            style="font-weight: 700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia
-                                                         and hypertriglyceridemia occurred in patients taking ORSERDU at
-                                                         an incidence of 30% and 27%, respectively. The incidence of
-                                                         Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia
-                                                         were 0.9% and 2.2%, respectively. Monitor lipid profile prior
-                                                         to starting and periodically while taking ORSERDU.
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
-                                                         <span class="f_bold" style="font-weight: 700">Embryo-Fetal
-                                                            Toxicity:&nbsp;</span>Based on findings in animals and its
-                                                         mechanism of action, ORSERDU can cause fetal harm when
-                                                         administered to a pregnant woman. Advise pregnant women and
-                                                         females of reproductive potential of the potential risk to a
-                                                         fetus. Advise females of reproductive potential to use
-                                                         effective contraception during treatment with ORSERDU and for 1
-                                                         week after the last dose. Advise male patients with female
-                                                         partners of reproductive potential to use effective
-                                                         contraception during treatment with ORSERDU and for 1 week
-                                                         after the last dose.
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="15"
-                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_bold" align="left" valign="top"
-                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
-                                             Adverse Reactions </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; padding:0 0 0 5px;">
-                                                         <span class="f_bold" style="font-weight: 700">Serious adverse
-                                                            reactions&nbsp;</span>occurred in 12% of patients who
-                                                         received ORSERDU. Serious adverse reactions in &gt;1% of
-                                                         patients who received ORSERDU were musculoskeletal pain (1.7%)
-                                                         and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of
-                                                         patients who received ORSERDU, including cardiac arrest, septic
-                                                         shock, diverticulitis, and unknown cause (one patient each).
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                      
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
-                                                         <span class="f_bold" style="font-weight: 700">The most common
-                                                            adverse reactions&nbsp;</span>(&#8805;10%), including laboratory
-                                                         abnormalities, of ORSERDU were musculoskeletal pain (41%),
-                                                         nausea (35%), increased cholesterol (30%), increased AST (29%),
-                                                         increased triglycerides (27%), fatigue (26%), decreased
-                                                         hemoglobin (26%), vomiting (19%), increased ALT (17%),
-                                                         decreased sodium (16%), increased creatinine (16%), decreased
-                                                         appetite (15%), diarrhea (13%), headache (12%), constipation
-                                                         (12%), abdominal pain (11%), hot flush (11%), and dyspepsia
-                                                         (10%).
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="15"
-                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_bold" align="left" valign="top"
-                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
-                                             Drug Interactions </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                    
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px;">
-                                                         <span class="f_bold" style="font-weight: 700">Concomitant use
-                                                            with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid
-                                                         concomitant use of strong or moderate CYP3A4 inhibitors with
-                                                         ORSERDU. Avoid concomitant use of strong or moderate CYP3A4
-                                                         inducers with ORSERDU.
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="15"
-                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_bold" align="left" valign="top"
-                                             style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
-                                             Use in Specific Populations </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                      
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;padding:0 0 0 5px; ">
-                                                         <span class="f_bold"
-                                                            style="font-weight: 700">Lactation:&nbsp;</span>Advise
-                                                         lactating women to not breastfeed during treatment with ORSERDU
-                                                         and for 1 week after the last dose.
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td>
-                                             <table class="mobile-table" width="100%" align="center" border="0"
-                                                cellspacing="0" cellpadding="0">
-                                                <tbody>
-                                                   <tr>
-                                                      <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color: #69d6b5;font-size: 16px;line-height: 16px;padding: 2px 0 0 0;">&#8226;</td>
-                                                     
-                                                      <td class="f_14 black f_normal" align="left" valign="top"
-                                                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px;padding:0 0 0 5px; ">
-                                                         <span class="f_bold" style="font-weight: 700">Hepatic
-                                                            Impairment:&nbsp;</span>Avoid use of ORSERDU in patients
-                                                         with severe hepatic impairment (Child-Pugh C). Reduce the dose
-                                                         of ORSERDU in patients with moderate hepatic impairment
-                                                         (Child-Pugh B).
-                                                      </td>
-                                                   </tr>
-                                                </tbody>
-                                             </table>
-                                          </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="10"
-                                             style=" font-size: 0px; line-height: 10px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_normal" align="left" valign="top"
-                                             style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;  ">
-                                             The safety and effectiveness of ORSERDU in pediatric patients have not been
-                                             established. </td>
-                                       </tr>
-                                       <tr>
-                                          <td width="100%" height="15"
-                                             style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                             &nbsp;</td>
-                                       </tr>
-                                       <tr>
-                                          <td class="f_14 black f_normal" align="left" valign="top"
-                                             style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
-                                       </tr>
-                                      <tr>
-                                        <td width="100%" height="15"
-                                          style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
-                                          &nbsp;</td>
-                                      </tr>
-                                      <tr>
-                                        <td class="f_14 black f_normal" align="left" valign="top"
-                                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
-                                             <b style="color:#006937;display:block;font-size:16px;margin-bottom:5px;">INDICATION</b>
-                                             ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy. </td>
-                                      </tr>
+                      <td class="f_14 green f_bold" align="left" valign="top"
+                         style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 18px; ">
+                         IMPORTANT SAFETY INFORMATION </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Warnings and Precautions -->
+                   <tr>
+                      <td class="f_14 black f_bold" align="left" valign="top"
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                         Warnings and Precautions </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Dyslipidemia bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="6" style="font-size:0px;line-height:6px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Embryo-Fetal Toxicity bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Embryo-Fetal Toxicity:&nbsp;</span>Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise pregnant women and females of reproductive potential of the potential risk to a fetus. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose. Advise male patients with female partners of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Adverse Reactions -->
+                   <tr>
+                      <td class="f_14 black f_bold" align="left" valign="top"
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         Adverse Reactions </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Serious adverse reactions bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Serious adverse reactions&nbsp;</span>occurred in 12% of patients who received ORSERDU. Serious adverse reactions in &gt;1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="6" style="font-size:0px;line-height:6px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Most common adverse reactions bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">The most common adverse reactions&nbsp;</span>(&#8805;10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Drug Interactions -->
+                   <tr>
+                      <td class="f_14 black f_bold" align="left" valign="top"
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         Drug Interactions </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- CYP3A4 bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Concomitant use with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Use in Specific Populations -->
+                   <tr>
+                      <td class="f_14 black f_bold" align="left" valign="top"
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         Use in Specific Populations </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Lactation bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Lactation:&nbsp;</span>Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="6" style="font-size:0px;line-height:6px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Hepatic Impairment bullet -->
+                   <tr>
+                      <td>
+                         <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td>
+                               <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 5px;">
+                                  <span class="f_bold" style="font-weight:700">Hepatic Impairment:&nbsp;</span>Avoid use of ORSERDU in patients with severe hepatic impairment (Child-Pugh C). Reduce the dose of ORSERDU in patients with moderate hepatic impairment (Child-Pugh B).
+                               </td>
+                            </tr></tbody>
+                         </table>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="20" style="font-size:0px;line-height:20px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Pediatric safety -->
+                   <tr>
+                      <td class="f_14 black f_normal" align="left" valign="top"
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         The safety and effectiveness of ORSERDU in pediatric patients have not been established. </td>
+                   </tr>
+                   <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- Tablets available -->
+                   <tr>
+                      <td class="f_14 black f_normal" align="left" valign="top"
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
+                   </tr>
+                   <tr><td width="100%" height="20" style="font-size:0px;line-height:20px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
+                   <!-- INDICATION -->
+                   <tr>
+                      <td class="f_14 black f_normal" align="left" valign="top"
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         <b style="color:#006937;display:block;font-size:16px;margin-bottom:0;">INDICATION</b>
+                      </td>
+                   </tr>
+                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                   <tr>
+                      <td class="f_14 black f_normal" align="left" valign="top"
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy. </td>
+                   </tr>
+                   <tr><td width="100%" height="20" style="font-size:0px;line-height:20px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+
                 </tbody>
                </table>
             </td>
@@ -1798,6 +1703,9 @@ case "isi": {
       const trialDesignHtml= c.trialDesignHtml?? "";
       const trialDesignPad = c.trialDesignPadding ?? "0 20px 10px 20px";
 
+      // Respect the configurable spaceBetweenBullets value
+      const spacingPx = parseInt(String(c.spaceBetweenBullets ?? "5").replace(/px$/i, ""), 10) || 5;
+
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
           <td align="left" valign="top" width="2%"
@@ -1809,7 +1717,7 @@ case "isi": {
             ${item.boldText ? `<b>${item.boldText}</b>` : ""}${item.normalText ?? ""}
           </td>
         </tr>
-        ${i < bulletItems.length - 1 ? `<tr><td colspan="2" height="5" style="font-size:0px;line-height:5px;mso-line-height-rule:exactly;background-color:${backgroundColor};">&nbsp;</td></tr>` : ""}
+        ${i < bulletItems.length - 1 ? `<tr><td colspan="2" height="${spacingPx}" style="font-size:0px;line-height:${spacingPx}px;mso-line-height-rule:exactly;background-color:${backgroundColor};">&nbsp;</td></tr>` : ""}
       `).join("");
 
       return `

@@ -33,13 +33,15 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
 
     setIsExporting(true)
     try {
-      const isThreeMode = optionMode === "three"
-      const optionsToExport = isThreeMode
-        ? [
-            { id: 1 as const, name: "Option1", components },
-            { id: 2 as const, name: "Option2", components: option2Components },
-            { id: 3 as const, name: "Option3", components: option3Components },
-          ]
+      const isMultiMode = optionMode === "two" || optionMode === "three"
+      const allOptions = [
+        { id: 1 as const, name: "Option1", components },
+        { id: 2 as const, name: "Option2", components: option2Components },
+        { id: 3 as const, name: "Option3", components: option3Components },
+      ]
+      const optionsToExport = isMultiMode
+        ? allOptions
+            .slice(0, optionMode === "two" ? 2 : 3)
             .filter((option) => selectedOptions[option.id])
             .map(({ name, components }) => ({ name, components }))
         : [{ name: "index", components }]
@@ -50,7 +52,7 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
         optionsToExport,
         currentTemplate?.name,
         preheaderText,
-        isThreeMode && optionSubMode === "completely-different", // ← new flag
+        isMultiMode && optionSubMode === "completely-different",
       )
       setIsOpen(false)
     } catch (error) {
@@ -73,9 +75,9 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
           <DialogTitle>Export Email</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {optionMode === "three" && (
+          {(optionMode === "two" || optionMode === "three") && (
             <div className="rounded-md border p-3 space-y-3">
-              {[1, 2, 3].map((option) => (
+              {(optionMode === "two" ? [1, 2] : [1, 2, 3]).map((option) => (
                 <label key={option} className="flex items-center gap-2 text-sm font-medium">
                   <Checkbox
                     checked={selectedOptions[option as 1 | 2 | 3]}
@@ -93,7 +95,7 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
             onClick={handleExport}
             disabled={
               isExporting ||
-              (optionMode === "three" && !Object.values(selectedOptions).some(Boolean)) ||
+              ((optionMode === "two" || optionMode === "three") && !Object.values(selectedOptions).some(Boolean)) ||
               (components.length === 0 && option2Components.length === 0 && option3Components.length === 0)
             }
             className="w-full flex items-center gap-2"
@@ -103,7 +105,7 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
           </Button>
 
           <p className="text-sm text-gray-600">
-            {optionMode === "three" && optionSubMode === "completely-different"
+            {(optionMode === "two" || optionMode === "three") && optionSubMode === "completely-different"
               ? "The ZIP will contain a separate folder per option, each with its own HTML file and images folder."
               : "The ZIP file will contain separate HTML files for each selected email option and a shared images folder."}
           </p>

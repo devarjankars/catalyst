@@ -250,14 +250,18 @@ function OrserduIsiSelectPanel({
   const [heading,         setHeading]         = useState<string>(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
   const [headingColor,    setHeadingColor]    = useState<string>(component.headingColor    ?? "#006937");
   const [headingFontSize, setHeadingFontSize] = useState<string>(component.headingFontSize ?? "16px");
+  const [headingPadding,  setHeadingPadding]  = useState<string>(component.headingPadding  ?? "10px 20px 10px 20px");
   const [bulletItems,     setBulletItems]     = useState<BulletItem[]>(component.bulletItems ?? []);
   const [bulletColor,     setBulletColor]     = useState<string>(component.bulletColor     ?? "#69d6b5");
   const [textColor,       setTextColor]       = useState<string>(component.textColor       ?? "#000000");
   const [fontSize,        setFontSize]        = useState<string>(component.fontSize        ?? "14px");
   const [lineHeight,      setLineHeight]      = useState<string>(component.lineHeight      ?? "16px");
+  const [spaceBetweenBullets, setSpaceBetweenBullets] = useState<string>(component.spaceBetweenBullets ?? "5");
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
+  const [footerPadding,   setFooterPadding]   = useState<string>(component.footerPadding   ?? "15px 20px 12px 20px");
   const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
+  const [trialDesignPadding, setTrialDesignPadding] = useState<string>(component.trialDesignPadding ?? "0 20px 10px 20px");
   const [showFooter,      setShowFooter]      = useState<boolean>(!!(component.footerLine));
   const [showTrialDesign, setShowTrialDesign] = useState<boolean>(!!(component.trialDesignHtml));
 
@@ -266,14 +270,18 @@ function OrserduIsiSelectPanel({
     setHeading(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
     setHeadingColor(component.headingColor    ?? "#006937");
     setHeadingFontSize(component.headingFontSize ?? "16px");
+    setHeadingPadding(component.headingPadding  ?? "10px 20px 10px 20px");
     setBulletItems(component.bulletItems   ?? []);
     setBulletColor(component.bulletColor    ?? "#69d6b5");
     setTextColor(component.textColor       ?? "#000000");
     setFontSize(component.fontSize        ?? "14px");
     setLineHeight(component.lineHeight      ?? "16px");
+    setSpaceBetweenBullets(component.spaceBetweenBullets ?? "5");
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
+    setFooterPadding(component.footerPadding   ?? "15px 20px 12px 20px");
     setTrialDesignHtml(component.trialDesignHtml ?? "");
+    setTrialDesignPadding(component.trialDesignPadding ?? "0 20px 10px 20px");
     setShowFooter(!!(component.footerLine));
     setShowTrialDesign(!!(component.trialDesignHtml));
   }, [component.id]);
@@ -329,6 +337,14 @@ function OrserduIsiSelectPanel({
             placeholder="16px"
           />
         </div>
+        <div>
+          <Label>Heading Padding <span className="text-gray-400 font-normal">(top right bottom left)</span></Label>
+          <PaddingInput
+            value={headingPadding}
+            onChange={(v) => { setHeadingPadding(v); commit({ headingPadding: v }); }}
+          />
+          <p className="text-[10px] text-gray-400 mt-1">Bottom value = gap between heading and bullet list.</p>
+        </div>
       </div>
 
       {/* Bullet items */}
@@ -363,6 +379,27 @@ function OrserduIsiSelectPanel({
         <div>
           <Label>Background Color</Label>
           <ColorInput value={backgroundColor} onChange={(v) => { setBackgroundColor(v); commit({ backgroundColor: v }); }} />
+        </div>
+        <div>
+          <Label>Space Between Bullets (px)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={spaceBetweenBullets}
+            onChange={(e) => setSpaceBetweenBullets(e.target.value)}
+            onBlur={() => commit({ spaceBetweenBullets })}
+            onKeyDown={(e) => {
+              if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+              e.preventDefault();
+              const cur = parseInt(spaceBetweenBullets, 10) || 0;
+              const step = e.shiftKey ? 5 : 1;
+              const next = Math.max(0, cur + (e.key === "ArrowUp" ? step : -step));
+              setSpaceBetweenBullets(String(next));
+              commit({ spaceBetweenBullets: String(next) });
+            }}
+            placeholder="5"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">Gap between each bullet row. ↑↓ keys to adjust. Default: 5px.</p>
         </div>
 
         {/* Per-bullet editing */}

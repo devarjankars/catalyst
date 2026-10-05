@@ -15,7 +15,7 @@ interface EditorSnapshot {
   option3Components: EmailComponent[]
   preheaderText: string
   activeOption: 1 | 2 | 3
-  optionMode: "single" | "three"
+  optionMode: "single" | "two" | "three"
   optionSubMode: "header-only" | "completely-different"
 }
 
@@ -53,7 +53,7 @@ interface EmailBuilderState {
   preheaderText: string
 
   // Multi-option state
-  optionMode: "single" | "three"
+  optionMode: "single" | "two" | "three"
   optionSubMode: "header-only" | "completely-different"
   activeOption: 1 | 2 | 3
   option2Components: EmailComponent[]
@@ -93,7 +93,7 @@ interface EmailBuilderState {
   setOriginalComponents: (components: EmailComponent[]) => void
 
   // Multi-option actions
-  setOptionMode: (mode: "single" | "three") => void
+  setOptionMode: (mode: "single" | "two" | "three") => void
   setOptionSubMode: (subMode: "header-only" | "completely-different") => void
   setActiveOption: (option: 1 | 2 | 3) => void
   getActiveComponents: () => EmailComponent[]
@@ -104,7 +104,7 @@ interface EmailBuilderState {
   ensureThreeOptions: () => void
   markComponentsSaved: () => void
   applyOptionConfiguration: (config: {
-    mode: "single" | "three"
+    mode: "single" | "two" | "three"
     subMode?: "header-only" | "completely-different"
   }) => void
   copyOptionTo: (fromOption: 1 | 2 | 3, toOptions: (1 | 2 | 3)[]) => void
@@ -114,7 +114,7 @@ interface EmailBuilderState {
   startWorkingCopy: (
     sourceTemplate: EmailTemplate,
     optionOverrides?: {
-      optionMode?: "single" | "three"
+      optionMode?: "single" | "two" | "three"
       optionSubMode?: "header-only" | "completely-different"
     },
   ) => void
@@ -231,6 +231,9 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           if ((template?.optionMode || "single") === "three") {
             get().ensureThreeOptions()
           }
+          if ((template?.optionMode || "single") === "two") {
+            get().ensureThreeOptions()
+          }
           get().checkForChanges()
         },
 
@@ -264,7 +267,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         setOptionMode: (mode) => {
           set({ optionMode: mode })
           
-          if (mode === "three") {
+          if (mode === "three" || mode === "two") {
             const state = get()
             get().initializeOptions(state.components)
           } else {
@@ -383,7 +386,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         },
         ensureThreeOptions: () => {
           const { optionMode, components } = get()
-          if (optionMode !== "three") return
+          if (optionMode !== "three" && optionMode !== "two") return
           get().initializeOptions(components)
         },
         markComponentsSaved: () => {
@@ -402,7 +405,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             set({ optionSubMode: config.subMode })
           }
 
-          if (config.mode === "three") {
+          if (config.mode === "three" || config.mode === "two") {
             // Start all options from scratch — never carry over stale builds
             set({
               option2Components: [],
@@ -507,7 +510,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             isNewTemplate: false,
             templateImages: [...new Set(imageUrls)], // dedupe
           })
-          if (optionMode === "three") {
+          if (optionMode === "three" || optionMode === "two") {
             get().ensureThreeOptions()
           }
         },
@@ -545,7 +548,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         addComponent: (component, index) => {
           get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
-          if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
+          if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
           const newComponent = {
             ...component,
@@ -568,7 +571,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           else if (activeOption === 2) set({ option2Components: newComponents })
           else set({ option3Components: newComponents })
 
-          if (activeOption === 1 && optionMode === "three" && optionSubMode === "header-only") {
+          if (activeOption === 1 && (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only") {
             get().syncBodyFromOption1()
           }
           
@@ -589,7 +592,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
             }
             return null
           }
-          if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1 && findById(componentsToEdit)?.type !== "header-image") return
+          if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1 && findById(componentsToEdit)?.type !== "header-image") return
 
           const updateInTree = (items: any[]): any[] => {
             return items.map((comp) => {
@@ -618,7 +621,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           else if (activeOption === 2) set({ option2Components: newComponents })
           else set({ option3Components: newComponents })
 
-          if (activeOption === 1 && optionMode === "three" && optionSubMode === "header-only") {
+          if (activeOption === 1 && (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only") {
             get().syncBodyFromOption1()
           }
 
@@ -628,7 +631,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         deleteComponent: (id) => {
           get().pushHistory()
           const { activeOption, optionMode, optionSubMode, selectedComponent } = get()
-          if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
+          if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
 
           const newComponents = deleteByIdRecursive(componentsToEdit, id);
@@ -640,7 +643,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           
           set(updates);
 
-          if (activeOption === 1 && optionMode === "three" && optionSubMode === "header-only") {
+          if (activeOption === 1 && (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only") {
             get().syncBodyFromOption1()
           }
 
@@ -650,7 +653,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         moveComponent: (dragIndex, hoverIndex) => {
           get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
-          if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
+          if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
           const newComponents = [...componentsToEdit]
           const draggedComponent = newComponents[dragIndex]
@@ -661,7 +664,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           else if (activeOption === 2) set({ option2Components: newComponents })
           else set({ option3Components: newComponents })
 
-          if (activeOption === 1 && optionMode === "three" && optionSubMode === "header-only") {
+          if (activeOption === 1 && (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only") {
             get().syncBodyFromOption1()
           }
 
@@ -671,7 +674,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         duplicateComponent: (id) => {
           get().pushHistory()
           const { activeOption, optionMode, optionSubMode } = get()
-          if (optionMode === "three" && optionSubMode === "header-only" && activeOption !== 1) return
+          if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) return
           const componentsToEdit = get().getActiveComponents()
           const componentToDuplicate = componentsToEdit.find((comp) => comp.id === id)
           if (!componentToDuplicate) return
@@ -685,7 +688,7 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
           else if (activeOption === 2) set({ option2Components: newComponents })
           else set({ option3Components: newComponents })
 
-          if (activeOption === 1 && optionMode === "three" && optionSubMode === "header-only") {
+          if (activeOption === 1 && (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only") {
             get().syncBodyFromOption1()
           }
 
