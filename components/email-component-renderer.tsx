@@ -823,14 +823,20 @@ export function EmailComponentRenderer({
       case "isi":
         // Render via the same generator used for preview/PDF so spacing
         // is identical on canvas, in preview, and in exported PDFs.
+        // On canvas we strip the 20px L/R outer padding so the ISI aligns
+        // with every other component (the export keeps the full padding).
         return (
           <div
             style={{ ...baseStyle, backgroundColor: '#ffffff' }}
             dangerouslySetInnerHTML={{
               __html: generateEmailHTML([component])
-                // Strip the outer html/head/body wrapper — we only want the component HTML
                 .replace(/^[\s\S]*?<body[^>]*>/i, '')
                 .replace(/<\/body>[\s\S]*$/i, '')
+                // Remove the 20px L/R on the outermost <td> padding for canvas only
+                .replace(
+                  'style="padding: 20px 20px 10px 20px;"',
+                  'style="padding: 20px 0 10px 0;"'
+                )
                 .trim()
             }}
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
