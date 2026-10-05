@@ -823,11 +823,9 @@ export function EmailComponentRenderer({
       case "isi":
         // Render via the same generator used for preview/PDF so spacing
         // is identical on canvas, in preview, and in exported PDFs.
-        // The negative margin cancels the 20px L/R padding baked into the
-        // ISI generator so it aligns with every other component on canvas.
         return (
           <div
-            style={{ ...baseStyle, backgroundColor: '#ffffff', margin: '0 -20px' }}
+            style={{ ...baseStyle, backgroundColor: '#ffffff' }}
             dangerouslySetInnerHTML={{
               __html: generateEmailHTML([component])
                 // Strip the outer html/head/body wrapper — we only want the component HTML

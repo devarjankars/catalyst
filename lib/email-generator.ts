@@ -651,7 +651,7 @@ case "isi": {
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
-            <td style="padding: 20px 20px 10px 20px;">
+            <td style="padding: 20px 0 10px 0;">
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
