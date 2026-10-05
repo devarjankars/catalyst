@@ -94,6 +94,8 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
 
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
+      const bg = component.backgroundColor || "transparent";
+
       const divStyle = `
         font-size: ${component.fontSize || "14px"};
         color: ${component.color || "#000000"};
@@ -101,8 +103,6 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         font-weight: ${component.fontWeight || "normal"};
         font-family: ${component.fontFamily || "Arial, Helvetica, sans-serif"};
         line-height: ${component.lineHeight || "16px"};
-        background-color: ${component.backgroundColor || "transparent"};
-       
       `.trim();
 
       return `
@@ -112,17 +112,16 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
           cellspacing="0"
           cellpadding="0"
           border="0"
-           ${innerStyle ? `style="${innerStyle}"` : ""}
-        ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
-
+          ${innerStyle ? `style="${innerStyle}"` : ""}
+          ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
         >
           <tbody>
             <tr>
-              <td style="padding: ${
-                component.padding || "0 20px 10px 20px"
-              }; background-color:${
-                component.backgroundColor || "transparent"
-              };${innerStyle ? innerStyle : ""}" bgcolor="${component.backgroundColor || "transferent"}"   ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}> 
+              <td
+                style="padding: ${component.padding || "0 20px 10px 20px"}; background-color: ${bg};"
+                ${bg !== "transparent" ? `bgcolor="${bg}"` : ""}
+                ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
+              >
                 <div style="${divStyle}">
                   ${component.content || ""}
                 </div>
@@ -651,7 +650,7 @@ case "isi": {
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
-            <td style="padding: 20px 20px 10px 20px;">
+            <td style="padding: 0px 20px 0px 20px;">
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
@@ -827,7 +826,6 @@ case "isi": {
                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
                          ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy. </td>
                    </tr>
-                   <tr><td width="100%" height="20" style="font-size:0px;line-height:20px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
 
                 </tbody>
                </table>

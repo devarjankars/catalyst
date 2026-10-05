@@ -823,20 +823,13 @@ export function EmailComponentRenderer({
       case "isi":
         // Render via the same generator used for preview/PDF so spacing
         // is identical on canvas, in preview, and in exported PDFs.
-        // On canvas we strip the 20px L/R outer padding so the ISI aligns
-        // with every other component (the export keeps the full padding).
         return (
           <div
-            style={{ ...baseStyle, backgroundColor: '#ffffff' }}
+            style={{ ...baseStyle, backgroundColor: '#ffffff', padding: 0 }}
             dangerouslySetInnerHTML={{
               __html: generateEmailHTML([component])
                 .replace(/^[\s\S]*?<body[^>]*>/i, '')
                 .replace(/<\/body>[\s\S]*$/i, '')
-                // Remove the 20px L/R on the outermost <td> padding for canvas only
-                .replace(
-                  'style="padding: 20px 20px 10px 20px;"',
-                  'style="padding: 20px 0 10px 0;"'
-                )
                 .trim()
             }}
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
@@ -1158,15 +1151,16 @@ export function EmailComponentRenderer({
         }
         case "orsedu-footer":
         return (
-          <div style={baseStyle} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">
+          <div style={{ ...baseStyle, padding: 0 }} className="z-50 mt-2 flex flex-col w-full justify-start text-[#000000] bg-[#F1F1F1]">
             <img
               src={component.src || DEFAULT_ORSERDU_FOOTER_LOGO}
               alt={component.imageAlt || component.alt || "Footer Image"}
               style={{
-                width: component.width || "100%",
+                width: component.width || "250px",
                 height: component.height || "auto",
                 maxWidth: component.maxWidth || "600px",
                 display: "block",
+                padding: "0 0 0 17px",
               }}
               onClick={(e) => {
                 e.stopPropagation()
