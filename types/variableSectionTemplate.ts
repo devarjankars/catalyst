@@ -49,10 +49,22 @@ const sfmc: VariableSection[] = [
     listText: null,
   },
   {
+    heading: "[Variable Title]",
+    options: ["Dr.", "Mr.", "Mrs.", "Ms.", "Mx."],
+    structure: "normal",
+    listText: "TITLE",
+  },
+  {
     heading: "[Variable Header Image]",
     options: [""],
     structure: "normal",
     listText: "Option",
+  },
+  {
+    heading: "[Variable Closing]",
+    options: ["Regards,", "Sincerely,", "Thank you,", "Best,"],
+    structure: "normal",
+    listText: "CLOSING",
   },
 ];
 
@@ -109,6 +121,12 @@ const RTE: VariableSection[] = [
     options: ["Regards,", "Sincerely,", "Thank you,", "Best,"],
     structure: "normal",
     listText: "CLOSING",
+  },
+  {
+    heading: "[Variable Header Image]",
+    options: [""],
+    structure: "normal",
+    listText: "Option",
   },
 ];
 
