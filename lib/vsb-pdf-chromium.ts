@@ -359,20 +359,24 @@ async function measureContentHeight(page: import('playwright-core').Page): Promi
 export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: string): Promise<Buffer> {
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
+  // ── Environment detection ─────────────────────────────────────────────────
+  // Vercel sets VERCEL=1 and VERCEL_ENV. Render sets RENDER=true.
+  // As a final fallback, any Linux environment where Playwright's own Chromium
+  // binary is missing required system libraries (libnss3.so etc.) should also
+  // use sparticuz — so we treat any non-Windows/non-macOS headless environment
+  // as serverless unless explicitly overridden.
   const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV != null;
   const isRender = process.env.RENDER === 'true';
+  const isLinuxCI = process.platform === 'linux' && !process.env.DISPLAY && !process.env.PLAYWRIGHT_SKIP_CHROMIUM;
+  const isServerless = isVercel || isRender || isLinuxCI;
 
-  // On any serverless/lambda environment (Vercel, Render, etc.) we need the
-  // sparticuz Chromium — Playwright's bundled binary lacks required system libs
-  // (libnss3.so etc.) that aren't present in the Lambda execution environment.
-  const isServerless = isVercel || isRender;
+  console.log('[PDF] VERCEL:', process.env.VERCEL, '| VERCEL_ENV:', process.env.VERCEL_ENV, '| RENDER:', process.env.RENDER);
+  console.log('[PDF] platform:', process.platform, '| isServerless:', isServerless);
 
   const executablePath = isServerless
     ? await serverlessChromium.executablePath(CHROMIUM_REMOTE_EXEC_URL)
     : undefined;
 
-  console.log('[PDF] environment:', isVercel ? 'vercel' : isRender ? 'render' : 'local');
-  console.log('[PDF] isServerless:', isServerless);
   console.log('[PDF] Chromium executable:', executablePath || 'Playwright-managed (auto-locate)');
 
   let browser: Awaited<ReturnType<typeof playwrightChromium.launch>> | undefined;
