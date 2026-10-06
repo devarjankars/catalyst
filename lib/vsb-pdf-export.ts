@@ -79,8 +79,14 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
         typeof opt === 'string' && isImageValue(opt)
       );
 
-      // If no valid image options, render nothing — no whitespace block
-      if (validOptions.length === 0) return '';
+      // If no valid image options, still render the heading so the section is visible
+      if (validOptions.length === 0) {
+        return `
+        <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
+          <div style="font-size:12px;font-weight:bold;margin-bottom:8px;color:${accent};">${section.heading}</div>
+          <div style="font-size:12px;color:#9ca3af;font-style:italic;">No images uploaded yet.</div>
+        </div>`;
+      }
 
       const items = validOptions.map((opt: any, i: number) => {
         const safeSrc = escAttr(opt.trim());
@@ -96,6 +102,19 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
     }
 
     // ── Normal text section ───────────────────────────────────────────────────
+    // Special case: single-option preheader — show as "Preheader: text" with no heading
+    const isPreheaderSection = typeof section.heading === 'string' &&
+      section.heading.trim().toLowerCase().includes('preheader');
+    if (isPreheaderSection && options.length === 1) {
+      const rawValue = typeof options[0] === 'string' ? options[0] : JSON.stringify(options[0]);
+      return `
+      <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
+        <div style="font-size:12px;color:#111827;line-height:1.4;box-sizing:border-box;">
+          <span style="font-weight:bold;margin-right:4px;">Preheader:</span>${rawValue}
+        </div>
+      </div>`;
+    }
+
     return `
       <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
         ${section.structure !== 'third-party-placeholder'
@@ -103,6 +122,10 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
           : ''}
         ${options.map((opt: any, i: number) => {
           const rawValue = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
+          // Only show "Option N:" prefix when there are 2 or more options
+          if (options.length >= 2) {
+            return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;"><span style="font-weight:bold;margin-right:6px;">${listLabel} ${i + 1}:</span>${rawValue}</div>`;
+          }
           return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;">${rawValue}</div>`;
         }).join('')}
       </div>`;

@@ -92,8 +92,13 @@ const NormalSectionRenderer: React.FC<{
 }> = ({ section, idx, onUpdate, onRemove }) => {
   const templateImages = useEmailBuilderStore(state => state.templateImages);
   const namedTemplateImages = useEmailBuilderStore(state => state.namedTemplateImages);
+  const addTemplateImage = useEmailBuilderStore(state => state.addTemplateImage);
+  const { currentTemplate } = useEmailBuilderStore();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryOptionIdx, setGalleryOptionIdx] = useState<number | null>(null);
+  const [uploading, setUploading] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTargetRef = useRef<number | null>(null);
 
   const isImageSection = section.heading.toLowerCase().includes('image');
   const mandatory = isMandatorySection(section.heading);
@@ -110,12 +115,51 @@ const NormalSectionRenderer: React.FC<{
     setGalleryOptionIdx(null);
   };
 
+  const handleUploadClick = (optIdx: number) => {
+    uploadTargetRef.current = optIdx;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || uploadTargetRef.current === null) return;
+    const optIdx = uploadTargetRef.current;
+    setUploading(optIdx);
+    try {
+      const { firebaseService } = await import('@/services/firebase-service');
+      const url = await firebaseService.uploadImage(file, currentTemplate?.id);
+      if (url && url !== 'PATH_NOT_FOUND') {
+        updateOption(optIdx, url);
+        addTemplateImage(url);
+      } else {
+        alert('Please save the email first, then upload images.');
+      }
+    } catch (err) {
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(null);
+      uploadTargetRef.current = null;
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-gray-50'}`}>
       {mandatory && (
         <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
           Required
         </span>
+      )}
+
+      {/* Hidden file input for image upload */}
+      {isImageSection && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
       )}
 
       <HeadingRow
@@ -138,12 +182,27 @@ const NormalSectionRenderer: React.FC<{
                   value={opt}
                   onChange={(e) => updateOption(optIdx, e.target.value)}
                   className="flex-1 bg-white"
-                  placeholder={isImageSection ? 'Image URL or select from gallery' : `${listLabel} ${optIdx + 1}`}
+                  placeholder={isImageSection ? 'Image URL or upload/select' : `${listLabel} ${optIdx + 1}`}
                 />
                 {isImageSection && (
-                  <Button variant="outline" size="icon" className="shrink-0 h-9 w-9 bg-white" onClick={() => openGallery(optIdx)} title="Select from gallery">
-                    <ImageIcon size={14} />
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 h-9 w-9 bg-white"
+                      onClick={() => handleUploadClick(optIdx)}
+                      title="Upload image"
+                      disabled={uploading === optIdx}
+                    >
+                      {uploading === optIdx
+                        ? <span className="animate-spin text-xs">↻</span>
+                        : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      }
+                    </Button>
+                    <Button variant="outline" size="icon" className="shrink-0 h-9 w-9 bg-white" onClick={() => openGallery(optIdx)} title="Select from gallery">
+                      <ImageIcon size={14} />
+                    </Button>
+                  </>
                 )}
                 <Button variant="ghost" size="icon" onClick={() => onUpdate({ ...section, options: section.options.filter((_, j) => j !== optIdx) })} className="shrink-0">
                   <X size={14} />
