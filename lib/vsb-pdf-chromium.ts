@@ -58,37 +58,41 @@ function stripBaseTags(html: string): string {
   return html.replace(/<base[^>]*>/gi, '');
 }
 
+/**
+ * Rewrite root-relative URLs (/path) to absolute URLs using the app origin.
+ * Chromium's headless renderer has no origin context, so /header-placeholder.png
+ * resolves to about:blank/header-placeholder.png and produces broken images.
+ * We rewrite src, href (on link tags), and url() in inline styles.
+ * Absolute URLs (https://, data:, blob:) are left untouched.
+ */
+function rewriteRelativeUrls(html: string, baseUrl: string): string {
+  const origin = baseUrl.replace(/\/$/, '');
+  // src="/..." and src='/...'
+  html = html.replace(/\bsrc=(["'])(\/[^"']*?)\1/gi, (_m, q, path) => `src=${q}${origin}${path}${q}`);
+  // href="/..." on <link> tags (stylesheets, fonts) — skip anchor hrefs
+  html = html.replace(/(<link[^>]+)\bhref=(["'])(\/[^"']*?)\2/gi, (_m, pre, q, path) => `${pre}href=${q}${origin}${path}${q}`);
+  // url('/...') and url("/...") in inline styles
+  html = html.replace(/url\((["']?)(\/[^)"']*?)\1\)/gi, (_m, q, path) => `url(${q}${origin}${path}${q})`);
+  return html;
+}
+
 function buildPageHtml(spec: VsbPdfPageSpec, baseUrl?: string): string {
-  // ── No <base href> ────────────────────────────────────────────────────────
-  // A <base href="http://localhost:3000"> would silently rewrite every relative
-  // href (SFMC tokens, "#", path-only URLs) to a localhost dead-link in the PDF.
-  // All email links are absolute — we don't need a base tag.
-  // baseUrl is kept as a parameter for future image-loading use only.
+  const applyUrlFix = (html: string) => baseUrl ? rewriteRelativeUrls(html, baseUrl) : html;
 
   if (spec.columns?.length) {
     const columns = spec.columns.map((column: VsbPdfColumn) => {
       const variantClass = column.variant === 'mobile'
         ? 'pdf-column pdf-column--mobile'
         : 'pdf-column pdf-column--desktop';
-      const parts = extractDocumentParts(stripBaseTags(stripTargetBlank(column.html)));
+      const parts = extractDocumentParts(stripBaseTags(stripTargetBlank(applyUrlFix(column.html))));
       return `<div class="${variantClass}" style="width:${column.width}px;flex:0 0 ${column.width}px;overflow:visible;">${parts.styles}${parts.body}</div>`;
     }).join('');
-    const pageHtml = `<!doctype html><html><head><meta charset="utf-8"><style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
-    // Write debug HTML to disk (server-side only)
-    try {
-      const { writeFileSync } = require('fs');
-      const debugPath = process.platform === 'win32' 
-        ? 'C:\\Users\\Public\\vsb-page-debug.html'
-        : '/tmp/vsb-page-debug.html';
-      writeFileSync(debugPath, pageHtml);
-      console.log('[PDF DEBUG] wrote debug HTML to', debugPath);
-    } catch(e) { console.log('[PDF DEBUG] could not write debug file:', e); }
-    return pageHtml;
+    return `<!doctype html><html><head><meta charset="utf-8"><style>${printStyles(0)}</style></head><body><main class="pdf-columns" style="gap:${spec.gap ?? 0}px;">${columns}</main></body></html>`;
   }
 
   // Single-page render — wrap in .pdf-column.pdf-column--single so the same
   // border and padding rules apply as for multi-column options.
-  const source = stripTargetBlank(spec.html ?? '<div></div>');
+  const source = applyUrlFix(stripTargetBlank(spec.html ?? '<div></div>'));
   const parts  = extractDocumentParts(source);
   const isMobile = (spec.width ?? DEFAULT_WIDTH) === 375;
   const singleVariant = isMobile ? 'pdf-column--mobile' : 'pdf-column--desktop';
@@ -359,38 +363,32 @@ async function measureContentHeight(page: import('playwright-core').Page): Promi
 export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: string): Promise<Buffer> {
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
-  // ── Environment detection ─────────────────────────────────────────────────
-  // Vercel sets VERCEL=1 and VERCEL_ENV. Render sets RENDER=true.
-  // As a final fallback, any Linux environment where Playwright's own Chromium
-  // binary is missing required system libraries (libnss3.so etc.) should also
-  // use sparticuz — so we treat any non-Windows/non-macOS headless environment
-  // as serverless unless explicitly overridden.
-  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV != null;
+  const isVercel = process.env.VERCEL === '1';
   const isRender = process.env.RENDER === 'true';
-  const isLinuxCI = process.platform === 'linux' && !process.env.DISPLAY && !process.env.PLAYWRIGHT_SKIP_CHROMIUM;
-  const isServerless = isVercel || isRender || isLinuxCI;
 
-  console.log('[PDF] VERCEL:', process.env.VERCEL, '| VERCEL_ENV:', process.env.VERCEL_ENV, '| RENDER:', process.env.RENDER);
-  console.log('[PDF] platform:', process.platform, '| isServerless:', isServerless);
-
-  const executablePath = isServerless
+  const executablePath = isVercel
     ? await serverlessChromium.executablePath(CHROMIUM_REMOTE_EXEC_URL)
     : undefined;
 
+  console.log('[PDF] environment:', isVercel ? 'vercel' : isRender ? 'render' : 'local');
   console.log('[PDF] Chromium executable:', executablePath || 'Playwright-managed (auto-locate)');
+
+  if (isRender && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
+  }
 
   let browser: Awaited<ReturnType<typeof playwrightChromium.launch>> | undefined;
   try {
     browser = await playwrightChromium.launch({
       headless: true,
-      ...(isServerless
+      ...(isVercel
         ? { args: serverlessChromium.args, executablePath }
         : { args: ['--no-sandbox', '--disable-setuid-sandbox'] }),
     });
     console.log('[PDF] browser launched');
     browser.on('disconnected', () => console.error('[PDF] BROWSER DISCONNECTED'));
 
-    if (isServerless) {
+    if (isVercel) {
       const diagnosticPage = await browser.newPage();
       await diagnosticPage.setContent('<html><body>Hello</body></html>');
       const testPdf = await diagnosticPage.pdf({ printBackground: true });

@@ -694,6 +694,40 @@ export function EmailComponentRenderer({
           </div>
         );
 
+      case "orserdu-highlight-box": {
+        const {
+          boxText         = "",
+          boxBgColor      = "#FFD500",
+          boxTextColor    = "#002E6D",
+          boxFontSize     = "14px",
+          boxLineHeight   = "18px",
+          boxFontWeight   = "700",
+          boxBorderRadius = "12px",
+          boxPadding      = "16px 18px",
+        } = component as any;
+
+        return (
+          <div
+            style={{ padding: component.padding || "0 20px 10px 20px" }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+          >
+            <div
+              style={{
+                backgroundColor: boxBgColor,
+                borderRadius: boxBorderRadius,
+                padding: boxPadding,
+                fontFamily: "Arial, sans-serif",
+                fontSize: boxFontSize,
+                lineHeight: boxLineHeight,
+                fontWeight: boxFontWeight,
+                color: boxTextColor,
+              }}
+              dangerouslySetInnerHTML={{ __html: boxText }}
+            />
+          </div>
+        );
+      }
+
       case "orserdu-report-links": {
         const {
           linkItems = [],
@@ -936,7 +970,7 @@ export function EmailComponentRenderer({
 
       case "orserdu-abbreviations":
         return (
-          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
@@ -971,7 +1005,7 @@ export function EmailComponentRenderer({
 
       case "orserdu-references":
         return (
-          <div style={{ ...baseStyle, backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
@@ -988,17 +1022,18 @@ export function EmailComponentRenderer({
                 }}
               />
             ) : (
-              <p style={{ 
-                fontSize: component.fontSize || '12px', 
-                color: component.color || '#646464', 
-                fontFamily: component.fontFamily || 'Arial, sans-serif',
-                fontWeight: component.fontWeight || 'normal',
-                lineHeight: component.lineHeight || '14px',
-                textAlign: component.textAlign || 'left',
-                margin: 0
-              }}>
-                {component.references}
-              </p>
+              <p
+                dangerouslySetInnerHTML={{ __html: component.references || "" }}
+                style={{
+                  fontSize: component.fontSize || '12px',
+                  color: component.color || '#646464',
+                  fontFamily: component.fontFamily || 'Arial, sans-serif',
+                  fontWeight: component.fontWeight || 'normal',
+                  lineHeight: component.lineHeight || '14px',
+                  textAlign: component.textAlign || 'left',
+                  margin: 0,
+                }}
+              />
             )}
           </div>
         );

@@ -2309,14 +2309,70 @@ export function PropertiesPanel({
           />
         );
             
+      case "orserdu-highlight-box": {
+        const comp = component as any;
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Box Text</Label>
+              <textarea
+                className="w-full min-h-[100px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                value={comp.boxText || ""}
+                onChange={(e) => onUpdateComponent({ boxText: e.target.value } as any)}
+                placeholder="Box content…"
+              />
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label>Box Background</Label>
+                <ColorInput value={comp.boxBgColor || "#FFD500"} onChange={(v) => onUpdateComponent({ boxBgColor: v } as any)} />
+              </div>
+              <div className="flex-1">
+                <Label>Text Color</Label>
+                <ColorInput value={comp.boxTextColor || "#002E6D"} onChange={(v) => onUpdateComponent({ boxTextColor: v } as any)} />
+              </div>
+            </div>
+            <div>
+              <Label>Font Size</Label>
+              <FontSizeInput value={comp.boxFontSize || "14px"} onChange={(v) => onUpdateComponent({ boxFontSize: v } as any)} />
+            </div>
+            <div>
+              <Label>Line Height</Label>
+              <LineHeightInput value={comp.boxLineHeight || "18px"} onChange={(v) => onUpdateComponent({ boxLineHeight: v } as any)} />
+            </div>
+            <div>
+              <Label>Font Weight</Label>
+              <Select value={comp.boxFontWeight || "700"} onValueChange={(v) => onUpdateComponent({ boxFontWeight: v } as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="400">Normal</SelectItem>
+                  <SelectItem value="700">Bold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Border Radius</Label>
+              <Input value={comp.boxBorderRadius || "12px"} onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value } as any)} placeholder="12px" />
+            </div>
+            <div>
+              <Label>Inner Padding</Label>
+              <PaddingInput value={comp.boxPadding || "16px 18px"} onChange={(v) => onUpdateComponent({ boxPadding: v } as any)} />
+            </div>
+            <div>
+              <Label>Space below box (px)</Label>
+              <Input type="number" min={0} value={comp.spacingAfterBox ?? "20"} onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value } as any)} />
+            </div>
+          </div>
+        );
+      }
+
       case "orserdu-view-in-browser":
       case "elzonris-view-in-browser":
         return (
           <div className="space-y-4">
             <div>
               <Label>Link URL</Label>
-              <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />
-            </div>
+              <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />            </div>
             <div>
               <Label>Link Title</Label>
               <Input value={component.linkTitle || ""} onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })} placeholder='title="…" tooltip on hover' />
@@ -2896,6 +2952,111 @@ export function PropertiesPanel({
             </div>
           </div>
         );
+
+        case "orserdu-highlight-box": {
+          const c = component as any;
+          return (
+            <div className="space-y-4">
+              {/* Box text */}
+              <div>
+                <Label>Box Text (HTML supported)</Label>
+                <textarea
+                  className="w-full min-h-[100px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                  value={c.boxText ?? ""}
+                  onChange={(e) => onUpdateComponent({ boxText: e.target.value } as any)}
+                  placeholder="Enter highlighted box text..."
+                />
+              </div>
+
+              {/* Colors */}
+              <div>
+                <Label>Box Background Color</Label>
+                <ColorInput
+                  value={c.boxBgColor ?? "#FFD500"}
+                  onChange={(v) => onUpdateComponent({ boxBgColor: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Text Color</Label>
+                <ColorInput
+                  value={c.boxTextColor ?? "#002E6D"}
+                  onChange={(v) => onUpdateComponent({ boxTextColor: v } as any)}
+                />
+              </div>
+
+              {/* Typography */}
+              <div>
+                <Label>Font Size</Label>
+                <FontSizeInput
+                  value={c.boxFontSize ?? "14px"}
+                  onChange={(v) => onUpdateComponent({ boxFontSize: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Line Height</Label>
+                <FontSizeInput
+                  value={c.boxLineHeight ?? "18px"}
+                  onChange={(v) => onUpdateComponent({ boxLineHeight: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Font Weight</Label>
+                <Select
+                  value={c.boxFontWeight ?? "700"}
+                  onValueChange={(v) => onUpdateComponent({ boxFontWeight: v } as any)}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="400">Normal</SelectItem>
+                    <SelectItem value="700">Bold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Shape */}
+              <div>
+                <Label>Border Radius</Label>
+                <Input
+                  value={c.boxBorderRadius ?? "12px"}
+                  onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value } as any)}
+                  placeholder="12px"
+                />
+              </div>
+
+              {/* Inner padding (inside the box) */}
+              <div>
+                <Label>Inner Padding (inside box)</Label>
+                <PaddingInput
+                  value={c.boxPadding ?? "16px 18px"}
+                  onChange={(v) => onUpdateComponent({ boxPadding: v } as any)}
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Controls space inside the coloured box.</p>
+              </div>
+
+              {/* Outer padding — left/right are FIXED at 20px to match email standard */}
+              <div>
+                <Label>Outer Padding (around box)</Label>
+                <PaddingInput
+                  value={c.outerPadding ?? "0 20px 20px 20px"}
+                  onChange={(v) => onUpdateComponent({ outerPadding: v } as any)}
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Left/right control the side margins. Standard email uses 20px.</p>
+              </div>
+
+              {/* Space after box */}
+              <div>
+                <Label>Space After Box (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={c.spacingAfterBox ?? "20"}
+                  onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value } as any)}
+                  placeholder="20"
+                />
+              </div>
+            </div>
+          );
+        }
 
         case "orserdu-isi-select":
           return (

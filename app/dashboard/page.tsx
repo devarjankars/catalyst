@@ -17,10 +17,10 @@ import { useLoggedInUserStore } from "@/store/logged-in-user"
 
 // ── Category metadata ────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: "rte",       label: "RTE",       description: "Ready-to-execute emailers",           color: "#BC2030", bg: "#fff5f5" },
-  { id: "sfmc",      label: "SFMC",      description: "Salesforce Marketing Cloud",          color: "#7e22ce", bg: "#faf5ff" },
-  { id: "unbranded", label: "Unbranded", description: "Disease-state / unbranded emails",    color: "#1a56db", bg: "#eff6ff" },
-  { id: "other",     label: "Other",     description: "Miscellaneous emailers",              color: "#374151", bg: "#f9fafb" },
+  { id: "rte",       label: "Rep Triggered",  description: "Rep triggered emailers",              color: "#BC2030", bg: "#fff5f5" },
+  { id: "sfmc",      label: "SFMC",           description: "Salesforce Marketing Cloud",           color: "#7e22ce", bg: "#faf5ff" },
+  { id: "unbranded", label: "Unbranded",      description: "Disease-state / unbranded emails",     color: "#1a56db", bg: "#eff6ff" },
+  { id: "other",     label: "Other",          description: "Miscellaneous emailers",               color: "#374151", bg: "#f9fafb" },
 ] as const
 
 type CategoryId = typeof CATEGORIES[number]["id"]

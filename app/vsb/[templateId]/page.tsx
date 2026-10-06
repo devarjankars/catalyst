@@ -99,6 +99,8 @@ export default function VSBPage() {
     }
 
     const isThreeMode = currentTemplate?.optionMode === 'three';
+    const isTwoMode   = currentTemplate?.optionMode === 'two';
+    const isMultiMode = isThreeMode || isTwoMode;
     const headerDetails = currentVsb?.headerDetails || [];
 
     // Link-footer types — the ones that carry the 5-link row.
@@ -133,6 +135,11 @@ export default function VSBPage() {
           { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: ensureFooters(live2) },
           { title: 'Option 3', imageOptionTitle: 'Option 3 - Image Option 3', components: ensureFooters(live3) },
         ]
+      : isTwoMode
+      ? [
+          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: ensureFooters(opt1Components) },
+          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: ensureFooters(live2) },
+        ]
       : [{ title: 'Standard View', imageOptionTitle: '', components: ensureFooters(opt1Components) }];
 
     // ── Header block ──────────────────────────────────────────────────────────
@@ -165,7 +172,7 @@ export default function VSBPage() {
           <div class="${detailsClass}" style="display:table;width:auto;margin:0 0 0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
               <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
-                <span style="font-weight:bold;color:black;">${detail.name}: </span><span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
+                <span style="font-weight:bold;color:black;">${detail.name}: </span><span style="font-weight:${detail.name === 'Preheader' ? 'normal' : 'bold'}; color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
               </div>
             `).join('')}
           </div>
@@ -260,6 +267,17 @@ export default function VSBPage() {
           gap:       GAP,
           pageWidth: COL_W * 3 + GAP * 2 + PADDING * 2,
         });
+      } else if (isTwoMode) {
+        // Two options side-by-side on one landscape page.
+        // pageWidth = 2 × 600 + 1 × 24 (gap) + 2 × 24 (outer pad) = 1272px
+        const COL_W   = 600;
+        const GAP     = 24;
+        const PADDING = 24;
+        pages.push({
+          columns: desktopHtmls.map((html) => ({ html, width: COL_W, variant: 'desktop' as const })),
+          gap:       GAP,
+          pageWidth: COL_W * 2 + GAP * 1 + PADDING * 2,
+        });
       } else {
         pages.push({ html: desktopHtmls[0], width: 600 });
       }
@@ -276,6 +294,17 @@ export default function VSBPage() {
           columns: mobileHtmls.map((html) => ({ html, width: MOB_W, variant: 'mobile' as const })),
           gap:       GAP,
           pageWidth: MOB_W * 3 + GAP * 2 + PADDING * 2,
+        });
+      } else if (isTwoMode) {
+        // Two mobile options side-by-side on one landscape page.
+        // pageWidth = 2 × 375 + 1 × 16 (gap) + 2 × 20 (outer pad) = 806px
+        const MOB_W   = 375;
+        const GAP     = 16;
+        const PADDING = 20;
+        pages.push({
+          columns: mobileHtmls.map((html) => ({ html, width: MOB_W, variant: 'mobile' as const })),
+          gap:       GAP,
+          pageWidth: MOB_W * 2 + GAP * 1 + PADDING * 2,
         });
       } else {
         // Single mobile option — centered on its own page.
@@ -374,18 +403,18 @@ export default function VSBPage() {
       const newPdfUrl = await firebaseService.uploadVSBPDF(pdfBlob, templateId, currentVsb.id);
 
       if (newPdfUrl) {
-        const versions = currentVsb.versions || [];
-        const currentVersion = currentVsb.currentVersion;
+        const versions = (currentVsb as any).versions || [];
+        const currentVersion = (currentVsb as any).currentVersion;
         const versionUpdates = {
           currentVersion: newPdfUrl,
           versions: currentVersion ? [...versions, currentVersion] : versions,
         };
 
         // Persist version data directly to Firestore (store's updateVSB is local-only)
-        const success = await firebaseService.updateVSB(currentVsb.id, versionUpdates);
+        const success = await firebaseService.updateVSB(currentVsb.id, versionUpdates as any);
         if (success) {
           // Sync local Zustand state to reflect the saved changes
-          await updateVSB(currentVsb.id, versionUpdates);
+          await updateVSB(currentVsb.id, versionUpdates as any);
           alert('VSB successfully up-versioned!');
         } else {
           alert('PDF uploaded but failed to save version to database. Please try again.');
@@ -473,7 +502,7 @@ export default function VSBPage() {
   setMlrDialogOpen(true);
   setMlrDialogStep('downloading');
   setMlrDialogMessage('Preparing the PDF download...');
-  seisConnectingToMRL(true);
+  setIsConnectingToMRL(true);
 
   try {
     await executeDownloadPDF();
@@ -512,7 +541,7 @@ export default function VSBPage() {
     setMlrDialogStep('error');
     setMlrDialogMessage('Something went wrong while connecting to MLR. Please try again.');
   } finally {
-    seisConnectingToMRL(false);
+    setIsConnectingToMRL(false);
     setMlrDialogOpen(true);
   }
 };
@@ -553,16 +582,26 @@ export default function VSBPage() {
                 data={currentVsb.headerDetails || []}
                 onChange={(data) => handleUpdateData('headerDetails', data)}
               />
-              <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>
-                <DesktopViewSection data={currentVsb.desktopView} onChange={(data) => handleUpdateData('Desktop view', data)} isPreview={true} />
+              <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three' || currentTemplate?.optionMode === 'two'}>
+                <DesktopViewSection
+                  data={currentVsb.desktopView}
+                  onChange={(data) => handleUpdateData('Desktop view', data)}
+                  isPreview={false}
+                  onExportPdf={() => executeDownloadPDF()}
+                />
               </VSBPageWrapper>
             </div>
           );
         case 'Mobile view':
           return (
             <div className="space-y-6">
-              <VSBPageWrapper title="Mobile View" number={3} wide={currentTemplate?.optionMode === 'three'}>
-                <MobileViewSection data={currentVsb.mobileView} onChange={(data) => handleUpdateData('Mobile view', data)} isPreview={true} />
+              <VSBPageWrapper title="Mobile View" number={3} wide={currentTemplate?.optionMode === 'three' || currentTemplate?.optionMode === 'two'}>
+                <MobileViewSection
+                  data={currentVsb.mobileView}
+                  onChange={(data) => handleUpdateData('Mobile view', data)}
+                  isPreview={false}
+                  onExportPdf={() => executeDownloadPDF()}
+                />
               </VSBPageWrapper>
             </div>
           );
@@ -649,7 +688,7 @@ export default function VSBPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto  p-8">
-            <div className={`${currentTemplate?.optionMode === 'three' && (activeSection === 'Desktop view' || activeSection === 'Mobile view') ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+            <div className={`${(currentTemplate?.optionMode === 'three' || currentTemplate?.optionMode === 'two') && (activeSection === 'Desktop view' || activeSection === 'Mobile view') ? 'w-full' : 'max-w-4xl mx-auto'}`}>
               {renderActiveSection()}
             </div>
           </div>
@@ -690,17 +729,15 @@ export default function VSBPage() {
         <Dialog open={downloadDialogOpen} onOpenChange={(open) => { if (!isGeneratingPdf) setDownloadDialogOpen(open); }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Download Selective Pages</DialogTitle>
+              <DialogTitle>Download PDF</DialogTitle>
               <DialogDescription>
-                Select the pages you want to include in the combined PDF.
+                Select optional pages to include. Desktop and Mobile views are always included.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 cursor-default">
               {[
                 { id: 'variableCopy', label: '1. Variable Copy' },
-                { id: 'desktopView',  label: '2. Desktop View'  },
-                { id: 'mobileView',   label: '3. Mobile View'   },
-                { id: 'altNamePage',  label: '4. Alt-Text Configuration' },
+                { id: 'altNamePage',  label: '2. Alt-Text Configuration' },
               ].map(({ id, label }) => (
                 <div key={id} className="flex items-center space-x-2">
                   <Checkbox
@@ -715,12 +752,22 @@ export default function VSBPage() {
                   </label>
                 </div>
               ))}
+              {/* Desktop + Mobile are always included — show as locked */}
+              {[
+                { label: '3. Desktop View' },
+                { label: '4. Mobile View' },
+              ].map(({ label }) => (
+                <div key={label} className="flex items-center space-x-2 opacity-60">
+                  <Checkbox checked={true} disabled />
+                  <label className="text-sm font-medium leading-none">{label} <span className="text-xs text-gray-400">(always included)</span></label>
+                </div>
+              ))}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
               <Button
-                onClick={() => executeDownloadPDF(selectedPages)}
-                disabled={!Object.values(selectedPages).some(Boolean) || isGeneratingPdf}
+                onClick={() => executeDownloadPDF({ ...selectedPages, desktopView: true, mobileView: true })}
+                disabled={isGeneratingPdf}
                 className="bg-[#006937] hover:bg-[#00522b] text-white"
               >
                 {'Download PDF'}

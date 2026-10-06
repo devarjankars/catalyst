@@ -582,8 +582,45 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       </table>`.trim();
     }
 
-    case "orserdu-report-links": {
-      const linkItems = (component as any).linkItems || [];
+    case "orserdu-highlight-box": {
+      const {
+        boxText         = "Connect virtually with an expert for a 30-minute, one-on-one presentation.",
+        boxBgColor      = "#FFD500",
+        boxTextColor    = "#002E6D",
+        boxFontSize     = "14px",
+        boxLineHeight   = "18px",
+        boxFontWeight   = "700",
+        boxBorderRadius = "12px",
+        boxPadding      = "16px 18px",
+        spacingAfterBox = "20",
+      } = component as any;
+
+      // Use the standard component.padding for the outer left/right spacing
+      // so it aligns with every other component in the email.
+      const outerPad = component.padding || "0 20px 10px 20px";
+      const spacerPx = parseInt(String(spacingAfterBox), 10) || 20;
+
+      return `
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tbody><tr>
+    <td style="padding:${outerPad};">
+      <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
+        style="background-color:${boxBgColor};border-radius:${boxBorderRadius};">
+        <tbody><tr>
+          <td style="padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};color:${boxTextColor};mso-line-height-rule:exactly;">
+            ${boxText}
+          </td>
+        </tr></tbody>
+      </table>
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tbody><tr><td height="${spacerPx}" style="font-size:0px;line-height:${spacerPx}px;mso-line-height-rule:exactly;">&nbsp;</td></tr></tbody>
+      </table>
+    </td>
+  </tr></tbody>
+</table>`.trim();
+    }
+
+    case "orserdu-report-links": {      const linkItems = (component as any).linkItems || [];
       const fontSize = (component as any).fontSize || "14px";
       const color = (component as any).color || "#000000";
       const lineHeight = (component as any).lineHeight || "16px";
@@ -1397,28 +1434,48 @@ case "isi": {
       const padding = component.padding || "0 20px 10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
-      // One <td> per link, spread edge-to-edge ΓÇö same structure as footer-link-3
-      const linkTds = links.map((link, index) => {
-        const align = index === 0 ? "left" : index === links.length - 1 ? "right" : "center";
-        return `<td class="footer-link-col" align="${align}" valign="middle" style="font-family:Arial,sans-serif; font-size:${fontSize}; line-height:1.4; white-space:nowrap;">
-          <a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${link.color || color}; text-decoration:underline; font-size:${link.fontSize || fontSize}; font-family:Arial,sans-serif;">${(link.text || "").trim()}</a>
-        </td>`;
-      }).join("\n          ");
+      const outerClass = footerDisplay === "mobile-only" ? 'class="mbl-show-table"'
+        : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : "";
+      const cellClass = footerDisplay === "mobile-only" ? 'class="mbl-show-cell"'
+        : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : "";
+
+      // ── Desktop: all links inline with pipes ────────────────────────────
+      const desktopHtml = links.map((link, index) => {
+        const isLast = index === links.length - 1;
+        const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+        return `<a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${link.color || color};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${(link.text || "").trim()}</a>${pipe}`;
+      }).join("");
+
+      // ── Mobile: 2 links per row ─────────────────────────────────────────
+      const mobileRows: string[] = [];
+      for (let i = 0; i < links.length; i += 2) {
+        const row = links.slice(i, i + 2);
+        const rowHtml = row.map((link, j) => {
+          const isLastInRow = j === row.length - 1;
+          const pipe = isLastInRow ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+          return `<a href="${link.href || "#"}" title="${link.title || ""}" target="_blank" style="color:${link.color || color};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${(link.text || "").trim()}</a>${pipe}`;
+        }).join("");
+        mobileRows.push(`<tr class="mbl-show-tr" style="display:none;"><td style="padding-bottom:4px;font-family:Arial,sans-serif;">${rowHtml}</td></tr>`);
+      }
 
       return `
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
       bgcolor="${bgColor}"
       style="background-color:${bgColor};${innerStyle ? innerStyle : ""}"
-      ${footerDisplay === "mobile-only" ? 'class="mbl-show-table"' : footerDisplay === "desktop-only" ? 'class="desk-show-table"' : ""}>
+      ${outerClass}>
       <tbody>
         <tr>
-          <td bgcolor="${bgColor}"
-            ${footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""}
+          <td bgcolor="${bgColor}" ${cellClass}
             style="padding:${padding}; background-color:${bgColor};">
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-              <tr>
-                ${linkTds}
-              </tr>
+              <tbody>
+                <tr class="desk-show-tr" style="display:table-row;">
+                  <td style="font-family:Arial,sans-serif;color:${color};font-size:${fontSize};line-height:1.8;">
+                    ${desktopHtml}
+                  </td>
+                </tr>
+                ${mobileRows.join("\n                ")}
+              </tbody>
             </table>
           </td>
         </tr>

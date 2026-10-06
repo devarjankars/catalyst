@@ -103,7 +103,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
           : ''}
         ${options.map((opt: any, i: number) => {
           const rawValue = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
-          return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;"><span style="font-weight:bold;margin-right:6px;">${listLabel} ${i + 1}:</span><span>${rawValue}</span></div>`;
+          return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;">${rawValue}</div>`;
         }).join('')}
       </div>`;
   };
