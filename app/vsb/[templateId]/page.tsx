@@ -55,7 +55,7 @@ export default function VSBPage() {
 
   const [activeSection, setActiveSection] = useState<SectionType>('Variable Copy');
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [isConnectingToMRL , seisConnectingToMRL] = useState(false)
+  const [isConnectingToMRL, setIsConnectingToMRL] = useState(false)
   const [mlrDialogOpen, setMlrDialogOpen] = useState(false);
   const [mlrDialogStep, setMlrDialogStep] = useState<'idle' | 'downloading' | 'connecting' | 'redirecting' | 'success' | 'error'>('idle');
   const [mlrDialogMessage, setMlrDialogMessage] = useState('Preparing the MLR connection...');
@@ -432,7 +432,7 @@ export default function VSBPage() {
       variableCopy: getVaribleCopyTemplate(currentTemplate?.category),
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
-        { name: 'To', value: '[HCPÃ¢â‚¬â„¢s email address]' },
+        { name: 'To', value: "[HCP\u2019s email address]" },
         { name: 'From', value: '[Variable From]' },
         { name: 'Friendly From', value: 'Stemline Therapeutics, Inc.' },
         { name: 'Subject Line', value: '[Variable subject line]' },

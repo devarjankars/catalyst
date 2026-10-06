@@ -8,6 +8,7 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
   Timestamp,
   setDoc,
 } from "firebase/firestore";
@@ -87,47 +88,76 @@ class FirebaseService {
     }
   }
 
-  // Template operations
-  async getAllTemplates(): Promise<EmailTemplate[]> {
+  // ── In-memory cache to avoid redundant Firestore reads on every navigation ──
+  private _templateCache: { data: EmailTemplate[]; fetchedAt: number } | null = null;
+  private readonly CACHE_TTL_MS = 60_000; // 1 minute
 
+  invalidateTemplateCache(): void {
+    this._templateCache = null;
+  }
+
+  // Template operations — pure read, no side effects
+  async getAllTemplates(): Promise<EmailTemplate[]> {
     if (!this.isFirebaseAvailable) {
       return this.getLocalTemplates();
+    }
+
+    // Return cached result if still fresh
+    if (
+      this._templateCache &&
+      Date.now() - this._templateCache.fetchedAt < this.CACHE_TTL_MS
+    ) {
+      return this._templateCache.data;
     }
 
     try {
       const querySnapshot = await getDocs(collection(db, this.templatesCollection));
       const templates: EmailTemplate[] = [];
-      // for (const docSnap of querySnapshot.docs) {
-      //   const data = docSnap.data();
 
-      //   if (data.createdAt?._methodName || data.updatedAt?._methodName) {
-      //     await updateDoc(docSnap.ref, {
-      //       createdAt: serverTimestamp(),
-      //       updatedAt: serverTimestamp(),
-      //     });
-      //   }
-      // }
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         templates.push({
-          id: doc.id,
+          id: docSnap.id,
           ...data,
           createdAt: parseDate(data.createdAt),
           updatedAt: parseDate(data.updatedAt),
         } as EmailTemplate);
       });
 
-      // ── Normalise standard templates ─────────────────────────────────────
+      this._templateCache = { data: templates, fetchedAt: Date.now() };
+      return templates;
+    } catch (error) {
+      console.error(
+        "Failed to load templates from Firebase, falling back to localStorage:",
+        error
+      );
+      return this.getLocalTemplates();
+    }
+  }
+
+  /**
+   * One-time admin/init operation — deduplicates, fixes brands, seeds missing
+   * standard templates. Call this from an admin route or on first app boot,
+   * NOT from getAllTemplates() on every dashboard load.
+   */
+  async seedAndNormalizeTemplates(): Promise<void> {
+    if (!this.isFirebaseAvailable) return;
+    try {
+      const querySnapshot = await getDocs(collection(db, this.templatesCollection));
+      const templates: EmailTemplate[] = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        templates.push({ id: docSnap.id, ...data, createdAt: parseDate(data.createdAt), updatedAt: parseDate(data.updatedAt) } as EmailTemplate);
+      });
+
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
-        "Ferring RTE",
-        "Idorsia_RTE",
+        "Ferring RTE", "Idorsia_RTE",
       ];
 
       const standardTemplates = templates.filter(t => !t.isUserCreated);
-      const userTemplates      = templates.filter(t => t.isUserCreated);
+      const userTemplates = templates.filter(t => t.isUserCreated);
 
       // Delete legacy / unknown standard templates
       const legacyToDelete = standardTemplates.filter(t => !CANONICAL_NAMES.includes(t.name));
@@ -147,7 +177,6 @@ class FirebaseService {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
       }
 
-      // ── Brand correction + content seeding from existing user emailers ────
       const SEED_MAP: Record<string, { source: string; brand: string; sourceId?: string }> = {
         "Orserdu RTE":        { source: "testesr1 (Copy)", sourceId: "i7hzXSuLJNkz2UwDFSbw", brand: "orserdu" },
         "Elzonris RTE":       { source: "MAT-US-TAG-00227-v2_BPDCN_Skin lesions_RTE", brand: "elzonris" },
@@ -162,25 +191,15 @@ class FirebaseService {
       for (const t of canonical) {
         const expected = sampleMap.get(t.name);
         const seedConfig = SEED_MAP[t.name];
-
-        // Skip if neither a sample definition nor a seed config exists for this name
         if (!expected && !seedConfig) continue;
-
         const currentBrand = (t as any).brand;
         const expectedBrand = seedConfig?.brand ?? expected?.brand;
         const wrongBrand = expectedBrand ? currentBrand !== expectedBrand : false;
-
-        // forcedResync: templates that should always re-sync from their source.
-        // After confirming the Idorsia_RTE standard template shows the correct
-        // content, remove "Idorsia_RTE" from this set to avoid re-copying on
-        // every dashboard load.
-        const forcedResync = new Set(["Idorsia_RTE"]);
         const isBlank = !t.components || t.components.length <= 2;
 
-        if (seedConfig && (isBlank || wrongBrand || forcedResync.has(t.name))) {
-          // Find source emailer by name match (case-insensitive) or explicit ID
+        if (seedConfig && (isBlank || wrongBrand)) {
           const needle = seedConfig.source.toLowerCase().trim();
-          const sourceTemplate = templates.find(src => {
+          const sourceTemplate = [...templates, ...userTemplates].find(src => {
             if (seedConfig.sourceId) return src.id === seedConfig.sourceId;
             const srcName = (src.name ?? "").toLowerCase().trim();
             return srcName === needle || srcName.includes(needle) || needle.includes(srcName);
@@ -197,44 +216,28 @@ class FirebaseService {
                 preheaderText: sourceTemplate.preheaderText ?? "",
                 updatedAt: new Date(),
               });
-              t.components = sourceTemplate.components;
-              (t as any).brand = seedConfig.brand;
             } catch {}
           }
         } else if (!seedConfig && expected && wrongBrand) {
-          // Wrong brand, no seed source — reset to blank placeholder
           try {
             await updateDoc(doc(db, this.templatesCollection, t.id), {
               brand: expected.brand,
               components: expected.components,
               updatedAt: new Date(),
             });
-            (t as any).brand = expected.brand;
-            t.components = expected.components;
           } catch {}
         }
       }
 
-      // Seed missing canonical templates
-      // Promoted templates such as Idorsia_RTE use their saved content; only
-      // built-in sample templates can be recreated when missing.
       const missingNames = CANONICAL_NAMES.filter(n => !seen.has(n) && sampleMap.has(n));
-      if (missingNames.length > 0 || legacyToDelete.length > 0 || dupes.length > 0) {
-        const toCreate = this.getSampleTemplates().filter(s => missingNames.includes(s.name));
-        for (const template of toCreate) {
-          await this.createTemplate(template);
-        }
-        // Re-fetch clean state
-        return this.getAllTemplates();
+      for (const template of this.getSampleTemplates().filter(s => missingNames.includes(s.name))) {
+        await this.createTemplate(template);
       }
 
-      return [...canonical, ...userTemplates];
+      // Bust cache so next getAllTemplates() returns fresh data
+      this.invalidateTemplateCache();
     } catch (error) {
-      console.error(
-        "Failed to load templates from Firebase, falling back to localStorage:",
-        error
-      );
-      return this.getLocalTemplates();
+      console.error("seedAndNormalizeTemplates failed:", error);
     }
   }
 
@@ -338,22 +341,18 @@ class FirebaseService {
     }
 
     try {
-      // Remove undefined fields
-      const rawData = {
+      const cleanData = removeUndefinedDeep({
         ...data,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
-
-      const cleanData = removeUndefinedDeep(rawData);
-
-      console.log("Cleaned before Firestore:", cleanData);
+      });
 
       const docRef = await addDoc(
         collection(db, this.templatesCollection),
         cleanData
       );
 
+      this.invalidateTemplateCache();
       return {
         id: docRef.id,
         ...data,
@@ -380,7 +379,6 @@ class FirebaseService {
     try {
       const docRef = doc(db, this.templatesCollection, id);
 
-
       await updateDoc(docRef, {
         ...removeUndefinedDeep(safeUpdates),
         updatedAt: new Date(),
@@ -394,6 +392,7 @@ class FirebaseService {
         return this.getTemplate(id);
       }
 
+      this.invalidateTemplateCache();
       return {
         id,
         ...data,
@@ -417,6 +416,7 @@ class FirebaseService {
     try {
       const docRef = doc(db, this.templatesCollection, id);
       await deleteDoc(docRef);
+      this.invalidateTemplateCache();
       return true;
     } catch (error) {
       console.error(
@@ -431,7 +431,7 @@ class FirebaseService {
     const template = await this.getTemplate(id);
     if (!template) throw new Error("Template not found");
 
-    return this.createTemplate({
+    const result = await this.createTemplate({
       name: `${template.name} (Copy)`,
       description: template.description,
       category: template.category,
@@ -444,6 +444,8 @@ class FirebaseService {
       preheaderText: template.preheaderText,
       isUserCreated: true,
     });
+    this.invalidateTemplateCache();
+    return result;
   }
 
   async getStorageUsage(templateId?: string): Promise<number> {
@@ -772,23 +774,18 @@ class FirebaseService {
   async getVersions(templateId: string): Promise<import("@/types/template").EmailVersion[]> {
     if (!this.isFirebaseAvailable) return [];
     try {
+      // Requires Firestore composite index: templateId ASC + versionNumber ASC
       const q = query(
         collection(db, this.versionsCollection),
+        where("templateId", "==", templateId),
         orderBy("versionNumber", "asc")
       );
       const snap = await getDocs(q);
-      const all: import("@/types/template").EmailVersion[] = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        if (data.templateId === templateId) {
-          all.push({
-            id: d.id,
-            ...data,
-            createdAt: parseDate(data.createdAt),
-          } as import("@/types/template").EmailVersion);
-        }
-      });
-      return all;
+      return snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        createdAt: parseDate(d.data().createdAt),
+      })) as import("@/types/template").EmailVersion[];
     } catch (e) {
       console.error("getVersions failed:", e);
       return [];
@@ -833,21 +830,21 @@ class FirebaseService {
   async getVSBs(templateId: string): Promise<any[]> {
     if (!this.isFirebaseAvailable) return [];
     try {
-      const q = query(collection(db, this.vsbsCollection));
+      // Requires Firestore composite index: templateId ASC
+      const q = query(
+        collection(db, this.vsbsCollection),
+        where("templateId", "==", templateId)
+      );
       const querySnapshot = await getDocs(q);
-      const vsbs: any[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.templateId === templateId) {
-          vsbs.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate?.() || data.createdAt,
-            updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
-          });
-        }
+      return querySnapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+        };
       });
-      return vsbs;
     } catch (error) {
       console.error("Failed to fetch VSBs:", error);
       return [];
