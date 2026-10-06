@@ -701,7 +701,7 @@ case "isi": {
                 <tbody>
                    <tr>
                       <td class="f_14 green f_bold" align="left" valign="top"
-                         style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 18px; ">
+                         style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 16px; ">
                          IMPORTANT SAFETY INFORMATION </td>
                    </tr>
                    <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -719,7 +719,7 @@ case "isi": {
                       <td>
                          <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                             <tbody><tr>
-                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:0;">&#8226;</td>
+                               <td bgcolor="#ffffff" align="left" valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:18px;padding:0;">&#8226;</td>
                                <td class="f_14 black f_normal" align="left" valign="top" style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:16px;padding:0 0 0 3px;">
                                   <span class="f_bold" style="font-weight:700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.
                                </td>
@@ -747,10 +747,10 @@ case "isi": {
                    <!-- Adverse Reactions -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Adverse Reactions </td>
                    </tr>
-                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                   <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
 
                    <!-- Serious adverse reactions bullet -->
                    <tr>
@@ -785,10 +785,10 @@ case "isi": {
                    <!-- Drug Interactions -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Drug Interactions </td>
                    </tr>
-                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                   <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
 
                    <!-- CYP3A4 bullet -->
                    <tr>
@@ -808,10 +808,10 @@ case "isi": {
                    <!-- Use in Specific Populations -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         style=" font-weight: 700; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Use in Specific Populations </td>
                    </tr>
-                   <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+                   <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
 
                    <!-- Lactation bullet -->
                    <tr>
@@ -846,7 +846,7 @@ case "isi": {
                    <!-- Pediatric safety -->
                    <tr>
                       <td class="f_14 black f_normal" align="left" valign="top"
-                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px; ">
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px; ">
                          The safety and effectiveness of ORSERDU in pediatric patients have not been established. </td>
                    </tr>
                    <tr><td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -854,7 +854,7 @@ case "isi": {
                    <!-- Tablets available -->
                    <tr>
                       <td class="f_14 black f_normal" align="left" valign="top"
-                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px;">
                          ORSERDU is available as 345 mg tablets and 86 mg tablets. </td>
                    </tr>
                    <tr><td width="100%" height="20" style="font-size:0px;line-height:20px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -862,14 +862,14 @@ case "isi": {
                    <!-- INDICATION -->
                    <tr>
                       <td class="f_14 black f_normal" align="left" valign="top"
-                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px;">
                          <b style="color:#006937;display:block;font-size:16px;margin-bottom:0;">INDICATION</b>
                       </td>
                    </tr>
                    <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
                    <tr>
                       <td class="f_14 black f_normal" align="left" valign="top"
-                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 18px;">
+                         style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 16px;">
                          ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, <i>ESR1</i>-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy. </td>
                    </tr>
 

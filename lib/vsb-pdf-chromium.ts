@@ -359,32 +359,34 @@ async function measureContentHeight(page: import('playwright-core').Page): Promi
 export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: string): Promise<Buffer> {
   if (!pages.length) throw new Error('No pages provided for PDF generation');
 
-  const isVercel = process.env.VERCEL === '1';
+  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV != null;
   const isRender = process.env.RENDER === 'true';
 
-  const executablePath = isVercel
+  // On any serverless/lambda environment (Vercel, Render, etc.) we need the
+  // sparticuz Chromium — Playwright's bundled binary lacks required system libs
+  // (libnss3.so etc.) that aren't present in the Lambda execution environment.
+  const isServerless = isVercel || isRender;
+
+  const executablePath = isServerless
     ? await serverlessChromium.executablePath(CHROMIUM_REMOTE_EXEC_URL)
     : undefined;
 
   console.log('[PDF] environment:', isVercel ? 'vercel' : isRender ? 'render' : 'local');
+  console.log('[PDF] isServerless:', isServerless);
   console.log('[PDF] Chromium executable:', executablePath || 'Playwright-managed (auto-locate)');
-
-  if (isRender && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
-    process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
-  }
 
   let browser: Awaited<ReturnType<typeof playwrightChromium.launch>> | undefined;
   try {
     browser = await playwrightChromium.launch({
       headless: true,
-      ...(isVercel
+      ...(isServerless
         ? { args: serverlessChromium.args, executablePath }
         : { args: ['--no-sandbox', '--disable-setuid-sandbox'] }),
     });
     console.log('[PDF] browser launched');
     browser.on('disconnected', () => console.error('[PDF] BROWSER DISCONNECTED'));
 
-    if (isVercel) {
+    if (isServerless) {
       const diagnosticPage = await browser.newPage();
       await diagnosticPage.setContent('<html><body>Hello</body></html>');
       const testPdf = await diagnosticPage.pdf({ printBackground: true });
