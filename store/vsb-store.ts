@@ -25,7 +25,8 @@ export interface VSBData {
   headerDetails?: HeaderDetail[];
   desktopView?: any[];
   mobileView?: any[];
-  currentVersionNumber?: number;
+  /** Legacy URL of the most recently generated PDF; PDFs are not email versions. */
+  currentVersion?: string;
   createdAt?: string;
   updatedAt?: string;
 }

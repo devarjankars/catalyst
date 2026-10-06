@@ -30,12 +30,16 @@ type Section = NormalSection | TableSection | ThirdPartySection;
 
 const NormalView = ({ section }: { section: NormalSection }) => {
   const listLabel = section.listText ?? 'Option';
+  const isImageSection = section.heading.toLowerCase().includes('header image');
 
   return (
     <>
       {section.options.map((opt, i) => {
         const isString = typeof opt === 'string';
-        const isImage = isString && (opt.startsWith('data:image') || opt.startsWith('http'));
+        const trimmed = isString ? opt.trim() : '';
+        // Skip empty options
+        if (isString && trimmed === '') return null;
+        const isImage = isString && (trimmed.startsWith('data:image') || trimmed.startsWith('http') || trimmed.startsWith('/'));
 
         return (
           <div key={i} className="text-[10px] text-black mb-[2px] w-[100%]">
@@ -44,9 +48,8 @@ const NormalView = ({ section }: { section: NormalSection }) => {
               isImage ? (
                 <img
                   src={opt}
-                  alt={`${listLabel} {i + 1}`}
+                  alt={`${listLabel} ${i + 1}`}
                   className="mt-2 border border-gray-100 w-[80%] max-h-[150px] inline-block max-w-[400px]"
-                  
                 />
               ) : (
                 <span>{opt}</span>
@@ -70,7 +73,7 @@ const TableView = ({ section }: { section: TableSection }) => (
     <thead>
       <tr style={{ background: '#f9f9f9' }}>
         <th style={thStyle}>Friendly From Name</th>
-        <th style={thStyle}>From Email Address</th>
+        <th style={thStyle}>From email address</th>
       </tr>
     </thead>
     <tbody>
@@ -151,9 +154,6 @@ const VariablePagePdfView = ({
   return (
     <div className="w-full max-w-[600px] bg-white p-4">
       <h1 className="text-[13px] text-[#006937] font-bold mb-2">{emailname}</h1>
-      <h3 className="text-[11px] font-bold mb-3" style={{ color: accent }}>
-        Variable copy
-      </h3>
 
       {data?.map((section, index) => (
         <div key={index} className="mb-4">

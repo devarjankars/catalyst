@@ -12,8 +12,27 @@ interface Props {
   data: any;
   onChange: (data: any) => void;
   isPreview?: boolean;
-  /** When provided, the Download PDF button calls this instead of local logic */
   onExportPdf?: () => Promise<void>;
+}
+
+/** Extract header image URLs from VSB variableCopy in order (opt1, opt2, opt3) */
+function getVsbHeaderImages(variableCopy: any[]): string[] {
+  if (!Array.isArray(variableCopy)) return [];
+  const section = variableCopy.find(
+    (s: any) => s.structure === 'normal' &&
+    typeof s.heading === 'string' &&
+    s.heading.toLowerCase().includes('header image')
+  );
+  if (!section || !Array.isArray(section.options)) return [];
+  return section.options.filter((o: any) => typeof o === 'string' && o.trim() !== '');
+}
+
+/** Replace the header-image src in a components array with the given URL */
+function applyHeaderImage(components: any[], src: string): any[] {
+  if (!src) return components;
+  return components.map(c =>
+    c.type === 'header-image' ? { ...c, src } : c
+  );
 }
 
 const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false, onExportPdf }) => {
@@ -27,15 +46,20 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   const isMultiMode = isThreeMode || isTwoMode;
   const preheader = currentTemplate?.preheaderText || '';
 
-  // Live store components (may differ from currentTemplate after ensureThreeOptions)
   const storeState = useEmailBuilderStore.getState();
-  const opt1 = currentTemplate?.components || [];
-  const opt2 = storeState.option2Components.length > 0
+  const rawOpt1 = currentTemplate?.components || [];
+  const rawOpt2 = storeState.option2Components.length > 0
     ? storeState.option2Components
     : (currentTemplate?.option2Components || []);
-  const opt3 = storeState.option3Components.length > 0
+  const rawOpt3 = storeState.option3Components.length > 0
     ? storeState.option3Components
     : (currentTemplate?.option3Components || []);
+
+  // Apply VSB header images to each option
+  const vsbHeaders = getVsbHeaderImages(currentVsb?.variableCopy || []);
+  const opt1 = vsbHeaders[0] ? applyHeaderImage(rawOpt1, vsbHeaders[0]) : rawOpt1;
+  const opt2 = vsbHeaders[1] ? applyHeaderImage(rawOpt2, vsbHeaders[1]) : rawOpt2;
+  const opt3 = vsbHeaders[2] ? applyHeaderImage(rawOpt3, vsbHeaders[2]) : rawOpt3;
 
   const options = isThreeMode
     ? [
@@ -50,7 +74,6 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
       ]
     : [{ title: 'Standard View', components: opt1 }];
 
-  // Generate preview HTMLs (desktop mode for canvas display)
   const htmls = options.map(opt => {
     const rawHtml = generateEmailHTML(opt.components, preheader, 'desktop');
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -80,12 +103,8 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
-      if (onExportPdf) {
-        // Delegate to parent — produces the full combined VSB PDF (desktop + mobile)
-        await onExportPdf();
-      }
+      if (onExportPdf) await onExportPdf();
     } catch (error) {
-      console.error('PDF Generation failed:', error);
       alert(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setPdfLoading(false);

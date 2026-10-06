@@ -244,7 +244,7 @@ export default function OrserduLibraryPage() {
                       {fmtDate(v.createdAt)}
                       {v.createdBy && <span>· {v.createdBy}</span>}
                       <span>·</span>
-                      <span>{v.optionMode === "three" ? "3-option" : "single"}</span>
+                      <span>{v.editorSnapshot.optionMode === "three" ? "3-option" : v.editorSnapshot.optionMode === "two" ? "2-option" : "single"}</span>
                     </div>
 
                     {selectedVersion?.id === v.id && (
@@ -262,7 +262,7 @@ export default function OrserduLibraryPage() {
                           <Download className="w-3 h-3" /> Export HTML
                         </Button>
                         <Button size="sm" variant="outline" className="rounded-full text-xs h-7 gap-1"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/vsb/${selectedFile.id}`) }}>
+                          onClick={(e) => { e.stopPropagation();                           router.push(`/vsb/${selectedFile.id}?versionId=${v.id}`) }}>
                           Create VSB
                         </Button>
                         <Button size="sm" className="rounded-full text-xs h-7 gap-1 bg-[#006937] hover:bg-[#005229] text-white"

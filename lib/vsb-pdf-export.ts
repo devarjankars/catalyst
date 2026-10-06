@@ -54,7 +54,9 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
   const isImageValue = (v: unknown): v is string => {
     if (typeof v !== 'string') return false;
     const t = v.trim();
-    return t.startsWith('data:image/') || /^https?:\/\/.+/i.test(t);
+    // Accept absolute URLs, data URIs, and root-relative paths (/path).
+    // Root-relative paths are rewritten to absolute by rewriteRelativeUrls() in the PDF pipeline.
+    return t.startsWith('data:image/') || /^https?:\/\/.+/i.test(t) || t.startsWith('/');
   };
 
   // Escape a string for safe use inside an HTML attribute value.
@@ -67,7 +69,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
     // Only "[Variable Header Image]" sections render images.
     // All other normal sections print values as plain text — unchanged.
     const isImageSection = typeof section.heading === 'string' &&
-      section.heading.trim() === '[Variable Header Image]';
+      section.heading.toLowerCase().includes('header image');
 
     // ── Image section: vertical stack, one row per option ───────────────────
     // Each row: label on the left (fixed 55px), image immediately to its right.
@@ -91,6 +93,11 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
       const items = validOptions.map((opt: any, i: number) => {
         const safeSrc = escAttr(opt.trim());
         const safeAlt = escAttr(`Variable Header Image Option ${i + 1}`);
+        // Single image — show without label, just the image
+        if (validOptions.length === 1) {
+          return `<div style="box-sizing:border-box;width:100%;"><img src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:100%;max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';"/></div>`;
+        }
+        // Multiple images — show "Option N:" label
         return `<div class="pdf-variable-header-image-option" style="display:flex;flex-direction:row;align-items:center;width:100%;gap:10px;box-sizing:border-box;"><span class="pdf-variable-header-image-label" style="flex:0 0 55px;width:55px;font-size:10px;font-weight:bold;color:#111827;white-space:nowrap;text-align:left;">${section.listText ?? 'Option'} ${i + 1}:</span><img class="pdf-variable-header-image" src="${safeSrc}" alt="${safeAlt}" style="display:block;width:auto;max-width:calc(100% - 65px);max-height:150px;height:auto;object-fit:contain;" onerror="this.style.display='none';"/></div>`;
       }).join('');
 
@@ -120,10 +127,10 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
         ${section.structure !== 'third-party-placeholder'
           ? `<div style="font-size:12px;font-weight:bold;margin-bottom:4px;color:${accent};">${section.heading}</div>`
           : ''}
-        ${options.map((opt: any, i: number) => {
+        ${options.filter((opt: any) => typeof opt !== 'string' || opt.trim() !== '').map((opt: any, i: number) => {
           const rawValue = typeof opt === 'string' ? opt : JSON.stringify(opt, null, 2);
-          // Only show "Option N:" prefix when there are 2 or more options
-          if (options.length >= 2) {
+          const nonEmptyOptions = options.filter((o: any) => typeof o !== 'string' || o.trim() !== '');
+          if (nonEmptyOptions.length >= 2) {
             return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;"><span style="font-weight:bold;margin-right:6px;">${listLabel} ${i + 1}:</span>${rawValue}</div>`;
           }
           return `<div style="font-size:12px;color:#111827;line-height:1.4;margin-bottom:3px;box-sizing:border-box;">${rawValue}</div>`;
@@ -177,7 +184,6 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
   return `
     <div style="box-sizing:border-box;width:100%;max-width:100%;padding:32px;margin:0 auto;background:#fff;font-family:Arial, Helvetica, sans-serif;">
       <div style="font-size:13px;color:#006937;font-weight:bold;margin:0 0 8px;">${emailName}</div>
-      <div style="font-size:12px;font-weight:bold;margin:0 0 12px;color:${accent};">Variable copy</div>
       ${(data || []).map((section: any) => {
         if (section.structure === 'table') return renderTableSection(section);
         if (section.structure === 'third-party-placeholder') return renderThirdPartySection(section);

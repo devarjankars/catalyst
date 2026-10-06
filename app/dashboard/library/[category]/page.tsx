@@ -286,7 +286,7 @@ export default function LibraryCategoryPage() {
                       {v.createdBy && <span>· {v.createdBy}</span>}
                       <span>·</span>
                       <span>
-                        {v.optionMode === "three" ? "3-option" : "single"}
+                        {v.editorSnapshot.optionMode === "three" ? "3-option" : v.editorSnapshot.optionMode === "two" ? "2-option" : "single"}
                       </span>
                     </div>
 
@@ -333,7 +333,7 @@ export default function LibraryCategoryPage() {
                           className="rounded-full text-xs h-7 gap-1"
                           onClick={(e) => {
                             e.stopPropagation()
-                            router.push(`/vsb/${selectedFile.id}`)
+                            router.push(`/vsb/${selectedFile.id}?versionId=${v.id}`)
                           }}
                         >
                           Create VSB

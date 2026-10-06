@@ -14,6 +14,7 @@ type EmailPreviewModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   components: EmailComponent[];
+  sourceHtmlByOption?: Partial<Record<1 | 2 | 3, string>>;
 };
 
 const DARK_CSS = `
@@ -36,8 +37,14 @@ const MOBILE_CSS = `
   .stack-column    { display: block !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; border-right: none !important; }
 `;
 
-function buildHtml(components: EmailComponent[], preheaderText: string | undefined, dark: boolean, mobile = false): string {
-  const base = generateEmailHTML(components, preheaderText);
+function buildHtml(
+  components: EmailComponent[],
+  preheaderText: string | undefined,
+  dark: boolean,
+  mobile = false,
+  sourceHtml?: string,
+): string {
+  const base = sourceHtml || generateEmailHTML(components, preheaderText);
   // Inject a <base href> so relative /public-folder image paths resolve
   // correctly inside the sandboxed preview iframe.
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -48,14 +55,15 @@ function buildHtml(components: EmailComponent[], preheaderText: string | undefin
   return result;
 }
 
-export default function EmailPreviewModal({ open, onOpenChange, components }: EmailPreviewModalProps) {
+export default function EmailPreviewModal({ open, onOpenChange, components, sourceHtmlByOption }: EmailPreviewModalProps) {
   const [screen, setScreen] = useState<"600px" | "375px">("600px");
   const [dark, setDark] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [activeTab, setActiveTab] = useState<"1" | "2" | "3">("1");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { currentTemplate, preheaderText, optionMode, option2Components, option3Components, activeOption } = useEmailBuilderStore();
-  const isThreeMode = optionMode === "three";
+  const isMultiMode = optionMode === "two" || optionMode === "three";
+  const optionCount = optionMode === "three" ? 3 : optionMode === "two" ? 2 : 1;
 
   // When the dialog opens, snap the preview tab to whichever option
   // the editor is currently on. Manual tab changes while the dialog
@@ -64,16 +72,20 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   useEffect(() => {
     const justOpened = open && !prevOpen.current;
     prevOpen.current = open;
-    if (justOpened && isThreeMode) {
+    if (justOpened && isMultiMode) {
       setActiveTab(String(activeOption) as "1" | "2" | "3");
     }
-  }, [open, isThreeMode, activeOption]);
+  }, [open, isMultiMode, activeOption]);
 
   const getActiveComponents = () => {
-    if (!isThreeMode) return components;
     if (activeTab === "2") return option2Components;
     if (activeTab === "3") return option3Components;
     return components;
+  };
+
+  const getActiveSourceHtml = () => {
+    const option = Number(activeTab) as 1 | 2 | 3;
+    return sourceHtmlByOption?.[option];
   };
 
   const writeHtml = (html: string) => {
@@ -90,16 +102,16 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
   useEffect(() => {
     if (!open) return;
     const timer = setTimeout(() => {
-      writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px"));
+      writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px", getActiveSourceHtml()));
     }, 30);
     return () => clearTimeout(timer);
-  }, [open, activeTab]);
+  }, [open, activeTab, sourceHtmlByOption]);
 
   // Write on mode, screen, or component change
   useEffect(() => {
     if (!open) return;
-    writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px"));
-  }, [dark, screen, components, option2Components, option3Components, preheaderText, activeTab]);
+    writeHtml(buildHtml(getActiveComponents(), preheaderText, dark, screen === "375px", getActiveSourceHtml()));
+  }, [dark, screen, components, option2Components, option3Components, preheaderText, activeTab, sourceHtmlByOption]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -182,13 +194,15 @@ export default function EmailPreviewModal({ open, onOpenChange, components }: Em
           </div>
         </DialogHeader>
 
-        {isThreeMode && (
+        {isMultiMode && (
           <div className="w-full flex justify-center border-b bg-gray-50 p-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-[400px]">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="1">Option 1</TabsTrigger>
-                <TabsTrigger value="2">Option 2</TabsTrigger>
-                <TabsTrigger value="3">Option 3</TabsTrigger>
+              <TabsList className={`grid w-full ${optionCount === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {Array.from({ length: optionCount }, (_, index) => (
+                  <TabsTrigger key={index + 1} value={String(index + 1)}>
+                    Option {index + 1}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           </div>

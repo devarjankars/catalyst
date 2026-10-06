@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { devtools, persist } from "zustand/middleware"
 import type { EmailComponent } from "@/types/email-builder"
-import type { EmailTemplate } from "@/types/template"
+import type { EmailTemplate, EmailVersion } from "@/types/template"
 import { firebaseService } from "@/services/firebase-service"
 
 const HISTORY_LIMIT = 100
@@ -86,6 +86,25 @@ interface EmailBuilderState {
   loading: boolean
   saving: boolean
 
+  // ── Version-view state ────────────────────────────────────────────────────
+  /** The version currently being viewed (null = live draft) */
+  viewingVersion: EmailVersion | null
+  /** Pre-view snapshot so we can restore when exiting version view */
+  _preViewSnapshot: {
+    currentTemplate: EmailTemplate | null
+    components: EmailComponent[]
+    originalComponents: EmailComponent[]
+    option2Components: EmailComponent[]
+    originalOption2Components: EmailComponent[]
+    option3Components: EmailComponent[]
+    originalOption3Components: EmailComponent[]
+    optionMode: "single" | "two" | "three"
+    optionSubMode: "header-only" | "completely-different"
+    preheaderText: string
+    activeOption: 1 | 2 | 3
+    hasComponentChanges: boolean
+  } | null
+
   // Actions
   setCurrentTemplate: (template: EmailTemplate | null) => void
   setOriginalTemplate: (template: EmailTemplate | null) => void
@@ -164,6 +183,12 @@ interface EmailBuilderState {
   deepCloneComponent: (component: EmailComponent) => EmailComponent
   deepCloneComponents: (components: EmailComponent[]) => EmailComponent[]
   collectImagesFromComponent: (component: EmailComponent) => string[]
+
+  // ── Version-view actions ────────────────────────────────────────────────
+  /** Load a version snapshot onto the canvas (read-only) */
+  viewVersion: (version: EmailVersion) => void
+  /** Return to the live draft, restoring pre-view state */
+  exitVersionView: () => void
 }
 
 export const useEmailBuilderStore = create<EmailBuilderState>()(
@@ -194,6 +219,8 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
         future: [],
         loading: false,
         saving: false,
+        viewingVersion: null,
+        _preViewSnapshot: null,
         preheaderText: "",
         templateImages: [],
         namedTemplateImages: {},
@@ -883,15 +910,28 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         // Change detection
         checkForChanges: () => {
-          const { components, originalComponents, option2Components, originalOption2Components, option3Components, originalOption3Components, isWorkingCopy, isNewTemplate } = get()
+          const {
+            components, originalComponents, option2Components, originalOption2Components,
+            option3Components, originalOption3Components, isWorkingCopy, isNewTemplate,
+            optionMode, optionSubMode, currentTemplate, originalTemplate,
+          } = get()
 
           const componentsChanged = JSON.stringify(components) !== JSON.stringify(originalComponents)
           const option2Changed = JSON.stringify(option2Components) !== JSON.stringify(originalOption2Components)
           const option3Changed = JSON.stringify(option3Components) !== JSON.stringify(originalOption3Components)
-          const preheaderChanged = get().preheaderText !== (get().originalTemplate?.preheaderText || "")
+          const preheaderChanged = get().preheaderText !== (originalTemplate?.preheaderText || "")
+          const settingsChanged = optionMode !== (originalTemplate?.optionMode || "single") ||
+            optionSubMode !== (originalTemplate?.optionSubMode || "header-only")
+          const metadataChanged = Boolean(currentTemplate && originalTemplate && (
+            currentTemplate.name !== originalTemplate.name ||
+            currentTemplate.description !== originalTemplate.description ||
+            currentTemplate.category !== originalTemplate.category ||
+            currentTemplate.brand !== originalTemplate.brand
+          ))
 
           set({
-            hasComponentChanges: componentsChanged || option2Changed || option3Changed || preheaderChanged,
+            hasComponentChanges: componentsChanged || option2Changed || option3Changed ||
+              preheaderChanged || settingsChanged || metadataChanged,
             hasUnsavedTemplate: isWorkingCopy || isNewTemplate,
           })
         },
@@ -1042,6 +1082,67 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
 
         deepCloneComponents: (components: EmailComponent[]): EmailComponent[] =>
           components.map((component) => get().deepCloneComponent(component)),
+
+        // ── Version-view actions ────────────────────────────────────────────
+        viewVersion: (version: EmailVersion) => {
+          const s = get()
+          const snapshot = version.editorSnapshot
+          // Save current live-draft state so we can restore it on exit
+          set({
+            _preViewSnapshot: s._preViewSnapshot || {
+              currentTemplate: s.currentTemplate,
+              components: s.components,
+              originalComponents: s.originalComponents,
+              option2Components: s.option2Components,
+              originalOption2Components: s.originalOption2Components,
+              option3Components: s.option3Components,
+              originalOption3Components: s.originalOption3Components,
+              optionMode: s.optionMode,
+              optionSubMode: s.optionSubMode,
+              preheaderText: s.preheaderText,
+              activeOption: s.activeOption,
+              hasComponentChanges: s.hasComponentChanges,
+            },
+            // Load the version state onto the canvas
+            currentTemplate: s.currentTemplate
+              ? { ...s.currentTemplate, ...snapshot.settings, ...snapshot.metadata }
+              : s.currentTemplate,
+            viewingVersion: version,
+            components: snapshot.components || [],
+            option2Components: snapshot.option2Components || [],
+            option3Components: snapshot.option3Components || [],
+            optionMode: snapshot.optionMode || "single",
+            optionSubMode: snapshot.optionSubMode || "header-only",
+            preheaderText: snapshot.preheaderText || "",
+            activeOption: 1,
+            selectedComponent: null,
+          })
+        },
+
+        exitVersionView: () => {
+          const snap = get()._preViewSnapshot
+          if (!snap) {
+            set({ viewingVersion: null, _preViewSnapshot: null })
+            return
+          }
+          set({
+            viewingVersion: null,
+            _preViewSnapshot: null,
+            currentTemplate: snap.currentTemplate,
+            components: snap.components,
+            originalComponents: snap.originalComponents,
+            option2Components: snap.option2Components,
+            originalOption2Components: snap.originalOption2Components,
+            option3Components: snap.option3Components,
+            originalOption3Components: snap.originalOption3Components,
+            optionMode: snap.optionMode,
+            optionSubMode: snap.optionSubMode,
+            preheaderText: snap.preheaderText,
+            activeOption: snap.activeOption,
+            hasComponentChanges: snap.hasComponentChanges,
+            selectedComponent: null,
+          })
+        },
       }),
       {
         name: "email-builder-store",
@@ -1056,7 +1157,3 @@ export const useEmailBuilderStore = create<EmailBuilderState>()(
     },
   ),
 )
-
-
-
-

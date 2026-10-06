@@ -41,7 +41,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
 }
 
 export async function exportToZip(
-  options: { name: string; components: EmailComponent[] }[],
+  options: { name: string; components: EmailComponent[]; sourceHtml?: string }[],
   templateName: string = "email-template",
   preHeaderText?: string,
   separateFolders = false, // true when optionSubMode === "completely-different"
@@ -66,7 +66,7 @@ export async function exportToZip(
       // Images are scoped per-option — no cross-option deduplication
       const downloadedImages = new Map<string, string>()
 
-      let html = generateEmailHTML(option.components, preHeaderText)
+      let html = option.sourceHtml || generateEmailHTML(option.components, preHeaderText)
 
       const imageRegex = /<img[^>]+src="([^">]+)"/g
       const srcMatches = [...html.matchAll(imageRegex)]
@@ -102,7 +102,7 @@ export async function exportToZip(
     const downloadedImages = new Map<string, string>()
 
     for (const option of options) {
-      let html = generateEmailHTML(option.components, preHeaderText)
+      let html = option.sourceHtml || generateEmailHTML(option.components, preHeaderText)
 
       const imageRegex = /<img[^>]+src="([^">]+)"/g
       const srcMatches = [...html.matchAll(imageRegex)]

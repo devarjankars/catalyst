@@ -77,7 +77,7 @@ export default function SenderTable({ data, onChange}: Props) {
                 Friendly From Name
               </th>
               <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold text-pink-600 w-1/2">
-                From Email Address
+                From email address
               </th>
             </tr>
           </thead>

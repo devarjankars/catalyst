@@ -36,11 +36,6 @@ const styles = StyleSheet.create({
     color: '#006937',
     marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
   heading: {
     fontSize: 11,
     fontWeight: 'bold',
@@ -315,7 +310,6 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
   return (
     <View style={styles.page}>
       <Text style={styles.title}>{emailName}</Text>
-      <Text style={{ ...styles.sectionTitle, color: accent }}>Variable copy</Text>
       {data.map((section, index) => {
         switch (section.structure) {
           case 'table':

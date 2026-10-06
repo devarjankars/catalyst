@@ -171,7 +171,7 @@ const NormalSectionRenderer: React.FC<{
 
       <div className="space-y-3 ml-4">
         {section.options.map((opt, optIdx) => {
-          const hasPreview = isImageSection && (opt.startsWith('data:image') || opt.startsWith('http'));
+          const hasPreview = isImageSection && (opt.startsWith('data:image') || opt.startsWith('http') || opt.startsWith('/'));
           return (
             <div key={optIdx} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">

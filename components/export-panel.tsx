@@ -13,9 +13,10 @@ import { useEmailBuilderStore } from "@/store/email-builder-store"
 interface ExportPanelProps {
   components: EmailComponent[]
   canvasRef: React.RefObject<HTMLDivElement>
+  sourceHtmlByOption?: Partial<Record<1 | 2 | 3, string>>
 }
 
-export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
+export function ExportPanel({ components, canvasRef, sourceHtmlByOption }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState<Record<1 | 2 | 3, boolean>>({ 1: true, 2: true, 3: true })
@@ -35,16 +36,16 @@ export function ExportPanel({ components, canvasRef }: ExportPanelProps) {
     try {
       const isMultiMode = optionMode === "two" || optionMode === "three"
       const allOptions = [
-        { id: 1 as const, name: "Option1", components },
-        { id: 2 as const, name: "Option2", components: option2Components },
-        { id: 3 as const, name: "Option3", components: option3Components },
+        { id: 1 as const, name: "Option1", components, sourceHtml: sourceHtmlByOption?.[1] },
+        { id: 2 as const, name: "Option2", components: option2Components, sourceHtml: sourceHtmlByOption?.[2] },
+        { id: 3 as const, name: "Option3", components: option3Components, sourceHtml: sourceHtmlByOption?.[3] },
       ]
       const optionsToExport = isMultiMode
         ? allOptions
             .slice(0, optionMode === "two" ? 2 : 3)
             .filter((option) => selectedOptions[option.id])
-            .map(({ name, components }) => ({ name, components }))
-        : [{ name: "index", components }]
+            .map(({ name, components, sourceHtml }) => ({ name, components, sourceHtml }))
+        : [{ name: "index", components, sourceHtml: sourceHtmlByOption?.[1] }]
 
       if (optionsToExport.length === 0) return
 
