@@ -185,6 +185,7 @@ function printStyles(width: number): string {
     ── */
     .pdf-column {
       position: relative;
+      display: flow-root;
       flex-shrink: 0;
       overflow: visible;
       background: #ffffff;

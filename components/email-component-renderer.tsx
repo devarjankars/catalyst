@@ -402,7 +402,7 @@ export function EmailComponentRenderer({
                 fontWeight: component.fontWeight || "normal",
                 backgroundColor: component.backgroundColor || "transparent",
                 lineHeight: component.lineHeight || "18px",
-                fontFamily: component.fontFamily || "Arial, Helvetica, sans-serif",
+                fontFamily: component.fontFamily || "Arial, sans-serif",
               }}
             />
           </div>
@@ -763,7 +763,7 @@ export function EmailComponentRenderer({
                   href={item.linkHref || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: item.linkColor || "#368eec", textDecoration: "underline" }}
+                  style={{ color: item.linkColor || "#007bff", textDecoration: "underline" }}
                   onClick={(e) => !previewMode && e.preventDefault()}
                 >
                   {item.linkText}
@@ -828,9 +828,11 @@ export function EmailComponentRenderer({
                 const isLast = linkIndex === links.length - 1;
                 const isEven = (linkIndex + 1) % 2 === 0;
                 const linkColor = link.color || component.color || "#0563C1";
+                const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
                 const pipeColor = !isLast ? (links[linkIndex + 1].color || "#000000") : "#000000";
                 return (
                   <React.Fragment key={linkIndex}>
+                    {isEmailPreferences && <span style={{ color: linkColor }}>[</span>}
                     <a
                       href={link.href || "#"}
                       title={link.title || undefined}
@@ -851,6 +853,7 @@ export function EmailComponentRenderer({
                     >
                       {link.text}
                     </a>
+                    {isEmailPreferences && <span style={{ color: linkColor }}>]</span>}
                     {!isLast && (
                       <span style={{ color: pipeColor, fontSize: component.fontSize || "12px" }}>
                         &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -1400,7 +1403,7 @@ export function EmailComponentRenderer({
                     ) : (
                       <div style={{ textAlign: "center", color: "#000", fontFamily: "Arial, sans-serif", flexShrink: 0, paddingRight: "10px", minWidth: "60px" }}>
                         <div style={{ fontSize: "22px", fontWeight: 700, lineHeight: "24px" }}>{emeraldRightStatNumber || "8.6"}</div>
-                        <div style={{ fontSize: "12px", lineHeight: "14px", fontWeight: 400 }}>
+                        <div style={{ fontSize: "12px", lineHeight: "14px", fontWeight: 700 }}>
                           {rightLabelLines.map((l, i) => <div key={i}>{l}</div>)}
                         </div>
                       </div>
@@ -2107,5 +2110,3 @@ export function EmailComponentRenderer({
     </div>
   );
 };
-
-

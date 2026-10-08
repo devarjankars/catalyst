@@ -3,14 +3,12 @@
 export const dynamic = 'force-dynamic'
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useVSBStore, VSBData } from '@/store/vsb-store';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Plus, Loader2, Download, Eye, Copy, Trash2 } from 'lucide-react';
-import type { EmailVersion } from '@/types/template';
-import { firebaseService } from '@/services/firebase-service';
 import VariableCopySection from '@/components/vsb-sections/VariableCopySection';
 import DesktopViewSection from '@/components/vsb-sections/DesktopViewSection';
 import MobileViewSection from '@/components/vsb-sections/MobileViewSection';
@@ -48,16 +46,9 @@ export default function VSBPage() {
   const router = useRouter();
   const params = useParams();
   const templateId = params.templateId as string;
-  const searchParams = useSearchParams();
-  const versionId = searchParams.get('versionId');
-
   const { vsbs, currentVsb, fetchVSBs, createVSB, updateVSB, deleteVSB, duplicateVSB, setCurrentVsb, loading, error, hasUnsavedChanges, saveVSB } = useVSBStore();
   const { currentTemplate, loadTemplateImages } = useEmailBuilderStore();
 
-  // When opened from a version snapshot, we use the version's frozen components
-  const [versionSnapshot, setVersionSnapshot] = useState<EmailVersion | null>(null);
-
-  // Components to use for PDF generation — version snapshot takes priority
   const storeOpt2 = useEmailBuilderStore(s => s.option2Components);
   const storeOpt3 = useEmailBuilderStore(s => s.option3Components);
 
@@ -105,11 +96,8 @@ export default function VSBPage() {
       });
     }
 
-    // Use version snapshot components if viewing from a version, otherwise live template
-    const snap = versionSnapshot;
-
-    const isThreeMode = (snap?.editorSnapshot.optionMode ?? currentTemplate?.optionMode) === 'three';
-    const isTwoMode   = (snap?.editorSnapshot.optionMode ?? currentTemplate?.optionMode) === 'two';
+    const isThreeMode = currentTemplate?.optionMode === 'three';
+    const isTwoMode   = currentTemplate?.optionMode === 'two';
     const isMultiMode = isThreeMode || isTwoMode;
     const headerDetails = currentVsb?.headerDetails || [];
 
@@ -118,7 +106,7 @@ export default function VSBPage() {
       'email-footer', 'footer-with-Preferences', 'footer-links',
       'footer-links(3)', 'footer-link-2', 'footer-link-3', 'footer-link',
     ]);
-    const opt1Components  = snap ? (snap.editorSnapshot.components || []) : (currentTemplate?.components || []);
+    const opt1Components  = currentTemplate?.components || [];
     const opt1LinkFooters = opt1Components.filter((c: any) => LINK_FOOTER_TYPES.has(c.type));
 
     const ensureFooters = (comps: any[]): any[] => {
@@ -132,9 +120,8 @@ export default function VSBPage() {
       return [...withoutLinkFooter, ...cloned];
     };
 
-    // Version snapshot takes priority; fall back to live store / template
-    const live2 = snap ? (snap.editorSnapshot.option2Components || []) : (storeOpt2.length > 0 ? storeOpt2 : (currentTemplate?.option2Components || []));
-    const live3 = snap ? (snap.editorSnapshot.option3Components || []) : (storeOpt3.length > 0 ? storeOpt3 : (currentTemplate?.option3Components || []));
+    const live2 = storeOpt2.length > 0 ? storeOpt2 : (currentTemplate?.option2Components || []);
+    const live3 = storeOpt3.length > 0 ? storeOpt3 : (currentTemplate?.option3Components || []);
 
     const optArray = isThreeMode
       ? [
@@ -179,7 +166,8 @@ export default function VSBPage() {
           <div class="${detailsClass}" style="display:table;width:auto;margin:0 0 0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
               <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
-                <span style="font-weight:bold;color:black;">${detail.name}: </span><span style="font-weight:${detail.name === 'Preheader' ? 'normal' : 'bold'}; color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
+                <span style="font-weight:bold;color:black;">${detail.name}: </span>
+                <span style="font-weight:bold;color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
               </div>
             `).join('')}
           </div>
@@ -412,61 +400,17 @@ export default function VSBPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Fetch VSBs and template data on mount; load version snapshot if versionId is set
+  // Fetch VSBs and template data on mount
   useEffect(() => {
     if (!templateId) return;
 
     const init = async () => {
       await useEmailBuilderStore.getState().loadTemplate(templateId);
       await fetchVSBs(templateId);
-
-      // If opened from a version link, load the frozen snapshot
-      if (versionId) {
-        const ver = await firebaseService.getVersion(versionId);
-        if (ver) {
-          setVersionSnapshot(ver);
-          const snapshot = ver.editorSnapshot;
-          const loadedTemplate = useEmailBuilderStore.getState().currentTemplate;
-          if (loadedTemplate) {
-            useEmailBuilderStore.getState().setCurrentTemplate({
-              ...loadedTemplate,
-              ...snapshot.settings,
-              ...snapshot.metadata,
-              components: snapshot.components || [],
-              option2Components: snapshot.option2Components || [],
-              option3Components: snapshot.option3Components || [],
-              optionMode: snapshot.optionMode || "single",
-              optionSubMode: snapshot.optionSubMode || "header-only",
-              preheaderText: snapshot.preheaderText || "",
-            });
-          }
-          // Pre-select the VSB from the version snapshot if available
-          if (snapshot.vsbData) {
-            // Synthesise a transient VSB object from the snapshot so the editor
-            // renders the correct variable copy / alt-name data
-            const syntheticVsb: VSBData = {
-              id: `version-${ver.id}`,
-              templateId,
-              name: snapshot.vsbData.name,
-              variableCopy: snapshot.vsbData.variableCopy || [],
-              variableCopyHeadingColor: snapshot.vsbData.variableCopyHeadingColor,
-              altNamePage: snapshot.vsbData.altNamePage || { images: [] },
-              headerDetails: snapshot.vsbData.headerDetails || [],
-              desktopView: snapshot.vsbData.desktopView || [],
-              mobileView: snapshot.vsbData.mobileView || [],
-            };
-            useVSBStore.getState().setCurrentVsb(syntheticVsb);
-          } else {
-            useVSBStore.getState().setCurrentVsb(null);
-          }
-        } else {
-          toast.error("The selected email version could not be found.");
-        }
-      }
     };
 
     init();
-  }, [templateId, versionId, fetchVSBs]);
+  }, [templateId, fetchVSBs]);
 
   const handleCreateVSB = async () => {
     if (!templateId || loading || currentTemplate?.id !== templateId) return;
@@ -594,8 +538,7 @@ export default function VSBPage() {
 };
 
   const handleUpdateData = (section: string, data: any) => {
-    // Block edits when viewing a frozen version snapshot
-    if (!currentVsb || versionSnapshot) return;
+    if (!currentVsb) return;
 
     let updates: Partial<VSBData> = {};
     if (section === 'Variable Copy') updates.variableCopy = data;
@@ -613,8 +556,7 @@ export default function VSBPage() {
     'Combined Preview'
   ];
 
-  // A VSB is considered active if it belongs to this template OR is a synthetic version snapshot
-  const isVsbActive = currentVsb?.templateId === templateId || (versionSnapshot !== null && currentVsb?.id.startsWith('version-'));
+  const isVsbActive = currentVsb?.templateId === templateId;
 
   if (isVsbActive && currentVsb) {
     const renderActiveSection = () => {
@@ -624,7 +566,7 @@ export default function VSBPage() {
             data={currentVsb.variableCopy} 
             color={currentVsb.variableCopyHeadingColor}
             onColorChange={(color) => {
-              if (!versionSnapshot) updateVSB(currentVsb.id, { variableCopyHeadingColor: color });
+              updateVSB(currentVsb.id, { variableCopyHeadingColor: color });
             }}
             onChange={(data) => handleUpdateData('Variable Copy', data)} 
           />;
@@ -683,13 +625,6 @@ export default function VSBPage() {
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
-            {/* Version badge — shown when viewing a frozen snapshot */}
-            {versionSnapshot && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-                v{versionSnapshot.versionNumber} snapshot — read-only
-              </span>
-            )}
-
             {activeSection === 'Combined Preview' && 
             (<Button className='bg-red-500' onClick={handleMLRconnection}>
               {isConnectingToMRL && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Connect to MLR
@@ -702,17 +637,14 @@ export default function VSBPage() {
               }
             }}>Back to List</Button>
 
-            {/* Only allow saving when NOT viewing a frozen version snapshot */}
-            {!versionSnapshot && (
-              <Button
-                onClick={() => saveVSB(currentVsb.id)}
-                disabled={!hasUnsavedChanges || loading}
-                className={hasUnsavedChanges ? "bg-amber-600 hover:bg-amber-700 text-white font-medium" : "bg-gray-100 text-gray-500"}
-              >
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {hasUnsavedChanges ? "Save Changes" : "Saved"}
-              </Button>
-            )}
+            <Button
+              onClick={() => saveVSB(currentVsb.id)}
+              disabled={!hasUnsavedChanges || loading}
+              className={hasUnsavedChanges ? "bg-amber-600 hover:bg-amber-700 text-white font-medium" : "bg-gray-100 text-gray-500"}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {hasUnsavedChanges ? "Save Changes" : "Saved"}
+            </Button>
 
             {activeSection === 'Combined Preview' && (
               <>
@@ -929,12 +861,12 @@ export default function VSBPage() {
       )}
 
       {!loading && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {vsbs.filter(v => v.templateId === templateId && !versionSnapshot).length === 0 && !loading && (
+        {vsbs.filter(v => v.templateId === templateId).length === 0 && !loading && (
           <div className="col-span-full border-2 border-dashed rounded-xl p-12 text-center text-gray-500">
             No VSBs found for this template. Click "Create New VSB" to get started.
           </div>
         )}
-        {vsbs.filter(v => v.templateId === templateId && !versionSnapshot).map(vsb => (
+        {vsbs.filter(v => v.templateId === templateId).map(vsb => (
           <Card key={vsb.id} className="hover:shadow-lg transition-shadow cursor-pointer relative group" onClick={() => handleEditVSB(vsb)}>
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
               <Button variant="ghost" size="icon" className="h-8 w-8 bg-white shadow-sm border" onClick={(e) => handleDuplicateVSB(e, vsb.id)} title="Duplicate">
@@ -951,7 +883,7 @@ export default function VSBPage() {
               {/* <Edit2 className="h-4 w-4 text-gray-400" /> */}
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold mb-1">VSB Version {vsbs.indexOf(vsb) + 1}</div>
+              <div className="text-xl font-bold mb-1">Story Board</div>
               <div className="text-xs text-gray-500 mb-4">Last updated: {vsb.updatedAt ? new Date(vsb.updatedAt).toLocaleString() : 'N/A'}</div>
               <Button variant="secondary" size="sm" className="w-full">Edit Story Board</Button>
             </CardContent>

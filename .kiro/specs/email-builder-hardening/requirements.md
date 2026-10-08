@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This hardening effort addresses 14 confirmed bugs and performance issues in the email builder application (Next.js + Zustand + Firebase/Firestore). The changes span four layers: Firestore query correctness, Zustand store data integrity, environment configuration hygiene, and localStorage / memory performance. All fixes are pure refactors — no new user-visible features are introduced. The goal is a codebase that is correct under concurrent load, does not lose data on page refresh, never exposes secrets in source code, and does not degrade in performance as the component tree grows.
+This hardening effort addresses confirmed bugs and performance issues in the email builder application (Next.js + Zustand + Firebase/Firestore). The changes span Firestore query correctness, Zustand store data integrity, environment configuration hygiene, and memory performance. All fixes are pure refactors — no new user-visible features are introduced. The goal is a codebase that is correct under concurrent load, does not silently persist unsaved editor drafts, never exposes secrets in source code, and does not degrade in performance as the component tree grows.
 
 ---
 
@@ -12,7 +12,6 @@ This hardening effort addresses 14 confirmed bugs and performance issues in the 
 - **EmailBuilderStore**: The Zustand store in `store/email-builder-store.ts` that manages editor state, undo/redo history, and change detection.
 - **VSBStore**: The Zustand store in `store/vsb-store.ts` that manages Variable Section Booklets (VSBs).
 - **VSB**: Variable Section Booklet — a named set of variable copy, alt-name images, desktop/mobile view data, and header details attached to a template.
-- **AutoSave**: The `useAutoSave` hook in `hooks/use-auto-save.ts` that periodically snapshots editor state to `localStorage`.
 - **HISTORY_LIMIT**: The constant controlling how many undo/redo snapshots are retained in memory and persisted.
 - **EditorSnapshot**: A single undo/redo entry containing all three component arrays plus preheader text and option metadata.
 - **Persist Middleware**: The Zustand `persist` middleware that serialises selected store slices to `localStorage`.
@@ -158,16 +157,15 @@ This hardening effort addresses 14 confirmed bugs and performance issues in the 
 
 ---
 
-### Requirement 11: Auto-Save Quota Error Handling
+### Requirement 11: Keep Unsaved Editor Drafts Out of Local Storage
 
-**User Story:** As an email builder user working on a large template, I want the auto-save hook to handle `localStorage` quota exceeded errors gracefully, so that the application does not silently fail or crash when storage is full.
+**User Story:** As an email builder user, I want unsaved editor drafts to remain in the editor only, so that stale drafts are not automatically restored from browser storage.
 
 #### Acceptance Criteria
 
-1. WHEN the auto-save interval fires and `localStorage.setItem` throws a `QuotaExceededError` (or any `DOMException` with name `"QuotaExceededError"`), THE `AutoSave` hook SHALL catch the error and SHALL log a warning to the console rather than silently discarding it.
-2. WHEN the serialised auto-save payload exceeds 4 MB, THE `AutoSave` hook SHALL log a warning indicating the payload size and SHALL NOT attempt to write to `localStorage`.
-3. THE `AutoSave` hook SHALL calculate payload size by measuring `JSON.stringify(data).length` before calling `localStorage.setItem`.
-4. WHEN an auto-save write fails due to quota or size limits, THE `AutoSave` hook SHALL NOT throw an unhandled exception that propagates to the React error boundary.
+1. THE email builder SHALL NOT write unsaved editor component state to `localStorage`.
+2. WHEN the builder loads, THE email builder SHALL remove any legacy `email_builder_autosave` entry.
+3. THE email builder SHALL continue to persist changes through its existing explicit save flow.
 
 ---
 

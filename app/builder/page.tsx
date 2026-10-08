@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/loading-spinner";
@@ -12,12 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import { toast } from "sonner";
-import { useAutoSave, clearAutoSave, getAutoSave } from "@/hooks/use-auto-save";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import { matchesBrand } from "@/lib/brand-filter"
-import type { EmailVersion } from "@/types/template"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
-import { generateEmailHTML } from "@/lib/email-generator";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
 import React from "react";
@@ -39,10 +36,6 @@ const ExportPanel = nextDynamic(
 );
 const SaveTemplateDialog = nextDynamic(
   () => import("@/components/save-template-dialog").then((m) => ({ default: m.SaveTemplateDialog })),
-  { ssr: false }
-);
-const VersionHistoryPanel = nextDynamic(
-  () => import("@/components/version-history-panel").then((m) => ({ default: m.VersionHistoryPanel })),
   { ssr: false }
 );
 const UnsavedChangesDialog = nextDynamic(
@@ -141,54 +134,57 @@ export default function EmailBuilder() {
 
   const addComponentToOption = useEmailBuilderStore((s) => s.addComponentToOption);
   const renameTemplate = useEmailBuilderStore((s) => s.renameTemplate);
-  const viewVersion = useEmailBuilderStore((s) => s.viewVersion);
-  const exitVersionView = useEmailBuilderStore((s) => s.exitVersionView);
-  const viewingVersion = useEmailBuilderStore((s) => s.viewingVersion);
 
   // ── Inline rename state ───────────────────────────────────────────────────
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const renameInProgress = useRef(false);
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem("email_builder_autosave");
+    } catch (error) {
+      console.error("Failed to remove the obsolete editor auto-save:", error);
+    }
+  }, []);
 
   const startRename = () => {
-    if (viewingVersion) return;
     setRenameValue(currentTemplate?.name || workingCopySource?.name || "Untitled");
     setIsRenaming(true);
     setTimeout(() => renameInputRef.current?.select(), 0);
   };
 
-  const commitRename = () => {
-    if (viewingVersion) return;
+  const commitRename = async () => {
+    if (renameInProgress.current) return;
     const trimmed = renameValue.trim();
-    if (trimmed && trimmed !== currentTemplate?.name) {
-      renameTemplate(trimmed);
-      toast.success("Project renamed");
+    const currentName = currentTemplate?.name || workingCopySource?.name || "Untitled";
+    if (!trimmed || trimmed === currentName) {
+      setIsRenaming(false);
+      return;
     }
+
+    renameInProgress.current = true;
+    try {
+      if (currentTemplate?.id) {
+        const updated = await firebaseService.updateTemplateName(currentTemplate.id, trimmed);
+        if (!updated) throw new Error("Template rename was not saved");
+      } else {
+        throw new Error("Save this emailer before renaming it.");
+      }
+      renameTemplate(trimmed);
+      toast.success("Emailer renamed");
+    } catch (error) {
+      console.error("Failed to rename emailer:", error);
+      toast.error("Failed to rename emailer. Please try again.");
+      renameInProgress.current = false;
+      return;
+    }
+    renameInProgress.current = false;
     setIsRenaming(false);
   };
 
   const cancelRename = () => setIsRenaming(false);
-
-  // ── Version history state ─────────────────────────────────────────────────
-  // rightTab drives the unified right panel (Properties vs Versions)
-  const [rightTab, setRightTab] = useState<"properties" | "versions" | "source">("versions");
-  const [versions, setVersions] = useState<EmailVersion[]>([]);
-  const [versionsLoading, setVersionsLoading] = useState(false);
-  const [showCreateVersionModal, setShowCreateVersionModal] = useState(false);
-  const [versionChangeNote, setVersionChangeNote] = useState("");
-  const [savingVersion, setSavingVersion] = useState(false);
-  const [sourceOption, setSourceOption] = useState<1 | 2 | 3>(1);
-  const sourceHtml = useMemo(() => {
-    if (viewingVersion) {
-      if (sourceOption === 2) return viewingVersion.sourceHtml2 || viewingVersion.sourceHtml || "";
-      if (sourceOption === 3) return viewingVersion.sourceHtml3 || viewingVersion.sourceHtml || "";
-      return viewingVersion.sourceHtml || "";
-    }
-    if (sourceOption === 2) return generateEmailHTML(option2Components, preheaderText);
-    if (sourceOption === 3) return generateEmailHTML(option3Components, preheaderText);
-    return generateEmailHTML(components, preheaderText);
-  }, [viewingVersion, sourceOption, components, option2Components, option3Components, preheaderText]);
-
 
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
   const [unsavedDialog, setUnsavedDialog] = useState(false);
@@ -202,36 +198,10 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
-  // ── Auto-save: restore prompt ─────────────────────────────────────────────
-  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
-
-  // Check for a prior auto-save on first mount (before template is loaded)
-  useEffect(() => {
-    const saved = getAutoSave();
-    if (saved && saved.components?.length > 0) {
-      setShowRestoreBanner(true);
-    }
-  }, []);
-
-  const handleRestoreAutoSave = () => {
-    const saved = getAutoSave();
-    if (!saved) return;
-    setComponents(saved.components || []);
-    toast.success("Draft restored from auto-save");
-    setShowRestoreBanner(false);
-    clearAutoSave();
-  };
-
-  const handleDismissRestore = () => {
-    clearAutoSave();
-    setShowRestoreBanner(false);
-  };
-
   // Run the builder initialization only ONCE per mount. The URL is rewritten
   // after mode selection (history.replaceState), which changes `searchParams`
   // and would otherwise re-run this effect and reset the chosen option mode.
   const didInitRef = useRef(false);
-
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
@@ -243,74 +213,6 @@ export default function EmailBuilder() {
       | "header-only"
       | "completely-different"
       | null;
-    const restoreVersionId = searchParams.get("restoreVersion");
-
-    // ── Restore a specific saved version into the editor ─────────────────
-    if (restoreVersionId && templateId) {
-      (async () => {
-        setLoading(true);
-        try {
-          const [template, version] = await Promise.all([
-            firebaseService.getTemplate(templateId),
-            firebaseService.getVersion(restoreVersionId),
-          ]);
-          if (template && version) {
-            const snapshot = version.editorSnapshot;
-            const restoredTemplate = {
-              ...template,
-              ...snapshot.settings,
-              ...snapshot.metadata,
-              components: snapshot.components || [],
-              option2Components: snapshot.option2Components || [],
-              option3Components: snapshot.option3Components || [],
-              optionMode: snapshot.optionMode || "single",
-              optionSubMode: snapshot.optionSubMode || "header-only",
-              preheaderText: snapshot.preheaderText || "",
-            };
-            setCurrentTemplate(restoredTemplate);
-            setOriginalTemplate(template);
-            setComponents(snapshot.components || []);
-            setOriginalComponents(template.components || []);
-            applyOptionConfiguration({
-              mode: snapshot.optionMode || "single",
-              subMode: snapshot.optionSubMode || "header-only",
-            });
-            useEmailBuilderStore.setState({
-              option2Components: snapshot.option2Components || [],
-              option3Components: snapshot.option3Components || [],
-              originalOption2Components: template.option2Components || [],
-              originalOption3Components: template.option3Components || [],
-              preheaderText: snapshot.preheaderText || "",
-              hasComponentChanges: true,
-            });
-            const { useVSBStore } = await import("@/store/vsb-store");
-            if (snapshot.vsbData) {
-              const { sourcVsbId: _sourceVsbId, ...vsbData } = snapshot.vsbData;
-              const restoredVsb = await firebaseService.createVSB({ templateId, ...vsbData });
-              useVSBStore.getState().setCurrentVsb(restoredVsb);
-            } else {
-              useVSBStore.getState().setCurrentVsb(null);
-            }
-            toast.success(`v${version.versionNumber} loaded — save to create a new version`);
-            // Load version list for this template
-            loadVersions(templateId);
-          }
-        } catch (error) {
-          console.error("Failed to restore email version as draft:", error);
-          toast.error(error instanceof Error ? error.message : "Could not restore this version as a draft.");
-        } finally {
-          setLoading(false);
-        }
-        const getCustomComponents = async () => {
-          const cc = await firebaseService.getCustomComponents();
-          loadCustomComponents(cc);
-        };
-        getCustomComponents();
-        loadTemplateImages(templateId);
-      })();
-      return;
-    }
-
     if (selectMode && !isEdit) {
       setModeDialogOpen(true);
       setAwaitingModeSelection(true);
@@ -362,7 +264,6 @@ export default function EmailBuilder() {
   // Global undo/redo shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (viewingVersion) return;
       if (!(e.metaKey || e.ctrlKey)) return;
       const target = e.target as HTMLElement | null;
       if (
@@ -388,7 +289,7 @@ export default function EmailBuilder() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, viewingVersion]);
+  }, [undo, redo]);
 
 const PLACEHOLDER_IMAGE = "/placeholder.svg?";
 
@@ -465,8 +366,6 @@ function replaceImagesInComponents(components: any[]): any[] {
               subMode: optionOverrides.optionSubMode,
             });
           }
-          // Load version history for edit mode
-          loadVersions(template.id);
         } else {
           startWorkingCopy(templateWithPlaceholders, optionOverrides);
         }
@@ -494,182 +393,6 @@ function replaceImagesInComponents(components: any[]): any[] {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  // ── Version history functions ─────────────────────────────────────────────
-  const loadVersions = useCallback(async (tId: string) => {
-    setVersionsLoading(true);
-    try {
-      const vlist = await firebaseService.getVersions(tId);
-      if (vlist.length === 0) throw new Error("No version history is available for this email.");
-      setVersions(vlist);
-    } catch (error) {
-      console.error("Failed to load email versions:", error);
-      toast.error("Could not load version history.");
-    } finally {
-      setVersionsLoading(false);
-    }
-  }, []);
-
-  const handleCreateVersion = async (note?: string) => {
-    if (!currentTemplate || viewingVersion) return;
-    if (!(note ?? versionChangeNote).trim()) {
-      toast.error("Enter a change note before creating a version.");
-      return;
-    }
-    setSavingVersion(true);
-    try {
-      const html1 = generateEmailHTML(components, preheaderText);
-      const html2 = optionMode !== "single" ? generateEmailHTML(option2Components, preheaderText) : undefined;
-      const html3 = optionMode === "three" ? generateEmailHTML(option3Components, preheaderText) : undefined;
-      const nextNum = Math.max(0, ...versions.map((version) => version.versionNumber)) + 1;
-      const userEmail = useLoggedInUserStore.getState().userEmail;
-      const changeNote = (note ?? versionChangeNote).trim() || `Version ${nextNum}`;
-
-      const { useVSBStore } = await import("@/store/vsb-store");
-      const vsbState = useVSBStore.getState();
-      const activeVsb = vsbState.currentVsb?.templateId === currentTemplate.id
-        ? vsbState.currentVsb
-        : [...await firebaseService.getVSBs(currentTemplate.id)].sort((a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0).getTime() -
-            new Date(a.updatedAt || a.createdAt || 0).getTime()
-          )[0] || null;
-      const { id, components: _components, option2Components: _option2, option3Components: _option3,
-        optionMode: _optionMode, optionSubMode: _optionSubMode, preheaderText: _preheader,
-        name, description, category, brand, thumbnail, html, isUserCreated, createdAt, updatedAt,
-        currentVersionId, ...settings } = currentTemplate;
-
-      const v = await firebaseService.createVersion({
-        templateId: currentTemplate.id,
-        versionNumber: nextNum,
-        changeNote,
-        createdBy: userEmail || "",
-        createdAt: new Date(),
-        editorSnapshot: {
-          components,
-          option2Components: option2Components || [],
-          option3Components: option3Components || [],
-          optionMode: optionMode || "single",
-          optionSubMode: optionSubMode || "header-only",
-          preheaderText: preheaderText || "",
-          metadata: { name, description, category, brand, thumbnail, html, isUserCreated },
-          settings,
-          ...(activeVsb ? {
-            vsbData: {
-              name: activeVsb.name,
-              variableCopy: activeVsb.variableCopy || [],
-              variableCopyHeadingColor: activeVsb.variableCopyHeadingColor,
-              altNamePage: activeVsb.altNamePage || { images: [] },
-              headerDetails: activeVsb.headerDetails || [],
-              desktopView: activeVsb.desktopView || [],
-              mobileView: activeVsb.mobileView || [],
-              sourcVsbId: activeVsb.id,
-            },
-          } : {}),
-        },
-        sourceHtml: html1,
-        sourceHtml2: html2,
-        sourceHtml3: html3,
-      });
-      if (v) {
-        setVersions((prev) => [...prev, v]);
-        const savedTemplate = {
-          ...currentTemplate,
-          components,
-          option2Components: option2Components || [],
-          option3Components: option3Components || [],
-          optionMode: optionMode || "single",
-          optionSubMode: optionSubMode || "header-only",
-          preheaderText: preheaderText || "",
-          currentVersionId: v.id,
-          updatedAt: new Date(),
-        };
-        setCurrentTemplate(savedTemplate);
-        setOriginalTemplate(savedTemplate);
-        markComponentsSaved();
-        toast.success(`v${nextNum} created`);
-        setShowCreateVersionModal(false);
-        setVersionChangeNote("");
-        // Show the version in the panel
-        setRightTab("versions");
-      } else {
-        throw new Error("Could not save the email version.");
-      }
-    } catch (error) {
-      console.error("Failed to create email version:", error);
-      toast.error(error instanceof Error ? error.message : "Could not create the email version.");
-    } finally {
-      setSavingVersion(false);
-    }
-  };
-
-  const handleVersionExportHtml = (v: EmailVersion) => {
-    const html = v.sourceHtml || "";
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${v.editorSnapshot.metadata.name || "email"}_v${v.versionNumber}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleVersionPreview = (v: EmailVersion) => {
-    const html = v.sourceHtml || "";
-    const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); }
-  };
-
-  const handleVersionExportPdf = async (v: EmailVersion) => {
-    if (!v.sourceHtml) {
-      toast.error("This version has no saved source HTML to export.");
-      return;
-    }
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;left:-10000px;top:0;width:600px;height:1200px;border:0";
-    try {
-      const loaded = new Promise<void>((resolve, reject) => {
-        iframe.onload = () => resolve();
-        iframe.onerror = () => reject(new Error("Could not load version HTML for PDF export."));
-      });
-      iframe.srcdoc = v.sourceHtml;
-      document.body.appendChild(iframe);
-      await loaded;
-      const { exportToPDF } = await import("@/lib/pdf-export-utils");
-      await exportToPDF(
-        iframe,
-        `${v.editorSnapshot.metadata.name || currentTemplate?.name || "email"}_v${v.versionNumber}`,
-        "desktop",
-      );
-    } catch (error) {
-      console.error("Version PDF export failed:", error);
-      toast.error(error instanceof Error ? error.message : "Could not export this version as PDF.");
-    } finally {
-      iframe.remove();
-    }
-  };
-
-  const handleVersionRestoreAsDraft = (v: EmailVersion) => {
-    if (currentTemplate) {
-      router.push(`/builder?template=${currentTemplate.id}&edit=true&brand=${selectedBrand}&restoreVersion=${v.id}`);
-    }
-  };
-
-  const handleViewVersion = (v: EmailVersion) => {
-    viewVersion(v);
-    setSourceOption(1);
-    toast.info(`Viewing v${v.versionNumber} — canvas is read-only`);
-  };
-
-  const handleExitVersionView = () => {
-    exitVersionView();
-  };
-
-  const handleVersionCreateVsb = (v: EmailVersion) => {
-    if (currentTemplate) {
-      // Navigate to VSB page — VSB page will read from the version snapshot
-      router.push(`/vsb/${currentTemplate.id}?versionId=${v.id}`);
     }
   };
 
@@ -770,6 +493,7 @@ function replaceImagesInComponents(components: any[]): any[] {
   const handleSaveComponentChanges = async () => {
     if (!currentTemplate) return false;
 
+    flushPendingUpdates();
     setSaving(true);
     try {
       const updatedTemplate = await firebaseService.updateTemplate(
@@ -812,6 +536,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     category: string,
     brand: "orserdu" | "ferring" | "idorsia" | "elzonris"
   ) => {
+    flushPendingUpdates();
     setSaving(true);
     try {
       const normalizedName = name.trim().toLowerCase();
@@ -874,8 +599,6 @@ function replaceImagesInComponents(components: any[]): any[] {
       }
 
       setSaveTemplateDialog(false);
-      clearAutoSave(); // explicit save succeeded — discard crash backup
-
       // If there was pending navigation after save, execute it
       if (pendingNavigation) {
         clearAll();
@@ -948,20 +671,6 @@ if (activeSelectedId) {
   parentId = null;
 }
 
-  // ── Auto-save: run every 5s when there are unsaved changes ──────────────
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useAutoSave(
-    {
-      components,
-      option2Components,
-      option3Components,
-      preheaderText,
-      templateId: currentTemplate?.id ?? null,
-      templateName: currentTemplate?.name ?? workingCopySource?.name ?? null,
-    },
-    hasComponentChanges || hasUnsavedTemplate
-  );
-
   // ── Debounced properties update ─────────────────────────────────────────
   // Capture latest ids in a ref so the debounced callback stays stable
   const activeIdRef = useRef(activeSelectedId);
@@ -970,7 +679,10 @@ if (activeSelectedId) {
   parentIdRef.current = parentId;
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { debouncedUpdate: debouncedUpdateComponent } = useDebouncedUpdate(
+  const {
+    debouncedUpdate: debouncedUpdateComponent,
+    flush: flushPendingUpdates,
+  } = useDebouncedUpdate(
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useCallback((updates: any) => {
       if (!activeIdRef.current) return;
@@ -1049,39 +761,13 @@ if (activeSelectedId) {
     (optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1;
 
   const canSaveComponentChanges =
-    currentTemplate && hasComponentChanges && !isWorkingCopy && !isNewTemplate && !viewingVersion;
+    currentTemplate && hasComponentChanges && !isWorkingCopy && !isNewTemplate;
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
     <>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
-        {showRestoreBanner && (
-          <div className="flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-5 py-2.5 text-sm">
-            <div className="flex items-center gap-2 text-amber-800">
-              <HistoryIcon className="w-4 h-4 shrink-0" />
-              <span>An unsaved draft was found. Want to restore it?</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-3 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
-                onClick={handleRestoreAutoSave}
-              >
-                Restore draft
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 px-3 text-xs text-amber-600 hover:bg-amber-100"
-                onClick={handleDismissRestore}
-              >
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        )}
         {/* Header - sticky */}
         <div className="bg-white border-b border-gray-200 shadow-sm px-4 py-0 flex items-center justify-between sticky top-0 z-30 h-12 gap-3">
           {/* Left: back + breadcrumb */}
@@ -1121,7 +807,7 @@ if (activeSelectedId) {
                   autoFocus
                 />
                 <button onClick={commitRename} className="text-green-600 hover:text-green-700 p-0.5"><Check className="w-3.5 h-3.5" /></button>
-                <button onClick={cancelRename} className="text-gray-400 hover:text-gray-600 p-0.5"><X className="w-3.5 h-3.5" /></button>
+                <button onMouseDown={(event) => event.preventDefault()} onClick={cancelRename} className="text-gray-400 hover:text-gray-600 p-0.5"><X className="w-3.5 h-3.5" /></button>
               </div>
             ) : (
               <button
@@ -1137,7 +823,7 @@ if (activeSelectedId) {
             )}
 
             {/* Status badges */}
-            {hasComponentChanges && !viewingVersion && (
+            {hasComponentChanges && (
               <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">Unsaved changes</span>
             )}
             {isWorkingCopy && (
@@ -1147,61 +833,22 @@ if (activeSelectedId) {
 
           {/* Right: actions */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => undo()} disabled={past.length === 0 || !!viewingVersion}
+            <Button variant="ghost" size="sm" onClick={() => undo()} disabled={past.length === 0}
               title="Undo (Ctrl+Z)" className="h-7 w-7 p-0 text-gray-500 hover:text-gray-800 disabled:opacity-30">
               <Undo2 className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => redo()} disabled={future.length === 0 || !!viewingVersion}
+            <Button variant="ghost" size="sm" onClick={() => redo()} disabled={future.length === 0}
               title="Redo (Ctrl+Shift+Z)" className="h-7 w-7 p-0 text-gray-500 hover:text-gray-800 disabled:opacity-30">
               <Redo2 className="w-3.5 h-3.5" />
             </Button>
 
             <div className="h-4 w-px bg-gray-200" />
 
-            {/* Version history toggle — always visible in edit mode */}
-            {currentTemplate && isEdit && (
-              <>
-                <Button
-                  variant={rightTab === "source" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setRightTab("source")}
-                  title="Source HTML"
-                  className="h-7 px-2.5 text-xs rounded-md text-gray-600"
-                >
-                  Source HTML
-                </Button>
-                <Button
-                  variant={rightTab === "versions" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setRightTab((t) => t === "versions" ? "properties" : "versions")}
-                  title="Version History"
-                  className={`h-7 px-2.5 text-xs rounded-md flex items-center gap-1.5 ${
-                    rightTab === "versions"
-                      ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300"
-                      : "text-gray-500 hover:text-gray-800"
-                  }`}
-                >
-                  <HistoryIcon className="w-3.5 h-3.5" />
-                  History
-                  {versions.length > 0 && (
-                    <span className="ml-0.5 text-[10px] font-bold px-1 py-0 rounded-full bg-amber-200 text-amber-900">
-                      {versions.length}
-                    </span>
-                  )}
-                </Button>
-                <div className="h-4 w-px bg-gray-200" />
-              </>
-            )}
-
             <Button variant="outline" size="sm"
               className="h-7 px-2.5 text-xs rounded-md flex items-center gap-1.5 text-gray-600"
               disabled={loading || saving}
               onClick={async () => {
                 const id = currentTemplate?.id || savedTemplateId;
-                if (viewingVersion && id) {
-                  router.push(`/vsb/${id}?versionId=${viewingVersion.id}`);
-                  return;
-                }
                 if (!id || hasUnsavedTemplate || isWorkingCopy || isNewTemplate) {
                   setCreateVsbAfterSave(true); setSaveTemplateDialog(true); return;
                 }
@@ -1213,7 +860,7 @@ if (activeSelectedId) {
               VSB
             </Button>
 
-            {hasComponentChanges && !isWorkingCopy && !viewingVersion && (
+            {hasComponentChanges && !isWorkingCopy && (
               <Button variant="ghost" size="sm" onClick={resetComponentChanges}
                 className="h-7 px-2.5 text-xs rounded-md text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
                 <RotateCcw className="w-3 h-3" />
@@ -1221,23 +868,10 @@ if (activeSelectedId) {
               </Button>
             )}
 
-            {/* Save Draft — persists working changes without creating a version */}
             {canSaveComponentChanges && (
               <Button variant="outline" size="sm" onClick={() => handleSaveComponentChanges()} disabled={saving}
                 className="h-7 px-2.5 text-xs rounded-md border-gray-300 flex items-center gap-1.5">
                 {saving ? <><div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600" />Saving…</> : <><Save className="w-3 h-3" />Save Draft</>}
-              </Button>
-            )}
-
-            {/* Create New Version — immutable snapshot */}
-            {currentTemplate && isEdit && !isWorkingCopy && !viewingVersion && (
-              <Button size="sm"
-                variant="outline"
-                onClick={() => setShowCreateVersionModal(true)}
-                className="h-7 px-2.5 text-xs rounded-md border-amber-400 text-amber-700 hover:bg-amber-50 flex items-center gap-1.5"
-              >
-                <HistoryIcon className="w-3 h-3" />
-                Create New Version
               </Button>
             )}
 
@@ -1261,11 +895,6 @@ if (activeSelectedId) {
             <ExportPanel
               components={components}
               canvasRef={canvasRef}
-              sourceHtmlByOption={viewingVersion ? {
-                1: viewingVersion.sourceHtml,
-                2: viewingVersion.sourceHtml2,
-                3: viewingVersion.sourceHtml3,
-              } : undefined}
             />
           </div>
         </div>
@@ -1283,13 +912,13 @@ if (activeSelectedId) {
                 <ComponentPalette
                   onAddComponent={addComponent}
                   customComponents={customComponents}
-                  disabled={isHeaderOnlyLocked || !!viewingVersion}
+                  disabled={isHeaderOnlyLocked}
                   selectedBrand={selectedBrand}
                   getSelectionInfo={() => {
                     return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
                   }}
                   applyUpdates={(updates, parentId) => {
-                    if (!activeSelectedId || viewingVersion) return
+                    if (!activeSelectedId) return
                     updateComponent(activeSelectedId, updates, parentId)
                   }}
                 />
@@ -1306,23 +935,8 @@ if (activeSelectedId) {
             }}>
 
             {currentTemplate && (
-              <div className={`w-full max-w-[600px] mb-3 flex items-center justify-between rounded-lg px-4 py-2 text-sm ${
-                viewingVersion ? "bg-amber-50 border border-amber-200" : "bg-white border border-gray-200"
-              }`}>
-                <span className={`font-medium ${viewingVersion ? "text-amber-800" : "text-gray-700"}`}>
-                  {currentTemplate.name} &nbsp;•&nbsp; {viewingVersion
-                    ? `Viewing v${viewingVersion.versionNumber}`
-                    : versions.length > 0 ? `Draft · v${versions[versions.length - 1].versionNumber} Current` : "Draft"}
-                  {viewingVersion?.changeNote ? ` — ${viewingVersion.changeNote}` : ""}
-                </span>
-                {viewingVersion && (
-                  <button
-                    onClick={handleExitVersionView}
-                    className="text-amber-700 hover:text-amber-900 hover:underline text-xs font-medium"
-                  >
-                    ← Back to draft
-                  </button>
-                )}
+              <div className="w-full max-w-[600px] mb-3 flex items-center justify-between rounded-lg px-4 py-2 text-sm bg-white border border-gray-200">
+                <span className="font-medium text-gray-700">{currentTemplate.name}</span>
               </div>
             )}
 
@@ -1358,7 +972,7 @@ if (activeSelectedId) {
                       const FOOTER_TYPES = new Set(['email-footer','footer-with-Preferences','footer-links','footer-links(3)','footer-link-2','footer-link-3','orsedu-footer','footer-tokens'])
                       const opt2Missing = !option2Components.some((c: any) => FOOTER_TYPES.has(c.type))
                       const opt3Missing = optionMode === "three" && !option3Components.some((c: any) => FOOTER_TYPES.has(c.type))
-                      if (viewingVersion || (!opt2Missing && !opt3Missing)) return null
+                      if (!opt2Missing && !opt3Missing) return null
                       return (
                         <button
                           onClick={() => { syncFooterFromOption1(); toast.success("Footer copied to missing options") }}
@@ -1386,7 +1000,6 @@ if (activeSelectedId) {
                 components={getActiveComponents()}
                 selectedComponent={selectedComponent}
                 onSelectComponent={(id) => {
-                  if (viewingVersion) return
                   if ((optionMode === "three" || optionMode === "two") && optionSubMode === "header-only" && activeOption !== 1) {
                      // Check if it's a header-image component
                      const comp = findComponentWithParentById(getActiveComponents(), id || "");
@@ -1402,7 +1015,7 @@ if (activeSelectedId) {
                 previewMode={previewMode}
                 duplicateComponent={duplicateComponent}
                 addComponent={addComponent}
-                isLockedMode={isHeaderOnlyLocked || !!viewingVersion}
+                isLockedMode={isHeaderOnlyLocked}
                 showCopyToOption={
                   (optionMode === "three" || optionMode === "two") && optionSubMode === "completely-different" && !!selectedComponent
                 }
@@ -1418,81 +1031,20 @@ if (activeSelectedId) {
             </div>
           </div>
 
-          {/* Right Panel: Properties + Version History — always visible in edit mode */}
+          {/* Right Panel: Properties */}
           {!previewMode && (selectedComponent || (currentTemplate && isEdit)) && (
             <div className="w-[272px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
+              <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
+              </div>
 
-              {/* Tab bar */}
-              {currentTemplate && isEdit ? (
-                <div className="flex border-b border-gray-100 shrink-0">
-                  {(["properties", "source", "versions"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setRightTab(tab)}
-                      className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                        rightTab === tab
-                          ? "text-gray-900 border-b-2 border-amber-500"
-                          : "text-gray-400 hover:text-gray-700"
-                      }`}
-                    >
-                      {tab === "properties" ? "Properties" : tab === "source" ? "Source HTML" : (
-                        <span className="flex items-center justify-center gap-1">
-                          Versions
-                          {versions.length > 0 && (
-                            <span className="text-[9px] font-bold px-1 py-0 rounded-full bg-amber-100 text-amber-700">{versions.length}</span>
-                          )}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
-                  <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
-                </div>
-              )}
-
-              {/* Properties tab */}
-              {(rightTab === "properties") && (
-                <div className="flex-1 overflow-y-auto">
-                  {currentTemplate && (
-                    <div className="px-3 pt-3 pb-2 border-b border-gray-100">
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">File</p>
-                      <div className="flex items-center gap-1.5">
-                        {isRenaming ? (
-                          <>
-                            <input
-                              ref={renameInputRef}
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") cancelRename(); }}
-                              onBlur={commitRename}
-                              className="flex-1 h-6 rounded border border-blue-400 bg-white px-2 text-xs font-medium text-gray-900 focus:outline-none"
-                              autoFocus
-                            />
-                            <button onClick={commitRename} disabled={!!viewingVersion} className="text-green-600 p-0.5"><Check className="w-3 h-3" /></button>
-                            <button onClick={cancelRename} className="text-gray-400 p-0.5"><X className="w-3 h-3" /></button>
-                          </>
-                        ) : (
-                          <button onClick={startRename} disabled={!!viewingVersion} className="group flex items-center gap-1 min-w-0 flex-1">
-                            <span className="text-xs font-medium text-gray-800 truncate">{currentTemplate.name}</span>
-                            <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 shrink-0" />
-                          </button>
-                        )}
-                      </div>
-                      {currentTemplate.category && (
-                        <p className="text-[10px] text-gray-400 mt-1 capitalize">
-                          {currentTemplate.category} &middot; {currentTemplate.brand || "--"}
-                        </p>
-                      )}
-                    </div>
-                  )}
+              <div className="flex-1 overflow-y-auto">
                   {selectedComponent ? (
                     <div className="p-3">
                       <PropertiesPanel
                         component={selectedComponentData}
                         onUpdateComponent={(updates) => {
-                          if (!activeSelectedId || viewingVersion) return;
+                          if (!activeSelectedId) return;
                           debouncedUpdateComponent(updates);
                         }}
                         onSaveAsCustom={(name) => saveAsCustomComponent(name)}
@@ -1507,105 +1059,11 @@ if (activeSelectedId) {
                     </div>
                   )}
                 </div>
-              )}
 
-              {currentTemplate && isEdit && rightTab === "source" && (
-                <div className="flex-1 min-h-0 flex flex-col">
-                  <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100">
-                    <span className="text-[11px] font-semibold text-gray-600">
-                      {viewingVersion ? `v${viewingVersion.versionNumber} HTML` : "Draft HTML"}
-                    </span>
-                    {(optionMode === "two" || optionMode === "three") && (
-                      <select
-                        value={sourceOption}
-                        onChange={(event) => setSourceOption(Number(event.target.value) as 1 | 2 | 3)}
-                        className="h-7 rounded border border-gray-200 bg-white px-2 text-[11px]"
-                        aria-label="Source HTML option"
-                      >
-                        {(optionMode === "two" ? [1, 2] : [1, 2, 3]).map((option) => (
-                          <option key={option} value={option}>Option {option}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  <textarea
-                    aria-label="Selected version source HTML"
-                    readOnly
-                    value={sourceHtml}
-                    className="flex-1 min-h-0 resize-none border-0 bg-gray-50 p-3 font-mono text-[10px] leading-relaxed text-gray-700 focus:outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Versions tab — unified VersionHistoryPanel */}
-              {currentTemplate && isEdit && rightTab === "versions" && (
-                <div className="flex-1 overflow-hidden flex flex-col">
-                  <VersionHistoryPanel
-                    versions={versions}
-                    loading={versionsLoading}
-                    viewingVersionId={viewingVersion?.id ?? null}
-                    currentTemplateName={currentTemplate?.name ?? ""}
-                    onViewVersion={handleViewVersion}
-                    onExitVersionView={handleExitVersionView}
-                    onRestoreAsDraft={handleVersionRestoreAsDraft}
-                    onExportHtml={handleVersionExportHtml}
-                    onPreview={handleVersionPreview}
-                    onExportPdf={handleVersionExportPdf}
-                    onCreateVsb={currentTemplate ? handleVersionCreateVsb : undefined}
-                  />
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Create Version Modal */}
-      <Dialog open={showCreateVersionModal} onOpenChange={setShowCreateVersionModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create New Version</DialogTitle>
-            <DialogDescription>
-              Saves an immutable snapshot of the current email state.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-2">
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Change note (required)</label>
-            <input
-              type="text"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="e.g. Updated CTA and ISI copy"
-              value={versionChangeNote}
-              onChange={(e) => setVersionChangeNote(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && versionChangeNote.trim() && !savingVersion && handleCreateVersion()}
-              autoFocus
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => { setShowCreateVersionModal(false); setVersionChangeNote(""); }}
-              disabled={savingVersion}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => { void handleCreateVersion(); }}
-              disabled={savingVersion || !currentTemplate || !versionChangeNote.trim()}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-            >
-              {savingVersion ? (
-                <>
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-2" />
-                  Saving…
-                </>
-              ) : (
-                "Create Version"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Save Template Dialog */}
       <SaveTemplateDialog
@@ -1656,11 +1114,7 @@ if (activeSelectedId) {
         components={components}
         open={openPreview}
         onOpenChange={setOpenPreview}
-        sourceHtmlByOption={viewingVersion ? {
-          1: viewingVersion.sourceHtml,
-          2: viewingVersion.sourceHtml2,
-          3: viewingVersion.sourceHtml3,
-        } : undefined}
+
       />
 
       {/* Copy Component To Dialog */}

@@ -181,6 +181,37 @@ function DeferredInput({
   );
 }
 
+function DeferredTextInput({
+  id,
+  value,
+  placeholder,
+  onCommit,
+}: {
+  id?: string;
+  value: string;
+  placeholder?: string;
+  onCommit: (value: string) => void;
+}) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+
+  return (
+    <Input
+      id={id}
+      value={local}
+      placeholder={placeholder}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={(e) => onCommit(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 function LineHeightInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const commonValues = ["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"];
   const [customValue, setCustomValue] = useState(value || "14px");
@@ -1212,26 +1243,6 @@ export function PropertiesPanel({
                 onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
             </div>
-            <div>
-              <Label htmlFor="fontFamily">Font Family</Label>
-              <Select
-                value={component.fontFamily || "Arial, Helvetica, sans-serif"}
-                onValueChange={(v) => onUpdateComponent({ fontFamily: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Arial, Helvetica, sans-serif">Arial</SelectItem>
-                  <SelectItem value="'Times New Roman', Times, serif">Times New Roman</SelectItem>
-                  <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                  <SelectItem value="Verdana, Geneva, sans-serif">Verdana</SelectItem>
-                  <SelectItem value="Trebuchet MS, sans-serif">Trebuchet MS</SelectItem>
-                  <SelectItem value="'Courier New', Courier, monospace">Courier New</SelectItem>
-                  <SelectItem value="Tahoma, Geneva, sans-serif">Tahoma</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="pt-2">
               <Button
                 variant="outline"
@@ -1358,11 +1369,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="imgLinkTitle">Link Title (tooltip)</Label>
-              <Input
+              <DeferredTextInput
                 id="imgLinkTitle"
                 value={component.linkTitle || ""}
-                onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })}
                 placeholder="Optional tooltip text"
+                onCommit={(value) => onUpdateComponent({ linkTitle: value })}
               />
             </div>
           </div>
@@ -1656,12 +1667,12 @@ export function PropertiesPanel({
                     placeholder="Link URL"
                   />
                   <Label>Link title</Label>
-                  <Input
+                  <DeferredTextInput
                     value={link.title || ""}
-                    onChange={(e) =>
+                    onCommit={(value) =>
                       onUpdateComponent({
                         links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
+                          i === index ? { ...l, title: value } : l
                         ),
                       })
                     }
@@ -1733,12 +1744,12 @@ export function PropertiesPanel({
                     placeholder="Link URL"
                   />
                   <Label>Link title</Label>
-                  <Input
+                  <DeferredTextInput
                     value={link.title || ""}
-                    onChange={(e) =>
+                    onCommit={(value) =>
                       onUpdateComponent({
                         links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
+                          i === index ? { ...l, title: value } : l
                         ),
                       })
                     }
@@ -1869,12 +1880,12 @@ export function PropertiesPanel({
                     placeholder="Link URL"
                   />
                   <Label>Link title</Label>
-                  <Input
+                  <DeferredTextInput
                     value={link.title || ""}
-                    onChange={(e) =>
+                    onCommit={(value) =>
                       onUpdateComponent({
                         links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
+                          i === index ? { ...l, title: value } : l
                         ),
                       })
                     }
@@ -2420,7 +2431,7 @@ export function PropertiesPanel({
         };
         const addLinkItem = () => {
           onUpdateComponent({
-            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: "#368eec", suffixText: "", bold: false }],
+            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: "#007bff", suffixText: "", bold: false }],
           } as any);
         };
         const removeLinkItem = (index: number) => {
@@ -2496,7 +2507,7 @@ export function PropertiesPanel({
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Label>Link Color</Label>
-                      <ColorInput value={item.linkColor || "#368eec"} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
+                      <ColorInput value={item.linkColor || "#007bff"} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
                     </div>
                     <div className="flex-1">
                       <Label>Bold</Label>
@@ -2712,12 +2723,12 @@ export function PropertiesPanel({
                     placeholder="Link URL"
                   />
                   <Label>Link {index + 1} Title</Label>
-                  <Input
+                  <DeferredTextInput
                     value={link.title || ""}
-                    onChange={(e) =>
+                    onCommit={(value) =>
                       onUpdateComponent({
                         links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
+                          i === index ? { ...l, title: value } : l
                         ),
                       })
                     }
@@ -2804,12 +2815,12 @@ export function PropertiesPanel({
                     placeholder="Link URL"
                   />
                   <Label>Link title</Label>
-                  <Input
+                  <DeferredTextInput
                     value={link.title || ""}
-                    onChange={(e) =>
+                    onCommit={(value) =>
                       onUpdateComponent({
                         links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: e.target.value } : l
+                          i === index ? { ...l, title: value } : l
                         ),
                       })
                     }

@@ -101,7 +101,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         color: ${component.color || "#000000"};
         text-align: ${component.textAlign || "left"};
         font-weight: ${component.fontWeight || "normal"};
-        font-family: ${component.fontFamily || "Arial, Helvetica, sans-serif"};
+        font-family: ${component.fontFamily || "Arial, sans-serif"};
         line-height: ${component.lineHeight || "16px"};
       `.trim();
 
@@ -362,8 +362,15 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         const rowHTML = row.map((link, j) => {
           const isLast = j === row.length - 1;
           const linkColor = link.color || color;
+          const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
+          const preferencesPrefix = isEmailPreferences
+            ? `<span style="color:${linkColor};">[</span>`
+            : "";
+          const preferencesSuffix = isEmailPreferences
+            ? `<span style="color:${linkColor};">]</span>`
+            : "";
           const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-          return `<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+          return `${preferencesPrefix}<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${preferencesSuffix}${pipe}`;
         }).join("");
         mobileRows.push(`<tr><td style="padding-bottom:4px;font-family:Arial,sans-serif;">${rowHTML}</td></tr>`);
       }
@@ -373,8 +380,15 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       const desktopHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
         const linkColor = link.color || color;
+        const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
+        const preferencesPrefix = isEmailPreferences
+          ? `<span style="color:${linkColor};">[</span>`
+          : "";
+        const preferencesSuffix = isEmailPreferences
+          ? `<span style="color:${linkColor};">]</span>`
+          : "";
         const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-        return `<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${pipe}`;
+        return `${preferencesPrefix}<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${preferencesSuffix}${pipe}`;
       }).join("");
 
       // In pdfMode we skip show/hide CSS classes entirely and just render
@@ -635,7 +649,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
 
       const rows = linkItems.map((item: any) => {
         const bold = item.bold ? "bold" : "normal";
-        const linkColor = item.linkColor || "#368eec";
+        const linkColor = item.linkColor || "#007bff";
         return `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tbody>
@@ -2010,7 +2024,7 @@ case "isi": {
                         ${rightNum}
                       </p>
                       <p style="margin:0;padding:0;font-family:Arial,sans-serif;
-                                 font-size:12px;line-height:14px;font-weight:400;color:#000;">
+                                 font-size:12px;line-height:14px;font-weight:700;color:#000;">
                         ${rightLabel}
                       </p>
                     </td>
@@ -2096,7 +2110,7 @@ case "isi": {
                     <td width="60" align="left" valign="top"
                       style="width:60px;text-align:left;vertical-align:top;padding-right:12px;">
                       <p style="margin:0;padding:0;font-family:Arial,sans-serif;
-                                 font-size:16px;line-height:18px;font-weight:400;color:#000;">
+                                 font-size:16px;line-height:18px;font-weight:700;color:#000;">
                         ${rightNum}<br/>${rightLabel}
                       </p>
                     </td>

@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderStyle: 'solid',
     padding: 6,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   thirdPartyRow: {
     display: 'flex',
@@ -235,7 +235,10 @@ function HeaderDetails({ details }: { details: HeaderDetail[] }) {
         {details.map((detail, idx) => (
           <View key={idx} style={styles.headerDetailRow}>
             <Text style={styles.headerDetailLabel}>{detail.name}: </Text>
-            <Text style={detail.value.includes('[') || detail.value.includes(']') ? styles.headerDetailValueVar : styles.headerDetailValue}>
+            <Text style={[
+              detail.value.includes('[') || detail.value.includes(']') ? styles.headerDetailValueVar : styles.headerDetailValue,
+              detail.name.toLowerCase() === 'preheader' ? { fontWeight: 'bold' } : {},
+            ]}>
               {detail.value}
             </Text>
           </View>
@@ -272,7 +275,7 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
       <View key={section.heading} style={styles.table}>
         <View style={{ flexDirection: 'row', backgroundColor: '#f9f9f9' }}>
           <View style={[styles.tableHeader, { flex: 1 }]}><Text>Friendly From Name</Text></View>
-          <View style={[styles.tableHeader, { flex: 1 }]}><Text>From Email Address</Text></View>
+          <View style={[styles.tableHeader, { flex: 1 }]}><Text>From email address</Text></View>
         </View>
         {options.map((row, rowIdx) => (
           <View key={rowIdx} style={{ flexDirection: 'row' }}>
@@ -309,6 +312,10 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
 
   return (
     <View style={styles.page}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, paddingBottom: 12, borderBottomWidth: 2, borderBottomColor: '#006937', borderBottomStyle: 'solid' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FF66CC', letterSpacing: -0.3 }}>1. VARIABLE COPY</Text>
+        <Text style={{ fontSize: 10, color: '#9ca3af', fontFamily: 'Courier' }}>VSB COMPONENT SECTION</Text>
+      </View>
       <Text style={styles.title}>{emailName}</Text>
       {data.map((section, index) => {
         switch (section.structure) {

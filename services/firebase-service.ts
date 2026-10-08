@@ -7,11 +7,9 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  orderBy,
   where,
   Timestamp,
   setDoc,
-  runTransaction,
 } from "firebase/firestore";
 import {
   ref,
@@ -22,9 +20,8 @@ import {
   getMetadata
 } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
-import type { EmailTemplate, EmailVersion, EmailEditorSnapshot } from "@/types/template";
+import type { EmailTemplate } from "@/types/template";
 import { EmailComponent } from "@/types/email-builder";
-import { generateEmailHTML } from "@/lib/email-generator";
 
 function removeUndefinedDeep(value: any): any {
   if (value === undefined) return undefined;
@@ -78,46 +75,6 @@ const parseDate = (value: any): Date | null => {
   }
 
   return null;
-}
-
-function normalizeEmailVersion(id: string, data: Record<string, any>): EmailVersion {
-  const legacySnapshot = data.editorSnapshot || {
-    components: data.components || [],
-    option2Components: data.option2Components || [],
-    option3Components: data.option3Components || [],
-    optionMode: data.optionMode || "single",
-    optionSubMode: data.optionSubMode || "header-only",
-    preheaderText: data.preheaderText || "",
-    metadata: {
-      name: data.name || "",
-      description: data.description || "",
-      category: data.category || "other",
-      brand: data.brand,
-    },
-    settings: {},
-    vsbData: data.vsbData,
-  } satisfies EmailEditorSnapshot;
-  const {
-    components: _components,
-    option2Components: _option2Components,
-    option3Components: _option3Components,
-    optionMode: _optionMode,
-    optionSubMode: _optionSubMode,
-    preheaderText: _preheaderText,
-    name: _name,
-    description: _description,
-    category: _category,
-    brand: _brand,
-    vsbData: _vsbData,
-    ...versionData
-  } = data;
-
-  return {
-    ...versionData,
-    id,
-    editorSnapshot: legacySnapshot,
-    createdAt: parseDate(data.createdAt) || (typeof data.createdAt === "string" ? new Date(data.createdAt) : null),
-  } as EmailVersion;
 }
 
 class FirebaseService {
@@ -453,6 +410,31 @@ class FirebaseService {
         error
       );
       return this.updateLocalTemplate(id, updates);
+    }
+  }
+
+  async updateTemplateName(id: string, name: string): Promise<EmailTemplate | null> {
+    if (!this.isFirebaseAvailable) {
+      return this.updateLocalTemplate(id, { name });
+    }
+
+    try {
+      const docRef = doc(db, this.templatesCollection, id);
+      await updateDoc(docRef, { name, updatedAt: new Date() });
+      const snap = await getDoc(docRef);
+      const data = snap.data();
+      if (!snap.exists() || !data) return null;
+
+      this.invalidateTemplateCache();
+      return {
+        id,
+        ...data,
+        createdAt: parseDate(data.createdAt),
+        updatedAt: parseDate(data.updatedAt),
+      } as EmailTemplate;
+    } catch (error) {
+      console.error("Failed to rename template in Firebase:", error);
+      throw error;
     }
   }
 
@@ -815,144 +797,6 @@ class FirebaseService {
       },
     ];
   }
-  private versionsCollection = "email-versions";
-
-  // ── Version History ────────────────────────────────────────────────────────
-
-  private async migrateTemplateToInitialVersion(templateId: string): Promise<EmailVersion | null> {
-    const template = await this.getTemplate(templateId);
-    if (!template) return null;
-
-    const vsbs = await this.getVSBs(templateId);
-    const vsb = [...vsbs].sort((a, b) =>
-      new Date(b.updatedAt || b.createdAt || 0).getTime() -
-      new Date(a.updatedAt || a.createdAt || 0).getTime()
-    )[0];
-    const {
-      id: _id, components, option2Components, option3Components, optionMode, optionSubMode,
-      preheaderText, name, description, category, brand, thumbnail, html, isUserCreated,
-      createdAt, updatedAt, currentVersionId: _currentVersionId, ...settings
-    } = template;
-    const version = {
-      templateId,
-      versionNumber: 1,
-      changeNote: "Initial version",
-      createdAt: createdAt || new Date(),
-      createdBy: "system:migration",
-      editorSnapshot: {
-        components: components || [],
-        option2Components: option2Components || [],
-        option3Components: option3Components || [],
-        optionMode: optionMode || "single",
-        optionSubMode: optionSubMode || "header-only",
-        preheaderText: preheaderText || "",
-        metadata: { name, description, category, brand, thumbnail, html, isUserCreated },
-        settings,
-        ...(vsb ? {
-          vsbData: {
-            name: vsb.name,
-            variableCopy: vsb.variableCopy || [],
-            variableCopyHeadingColor: vsb.variableCopyHeadingColor,
-            altNamePage: vsb.altNamePage || { images: [] },
-            headerDetails: vsb.headerDetails || [],
-            desktopView: vsb.desktopView || [],
-            mobileView: vsb.mobileView || [],
-            sourcVsbId: vsb.id,
-          },
-        } : {}),
-      },
-      sourceHtml: generateEmailHTML(components || [], preheaderText || ""),
-      sourceHtml2: optionMode !== "single"
-        ? generateEmailHTML(option2Components || [], preheaderText || "")
-        : undefined,
-      sourceHtml3: optionMode === "three"
-        ? generateEmailHTML(option3Components || [], preheaderText || "")
-        : undefined,
-    } satisfies Omit<EmailVersion, "id">;
-
-    const initialVersionRef = doc(db, this.versionsCollection, `initial-${templateId}`);
-    const templateRef = doc(db, this.templatesCollection, templateId);
-    return runTransaction(db, async (transaction) => {
-      const existingVersion = await transaction.get(initialVersionRef);
-      if (existingVersion.exists()) {
-        return normalizeEmailVersion(existingVersion.id, existingVersion.data());
-      }
-
-      const templateSnapshot = await transaction.get(templateRef);
-      if (!templateSnapshot.exists()) return null;
-      const cleanVersion = removeUndefinedDeep(version);
-      transaction.set(initialVersionRef, cleanVersion);
-      transaction.update(templateRef, {
-        currentVersionId: initialVersionRef.id,
-        updatedAt: new Date(),
-      });
-      return normalizeEmailVersion(initialVersionRef.id, version);
-    });
-  }
-
-  async getVersions(templateId: string): Promise<import("@/types/template").EmailVersion[]> {
-    if (!this.isFirebaseAvailable) return [];
-    try {
-      // Requires Firestore composite index: templateId ASC + versionNumber ASC
-      const q = query(
-        collection(db, this.versionsCollection),
-        where("templateId", "==", templateId),
-        orderBy("versionNumber", "asc")
-      );
-      let snap = await getDocs(q);
-      if (snap.empty) {
-        const initialVersion = await this.migrateTemplateToInitialVersion(templateId);
-        if (!initialVersion) return [];
-        snap = await getDocs(q);
-      }
-      return snap.docs.map((d) => normalizeEmailVersion(d.id, d.data()));
-    } catch (e) {
-      console.error("getVersions failed:", e);
-      return [];
-    }
-  }
-
-  async createVersion(
-    version: Omit<import("@/types/template").EmailVersion, "id">
-  ): Promise<import("@/types/template").EmailVersion | null> {
-    if (!this.isFirebaseAvailable) return null;
-    try {
-      const clean = removeUndefinedDeep({ ...version, createdAt: new Date() });
-      const ref2 = await addDoc(collection(db, this.versionsCollection), clean);
-      // Also stamp currentVersionId on the parent template
-      await updateDoc(doc(db, this.templatesCollection, version.templateId), {
-        ...removeUndefinedDeep(version.editorSnapshot.settings),
-        ...removeUndefinedDeep(version.editorSnapshot.metadata),
-        components: version.editorSnapshot.components,
-        option2Components: version.editorSnapshot.option2Components,
-        option3Components: version.editorSnapshot.option3Components,
-        optionMode: version.editorSnapshot.optionMode,
-        optionSubMode: version.editorSnapshot.optionSubMode,
-        preheaderText: version.editorSnapshot.preheaderText,
-        currentVersionId: ref2.id,
-        updatedAt: new Date(),
-      });
-      return normalizeEmailVersion(ref2.id, { ...version, createdAt: new Date() });
-    } catch (e) {
-      console.error("createVersion failed:", e);
-      return null;
-    }
-  }
-
-  async getVersion(
-    versionId: string
-  ): Promise<import("@/types/template").EmailVersion | null> {
-    if (!this.isFirebaseAvailable) return null;
-    try {
-      const snap = await getDoc(doc(db, this.versionsCollection, versionId));
-      if (!snap.exists()) return null;
-      return normalizeEmailVersion(snap.id, snap.data());
-    } catch (e) {
-      console.error("getVersion failed:", e);
-      return null;
-    }
-  }
-
   // VSB Operations
   async getVSBs(templateId: string): Promise<any[]> {
     if (!this.isFirebaseAvailable) return [];

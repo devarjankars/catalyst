@@ -81,9 +81,7 @@ function detectUnsupportedProduct(text: string): boolean {
   const lower = text.toLowerCase();
   // If user explicitly mentions orserdu that's fine — only flag non-orserdu products
   const competitorHints = [
-    "ibrance", "kisqali", "verzenio", "piqray", "afinitor",
-    "xeloda", "exemestane", "letrozole",
-    "anastrozole", "tamoxifen", "paloma", "monarch", "monarcHER",
+    "ibrance", "kisqali", "verzenio", "piqray", "afinitor "paloma", "monarch", "monarcHER",
   ];
   return competitorHints.some((hint) => lower.includes(hint));
 }
