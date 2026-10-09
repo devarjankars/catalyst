@@ -3,8 +3,74 @@
 
 import { Italic, Link, Superscript } from "lucide-react"
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { applyTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
+
+const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect
+
+interface SelectionBoundary {
+  path: number[]
+  offset: number
+}
+
+interface SelectionSnapshot {
+  start: SelectionBoundary
+  end: SelectionBoundary
+}
+
+function getNodePath(root: Node, node: Node): number[] | null {
+  const path: number[] = [];
+  let current: Node | null = node;
+
+  while (current && current !== root) {
+    const parent: Node | null = current.parentNode;
+    if (!parent) return null;
+    const index = Array.prototype.indexOf.call(parent.childNodes, current);
+    if (index < 0) return null;
+    path.unshift(index);
+    current = parent;
+  }
+
+  return current === root ? path : null;
+}
+
+function getSelectionSnapshot(root: HTMLElement): SelectionSnapshot | null {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  const startPath = getNodePath(root, range.startContainer);
+  const endPath = getNodePath(root, range.endContainer);
+  if (!startPath || !endPath) return null;
+  return {
+    start: { path: startPath, offset: range.startOffset },
+    end: { path: endPath, offset: range.endOffset },
+  }
+}
+
+function resolveBoundary(root: Node, boundary: SelectionBoundary): { node: Node; offset: number } | null {
+  let node = root;
+  for (const index of boundary.path) {
+    const child = node.childNodes[index];
+    if (!child) return null;
+    node = child;
+  }
+  const maxOffset = node.nodeType === Node.TEXT_NODE ? node.textContent?.length ?? 0 : node.childNodes.length;
+  return { node, offset: Math.min(boundary.offset, maxOffset) };
+}
+
+function restoreSelectionSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null) {
+  if (!snapshot) return;
+  const start = resolveBoundary(root, snapshot.start);
+  const end = resolveBoundary(root, snapshot.end);
+  if (!start || !end) return;
+  const range = document.createRange();
+  range.setStart(start.node, start.offset);
+  range.setEnd(end.node, end.offset);
+  const selection = window.getSelection();
+  if (!selection) return;
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
 
 interface RichTextEditorProps {
 
@@ -44,13 +110,18 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
     }
   }
 
-  useEffect(() => {
+  useBrowserLayoutEffect(() => {
     if (editorRef.current) {
+      const editor = editorRef.current;
       const spacedValue = paragraphSpacingPx === undefined
         ? value
         : applyTextParagraphSpacing(value, paragraphSpacingPx)
-      if (editorRef.current.innerHTML !== spacedValue) {
-        editorRef.current.innerHTML = spacedValue
+      const normalizedTarget = document.createElement("div");
+      normalizedTarget.innerHTML = spacedValue;
+      if (editor.innerHTML !== normalizedTarget.innerHTML) {
+        const selectionSnapshot = getSelectionSnapshot(editor);
+        editor.innerHTML = normalizedTarget.innerHTML;
+        restoreSelectionSnapshot(editor, selectionSnapshot);
       }
     }
   }, [value, paragraphSpacingPx])
