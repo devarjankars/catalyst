@@ -2337,25 +2337,37 @@ return `
     case "elzonris-image-text-block": {
       const imageSrc = component.imageTextImageSrc || "";
       const imageAlt = component.imageTextImageAlt || "";
-      const imageWidth = component.imageTextImageWidth || 167;
+      const configuredImageWidth = Number(component.imageTextImageWidth);
+      const imageWidth = Number.isFinite(configuredImageWidth) && configuredImageWidth > 0
+        ? configuredImageWidth
+        : 167;
       const outerStyle = component.padding || "0 20px 10px 20px";
       const verticalAlign = component.imageTextVerticalAlign || "top";
       const textAlign = component.textAlign || "left";
+      const imagePosition = component.imageTextImagePosition || "left";
+      const imageTextGap = component.imageTextGap !== undefined && Number.isFinite(component.imageTextGap)
+        ? Math.max(0, component.imageTextGap)
+        : 16;
+      const imageCell = `
+                <td valign="${verticalAlign}" align="center" width="${imageWidth}" style="width:${imageWidth}px;padding:0;">
+                  <img width="${imageWidth}" src="${imageSrc}" alt="${imageAlt}" style="display:block;width:${imageWidth}px;max-width:100%;height:auto;" />
+                </td>`;
+      const gapCell = `
+                <td width="${imageTextGap}" style="width:${imageTextGap}px;font-size:0;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>`;
+      const textCell = `
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:20px;text-align:${textAlign};">
+                  <div>${component.imageTextText1 || ""}</div>
+                </td>`;
+      const contentCells = imagePosition === "right"
+        ? `${textCell}${gapCell}${imageCell}`
+        : `${imageCell}${gapCell}${textCell}`;
       return `
       <table id="deskDisp" class="mobile-table darkmode deskDisp" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
         <tbody><tr class="deskDisp">
           <td width="20" height="1" valign="top" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;"></td>
           <td valign="top" width="100%" style="padding:${outerStyle};">
-            <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
-              <tbody><tr>
-                <td valign="${verticalAlign}" align="center" style="padding:0 30px 0 0;">
-                  <img width="${imageWidth}" src="${imageSrc}" alt="${imageAlt}" style="display:block;max-width:100%;height:auto;" />
-                </td>
-                <td width="8" height="1" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>
-                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:20px;text-align:${textAlign};">
-                  <div>${component.imageTextText1 || ""}</div>
-                </td>
-              </tr></tbody>
+            <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0" style="table-layout:fixed;">
+              <tbody><tr>${contentCells}</tr></tbody>
             </table>
           </td>
           <td width="20" height="1" valign="top" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;"></td>

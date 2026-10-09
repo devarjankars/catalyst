@@ -166,7 +166,10 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
   const brandConfig = BRANDS.find((b) => b.id === activeBrandId) ?? BRANDS[0]
   const brandCategories = BRAND_CATEGORY_MAP[activeBrandId]
   const brandComponents = componentTypes.filter(
-    (type) => type.type !== "section" && brandCategories.includes(type.category ?? "")
+    (type) =>
+      type.type !== "section" &&
+      type.type !== "orserdu-isi-animated" &&
+      brandCategories.includes(type.category ?? "")
   )
 
   // Pick a brand icon colour class based on the brand

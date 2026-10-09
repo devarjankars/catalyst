@@ -144,6 +144,8 @@ export interface EmailComponent {
   imageTextImageAlt?: string
   imageTextImageWidth?: number
   imageTextText1?: string
+  imageTextImagePosition?: "left" | "right"
+  imageTextGap?: number
   imageTextVerticalAlign?: "top" | "middle" | "bottom"
 
   // orserdu-emerald-stats properties

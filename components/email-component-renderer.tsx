@@ -1447,14 +1447,40 @@ export function EmailComponentRenderer({
         case "elzonris-image-text-block": {
           const { imageTextImageSrc, imageTextImageAlt, imageTextImageWidth, imageTextText1 } = component;
           const verticalAlign = component.imageTextVerticalAlign || "top";
+          const configuredImageWidth = Number(imageTextImageWidth);
+          const imageWidth = Number.isFinite(configuredImageWidth) && configuredImageWidth > 0
+            ? configuredImageWidth
+            : 167;
+          const imagePosition = component.imageTextImagePosition || "left";
+          const imageTextGap = component.imageTextGap ?? 16;
           return (
             <div style={{ padding: component.padding || "0 20px 10px 20px", backgroundColor: "#ffffff" }}>
-              <style>{`.image-text-block-wrap { display:flex; flex-wrap:wrap; width:100%; } .image-text-block-image { flex:1 1 240px; min-width:200px; padding-right:16px; box-sizing:border-box; text-align:center; } .image-text-block-copy { flex:1 1 240px; min-width:200px; padding-left:16px; box-sizing:border-box; } @media screen and (max-width:480px) { .image-text-block-image { padding-right:0; padding-bottom:16px; } .image-text-block-copy { padding-left:0; } }`}</style>
-              <div className="image-text-block-wrap" style={{ alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start" }}>
-                <div className="image-text-block-image">
-                  <img src={imageTextImageSrc || "/placeholder.svg"} alt={imageTextImageAlt || ""} width={imageTextImageWidth || 167} style={{ display: "block", width: imageTextImageWidth || 167, maxWidth: "100%", height: "auto", margin: "0 auto" }} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: imagePosition === "right" ? "row-reverse" : "row",
+                  alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start",
+                  gap: `${imageTextGap}px`,
+                  width: "100%",
+                  transition: "gap 140ms ease",
+                }}
+              >
+                <div
+                  style={{
+                    flex: `0 0 ${imageWidth}px`,
+                    width: `${imageWidth}px`,
+                    minWidth: 0,
+                    transition: "flex-basis 140ms ease",
+                  }}
+                >
+                  <img
+                    src={imageTextImageSrc || "/placeholder.svg"}
+                    alt={imageTextImageAlt || ""}
+                    width={imageWidth}
+                    style={{ display: "block", width: `${imageWidth}px`, maxWidth: "100%", height: "auto" }}
+                  />
                 </div>
-                <div className="image-text-block-copy" style={{ textAlign: component.textAlign || "left" }}>
+                <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
                   <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (
                       <RichTextEditor

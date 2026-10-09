@@ -717,6 +717,161 @@ interface PropertiesPanelProps {
   onSaveHtmlBlock?: (value: string, name: string) => void;
 }
 
+function ImageTextBlockProperties({
+  component,
+  onUpdateComponent,
+}: {
+  component: EmailComponent;
+  onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
+}) {
+  const [imageWidth, setImageWidth] = useState(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
+  const [imageGap, setImageGap] = useState(String(component.imageTextGap ?? 16));
+
+  useEffect(() => {
+    setImageWidth(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
+    setImageGap(String(component.imageTextGap ?? 16));
+  }, [component.id, component.imageTextImageWidth, component.imageTextGap]);
+
+  const commitImageWidth = () => {
+    const width = Number.parseInt(imageWidth, 10);
+    if (Number.isFinite(width) && width > 0) {
+      onUpdateComponent({ imageTextImageWidth: width });
+      setImageWidth(String(width));
+    } else {
+      setImageWidth(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
+    }
+  };
+
+  const commitImageGap = () => {
+    const gap = Number.parseInt(imageGap, 10);
+    if (Number.isFinite(gap) && gap >= 0) {
+      onUpdateComponent({ imageTextGap: gap });
+      setImageGap(String(gap));
+    } else {
+      setImageGap(String(component.imageTextGap ?? 16));
+    }
+  };
+
+  const sliderGap = Math.min(80, Math.max(0, component.imageTextGap ?? 16));
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Image</Label>
+        <ImageUpload
+          currentImage={component.imageTextImageSrc}
+          onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })}
+        />
+        <div>
+          <Label>Alt Text</Label>
+          <Input
+            value={component.imageTextImageAlt || ""}
+            onChange={(e) => onUpdateComponent({ imageTextImageAlt: e.target.value })}
+            placeholder="Alt text"
+          />
+        </div>
+        <div>
+          <Label>Image Width (px)</Label>
+          <Input
+            type="number"
+            min={1}
+            value={imageWidth}
+            onChange={(e) => setImageWidth(e.target.value)}
+            onBlur={commitImageWidth}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            placeholder="167"
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Image Position</Label>
+        <Select
+          value={component.imageTextImagePosition || "left"}
+          onValueChange={(imageTextImagePosition) =>
+            onUpdateComponent({ imageTextImagePosition: imageTextImagePosition as "left" | "right" })
+          }
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="left">Left of text</SelectItem>
+            <SelectItem value="right">Right of text</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Space Between Image and Text</Label>
+          <span className="text-xs tabular-nums text-gray-500">{component.imageTextGap ?? 16}px</span>
+        </div>
+        <Slider
+          min={0}
+          max={80}
+          step={1}
+          value={[sliderGap]}
+          onValueChange={([gap]) => onUpdateComponent({ imageTextGap: gap })}
+          aria-label="Space between image and text"
+        />
+        <Input
+          type="number"
+          min={0}
+          value={imageGap}
+          onChange={(e) => setImageGap(e.target.value)}
+          onBlur={commitImageGap}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          aria-label="Space between image and text in pixels"
+        />
+      </div>
+      <div>
+        <Label>Text</Label>
+        <RichTextEditor
+          isSelected
+          value={component.imageTextText1 || ""}
+          onChange={(html) => onUpdateComponent({ imageTextText1: html })}
+          style={{ minHeight: "100px" }}
+        />
+        <p className="mt-1 text-[11px] text-gray-400">
+          Select text to format it, change its color, or add a link.
+        </p>
+      </div>
+      <div>
+        <Label>Text Align</Label>
+        <Select
+          value={component.textAlign || "left"}
+          onValueChange={(value) => onUpdateComponent({ textAlign: value as "left" | "center" | "right" })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="left">Left</SelectItem>
+            <SelectItem value="center">Center</SelectItem>
+            <SelectItem value="right">Right</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Vertical Align</Label>
+        <Select
+          value={component.imageTextVerticalAlign || "top"}
+          onValueChange={(value) => onUpdateComponent({ imageTextVerticalAlign: value as "top" | "middle" | "bottom" })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="top">Top</SelectItem>
+            <SelectItem value="middle">Center</SelectItem>
+            <SelectItem value="bottom">Bottom</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Padding</Label>
+        <PaddingInput
+          value={component.padding || "0px 20px 10px 20px"}
+          onChange={(padding) => onUpdateComponent({ padding })}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PropertiesPanel({
   component,
   onUpdateComponent,
@@ -3498,47 +3653,7 @@ export function PropertiesPanel({
             );
           case "orserdu-image-text-block":
           case "elzonris-image-text-block":
-            return (
-              <div className="space-y-4">
-                <div>
-                  <Label>Image</Label>
-                  <ImageUpload currentImage={component.imageTextImageSrc} onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })} />
-                  <div><Label>Alt Text</Label><Input value={component.imageTextImageAlt || ""} onChange={(e) => onUpdateComponent({ imageTextImageAlt: e.target.value })} placeholder="Alt text" /></div>
-                  <div><Label>Image Width</Label><Input type="number" value={component.imageTextImageWidth || 167} onChange={(e) => onUpdateComponent({ imageTextImageWidth: parseInt(e.target.value) || 0 })} placeholder="167" /></div>
-                </div>
-                <div>
-                  <Label>Text</Label>
-                  <RichTextEditor
-                    value={component.imageTextText1 || ""}
-                    onChange={(html) => onUpdateComponent({ imageTextText1: html })}
-                    style={{ minHeight: "100px" }}
-                  />
-                </div>
-                <div>
-                  <Label>Text Align</Label>
-                  <Select value={component.textAlign || "left"} onValueChange={(value) => onUpdateComponent({ textAlign: value as "left" | "center" | "right" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Vertical Align</Label>
-                  <Select value={component.imageTextVerticalAlign || "top"} onValueChange={(value) => onUpdateComponent({ imageTextVerticalAlign: value as "top" | "middle" | "bottom" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="top">Top</SelectItem>
-                      <SelectItem value="middle">Center</SelectItem>
-                      <SelectItem value="bottom">Bottom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Padding</Label><PaddingInput value={component.padding || "0px 20px 10px 20px"} onChange={(padding) => onUpdateComponent({ padding })} /></div>
-              </div>
-            );
+            return <ImageTextBlockProperties component={component} onUpdateComponent={onUpdateComponent} />;
           case "ferring-footer":
             return (
               <div className="space-y-4">
