@@ -6,6 +6,20 @@ const ts = require('typescript');
 const { chromium } = require('playwright');
 const { PDFDocument } = require('pdf-lib');
 
+test('Variable Copy PDF layout puts the project name above its section heading', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../lib/vsb-pdf-export.ts'), 'utf8');
+  const { outputText } = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  });
+  const exports = {};
+  new Function('exports', outputText)(exports);
+  const html = exports.buildVariableCopyHtml([], 'Test');
+
+  assert.match(html, /font-size:13px;color:#006937;font-weight:bold;margin:0 0 16px;">Test<\/div>/);
+  assert.match(html, /font-size:12px;font-weight:bold;margin:0 0 18px;color:#FF66CC;">Variable Copy<\/div>/);
+  assert.doesNotMatch(html, /1\. Variable Copy|VSB Component Section|border-bottom:2px solid #006937/);
+});
+
 test('PDF export includes overflowing edges, long content, and all three options', async () => {
   const browser = await chromium.launch({ headless: true });
   try {

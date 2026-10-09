@@ -18,19 +18,25 @@ export const VSBPageWrapper: React.FC<{
   number: number;
   children: React.ReactNode;
   wide?: boolean;
-}> = ({ title, number, children }) => (
+  showHeader?: boolean;
+  showFooter?: boolean;
+}> = ({ title, number, children, showHeader = true, showFooter = true }) => (
   <div className="bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] border overflow-y-auto border-gray-100 rounded-lg mb-10 p-12 min-h-[1050px] relative flex flex-col">
-    <div className="mb-8 border-b-2 border-[#006937] pb-3 flex justify-between items-end">
-      <div>
-        <h3 className="text-xl font-bold text-[#FF66CC] uppercase tracking-tight">{number}. {title}</h3>
+    {showHeader && (
+      <div className="mb-8 border-b-2 border-[#006937] pb-3 flex justify-between items-end">
+        <div>
+          <h3 className="text-xl font-bold text-[#FF66CC] uppercase tracking-tight">{number}. {title}</h3>
+        </div>
+        <div className="text-[10px] text-gray-400 font-mono uppercase">VSB Component Section</div>
       </div>
-      <div className="text-[10px] text-gray-400 font-mono uppercase">VSB Component Section</div>
-    </div>
+    )}
     <div className="flex-1 overflow-auto">{children}</div>
-    <div className="mt-8 pt-4 border-t border-gray-50 flex justify-between items-center text-[10px] text-gray-400">
-      <span>Visual Story Board</span>
-      <span>Page {number}</span>
-    </div>
+    {showFooter && (
+      <div className="mt-8 pt-4 border-t border-gray-50 flex justify-between items-center text-[10px] text-gray-400">
+        <span>Visual Story Board</span>
+        <span>Page {number}</span>
+      </div>
+    )}
   </div>
 )
 
@@ -45,7 +51,7 @@ const CombinedVSBView = ({ data, emailName }: Props) => {
       </div>
 
       <div className="space-y-4 text-black">
-        <VSBPageWrapper title="Variable Copy" number={1}>
+        <VSBPageWrapper title="Variable Copy" number={1} showHeader={false} showFooter={false}>
           <VariablePagePdfView emailname={emailName} data={data.variableCopy} headingColor={data.variableCopyHeadingColor} />
         </VSBPageWrapper>
 

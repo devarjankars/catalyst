@@ -183,11 +183,8 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
 
   return `
     <div style="box-sizing:border-box;width:100%;max-width:100%;padding:32px;margin:0 auto;background:#fff;font-family:Arial, Helvetica, sans-serif;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 32px;padding:0 0 12px;border-bottom:2px solid #006937;">
-        <div style="font-size:20px;font-weight:bold;color:#FF66CC;text-transform:uppercase;letter-spacing:-0.3px;">1. Variable Copy</div>
-        <div style="font-size:10px;color:#9ca3af;font-family:monospace;text-transform:uppercase;">VSB Component Section</div>
-      </div>
-      <div style="font-size:13px;color:#006937;font-weight:bold;margin:0 0 8px;">${emailName}</div>
+      <div style="font-size:13px;color:#006937;font-weight:bold;margin:0 0 16px;">${emailName}</div>
+      <div style="font-size:12px;font-weight:bold;margin:0 0 18px;color:${accent};">Variable Copy</div>
       ${(data || []).map((section: any) => {
         if (section.structure === 'table') return renderTableSection(section);
         if (section.structure === 'third-party-placeholder') return renderThirdPartySection(section);

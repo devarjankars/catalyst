@@ -312,11 +312,10 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
 
   return (
     <View style={styles.page}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, paddingBottom: 12, borderBottomWidth: 2, borderBottomColor: '#006937', borderBottomStyle: 'solid' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FF66CC', letterSpacing: -0.3 }}>1. VARIABLE COPY</Text>
-        <Text style={{ fontSize: 10, color: '#9ca3af', fontFamily: 'Courier' }}>VSB COMPONENT SECTION</Text>
-      </View>
-      <Text style={styles.title}>{emailName}</Text>
+      <Text style={[styles.title, { marginBottom: 16 }]}>{emailName}</Text>
+      <Text style={{ ...styles.heading, color: accent, marginBottom: 18 }}>
+        Variable Copy
+      </Text>
       {data.map((section, index) => {
         switch (section.structure) {
           case 'table':

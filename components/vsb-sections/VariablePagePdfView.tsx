@@ -153,7 +153,10 @@ const VariablePagePdfView = ({
 
   return (
     <div className="w-full max-w-[600px] bg-white p-4">
-      <h1 className="text-[13px] text-[#006937] font-bold mb-2">{emailname}</h1>
+      <h1 className="text-[13px] text-[#006937] font-bold mb-4">{emailname}</h1>
+      <h2 className="text-[11px] font-bold mb-[18px]" style={{ color: accent }}>
+        Variable Copy
+      </h2>
 
       {data?.map((section, index) => (
         <div key={index} className="mb-4">
