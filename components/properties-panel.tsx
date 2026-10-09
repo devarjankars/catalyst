@@ -537,6 +537,36 @@ function OrserduIsiSelectPanel({
   );
 }
 
+const ORSERDU_ISI_SECTION_COLORS = [
+  ["Warnings and Precautions", "warningsAndPrecautionsColor"],
+  ["Adverse Reactions", "adverseReactionsColor"],
+  ["Drug Interactions", "drugInteractionsColor"],
+  ["Use in Specific Populations", "specificPopulationsColor"],
+] as const;
+
+function OrserduIsiSectionColorControls({
+  component,
+  onUpdateComponent,
+}: {
+  component: EmailComponent;
+  onUpdateComponent: (updates: Partial<EmailComponent>) => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Section heading colors</h4>
+      {ORSERDU_ISI_SECTION_COLORS.map(([label, field]) => (
+        <div key={field}>
+          <Label>{label}</Label>
+          <ColorInput
+            value={component[field] || "#2B2E34"}
+            onChange={(value) => onUpdateComponent({ [field]: value })}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // OrseduFooterPanel — fully local state so every keystroke is instant.
 // The store is only updated on blur or Enter, not on every character.
@@ -827,33 +857,6 @@ export function PropertiesPanel({
 
   const renderProperties = () => {
     switch (component.type) {
-      case "isi":
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label>Important Safety Information Heading Color</Label>
-              <ColorInput
-                value={component.isiHeadingColor ?? "#006937"}
-                onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
-              />
-            </div>
-            <div>
-              <Label>Indication Heading Color</Label>
-              <ColorInput
-                value={component.indicationHeadingColor ?? "#006937"}
-                onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
-              />
-            </div>
-            <div>
-              <Label>Subheading Bullet Dot Color</Label>
-              <ColorInput
-                value={component.isiBulletColor ?? "#69d6b5"}
-                onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
-              />
-            </div>
-          </div>
-        );
-
       case "section":
         return (
           <div className="space-y-4">
@@ -3099,6 +3102,10 @@ export function PropertiesPanel({
         case "orserdu-isi-animated":
           return (
             <div className="space-y-5">
+              <OrserduIsiSectionColorControls
+                component={component}
+                onUpdateComponent={onUpdateComponent}
+              />
               <div className="space-y-3 rounded-lg border p-3">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">ISI heading</h4>
                 <div>
@@ -3140,6 +3147,37 @@ export function PropertiesPanel({
                   onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
                 />
               </div>
+            </div>
+          );
+
+        case "isi":
+          return (
+            <div className="space-y-4">
+              <div>
+                <Label>Important Safety Information Heading Color</Label>
+                <ColorInput
+                  value={component.isiHeadingColor ?? "#006937"}
+                  onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
+                />
+              </div>
+              <div>
+                <Label>Indication Heading Color</Label>
+                <ColorInput
+                  value={component.indicationHeadingColor ?? "#006937"}
+                  onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
+                />
+              </div>
+              <div>
+                <Label>Subheading Bullet Dot Color</Label>
+                <ColorInput
+                  value={component.isiBulletColor ?? "#69d6b5"}
+                  onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
+                />
+              </div>
+              <OrserduIsiSectionColorControls
+                component={component}
+                onUpdateComponent={onUpdateComponent}
+              />
             </div>
           );
 

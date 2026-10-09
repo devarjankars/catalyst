@@ -162,6 +162,10 @@ export interface EmailComponent {
   indicationHeading?: string
   indicationHeadingColor?: string
   isiBulletColor?: string
+  warningsAndPrecautionsColor?: string
+  adverseReactionsColor?: string
+  drugInteractionsColor?: string
+  specificPopulationsColor?: string
 
   // orserdu-report-links properties
   linkItems?: Array<{

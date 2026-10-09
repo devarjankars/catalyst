@@ -125,6 +125,10 @@ export const componentTypes = [
       isiHeadingColor: "#006937",
       indicationHeadingColor: "#006937",
       isiBulletColor: "#69d6b5",
+      warningsAndPrecautionsColor: "#2B2E34",
+      adverseReactionsColor: "#2B2E34",
+      drugInteractionsColor: "#2B2E34",
+      specificPopulationsColor: "#2B2E34",
       importantSafetyInformation: {
         sections: [
           {
@@ -222,6 +226,10 @@ export const componentTypes = [
       indicationHeading: "INDICATION",
       indicationHeadingColor: "#006937",
       isiBulletColor: "#69d6b5",
+      warningsAndPrecautionsColor: "#2B2E34",
+      adverseReactionsColor: "#2B2E34",
+      drugInteractionsColor: "#2B2E34",
+      specificPopulationsColor: "#2B2E34",
       indicationImgSrc: "/orserdu-logo.png",
       indicationImgAlt: "ORSERDU® (elacestrant) indication",
       indicationImgWidth: 135,
