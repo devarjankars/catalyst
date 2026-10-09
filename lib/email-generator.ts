@@ -4,6 +4,19 @@ import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 
+function escapeHtmlText(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character];
+  });
+}
+
 export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
   switch (component.type) {
@@ -743,7 +756,12 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
     }
 
 case "isi": {
-      return `
+      const {
+        isiHeadingColor = "#006937",
+        indicationHeadingColor = "#006937",
+        isiBulletColor = "#69d6b5",
+      } = component;
+      const html = `
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
@@ -931,6 +949,10 @@ case "isi": {
           </tbody>
           </table>
           `;
+      return html
+        .replaceAll("color: #006937", `color: ${isiHeadingColor}`)
+        .replaceAll("color:#006937", `color:${indicationHeadingColor}`)
+        .replaceAll("color:#69d6b5", `color:${isiBulletColor}`);
     }
 
     case "orserdu-isi-animated": {
@@ -947,9 +969,14 @@ case "isi": {
         copyFadeDuration = 800,
         copyFadeDelay = 500,
         backgroundColor = "#ffffff",
+        isiHeading = "IMPORTANT SAFETY INFORMATION",
+        isiHeadingColor = "#006937",
+        indicationHeading = "INDICATION",
+        indicationHeadingColor = "#006937",
+        isiBulletColor = "#69d6b5",
       } = component as any;
 
-      return `
+      const html = `
 <style>
   @keyframes isiSlideIn { from { transform:translateX(-120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
   @keyframes isiFadeIn  { from { opacity:0; } to { opacity:1; } }
@@ -976,7 +1003,7 @@ case "isi": {
   <tr>
     <td class="isi-copy" style="padding:20px 20px 10px 20px;background-color:${backgroundColor};">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tbody>
-        <tr><td style="font-weight:600;color:#006937;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">IMPORTANT SAFETY INFORMATION</td></tr>
+        <tr><td style="font-weight:600;color:#006937;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">${escapeHtmlText(isiHeading)}</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td style="font-weight:700;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:14px;">Warnings and Precautions</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
@@ -1004,7 +1031,7 @@ case "isi": {
         <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
         <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU is available as 345 mg tablets and 86 mg tablets.</td></tr>
         <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;"><b style="color:#006937;display:block;font-size:16px;">INDICATION</b></td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;"><b style="color:#006937;display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b></td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, &lt;i&gt;ESR1&lt;/i&gt;-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy.</td></tr>
         <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
@@ -1014,6 +1041,13 @@ case "isi": {
 </tbody>
 </table>
       `;
+      return html
+        .replaceAll("color:#69d6b5", `color:${isiBulletColor}`)
+        .replaceAll("color:#006937", `color:${isiHeadingColor}`)
+        .replace(
+          `<b style="color:${isiHeadingColor};display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b>`,
+          `<b style="color:${indicationHeadingColor};display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b>`
+        );
     }
     case "bullet-list": {
       const display = (component.displayType ||

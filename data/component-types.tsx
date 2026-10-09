@@ -122,6 +122,9 @@ export const componentTypes = [
     category : "custom",
     icon: NotepadText,
     defaultProps: {
+      isiHeadingColor: "#006937",
+      indicationHeadingColor: "#006937",
+      isiBulletColor: "#69d6b5",
       importantSafetyInformation: {
         sections: [
           {
@@ -214,6 +217,11 @@ export const componentTypes = [
     defaultProps: {
       // ── Intro banner (green, slides in from left) ─────────────────────
       bannerBgColor: "#006937",
+      isiHeading: "IMPORTANT SAFETY INFORMATION",
+      isiHeadingColor: "#006937",
+      indicationHeading: "INDICATION",
+      indicationHeadingColor: "#006937",
+      isiBulletColor: "#69d6b5",
       indicationImgSrc: "/orserdu-logo.png",
       indicationImgAlt: "ORSERDU® (elacestrant) indication",
       indicationImgWidth: 135,

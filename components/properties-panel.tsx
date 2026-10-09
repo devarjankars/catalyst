@@ -827,6 +827,33 @@ export function PropertiesPanel({
 
   const renderProperties = () => {
     switch (component.type) {
+      case "isi":
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Important Safety Information Heading Color</Label>
+              <ColorInput
+                value={component.isiHeadingColor ?? "#006937"}
+                onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
+              />
+            </div>
+            <div>
+              <Label>Indication Heading Color</Label>
+              <ColorInput
+                value={component.indicationHeadingColor ?? "#006937"}
+                onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
+              />
+            </div>
+            <div>
+              <Label>Subheading Bullet Dot Color</Label>
+              <ColorInput
+                value={component.isiBulletColor ?? "#69d6b5"}
+                onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
+              />
+            </div>
+          </div>
+        );
+
       case "section":
         return (
           <div className="space-y-4">
@@ -3068,6 +3095,53 @@ export function PropertiesPanel({
             </div>
           );
         }
+
+        case "orserdu-isi-animated":
+          return (
+            <div className="space-y-5">
+              <div className="space-y-3 rounded-lg border p-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">ISI heading</h4>
+                <div>
+                  <Label>Heading Text</Label>
+                  <Input
+                    value={component.isiHeading ?? "IMPORTANT SAFETY INFORMATION"}
+                    onChange={(e) => onUpdateComponent({ isiHeading: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Heading Color</Label>
+                  <ColorInput
+                    value={component.isiHeadingColor ?? "#006937"}
+                    onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-3 rounded-lg border p-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Indication heading</h4>
+                <div>
+                  <Label>Heading Text</Label>
+                  <Input
+                    value={component.indicationHeading ?? "INDICATION"}
+                    onChange={(e) => onUpdateComponent({ indicationHeading: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Heading Color</Label>
+                  <ColorInput
+                    value={component.indicationHeadingColor ?? "#006937"}
+                    onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Bullet Dot Color</Label>
+                <ColorInput
+                  value={component.isiBulletColor ?? "#69d6b5"}
+                  onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
+                />
+              </div>
+            </div>
+          );
 
         case "orserdu-isi-select":
           return (

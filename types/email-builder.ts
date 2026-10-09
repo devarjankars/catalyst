@@ -157,6 +157,11 @@ export interface EmailComponent {
   emeraldRightDesc?: string
   emeraldRightStat?: string
   emeraldRightHR?: string
+  isiHeading?: string
+  isiHeadingColor?: string
+  indicationHeading?: string
+  indicationHeadingColor?: string
+  isiBulletColor?: string
 
   // orserdu-report-links properties
   linkItems?: Array<{

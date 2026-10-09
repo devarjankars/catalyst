@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
 import { ArrowLeft, Plus, Search, Mail, Send, Globe, Layers, Loader2, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -23,16 +23,28 @@ const CATEGORIES = [
 
 type CategoryId = typeof CATEGORIES[number]['id']
 
+function isCategoryId(value: string | null): value is CategoryId {
+  return CATEGORIES.some(({ id }) => id === value)
+}
+
 export default function StandardTemplatesPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { clientId, client } = useClient()
   const { userRole } = useLoggedInUserStore()
 
   const [allTemplates, setAllTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [expandedCategory, setExpandedCategory] = useState<CategoryId | null>(null)
+  const requestedCategory = searchParams.get('category')
+  const [expandedCategory, setExpandedCategory] = useState<CategoryId | null>(
+    () => isCategoryId(requestedCategory) ? requestedCategory : null
+  )
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({ open: false, template: null })
+
+  useEffect(() => {
+    setExpandedCategory(isCategoryId(requestedCategory) ? requestedCategory : null)
+  }, [requestedCategory])
 
   useEffect(() => {
     setLoading(true)
