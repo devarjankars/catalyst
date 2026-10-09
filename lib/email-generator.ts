@@ -3,6 +3,7 @@ import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
+import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -19,6 +20,9 @@ function escapeHtmlText(value: string): string {
 
 export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
+  if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
+    return component.isiHtml;
+  }
   switch (component.type) {
     case "section":
       const childrenHTML = (component.children || [])
@@ -117,6 +121,8 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         font-family: ${component.fontFamily || "Arial, sans-serif"};
         line-height: ${component.lineHeight || "16px"};
       `.trim();
+      const paragraphSpacing = Math.max(0, Math.min(200, Number(component.paragraphSpacingPx) || 0));
+      const textContent = applyTextParagraphSpacing(component.content || "", paragraphSpacing);
 
       return `
         <table
@@ -136,7 +142,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
                 ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
               >
                 <div style="${divStyle}">
-                  ${component.content || ""}
+                  ${textContent}
                 </div>
               </td>
             </tr>
@@ -757,12 +763,15 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
 
 case "isi": {
       const {
+        isiHeadingColor = "#006937",
+        indicationHeadingColor = "#006937",
+        isiBulletColor = "#69d6b5",
         warningsAndPrecautionsColor = "#2B2E34",
         adverseReactionsColor = "#2B2E34",
         drugInteractionsColor = "#2B2E34",
         specificPopulationsColor = "#2B2E34",
       } = component;
-      return `
+      const html = `
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
@@ -771,7 +780,7 @@ case "isi": {
                 <tbody>
                    <tr>
                       <td class="f_14 green f_bold" align="left" valign="top"
-                         style=" font-weight: 600; color: #006937; font-family: Arial, sans-serif; font-size: 16px; line-height: 16px; ">
+                         style=" font-weight: 600; color: ${isiHeadingColor} !important; font-family: Arial, sans-serif; font-size: 16px; line-height: 16px; ">
                          IMPORTANT SAFETY INFORMATION </td>
                    </tr>
                    <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -779,7 +788,7 @@ case "isi": {
                    <!-- Warnings and Precautions -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: ${warningsAndPrecautionsColor}; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                         style=" font-weight: 700; color: ${warningsAndPrecautionsColor} !important; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Warnings and Precautions </td>
                    </tr>
                    <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -817,7 +826,7 @@ case "isi": {
                    <!-- Adverse Reactions -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: ${adverseReactionsColor}; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                         style=" font-weight: 700; color: ${adverseReactionsColor} !important; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Adverse Reactions </td>
                    </tr>
                    <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -855,7 +864,7 @@ case "isi": {
                    <!-- Drug Interactions -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: ${drugInteractionsColor}; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                         style=" font-weight: 700; color: ${drugInteractionsColor} !important; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Drug Interactions </td>
                    </tr>
                    <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -878,7 +887,7 @@ case "isi": {
                    <!-- Use in Specific Populations -->
                    <tr>
                       <td class="f_14 black f_bold" align="left" valign="top"
-                         style=" font-weight: 700; color: ${specificPopulationsColor}; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
+                         style=" font-weight: 700; color: ${specificPopulationsColor} !important; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px; ">
                          Use in Specific Populations </td>
                    </tr>
                    <tr><td width="100%" height="9" style="font-size:0px;line-height:9px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -933,7 +942,7 @@ case "isi": {
                    <tr>
                       <td class="f_14 black f_normal" align="left" valign="top"
                          style=" font-weight: 400; color: #2B2E34; font-family: Arial, sans-serif; font-size: 14px; line-height: 14px;">
-                         <b style="color:#006937;display:block;font-size:16px;margin-bottom:0;">INDICATION</b>
+                         <b style="color:${indicationHeadingColor} !important;display:block;font-size:16px;margin-bottom:0;">INDICATION</b>
                       </td>
                    </tr>
                    <tr><td width="100%" height="10" style="font-size:0px;line-height:10px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
@@ -950,6 +959,7 @@ case "isi": {
           </tbody>
           </table>
           `;
+      return html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`);
     }
 
     case "orserdu-isi-animated": {
@@ -1004,25 +1014,25 @@ case "isi": {
   <tr>
     <td class="isi-copy" style="padding:20px 20px 10px 20px;background-color:${backgroundColor};">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tbody>
-        <tr><td style="font-weight:600;color:#006937;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">${escapeHtmlText(isiHeading)}</td></tr>
+        <tr><td style="font-weight:600;color:${isiHeadingColor} !important;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">${escapeHtmlText(isiHeading)}</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:700;color:${warningsAndPrecautionsColor};font-family:Arial,sans-serif;font-size:14px;line-height:14px;">Warnings and Precautions</td></tr>
+        <tr><td style="font-weight:700;color:${warningsAndPrecautionsColor} !important;font-family:Arial,sans-serif;font-size:14px;line-height:14px;">Warnings and Precautions</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Dyslipidemia:&nbsp;</span>Hypercholesterolemia and hypertriglyceridemia occurred in patients taking ORSERDU at an incidence of 30% and 27%, respectively. The incidence of Grade 3 and 4 hypercholesterolemia and hypertriglyceridemia were 0.9% and 2.2%, respectively. Monitor lipid profile prior to starting and periodically while taking ORSERDU.</td></tr></tbody></table></td></tr>
         <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Embryo-Fetal Toxicity:&nbsp;</span>Based on findings in animals and its mechanism of action, ORSERDU can cause fetal harm when administered to a pregnant woman. Advise females of reproductive potential to use effective contraception during treatment with ORSERDU and for 1 week after the last dose.</td></tr></tbody></table></td></tr>
         <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:700;color:${adverseReactionsColor};font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Adverse Reactions</td></tr>
+        <tr><td style="font-weight:700;color:${adverseReactionsColor} !important;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Adverse Reactions</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Serious adverse reactions&nbsp;</span>occurred in 12% of patients who received ORSERDU. Serious adverse reactions in &gt;1% of patients who received ORSERDU were musculoskeletal pain (1.7%) and nausea (1.3%). Fatal adverse reactions occurred in 1.7% of patients who received ORSERDU, including cardiac arrest, septic shock, diverticulitis, and unknown cause (one patient each).</td></tr></tbody></table></td></tr>
         <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">The most common adverse reactions&nbsp;</span>(&#8805;10%), including laboratory abnormalities, of ORSERDU were musculoskeletal pain (41%), nausea (35%), increased cholesterol (30%), increased AST (29%), increased triglycerides (27%), fatigue (26%), decreased hemoglobin (26%), vomiting (19%), increased ALT (17%), decreased sodium (16%), increased creatinine (16%), decreased appetite (15%), diarrhea (13%), headache (12%), constipation (12%), abdominal pain (11%), hot flush (11%), and dyspepsia (10%).</td></tr></tbody></table></td></tr>
         <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:700;color:${drugInteractionsColor};font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Drug Interactions</td></tr>
+        <tr><td style="font-weight:700;color:${drugInteractionsColor} !important;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Drug Interactions</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Concomitant use with CYP3A4 inducers and/or inhibitors:&nbsp;</span>Avoid concomitant use of strong or moderate CYP3A4 inhibitors with ORSERDU. Avoid concomitant use of strong or moderate CYP3A4 inducers with ORSERDU.</td></tr></tbody></table></td></tr>
         <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:700;color:${specificPopulationsColor};font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Use in Specific Populations</td></tr>
+        <tr><td style="font-weight:700;color:${specificPopulationsColor} !important;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">Use in Specific Populations</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td><table width="100%" cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="2%" style="color:#69d6b5;font-size:16px;line-height:16px;padding:2px 0 0 0;">&#8226;</td><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;padding:0 0 0 5px;"><span style="font-weight:700">Lactation:&nbsp;</span>Advise lactating women to not breastfeed during treatment with ORSERDU and for 1 week after the last dose.</td></tr></tbody></table></td></tr>
         <tr><td height="6" style="font-size:0;line-height:6px;">&nbsp;</td></tr>
@@ -1032,7 +1042,7 @@ case "isi": {
         <tr><td height="15" style="font-size:0;line-height:15px;">&nbsp;</td></tr>
         <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU is available as 345 mg tablets and 86 mg tablets.</td></tr>
         <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
-        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;"><b style="color:#006937;display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b></td></tr>
+        <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;"><b style="color:${indicationHeadingColor} !important;display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b></td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
         <tr><td style="font-weight:400;color:#2B2E34;font-family:Arial,sans-serif;font-size:14px;line-height:18px;">ORSERDU (elacestrant) is indicated for the treatment of postmenopausal women or adult men with estrogen receptor (ER)-positive, human epidermal growth factor receptor 2 (HER2)-negative, &lt;i&gt;ESR1&lt;/i&gt;-mutated advanced or metastatic breast cancer as detected by an FDA-authorized test, with disease progression following at least one line of endocrine therapy.</td></tr>
         <tr><td height="20" style="font-size:0;line-height:20px;">&nbsp;</td></tr>
@@ -1042,13 +1052,7 @@ case "isi": {
 </tbody>
 </table>
       `;
-      return html
-        .replaceAll("color:#69d6b5", `color:${isiBulletColor}`)
-        .replaceAll("color:#006937", `color:${isiHeadingColor}`)
-        .replace(
-          `<b style="color:${isiHeadingColor};display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b>`,
-          `<b style="color:${indicationHeadingColor};display:block;font-size:16px;">${escapeHtmlText(indicationHeading)}</b>`
-        );
+      return html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`);
     }
     case "bullet-list": {
       const display = (component.displayType ||

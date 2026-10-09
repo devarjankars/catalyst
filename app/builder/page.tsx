@@ -1043,9 +1043,9 @@ if (activeSelectedId) {
                     <div className="p-3">
                       <PropertiesPanel
                         component={selectedComponentData}
-                        onUpdateComponent={(updates) => {
+                        onUpdateComponent={(updates, immediate = false) => {
                           if (!activeSelectedId) return;
-                          debouncedUpdateComponent(updates);
+                          debouncedUpdateComponent(updates, immediate);
                         }}
                         onSaveAsCustom={(name) => saveAsCustomComponent(name)}
                       />

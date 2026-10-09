@@ -537,36 +537,6 @@ function OrserduIsiSelectPanel({
   );
 }
 
-const ORSERDU_ISI_SECTION_COLORS = [
-  ["Warnings and Precautions", "warningsAndPrecautionsColor"],
-  ["Adverse Reactions", "adverseReactionsColor"],
-  ["Drug Interactions", "drugInteractionsColor"],
-  ["Use in Specific Populations", "specificPopulationsColor"],
-] as const;
-
-function OrserduIsiSectionColorControls({
-  component,
-  onUpdateComponent,
-}: {
-  component: EmailComponent;
-  onUpdateComponent: (updates: Partial<EmailComponent>) => void;
-}) {
-  return (
-    <div className="space-y-3 rounded-lg border p-3">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Section heading colors</h4>
-      {ORSERDU_ISI_SECTION_COLORS.map(([label, field]) => (
-        <div key={field}>
-          <Label>{label}</Label>
-          <ColorInput
-            value={component[field] || "#2B2E34"}
-            onChange={(value) => onUpdateComponent({ [field]: value })}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // OrseduFooterPanel — fully local state so every keystroke is instant.
 // The store is only updated on blur or Enter, not on every character.
@@ -742,7 +712,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
-  onUpdateComponent: (updates: Partial<EmailComponent>) => void;
+  onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
   onSaveAsCustom?: (name?: string) => void;
   onSaveHtmlBlock?: (value: string, name: string) => void;
 }
@@ -1272,6 +1242,22 @@ export function PropertiesPanel({
                 value={component.lineHeight || "18px"}
                 onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
+            </div>
+            <div>
+              <Label htmlFor="paragraphSpacingPx">Extra Space Between Lines (px)</Label>
+              <Input
+                id="paragraphSpacingPx"
+                type="number"
+                min={0}
+                max={200}
+                step={1}
+                value={component.paragraphSpacingPx ?? 0}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
+                }}
+              />
+              <p className="mt-1 text-[10px] text-gray-400">Sets the extra gap after each paragraph made with Enter. Press Enter twice for a blank paragraph. No extra space is added before the first or after the last paragraph.</p>
             </div>
             <div className="pt-2">
               <Button
@@ -3101,83 +3087,15 @@ export function PropertiesPanel({
 
         case "orserdu-isi-animated":
           return (
-            <div className="space-y-5">
-              <OrserduIsiSectionColorControls
-                component={component}
-                onUpdateComponent={onUpdateComponent}
-              />
-              <div className="space-y-3 rounded-lg border p-3">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">ISI heading</h4>
-                <div>
-                  <Label>Heading Text</Label>
-                  <Input
-                    value={component.isiHeading ?? "IMPORTANT SAFETY INFORMATION"}
-                    onChange={(e) => onUpdateComponent({ isiHeading: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Heading Color</Label>
-                  <ColorInput
-                    value={component.isiHeadingColor ?? "#006937"}
-                    onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-3 rounded-lg border p-3">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Indication heading</h4>
-                <div>
-                  <Label>Heading Text</Label>
-                  <Input
-                    value={component.indicationHeading ?? "INDICATION"}
-                    onChange={(e) => onUpdateComponent({ indicationHeading: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Heading Color</Label>
-                  <ColorInput
-                    value={component.indicationHeadingColor ?? "#006937"}
-                    onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Bullet Dot Color</Label>
-                <ColorInput
-                  value={component.isiBulletColor ?? "#69d6b5"}
-                  onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
-                />
-              </div>
+            <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
+              Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
             </div>
           );
 
         case "isi":
           return (
-            <div className="space-y-4">
-              <div>
-                <Label>Important Safety Information Heading Color</Label>
-                <ColorInput
-                  value={component.isiHeadingColor ?? "#006937"}
-                  onChange={(isiHeadingColor) => onUpdateComponent({ isiHeadingColor })}
-                />
-              </div>
-              <div>
-                <Label>Indication Heading Color</Label>
-                <ColorInput
-                  value={component.indicationHeadingColor ?? "#006937"}
-                  onChange={(indicationHeadingColor) => onUpdateComponent({ indicationHeadingColor })}
-                />
-              </div>
-              <div>
-                <Label>Subheading Bullet Dot Color</Label>
-                <ColorInput
-                  value={component.isiBulletColor ?? "#69d6b5"}
-                  onChange={(isiBulletColor) => onUpdateComponent({ isiBulletColor })}
-                />
-              </div>
-              <OrserduIsiSectionColorControls
-                component={component}
-                onUpdateComponent={onUpdateComponent}
-              />
+            <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
+              Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
             </div>
           );
 

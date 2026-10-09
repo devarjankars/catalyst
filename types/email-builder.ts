@@ -166,6 +166,8 @@ export interface EmailComponent {
   adverseReactionsColor?: string
   drugInteractionsColor?: string
   specificPopulationsColor?: string
+  isiHtml?: string
+  paragraphSpacingPx?: number
 
   // orserdu-report-links properties
   linkItems?: Array<{

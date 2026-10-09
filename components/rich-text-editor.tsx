@@ -4,6 +4,7 @@
 import { Italic, Link, Superscript } from "lucide-react"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
+import { applyTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
 
 interface RichTextEditorProps {
 
@@ -11,11 +12,13 @@ interface RichTextEditorProps {
   onChange: (value: string) => void
   style?: React.CSSProperties
   isSelected?: boolean
+  paragraphSpacingPx?: number
 }
 
-export function RichTextEditor({ value, onChange, style, isSelected }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, style, isSelected, paragraphSpacingPx }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focused, setFocused] = useState(false)
   const savedRangeRef = useRef<Range | null>(null)
 
@@ -42,19 +45,34 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
   }
 
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value
+    if (editorRef.current) {
+      const spacedValue = paragraphSpacingPx === undefined
+        ? value
+        : applyTextParagraphSpacing(value, paragraphSpacingPx)
+      if (editorRef.current.innerHTML !== spacedValue) {
+        editorRef.current.innerHTML = spacedValue
+      }
     }
-  }, [value])
+  }, [value, paragraphSpacingPx])
+
+  useEffect(() => () => {
+    if (changeTimerRef.current) clearTimeout(changeTimerRef.current)
+  }, [])
+
+  const flushInput = () => {
+    if (changeTimerRef.current) {
+      clearTimeout(changeTimerRef.current)
+      changeTimerRef.current = null
+    }
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML
+      onChange(paragraphSpacingPx === undefined ? html : applyTextParagraphSpacing(html, paragraphSpacingPx))
+    }
+  }
 
   const handleInput = () => {
-    if (editorRef.current) {
-      setTimeout(() => {
-        if (editorRef.current) {
-          onChange(editorRef.current.innerHTML)
-        }
-      }, 1000);
-    }
+    if (changeTimerRef.current) clearTimeout(changeTimerRef.current)
+    changeTimerRef.current = setTimeout(flushInput, 300)
   }
 
   const LinkifyText = () => {
@@ -330,6 +348,7 @@ export function RichTextEditor({ value, onChange, style, isSelected }: RichTextE
         onPaste={handlePaste}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
+          flushInput()
           setTimeout(() => {
             const active = document.activeElement
             if (toolbarRef.current && active && toolbarRef.current.contains(active)) return

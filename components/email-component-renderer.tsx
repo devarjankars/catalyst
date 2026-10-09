@@ -21,7 +21,7 @@ import { firebaseService } from "@/services/firebase-service";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { toast } from "sonner";
 import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
-import { generateEmailHTML } from "@/lib/email-generator";
+import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -388,13 +388,14 @@ export function EmailComponentRenderer({
             break;
         }
 
-      case "text":
+      case "text": {
         return (
           <div style={{ padding: component.padding || "0 20px 10px 20px" }} className="mt-2 z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
+              paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
               style={{
                 fontSize: component.fontSize || "16px",
                 color: component.color || "#000000",
@@ -407,6 +408,7 @@ export function EmailComponentRenderer({
             />
           </div>
         );
+      }
 
       case "image": {
         return (
@@ -906,34 +908,24 @@ export function EmailComponentRenderer({
 }
     
       case "isi":
-        // Render via the same generator used for preview/PDF so spacing
-        // is identical on canvas, in preview, and in exported PDFs.
+      case "orserdu-isi-animated": {
+        const generatedHtml = generateComponentHTML(component);
         return (
           <div
             style={{ ...baseStyle, backgroundColor: '#ffffff', padding: 0 }}
-            dangerouslySetInnerHTML={{
-              __html: generateEmailHTML([component])
-                .replace(/^[\s\S]*?<body[^>]*>/i, '')
-                .replace(/<\/body>[\s\S]*$/i, '')
-                .trim()
-            }}
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
-          />
-        );
-
-      case "orserdu-isi-animated": {
-        // Rendered through the HTML generator so canvas preview matches the exported HTML.
-        return (
-          <div
-            style={{ ...baseStyle, backgroundColor: (component as any).backgroundColor || "#ffffff" }}
-            dangerouslySetInnerHTML={{
-              __html: generateEmailHTML([component])
-                .replace(/^[\s\S]*?<body[^>]*>/i, "")
-                .replace(/<\/body>[\s\S]*$/i, "")
-                .trim()
-            }}
-            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
-          />
+          >
+            {!previewMode && isSelected ? (
+              <RichTextEditor
+                isSelected={isSelected}
+                value={component.isiHtml || generatedHtml}
+                onChange={(isiHtml) => onUpdate({ isiHtml })}
+                style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
+              />
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+            )}
+          </div>
         );
       }
 
