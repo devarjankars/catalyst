@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     padding: 6,
     textAlign: 'left',
+    justifyContent: 'center',
   },
   thirdPartyRow: {
     display: 'flex',
@@ -289,7 +290,7 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
           return (
             <View key={rowIdx}>
               <View style={{ width: '100%', flexDirection: 'row' }}>
-                <View style={[styles.tableCell, { width: '50%', boxSizing: 'border-box' }, cellStyle]}>
+                <View style={[styles.tableCell, { width: '50%', boxSizing: 'border-box', paddingLeft: 8 }, cellStyle]}>
                   {row.friendlyNames.map((name, nameIdx) => (
                     <Text key={nameIdx} style={{ marginBottom: 3 }}>
                       <Text style={{ fontWeight: 'bold', marginRight: 4 }}>{nameIdx + 1}.</Text>
@@ -297,7 +298,7 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
                     </Text>
                   ))}
                 </View>
-                <View style={[styles.tableCellCenter, { width: '50%', boxSizing: 'border-box' }, cellStyle]}><Text>{row.fromEmail}</Text></View>
+                <View style={[styles.tableCellCenter, { width: '50%', boxSizing: 'border-box', paddingLeft: 25 }, cellStyle]}><Text>{row.fromEmail}</Text></View>
               </View>
               {separator === 'double' && (
                 <View style={{ width: '100%', flexDirection: 'row' }}>

@@ -162,14 +162,14 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
               : '';
             return `
             <tr>
-              <td class="pdf-friendly-from-table__names" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px;vertical-align:top;font-size:12px;text-align:left;">
+              <td class="pdf-friendly-from-table__names" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px 6px 6px 8px;vertical-align:top;font-size:12px;text-align:left;">
                 ${(row.friendlyNames || []).map((name: string, j: number) => `
                   <div style="margin-bottom:3px;">
                     <span style="font-weight:bold;margin-right:4px;">${j + 1}.</span>${name}
                   </div>
                 `).join('')}
               </td>
-              <td class="pdf-friendly-from-table__email" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px;font-size:12px;text-align:left;vertical-align:middle;">${row.fromEmail}</td>
+              <td class="pdf-friendly-from-table__email" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px 6px 6px 25px;font-size:12px;text-align:left;vertical-align:middle;">${row.fromEmail}</td>
             </tr>
             ${separator === 'double' ? '<tr><td style="width:50%;height:17px;box-sizing:border-box;padding:0;border:1px solid #d1d5db;"></td><td style="width:50%;height:17px;box-sizing:border-box;padding:0;border:1px solid #d1d5db;"></td></tr>' : ''}
           `;

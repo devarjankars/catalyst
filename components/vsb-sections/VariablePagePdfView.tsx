@@ -89,7 +89,7 @@ const TableView = ({ section }: { section: TableSection }) => (
         return (
           <React.Fragment key={i}>
             <tr>
-              <td style={cellStyle}>
+              <td style={{ ...cellStyle, paddingLeft: 8 }}>
                 {row.friendlyNames.map((name, j) => (
                   <div key={j} style={{ marginBottom: 3 }}>
                     <span style={{ fontWeight: 700, marginRight: 4 }}>{j + 1}.</span>
@@ -97,7 +97,7 @@ const TableView = ({ section }: { section: TableSection }) => (
                   </div>
                 ))}
               </td>
-              <td style={{ ...cellStyle, verticalAlign: 'middle', textAlign: 'center' }}>
+              <td style={{ ...cellStyle, paddingLeft: 25, verticalAlign: 'middle', textAlign: 'left' }}>
                 {row.fromEmail}
               </td>
             </tr>

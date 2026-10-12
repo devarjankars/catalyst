@@ -2335,6 +2335,12 @@ return `
 
     case "orserdu-image-text-block":
     case "elzonris-image-text-block": {
+      const display = component.displayType || "all";
+      const visibilityClass = display === "mobile-only"
+        ? "mbl-show-table"
+        : display === "desktop-only"
+          ? "desk-show-table"
+          : "mobile-table darkmode";
       const imageSrc = component.imageTextImageSrc || "";
       const imageAlt = component.imageTextImageAlt || "";
       const configuredImageWidth = Number(component.imageTextImageWidth);
@@ -2362,8 +2368,8 @@ return `
         ? `${textCell}${gapCell}${imageCell}`
         : `${imageCell}${gapCell}${textCell}`;
       return `
-      <table id="deskDisp" class="mobile-table darkmode deskDisp" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
-        <tbody><tr class="deskDisp">
+      <table class="${visibilityClass}" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+        <tbody><tr>
           <td width="20" height="1" valign="top" style="font-size:0;line-height:1px;mso-line-height-rule:exactly;"></td>
           <td valign="top" width="100%" style="padding:${outerStyle};">
             <table class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0" style="table-layout:fixed;">
