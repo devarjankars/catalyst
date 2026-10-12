@@ -973,6 +973,15 @@ export function PropertiesPanel({
   }
 
   const isColumn = component.type === "section" && component.isColumn;
+  const hasDedicatedPaddingControl = new Set<EmailComponent["type"]>([
+    "orserdu-references",
+    "orserdu-abbreviations",
+    "elzonris-references",
+    "elzonris-abbreviations",
+    "elzonris-ref-abbr",
+    "tryvio-references",
+    "tryvio-abbreviations",
+  ]).has(component.type);
 
   const handleSaveBlock = () => {
     onSaveAsCustom?.(blockName.trim() || component.name || `Saved ${component.type}`);
@@ -3914,7 +3923,7 @@ export function PropertiesPanel({
               <Label>Padding</Label>
               <PaddingInput
                 value={component.padding || "0px 20px 10px 20px"}
-                onChange={(padding) => onUpdateComponent({ padding })}
+                onChange={(padding) => onUpdateComponent({ padding }, true)}
               />
             </div>
           </div>
@@ -3975,10 +3984,9 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Padding</Label>
-              <Input
+              <PaddingInput
                 value={component.padding || "0 20px 10px 20px"}
-                onChange={(e) => onUpdateComponent({ padding: e.target.value })}
-                placeholder="0 20px 10px 20px"
+                onChange={(padding) => onUpdateComponent({ padding }, true)}
               />
             </div>
           </div>
@@ -4065,18 +4073,20 @@ export function PropertiesPanel({
       {renderProperties()}
 
       {/* Common Properties */}
-      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
-        <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Spacing
-        </h4>
-        <div>
-          <Label htmlFor="padding">Padding</Label>
-          <PaddingInput
-            value={component.padding || "0 20px 10px 20px"}
-            onChange={(value) => onUpdateComponent({ padding: value })}
-          />
+      {!hasDedicatedPaddingControl && (
+        <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Spacing
+          </h4>
+          <div>
+            <Label htmlFor="padding">Padding</Label>
+            <PaddingInput
+              value={component.padding || "0 20px 10px 20px"}
+              onChange={(value) => onUpdateComponent({ padding: value })}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">

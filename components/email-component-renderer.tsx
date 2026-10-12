@@ -974,6 +974,7 @@ export function EmailComponentRenderer({
                 value={component.abbreviations || ""}
                 onChange={(content) => onUpdate({ abbreviations: content })}
                 style={{
+                  padding: 0,
                   fontSize: component.fontSize || '12px',
                   color: component.color || '#646464',
                   textAlign: component.textAlign || 'left',
@@ -1009,6 +1010,7 @@ export function EmailComponentRenderer({
                 value={component.references || ""}
                 onChange={(content) => onUpdate({ references: content })}
                 style={{
+                  padding: 0,
                   fontSize: component.fontSize || '12px',
                   color: component.color || '#646464',
                   textAlign: component.textAlign || 'left',
@@ -1547,6 +1549,7 @@ export function EmailComponentRenderer({
                     value={component.references || ""}
                     onChange={(val) => onUpdate({ references: val })}
                     style={{
+                      padding: 0,
                       fontFamily: "Arial, sans-serif",
                       fontSize: component.fontSize || "10px",
                       color: component.color || "#000000",
@@ -1590,6 +1593,7 @@ export function EmailComponentRenderer({
                     value={component.abbreviations || ""}
                     onChange={(val) => onUpdate({ abbreviations: val })}
                     style={{
+                      padding: 0,
                       fontFamily: "Arial, sans-serif",
                       fontSize: component.fontSize || "10px",
                       color: component.color || "#000000",
@@ -1633,6 +1637,7 @@ export function EmailComponentRenderer({
                       value={component.references || ""}
                       onChange={(val) => onUpdate({ references: val })}
                       style={{
+                        padding: 0,
                         fontFamily: "Arial, sans-serif",
                         fontSize: component.fontSize || "10px",
                         color: component.color || "#000000",
@@ -1656,6 +1661,7 @@ export function EmailComponentRenderer({
                       value={component.abbreviations || ""}
                       onChange={(val) => onUpdate({ abbreviations: val })}
                       style={{
+                        padding: 0,
                         fontFamily: "Arial, sans-serif",
                         fontSize: component.fontSize || "10px",
                         color: component.color || "#000000",
