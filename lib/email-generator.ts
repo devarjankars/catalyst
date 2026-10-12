@@ -4,6 +4,7 @@ import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
+import { getOrserduImageTextContent } from "./orserdu-image-text";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -122,7 +123,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         line-height: ${component.lineHeight || "16px"};
       `.trim();
       const paragraphSpacing = Math.max(0, Math.min(200, Number(component.paragraphSpacingPx) || 0));
-      const textContent = applyTextParagraphSpacing(component.content || "", paragraphSpacing);
+      const textContent = applyTextParagraphSpacing(component.content || "", paragraphSpacing, false);
 
       return `
         <table
@@ -2335,6 +2336,7 @@ return `
 
     case "orserdu-image-text-block":
     case "elzonris-image-text-block": {
+      const isOrserdu = component.type === "orserdu-image-text-block";
       const display = component.displayType || "all";
       const visibilityClass = display === "mobile-only"
         ? "mbl-show-table"
@@ -2360,9 +2362,11 @@ return `
                 </td>`;
       const gapCell = `
                 <td width="${imageTextGap}" style="width:${imageTextGap}px;font-size:0;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>`;
+      const rawTextContent = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
+      const textContent = isOrserdu ? applyTextParagraphSpacing(rawTextContent, 0, false) : rawTextContent;
       const textCell = `
-                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:20px;text-align:${textAlign};">
-                  <div>${component.imageTextText1 || ""}</div>
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
+                  <div>${textContent}</div>
                 </td>`;
       const contentCells = imagePosition === "right"
         ? `${textCell}${gapCell}${imageCell}`

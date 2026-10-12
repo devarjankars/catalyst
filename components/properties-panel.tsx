@@ -14,11 +14,12 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useEffect, useState, useCallback } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers } from "lucide-react";
+import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
 import { RichTextEditor } from "./rich-text-editor";
+import { removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { verifyHtml } from "@/lib/verify-html";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
 // Used by FontSizeInput and per-link font-size inputs throughout this file.
@@ -215,15 +217,28 @@ function DeferredTextInput({
 function LineHeightInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const commonValues = ["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"];
   const [customValue, setCustomValue] = useState(value || "14px");
-  const isCustom = !commonValues.includes(value);
+  const [showCustom, setShowCustom] = useState(!commonValues.includes(value));
 
   useEffect(() => {
     setCustomValue(value || "14px");
+    setShowCustom(!commonValues.includes(value));
   }, [value]);
 
   return (
     <div className="flex items-center gap-2">
-      <Select value={isCustom ? "custom" : value} onValueChange={(nextValue) => nextValue !== "custom" && onChange(nextValue)}>
+      <Select
+        value={showCustom ? "custom" : value}
+        onValueChange={(nextValue) => {
+          if (nextValue === "custom") {
+            setCustomValue(value || "14px");
+            setShowCustom(true);
+          } else {
+            setShowCustom(false);
+            setCustomValue(nextValue);
+            onChange(nextValue);
+          }
+        }}
+      >
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Line height" />
         </SelectTrigger>
@@ -234,7 +249,7 @@ function LineHeightInput({ value, onChange }: { value: string; onChange: (v: str
           <SelectItem value="custom">Custom...</SelectItem>
         </SelectContent>
       </Select>
-      {isCustom && (
+      {showCustom && (
         <Input
           type="number"
           min="8"
@@ -244,16 +259,27 @@ function LineHeightInput({ value, onChange }: { value: string; onChange: (v: str
           onChange={(event) => {
             const nextValue = event.target.value;
             setCustomValue(nextValue ? `${nextValue}px` : "");
-            if (nextValue) onChange(`${nextValue}px`);
+          }}
+          onBlur={() => {
+            const nextValue = parseInt(customValue, 10);
+            if (Number.isFinite(nextValue) && nextValue >= 8 && nextValue <= 100) {
+              const formatted = `${nextValue}px`;
+              setCustomValue(formatted);
+              onChange(formatted);
+            }
           }}
           onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.currentTarget.blur();
+              return;
+            }
             if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
             e.preventDefault();
             const cur = parseInt(customValue, 10) || 0;
             const step = e.shiftKey ? 10 : 1;
             const next = Math.max(8, cur + (e.key === "ArrowUp" ? step : -step));
             setCustomValue(`${next}px`);
-            onChange(`${next}px`);
           }}
           className="w-[90px]"
           placeholder="px"
@@ -726,11 +752,13 @@ function ImageTextBlockProperties({
 }) {
   const [imageWidth, setImageWidth] = useState(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
   const [imageGap, setImageGap] = useState(String(component.imageTextGap ?? 16));
+  const [imageAlt, setImageAlt] = useState(component.imageTextImageAlt || "");
 
   useEffect(() => {
     setImageWidth(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
     setImageGap(String(component.imageTextGap ?? 16));
-  }, [component.id, component.imageTextImageWidth, component.imageTextGap]);
+    setImageAlt(component.imageTextImageAlt || "");
+  }, [component.id, component.imageTextImageWidth, component.imageTextGap, component.imageTextImageAlt]);
 
   const commitImageWidth = () => {
     const width = Number.parseInt(imageWidth, 10);
@@ -763,10 +791,12 @@ function ImageTextBlockProperties({
           onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })}
         />
         <div>
-          <Label>Alt Text</Label>
+          <Label htmlFor={`image-text-alt-${component.id}`}>Alt Text</Label>
           <Input
-            value={component.imageTextImageAlt || ""}
-            onChange={(e) => onUpdateComponent({ imageTextImageAlt: e.target.value })}
+            id={`image-text-alt-${component.id}`}
+            value={imageAlt}
+            onChange={(e) => setImageAlt(e.target.value)}
+            onBlur={() => onUpdateComponent({ imageTextImageAlt: imageAlt }, true)}
             placeholder="Alt text"
           />
         </div>
@@ -825,14 +855,32 @@ function ImageTextBlockProperties({
         <Label>Text</Label>
         <RichTextEditor
           isSelected
-          value={component.imageTextText1 || ""}
-          onChange={(html) => onUpdateComponent({ imageTextText1: html })}
+          value={component.type === "orserdu-image-text-block"
+            ? removeTextParagraphSpacing(getOrserduImageTextContent(component))
+            : component.imageTextText1 || ""}
+          onChange={(html) => onUpdateComponent({
+            imageTextText1: html,
+            ...(component.type === "orserdu-image-text-block" ? { imageTextSections: undefined } : {}),
+          })}
+          className={component.type === "orserdu-image-text-block" ? "rich-text-editor-reset-block-spacing" : undefined}
           style={{ minHeight: "100px" }}
         />
         <p className="mt-1 text-[11px] text-gray-400">
           Select text to format it, change its color, or add a link.
         </p>
       </div>
+      {component.type === "orserdu-image-text-block" && (
+        <div>
+          <Label>Line Height</Label>
+          <LineHeightInput
+            value={component.lineHeight || "20px"}
+            onChange={(lineHeight) => onUpdateComponent({ lineHeight }, true)}
+          />
+          <p className="mt-1 text-[11px] text-gray-400">
+            Applies a default line height; use the text toolbar to change selected paragraphs.
+          </p>
+        </div>
+      )}
       <div>
         <Label>Text Align</Label>
         <Select
@@ -3652,6 +3700,7 @@ export function PropertiesPanel({
               </div>
             );
           case "orserdu-image-text-block":
+            return <ImageTextBlockProperties component={component} onUpdateComponent={onUpdateComponent} />;
           case "elzonris-image-text-block":
             return <ImageTextBlockProperties component={component} onUpdateComponent={onUpdateComponent} />;
           case "ferring-footer":

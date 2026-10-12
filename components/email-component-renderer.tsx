@@ -22,6 +22,8 @@ import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { toast } from "sonner";
 import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
 import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator";
+import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
+import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -1445,9 +1447,16 @@ export function EmailComponentRenderer({
 
         case "orserdu-image-text-block":
         case "elzonris-image-text-block": {
-          const { imageTextImageSrc, imageTextImageAlt, imageTextImageWidth, imageTextText1 } = component;
+          const isOrserdu = component.type === "orserdu-image-text-block";
+          const imageTextImageSrc = component.imageTextImageSrc;
+          const imageTextImageAlt = component.imageTextImageAlt;
+          const imageTextText1 = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
+          const normalizedText = isOrserdu
+            ? applyTextParagraphSpacing(imageTextText1, 0, false)
+            : imageTextText1;
+          const editorText = isOrserdu ? removeTextParagraphSpacing(imageTextText1) : imageTextText1;
           const verticalAlign = component.imageTextVerticalAlign || "top";
-          const configuredImageWidth = Number(imageTextImageWidth);
+          const configuredImageWidth = Number(component.imageTextImageWidth);
           const imageWidth = Number.isFinite(configuredImageWidth) && configuredImageWidth > 0
             ? configuredImageWidth
             : 167;
@@ -1481,15 +1490,21 @@ export function EmailComponentRenderer({
                   />
                 </div>
                 <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "20px", marginBottom: "17px" }}>
+                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (
                       <RichTextEditor
                         isSelected={isSelected}
-                        value={imageTextText1 || ""}
-                        onChange={(html) => onUpdate({ imageTextText1: html })}
-                        style={{ fontSize: "14px", lineHeight: "20px", color: "#000000" }}
+                        value={editorText}
+                        onChange={(html) => onUpdate({
+                          imageTextText1: html,
+                          ...(isOrserdu ? { imageTextSections: undefined } : {}),
+                        })}
+                        className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
+                        style={{ fontSize: "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
                       />
-                    ) : <span dangerouslySetInnerHTML={{ __html: imageTextText1 || "" }} />}
+                    ) : (
+                      <span dangerouslySetInnerHTML={{ __html: normalizedText }} />
+                    )}
                   </div>
                 </div>
               </div>

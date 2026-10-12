@@ -144,6 +144,7 @@ export interface EmailComponent {
   imageTextImageAlt?: string
   imageTextImageWidth?: number
   imageTextText1?: string
+  imageTextSections?: OrserduImageTextSection[]
   imageTextImagePosition?: "left" | "right"
   imageTextGap?: number
   imageTextVerticalAlign?: "top" | "middle" | "bottom"
@@ -181,4 +182,14 @@ export interface EmailComponent {
     bold?: boolean
     padding?: string
   }>
+}
+
+export interface OrserduImageTextSection {
+  id: string
+  label: string
+  content: string
+  color: string
+  fontSize: number
+  fontWeight: "normal" | "bold"
+  marginTopPx: number
 }

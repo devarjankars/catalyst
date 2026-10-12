@@ -119,6 +119,20 @@ input[type=number] {
   -moz-appearance: textfield; /* Firefox */
 }
 
+.rich-text-editor-reset-block-spacing p,
+.rich-text-editor-reset-block-spacing div,
+.rich-text-editor-reset-block-spacing blockquote,
+.rich-text-editor-reset-block-spacing h1,
+.rich-text-editor-reset-block-spacing h2,
+.rich-text-editor-reset-block-spacing h3,
+.rich-text-editor-reset-block-spacing h4,
+.rich-text-editor-reset-block-spacing h5,
+.rich-text-editor-reset-block-spacing h6,
+.rich-text-editor-reset-block-spacing li,
+.rich-text-editor-reset-block-spacing pre {
+  margin: 0;
+}
+
 /* ===== Email Builder — Properties Panel ===== */
 /* Modernize the property field labels/headings consistently across every
    component type without touching each field individually. Unlayered rules

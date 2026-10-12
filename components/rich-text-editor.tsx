@@ -4,7 +4,7 @@
 import { Italic, Link, Superscript } from "lucide-react"
 import type React from "react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { applyTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
+import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
 
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect
 
@@ -77,15 +77,17 @@ interface RichTextEditorProps {
   value: string
   onChange: (value: string) => void
   style?: React.CSSProperties
+  className?: string
   isSelected?: boolean
   paragraphSpacingPx?: number
 }
 
-export function RichTextEditor({ value, onChange, style, isSelected, paragraphSpacingPx }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focused, setFocused] = useState(false)
+  const [paragraphPadding, setParagraphPadding] = useState("8")
   const savedRangeRef = useRef<Range | null>(null)
 
   // Link dialog state
@@ -95,10 +97,28 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
   // Saved range when dialog opens (prompt steals focus)
   const pendingRangeRef = useRef<Range | null>(null)
 
+  const getParagraphsForRange = (range: Range): HTMLElement[] => {
+    const editor = editorRef.current
+    if (!editor) return []
+
+    const blockSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
+    return Array.from(editor.querySelectorAll<HTMLElement>(blockSelector))
+      .filter((element) => !element.querySelector(blockSelector))
+      .filter((element) => range.intersectsNode(element))
+  }
+
   const saveSelection = () => {
     const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      savedRangeRef.current = selection.getRangeAt(0).cloneRange()
+    const editor = editorRef.current
+    if (selection && editor && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
+        savedRangeRef.current = range.cloneRange()
+        const paragraph = getParagraphsForRange(range)[0]
+        if (paragraph) {
+          setParagraphPadding(String(Number.parseFloat(paragraph.style.paddingTop) || 0))
+        }
+      }
     }
   }
 
@@ -137,7 +157,7 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
     }
     if (editorRef.current) {
       const html = editorRef.current.innerHTML
-      onChange(paragraphSpacingPx === undefined ? html : applyTextParagraphSpacing(html, paragraphSpacingPx))
+      onChange(paragraphSpacingPx === undefined ? html : removeTextParagraphSpacing(html))
     }
   }
 
@@ -365,6 +385,38 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
     handleInput()
   }
 
+  const getSelectedParagraphs = (): HTMLElement[] => {
+    const editor = editorRef.current
+    const range = savedRangeRef.current
+    if (!editor || !range) return []
+
+    const paragraphs = getParagraphsForRange(range)
+
+    if (paragraphs.length > 0) return paragraphs
+
+    const paragraph = document.createElement("div")
+    while (editor.firstChild) paragraph.appendChild(editor.firstChild)
+    editor.appendChild(paragraph)
+    return [paragraph]
+  }
+
+  const applyParagraphPadding = (paddingTop: string) => {
+    restoreSelection()
+    const paragraphs = getSelectedParagraphs()
+    paragraphs.forEach((paragraph) => {
+      paragraph.style.paddingTop = paddingTop === "0px" ? "" : paddingTop
+    })
+    handleInput()
+  }
+
+  const applyLineHeight = (lineHeight: string) => {
+    restoreSelection()
+    getSelectedParagraphs().forEach((paragraph) => {
+      paragraph.style.lineHeight = lineHeight
+    })
+    handleInput()
+  }
+
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
     let text = e.clipboardData.getData("text/plain");
@@ -416,6 +468,8 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
         contentEditable
         onInput={handleInput}
         onKeyDown={handleKeyDown}
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
         onPaste={handlePaste}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
@@ -427,16 +481,16 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
           }, 0)
         }}
         style={{ minHeight: "min-content", outline: "none", ...style }}
-        className="px-3 py-2"
+        className={`px-3 py-2 ${className || ""}`}
       />
 
       {/* Toolbar */}
       {isSelected && focused && (
         <div
           ref={toolbarRef}
-          className="absolute -top-10 left-0 bg-white border rounded shadow-lg p-1 flex gap-1 z-50"
+          className="mt-2 w-fit max-w-full bg-white border rounded shadow-lg p-1.5 flex flex-wrap items-center gap-1 z-50"
           tabIndex={-1}
-          onMouseDown={() => saveSelection()}
+          onMouseDown={saveSelection}
         >
           <button type="button" className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-black"
             onClick={() => { document.execCommand("bold"); handleInput() }}>
@@ -484,6 +538,61 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
             <option value="40px">40</option>
             <option value="48px">48</option>
           </select>
+          <select
+            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) applyLineHeight(e.target.value)
+              e.currentTarget.value = ""
+            }}
+            title="Line height for selected paragraph"
+          >
+            <option value="" disabled>Line height</option>
+            <option value="14px">14px line</option>
+            <option value="16px">16px line</option>
+            <option value="18px">18px line</option>
+            <option value="20px">20px line</option>
+            <option value="24px">24px line</option>
+            <option value="28px">28px line</option>
+            <option value="32px">32px line</option>
+          </select>
+          <label className="flex items-center gap-1 border-l pl-2 px-1 text-xs text-black">
+            Top space
+            <input
+              type="number"
+              min="0"
+              max="200"
+              step="any"
+              value={paragraphPadding}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  const padding = Number(paragraphPadding)
+                  if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                    applyParagraphPadding(`${padding}px`)
+                  }
+                }
+              }}
+              onMouseDown={saveSelection}
+              onBlur={() => {
+                const padding = Number(paragraphPadding)
+                if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                  applyParagraphPadding(`${padding}px`)
+                }
+              }}
+              onChange={(e) => {
+                const value = e.target.value
+                setParagraphPadding(value)
+                const padding = Number(value)
+                if (value !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                  applyParagraphPadding(`${padding}px`)
+                }
+              }}
+              className="w-14 rounded border border-gray-300 px-1 py-1 text-xs text-black"
+              aria-label="Space above selected paragraph in pixels"
+            />
+            px
+          </label>
         </div>
       )}
 
