@@ -1,4 +1,5 @@
 import React from 'react';
+import { getSenderRowSeparator } from '@/lib/sender-table-layout';
 
 interface NormalSection {
   heading: string;
@@ -68,30 +69,47 @@ const NormalView = ({ section }: { section: NormalSection }) => {
 
 const TableView = ({ section }: { section: TableSection }) => (
   <table
-    style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9 }}
+    style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', border: '1px solid #ddd', fontSize: 9 }}
   >
     <thead>
       <tr style={{ background: '#f9f9f9' }}>
-        <th style={thStyle}>Friendly From Name</th>
-        <th style={thStyle}>From email address</th>
+        <th style={{ ...thStyle, width: '50%' }}>Friendly From Name</th>
+        <th style={{ ...thStyle, width: '50%' }}>From email address</th>
       </tr>
     </thead>
     <tbody>
-      {section.options.map((row, i) => (
-        <tr key={i}>
-          <td style={tdStyle}>
-            {row.friendlyNames.map((name, j) => (
-              <div key={j} style={{ marginBottom: 3 }}>
-                <span style={{ fontWeight: 700, marginRight: 4 }}>{j + 1}.</span>
-                {name}
-              </div>
-            ))}
-          </td>
-          <td style={{ ...tdStyle, verticalAlign: 'middle', textAlign: 'center' }}>
-            {row.fromEmail}
-          </td>
-        </tr>
-      ))}
+      {section.options.map((row, i) => {
+        const separator = getSenderRowSeparator(i, section.options.length);
+        const borderTop = i > 0 && getSenderRowSeparator(i - 1, section.options.length) === 'double'
+          ? 'none'
+          : undefined;
+        const cellStyle = separator === 'normal'
+          ? { ...tdStyle, borderTop }
+          : { ...tdStyle, borderBottom: 0, borderTop };
+        return (
+          <React.Fragment key={i}>
+            <tr>
+              <td style={cellStyle}>
+                {row.friendlyNames.map((name, j) => (
+                  <div key={j} style={{ marginBottom: 3 }}>
+                    <span style={{ fontWeight: 700, marginRight: 4 }}>{j + 1}.</span>
+                    {name}
+                  </div>
+                ))}
+              </td>
+              <td style={{ ...cellStyle, verticalAlign: 'middle', textAlign: 'center' }}>
+                {row.fromEmail}
+              </td>
+            </tr>
+            {separator === 'double' && (
+              <tr>
+                <td style={{ width: '50%', height: 17, boxSizing: 'border-box', padding: 0, border: '1px solid #ddd' }} />
+                <td style={{ width: '50%', height: 17, boxSizing: 'border-box', padding: 0, border: '1px solid #ddd' }} />
+              </tr>
+            )}
+          </React.Fragment>
+        );
+      })}
     </tbody>
   </table>
 );

@@ -1,4 +1,6 @@
-﻿export interface VsbPdfColumn {
+﻿import { getSenderRowSeparator } from "./sender-table-layout";
+
+export interface VsbPdfColumn {
   html: string;
   width: number;
   /** Rendering variant — controls whether mobile responsive CSS is scoped to this column. */
@@ -138,33 +140,45 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
       </div>`;
   };
 
-  const renderTableSection = (section: any) => `
+  const renderTableSection = (section: any) => {
+    const rows = Array.isArray(section.options) ? section.options : [];
+    return `
     <div style="width:100%;box-sizing:border-box;margin:0 0 16px;">
       <div style="font-size:12px;font-weight:bold;margin:0 0 12px;color:${accent};">${section.heading}</div>
-      <table class="pdf-friendly-from-table" style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
+      <table class="pdf-friendly-from-table" style="width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #d1d5db;box-sizing:border-box;">
+        <colgroup><col style="width:50%;"><col style="width:50%;"></colgroup>
         <thead>
           <tr>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:60%;">Friendly From Name</th>
-            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:40%;">From email address</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:50%;">Friendly From Name</th>
+            <th style="background:#f9fafb;border:1px solid #d1d5db;padding:6px;font-size:12.5px;line-height:1.4;font-weight:bold;color:#FF66CC;text-align:center;vertical-align:middle;width:50%;">From email address</th>
           </tr>
         </thead>
         <tbody>
-          ${(section.options || []).map((row: any) => `
+          ${rows.map((row: any, rowIndex: number) => {
+            const separator = getSenderRowSeparator(rowIndex, rows.length);
+            const borderBottom = separator === 'normal' ? 'border-bottom:1px solid #d1d5db;' : 'border-bottom:0;';
+            const borderTop = rowIndex > 0 && getSenderRowSeparator(rowIndex - 1, rows.length) === 'double'
+              ? 'border-top:0;'
+              : '';
+            return `
             <tr>
-              <td class="pdf-friendly-from-table__names" style="border:1px solid #d1d5db;padding:6px;vertical-align:top;font-size:12px;text-align:left;">
+              <td class="pdf-friendly-from-table__names" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px;vertical-align:top;font-size:12px;text-align:left;">
                 ${(row.friendlyNames || []).map((name: string, j: number) => `
                   <div style="margin-bottom:3px;">
                     <span style="font-weight:bold;margin-right:4px;">${j + 1}.</span>${name}
                   </div>
                 `).join('')}
               </td>
-              <td class="pdf-friendly-from-table__email" style="border:1px solid #d1d5db;padding:6px;font-size:12px;text-align:left;vertical-align:middle;">${row.fromEmail}</td>
+              <td class="pdf-friendly-from-table__email" style="border:1px solid #d1d5db;${borderTop}${borderBottom}padding:6px;font-size:12px;text-align:left;vertical-align:middle;">${row.fromEmail}</td>
             </tr>
-          `).join('')}
+            ${separator === 'double' ? '<tr><td style="width:50%;height:17px;box-sizing:border-box;padding:0;border:1px solid #d1d5db;"></td><td style="width:50%;height:17px;box-sizing:border-box;padding:0;border:1px solid #d1d5db;"></td></tr>' : ''}
+          `;
+          }).join('')}
         </tbody>
       </table>
     </div>
   `;
+  };
 
   const renderThirdPartySection = (section: any) => {
     if (!Array.isArray(section.options) || !section.options.length) return '';

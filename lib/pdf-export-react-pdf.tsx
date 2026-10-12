@@ -4,6 +4,7 @@ import { Document, Page, View, Text, StyleSheet, Image, Font, pdf } from '@react
 import { PDFDocument } from 'pdf-lib'
 import https from 'https'
 import http from 'http'
+import { getSenderRowSeparator } from './sender-table-layout'
 
 Font.register({
   family: 'Helvetica',
@@ -274,22 +275,39 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
     return (
       <View key={section.heading} style={styles.table}>
         <View style={{ flexDirection: 'row', backgroundColor: '#f9f9f9' }}>
-          <View style={[styles.tableHeader, { flex: 1 }]}><Text>Friendly From Name</Text></View>
-          <View style={[styles.tableHeader, { flex: 1 }]}><Text>From email address</Text></View>
+          <View style={[styles.tableHeader, { width: '50%', boxSizing: 'border-box' }]}><Text>Friendly From Name</Text></View>
+          <View style={[styles.tableHeader, { width: '50%', boxSizing: 'border-box' }]}><Text>From email address</Text></View>
         </View>
-        {options.map((row, rowIdx) => (
-          <View key={rowIdx} style={{ flexDirection: 'row' }}>
-            <View style={[styles.tableCell, { flex: 1 }]}>
-              {row.friendlyNames.map((name, nameIdx) => (
-                <Text key={nameIdx} style={{ marginBottom: 3 }}>
-                  <Text style={{ fontWeight: 'bold', marginRight: 4 }}>{nameIdx + 1}.</Text>
-                  {name}
-                </Text>
-              ))}
+        {options.map((row, rowIdx) => {
+          const separator = getSenderRowSeparator(rowIdx, options.length)
+          const borderTopWidth = rowIdx > 0 && getSenderRowSeparator(rowIdx - 1, options.length) === 'double'
+            ? 0
+            : undefined
+          const cellStyle = separator === 'normal'
+            ? { borderTopWidth }
+            : { borderBottomWidth: 0, borderTopWidth }
+          return (
+            <View key={rowIdx}>
+              <View style={{ width: '100%', flexDirection: 'row' }}>
+                <View style={[styles.tableCell, { width: '50%', boxSizing: 'border-box' }, cellStyle]}>
+                  {row.friendlyNames.map((name, nameIdx) => (
+                    <Text key={nameIdx} style={{ marginBottom: 3 }}>
+                      <Text style={{ fontWeight: 'bold', marginRight: 4 }}>{nameIdx + 1}.</Text>
+                      {name}
+                    </Text>
+                  ))}
+                </View>
+                <View style={[styles.tableCellCenter, { width: '50%', boxSizing: 'border-box' }, cellStyle]}><Text>{row.fromEmail}</Text></View>
+              </View>
+              {separator === 'double' && (
+                <View style={{ width: '100%', flexDirection: 'row' }}>
+                  <View style={{ width: '50%', height: 17, boxSizing: 'border-box', borderWidth: 1, borderColor: '#ddd' }} />
+                  <View style={{ width: '50%', height: 17, boxSizing: 'border-box', borderWidth: 1, borderColor: '#ddd' }} />
+                </View>
+              )}
             </View>
-            <View style={[styles.tableCellCenter, { flex: 1 }]}><Text>{row.fromEmail}</Text></View>
-          </View>
-        ))}
+          )
+        })}
       </View>
     )
   }

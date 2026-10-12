@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { EmailComponent } from "@/types/email-builder";
 import { generateEmailHTML } from "@/lib/email-generator";
+import { exportToPDF } from "@/lib/pdf-export-utils";
 import { Monitor, Smartphone, Upload, Sun, Moon, Loader2 } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 
@@ -130,7 +131,6 @@ export default function EmailPreviewModal({ open, onOpenChange, components, sour
       const viewMode = screen === "600px" ? "desktop" : "mobile";
       const fileName = currentTemplate?.name || "email-preview";
       
-      const { exportToPDF } = await import("@/lib/pdf-export-utils");
       await exportToPDF(iframeRef.current, fileName, viewMode);
     } catch (error) {
       console.error("PDF export failed:", error);
