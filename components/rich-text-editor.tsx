@@ -460,7 +460,9 @@ export function RichTextEditor({ value, onChange, style, isSelected, paragraphSp
           </button>
           <div className="relative">
             <input type="color" className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-              onBlur={(e) => applyColor(e.target.value)} title="Text Color" />
+              onMouseDown={saveSelection}
+              onChange={(e) => applyColor(e.currentTarget.value)}
+              title="Text Color" />
           </div>
           <select
             className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
