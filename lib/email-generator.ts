@@ -251,14 +251,18 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
     case "divider": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
-      const { classAttr, innerStyle } = getDisplayAttributes(display);
+      const visibilityClass =
+        display === "mobile-only"
+          ? "mbl-show-table"
+          : display === "desktop-only"
+            ? "desk-show-table"
+            : "";
 
       const dividerStyle = `
     line-height: ${component.height || "1px"};
     font-size: 0px;
     height: ${component.height || "1px"};
     background-color: ${component.backgroundColor || "#e0e0e0"};
-    ${innerStyle ? innerStyle : ""}
     mso-line-height-rule: exactly;
   `.trim();
 
@@ -269,13 +273,13 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       cellspacing="0"
       cellpadding="0"
       border="0"
-       ${innerStyle ? `style="${innerStyle}"` : ""}
-     ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""}
+      ${visibilityClass ? `class="${visibilityClass}"` : ""}
+      ${display === "mobile-only" ? 'style="mso-hide: all;"' : ""}
     >
       <tbody>
         <tr>
-          <td ${display && display === "mobile-only" ? 'class="mbl-show-cell"' : display && display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "0 20px 20px 20px"};${innerStyle ? innerStyle : ""}" >
-            <table  ${display && display === "mobile-only" ? 'class="mbl-show-table"' : display && display === "desktop-only" ? 'class="desk-show-table"' : ""} cellpadding="0" cellspacing="0" border="0" width="100%"  ${innerStyle ? `style="${innerStyle}"` : ""}>
+          <td style="padding: ${component.padding || "0 20px 20px 20px"};">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td style="${dividerStyle}">&nbsp;</td>
               </tr>

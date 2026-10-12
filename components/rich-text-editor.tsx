@@ -86,6 +86,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const undoHistoryRef = useRef<string[]>([])
+  const redoHistoryRef = useRef<string[]>([])
+  const lastEditorHtmlRef = useRef<string | null>(null)
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("8")
   const savedRangeRef = useRef<Range | null>(null)
@@ -212,6 +215,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         editor.innerHTML = normalizedTarget.innerHTML;
         restoreSelectionSnapshot(editor, selectionSnapshot);
       }
+      lastEditorHtmlRef.current = editor.innerHTML
     }
   }, [value, paragraphSpacingPx])
 
@@ -230,7 +234,60 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     }
   }
 
+  const applyHistorySnapshot = (html: string) => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    editor.innerHTML = html
+    lastEditorHtmlRef.current = html
+    const range = document.createRange()
+    range.selectNodeContents(editor)
+    range.collapse(false)
+    const selection = window.getSelection()
+    if (selection) {
+      selection.removeAllRanges()
+      selection.addRange(range)
+      savedRangeRef.current = range.cloneRange()
+    }
+
+    if (changeTimerRef.current) {
+      clearTimeout(changeTimerRef.current)
+      changeTimerRef.current = null
+    }
+    onChange(paragraphSpacingPx === undefined ? html : removeTextParagraphSpacing(html))
+  }
+
+  const undo = () => {
+    const editor = editorRef.current
+    const previousHtml = undoHistoryRef.current.pop()
+    if (!editor || previousHtml === undefined) return
+
+    redoHistoryRef.current.push(editor.innerHTML)
+    applyHistorySnapshot(previousHtml)
+  }
+
+  const redo = () => {
+    const editor = editorRef.current
+    const nextHtml = redoHistoryRef.current.pop()
+    if (!editor || nextHtml === undefined) return
+
+    undoHistoryRef.current.push(editor.innerHTML)
+    applyHistorySnapshot(nextHtml)
+  }
+
   const handleInput = () => {
+    const editor = editorRef.current
+    if (editor) {
+      const currentHtml = editor.innerHTML
+      const previousHtml = lastEditorHtmlRef.current
+      if (previousHtml !== null && previousHtml !== currentHtml) {
+        undoHistoryRef.current.push(previousHtml)
+        if (undoHistoryRef.current.length > 100) undoHistoryRef.current.shift()
+        redoHistoryRef.current = []
+      }
+      lastEditorHtmlRef.current = currentHtml
+    }
+
     if (changeTimerRef.current) clearTimeout(changeTimerRef.current)
     changeTimerRef.current = setTimeout(flushInput, 300)
   }
@@ -512,7 +569,16 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
-      switch (e.key) {
+      switch (e.key.toLowerCase()) {
+        case "z":
+          e.preventDefault()
+          if (e.shiftKey) redo()
+          else undo()
+          break
+        case "y":
+          e.preventDefault()
+          redo()
+          break
         case "b":
           e.preventDefault()
           document.execCommand("bold")
