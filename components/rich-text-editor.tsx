@@ -107,6 +107,75 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       .filter((element) => range.intersectsNode(element))
   }
 
+  const splitSelectedBreakLines = (range: Range): HTMLElement[] | null => {
+    const editor = editorRef.current
+    if (!editor) return null
+
+    const blockSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
+    const blocks = Array.from(editor.querySelectorAll<HTMLElement>(blockSelector))
+      .filter((element) => !element.querySelector(blockSelector) && range.intersectsNode(element))
+    if (blocks.length === 0 && editor.querySelector("br")) blocks.push(editor)
+
+    const startContainer = range.startContainer
+    const startOffset = range.startOffset
+    const endContainer = range.endContainer
+    const endOffset = range.endOffset
+    const selectedLines: HTMLElement[] = []
+    let didSplit = false
+
+    blocks.forEach((block) => {
+      const childNodes = Array.from(block.childNodes)
+      if (!childNodes.some((node) => node.nodeName === "BR")) return
+
+      didSplit = true
+      const lines: Node[][] = [[]]
+      childNodes.forEach((node) => {
+        if (node.nodeName === "BR") lines.push([])
+        else lines[lines.length - 1].push(node)
+      })
+      const selectedLineFlags = lines.map((nodes) =>
+        nodes.some((node) => range.intersectsNode(node))
+      )
+
+      const lineElements = lines.map((nodes, index) => {
+        const line = block === editor
+          ? document.createElement("div")
+          : block.cloneNode(false) as HTMLElement
+        if (line !== block) {
+          line.removeAttribute("id")
+          if (index > 0) line.style.paddingTop = ""
+        }
+        if (selectedLineFlags[index]) selectedLines.push(line)
+        nodes.forEach((node) => line.appendChild(node))
+        return line
+      })
+
+      if (block === editor) {
+        editor.replaceChildren(...lineElements)
+      } else {
+        block.replaceWith(...lineElements)
+      }
+    })
+
+    if (!didSplit) return null
+
+    const updatedRange = document.createRange()
+    if (editor.contains(startContainer) && editor.contains(endContainer)) {
+      updatedRange.setStart(startContainer, startOffset)
+      updatedRange.setEnd(endContainer, endOffset)
+    } else if (selectedLines.length > 0) {
+      updatedRange.selectNodeContents(selectedLines[0])
+      updatedRange.setEnd(
+        selectedLines[selectedLines.length - 1],
+        selectedLines[selectedLines.length - 1].childNodes.length,
+      )
+    } else {
+      return []
+    }
+    savedRangeRef.current = updatedRange
+    return selectedLines
+  }
+
   const saveSelection = () => {
     const selection = window.getSelection()
     const editor = editorRef.current
@@ -402,7 +471,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
   const applyParagraphPadding = (paddingTop: string) => {
     restoreSelection()
-    const paragraphs = getSelectedParagraphs()
+    const range = savedRangeRef.current
+    const splitParagraphs = range ? splitSelectedBreakLines(range) : null
+    const paragraphs = splitParagraphs ?? getSelectedParagraphs()
     paragraphs.forEach((paragraph) => {
       paragraph.style.paddingTop = paddingTop === "0px" ? "" : paddingTop
     })
