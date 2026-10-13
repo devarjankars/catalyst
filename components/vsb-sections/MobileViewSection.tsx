@@ -79,8 +79,9 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false,
         <div style="border-top:1px solid #000;">
           <div style="margin-left:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;padding-top:20px;">
             ${headerDetails.map(detail => {
-              const fv = detail.value.replace(/(\[[^\]]*\])/g, '<b>$1</b>');
-              return `<div style="margin-bottom:2px;"><span style="font-weight:bold;color:black;">${detail.name}: </span><span style="color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${fv}</span></div>`;
+              const valueBold = detail.valueBold ?? (detail.name.toLowerCase() !== 'preheader');
+              const fv = valueBold ? detail.value.replace(/(\[[^\]]*\])/g, '<b>$1</b>') : detail.value;
+              return `<div style="margin-bottom:2px;"><span style="font-weight:${(detail.nameBold ?? true) ? 'bold' : 'normal'};color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${valueBold ? 'bold' : 'normal'};color:${detail.valueColor || (detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black')};">${fv}</span></div>`;
             }).join('')}
           </div>
         </div>

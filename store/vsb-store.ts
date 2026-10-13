@@ -15,6 +15,8 @@ export interface HeaderDetail {
   value: string;
   nameColor?: string;   // color for the left "label" cell
   valueColor?: string;  // color for the right "value" cell
+  nameBold?: boolean;
+  valueBold?: boolean;
 }
 
 export interface VSBData {

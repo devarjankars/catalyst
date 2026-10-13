@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { PlusCircle, Trash2, ChevronDown, ChevronUp, Palette } from 'lucide-react';
+import { Bold, PlusCircle, Trash2, ChevronDown, ChevronUp, Palette } from 'lucide-react';
 import { HeaderDetail } from '@/store/vsb-store';
 
 interface Props {
@@ -47,16 +47,16 @@ function RowColorPicker({
 // ── Row item ──────────────────────────────────────────────────────────────────
 function DetailRow({
   detail,
-  idx,
   onUpdate,
   onRemove,
 }: {
   detail: HeaderDetail;
-  idx: number;
-  onUpdate: (field: keyof HeaderDetail, value: string) => void;
+  onUpdate: (updates: Partial<HeaderDetail>) => void;
   onRemove: () => void;
 }) {
   const [showColors, setShowColors] = useState(false);
+  const nameBold = detail.nameBold ?? true;
+  const valueBold = detail.valueBold ?? (detail.name.toLowerCase() !== 'preheader');
 
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50 overflow-hidden">
@@ -66,27 +66,27 @@ function DetailRow({
         <div className="w-[28%] shrink-0">
           <Input
             value={detail.name}
-            onChange={(e) => onUpdate('name', e.target.value)}
+            onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder="Label (e.g. To)"
             className="font-medium text-sm h-8"
-            style={{ color: detail.nameColor || '#000000' }}
+            style={{ color: detail.nameColor || '#000000', fontWeight: nameBold ? 'bold' : 'normal' }}
           />
         </div>
         {/* Value */}
         <div className="flex-1">
           <Input
             value={detail.value}
-            onChange={(e) => onUpdate('value', e.target.value)}
+            onChange={(e) => onUpdate({ value: e.target.value })}
             placeholder="Value"
             className="text-sm h-8"
-            style={{ color: detail.valueColor || '#000000' }}
+            style={{ color: detail.valueColor || '#000000', fontWeight: valueBold ? 'bold' : 'normal' }}
           />
         </div>
         {/* Color toggle */}
         <button
           onClick={() => setShowColors((v) => !v)}
           className="shrink-0 h-8 w-8 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-white transition-colors"
-          title="Row colors"
+          title="Row formatting"
         >
           <Palette size={14} />
         </button>
@@ -101,18 +101,36 @@ function DetailRow({
         </Button>
       </div>
 
-      {/* Expandable color row */}
+      {/* Expandable row formatting */}
       {showColors && (
-        <div className="flex items-center gap-4 px-3 py-2 bg-white border-t border-gray-100">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 bg-white border-t border-gray-100">
+          <button
+            type="button"
+            aria-label="Toggle label bold"
+            aria-pressed={nameBold}
+            onClick={() => onUpdate({ nameBold: !nameBold })}
+            className={`flex h-7 items-center gap-1 rounded border px-2 text-xs ${nameBold ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-200 text-gray-500'}`}
+          >
+            <Bold size={13} /> Label
+          </button>
           <RowColorPicker
             label="Label"
             value={detail.nameColor || '#000000'}
-            onChange={(v) => onUpdate('nameColor', v)}
+            onChange={(nameColor) => onUpdate({ nameColor })}
           />
+          <button
+            type="button"
+            aria-label="Toggle value bold"
+            aria-pressed={valueBold}
+            onClick={() => onUpdate({ valueBold: !valueBold })}
+            className={`flex h-7 items-center gap-1 rounded border px-2 text-xs ${valueBold ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-200 text-gray-500'}`}
+          >
+            <Bold size={13} /> Value
+          </button>
           <RowColorPicker
             label="Value"
             value={detail.valueColor || '#000000'}
-            onChange={(v) => onUpdate('valueColor', v)}
+            onChange={(valueColor) => onUpdate({ valueColor })}
           />
           <button
             onClick={() => setShowColors(false)}
@@ -138,9 +156,9 @@ const HeaderDetailsEditor: React.FC<Props> = ({ data, onChange }) => {
     onChange(details.filter((_, i) => i !== idx));
   };
 
-  const updateDetail = (idx: number, field: keyof HeaderDetail, value: string) => {
+  const updateDetail = (idx: number, updates: Partial<HeaderDetail>) => {
     onChange(details.map((detail, i) =>
-      i === idx ? { ...detail, [field]: value } : detail
+      i === idx ? { ...detail, ...updates } : detail
     ));
   };
 
@@ -159,8 +177,7 @@ const HeaderDetailsEditor: React.FC<Props> = ({ data, onChange }) => {
           <DetailRow
             key={idx}
             detail={detail}
-            idx={idx}
-            onUpdate={(field, value) => updateDetail(idx, field, value)}
+            onUpdate={(updates) => updateDetail(idx, updates)}
             onRemove={() => removeDetail(idx)}
           />
         ))}

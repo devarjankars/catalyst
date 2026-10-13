@@ -166,7 +166,7 @@ export default function VSBPage() {
           <div class="${detailsClass}" style="display:table;width:auto;margin:0 0 0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
               <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
-                <span style="font-weight:bold;color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${detail.name === 'Preheader' ? 'normal' : 'bold'};color:${detail.valueColor || ((detail.value.includes('[') || detail.value.includes(']')) ? '#FF66CC' : 'black')};">${detail.value}</span>
+                <span style="font-weight:${(detail.nameBold ?? true) ? 'bold' : 'normal'};color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${(detail.valueBold ?? (detail.name.toLowerCase() !== 'preheader')) ? 'bold' : 'normal'};color:${detail.valueColor || ((detail.value.includes('[') || detail.value.includes(']')) ? '#FF66CC' : 'black')};">${detail.value}</span>
               </div>
             `).join('')}
           </div>
