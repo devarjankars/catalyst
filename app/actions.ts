@@ -10,7 +10,7 @@ export async function handlePdfAction(html: string, viewMode: 'desktop' | 'mobil
     emailHtmlDesktop?: string;
     emailHtmlMobile?: string;
     emailHtmlsMobile?: string[];
-    variableCopyData?: { data: any; emailname: string; headingColor?: string };
+    variableCopyData?: { data: any; emailname: string; headingColor?: string; projectTitleColor?: string };
     altNameData?: any;
     emailName: string;
     desktopWidthOverride?: string;
@@ -68,7 +68,7 @@ export async function generateCombinedPdfAction(params: {
   emailHtmlMobile?:     string;
   emailHtmlsMobile?:    string[];
   // Always used
-  variableCopyData?:    { data: VariableSection[]; emailname: string; headingColor?: string };
+  variableCopyData?:    { data: VariableSection[]; emailname: string; headingColor?: string; projectTitleColor?: string };
   altNameData?:         { data: { images: Array<{ name: string; value: string }>; headingColor?: string } | Array<{ name: string; value: string }>; emailName?: string };
   emailName:            string;
   desktopWidthOverride?: string;
@@ -84,6 +84,7 @@ export async function generateCombinedPdfAction(params: {
         data: params.variableCopyData.data,
         emailname: params.variableCopyData.emailname,
         headingColor: params.variableCopyData.headingColor,
+        projectTitleColor: params.variableCopyData.projectTitleColor,
       } : undefined,
       altNameData: params.altNameData ? {
         data: params.altNameData.data,

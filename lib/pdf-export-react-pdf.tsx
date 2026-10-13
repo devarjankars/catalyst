@@ -250,7 +250,7 @@ function HeaderDetails({ details }: { details: HeaderDetail[] }) {
   )
 }
 
-function VariableCopySection({ data, emailName, headingColor }: { data: VariableSection[]; emailName: string; headingColor?: string }) {
+function VariableCopySection({ data, emailName, headingColor, projectTitleColor }: { data: VariableSection[]; emailName: string; headingColor?: string; projectTitleColor?: string }) {
   const accent = headingColor || '#FF66CC'
 
   const renderNormalSection = (section: VariableSection) => {
@@ -331,7 +331,7 @@ function VariableCopySection({ data, emailName, headingColor }: { data: Variable
 
   return (
     <View style={styles.page}>
-      <Text style={[styles.title, { marginBottom: 16 }]}>{emailName}</Text>
+      <Text style={[styles.title, { color: projectTitleColor || '#006937', marginBottom: 16 }]}>{emailName}</Text>
       <Text style={{ ...styles.heading, color: accent, marginBottom: 18 }}>
         Variable Copy
       </Text>
@@ -441,7 +441,7 @@ export async function generateCombinedPdfReactPdf(params: {
   desktopImagesBase64?: string[];
   mobileImageBase64?:   string;
   mobileImagesBase64?:  string[];
-  variableCopyData?: { data: VariableSection[]; emailname: string; headingColor?: string }
+  variableCopyData?: { data: VariableSection[]; emailname: string; headingColor?: string; projectTitleColor?: string }
   altNameData?: { data: { images: AltNameImage[]; headingColor?: string } | AltNameImage[]; emailName?: string }
   emailName: string
   desktopWidthOverride?: string
@@ -490,6 +490,7 @@ export async function generateCombinedPdfReactPdf(params: {
             data={params.variableCopyData.data}
             emailName={params.variableCopyData.emailname}
             headingColor={params.variableCopyData.headingColor}
+            projectTitleColor={params.variableCopyData.projectTitleColor}
           />
         </Page>
       )}

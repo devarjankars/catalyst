@@ -19,10 +19,43 @@ function escapeHtmlText(value: string): string {
   });
 }
 
+function applyPaddingToCell(html: string, cellMatch: RegExpExecArray, padding: string): string {
+  const cellTag = cellMatch[0];
+  const styleMatch = /\sstyle=(["'])(.*?)\1/i.exec(cellTag);
+  let updatedCellTag: string;
+  if (styleMatch) {
+    const cleanedStyle = styleMatch[2]
+      .replace(/(^|;)\s*padding(?:-[\w-]+)?\s*:[^;]*/gi, "")
+      .replace(/^\s*;+|;+\s*$/g, "")
+      .trim();
+    const nextStyle = [cleanedStyle, `padding: ${padding}`].filter(Boolean).join("; ");
+    updatedCellTag = cellTag.replace(styleMatch[0], ` style=${styleMatch[1]}${nextStyle}${styleMatch[1]}`);
+  } else {
+    updatedCellTag = cellTag.replace(/>$/, ` style="padding: ${padding};">`);
+  }
+
+  return html.slice(0, cellMatch.index) + updatedCellTag + html.slice(cellMatch.index + cellTag.length);
+}
+
+function applyPaddingToFirstTableCell(html: string, padding: string): string {
+  const cellMatch = /<td\b[^>]*>/i.exec(html);
+  return cellMatch ? applyPaddingToCell(html, cellMatch, padding) : html;
+}
+
+function applyAnimatedIsiPadding(html: string, padding: string): string {
+  const wrapperCellMatch = /<td\b[^>]*data-orserdu-isi-padding-wrapper[^>]*>/i.exec(html);
+  if (!wrapperCellMatch) {
+    return `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0"><tbody><tr><td data-orserdu-isi-padding-wrapper="true" style="padding: ${padding};">${html}</td></tr></tbody></table>`;
+  }
+  return applyPaddingToCell(html, wrapperCellMatch, padding);
+}
+
 export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
-    return component.isiHtml;
+    return component.type === "isi"
+      ? applyPaddingToFirstTableCell(component.isiHtml, component.padding || "0 20px 10px 20px")
+      : applyAnimatedIsiPadding(component.isiHtml, component.padding || "0 20px 10px 20px");
   }
   switch (component.type) {
     case "section":
@@ -115,12 +148,12 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       const bg = component.backgroundColor || "transparent";
 
       const divStyle = `
-        font-size: ${component.fontSize || "14px"};
+        font-size: ${component.fontSize || "12px"};
         color: ${component.color || "#000000"};
         text-align: ${component.textAlign || "left"};
         font-weight: ${component.fontWeight || "normal"};
         font-family: ${component.fontFamily || "Arial, sans-serif"};
-        line-height: ${component.lineHeight || "16px"};
+        line-height: ${component.lineHeight || "14px"};
       `.trim();
       const paragraphSpacing = Math.max(0, Math.min(200, Number(component.paragraphSpacingPx) || 0));
       const textContent = applyTextParagraphSpacing(component.content || "", paragraphSpacing, false);
@@ -180,7 +213,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
             <tr>
               <td width="${(component.width || "100%").toString().replace("px", "")}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
+              }' style="padding: ${component.padding || "0 20px 0 20px"}; mso-line-height-rule: exactly;">
                  <img 
                     width="${(component.width || "100%").toString().replace("px", "")}"
                     src="${component.src || ""}" 
@@ -780,7 +813,7 @@ case "isi": {
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
-            <td style="padding: 0px 20px 0px 20px;">
+            <td style="padding: ${component.padding || "0 20px 10px 20px"};">
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
@@ -964,7 +997,10 @@ case "isi": {
           </tbody>
           </table>
           `;
-      return html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`);
+      return applyAnimatedIsiPadding(
+        html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`),
+        component.padding || "0 20px 10px 20px",
+      );
     }
 
     case "orserdu-isi-animated": {

@@ -48,8 +48,9 @@ export async function exportVsbPdf(pages: VsbPdfPageSpec[], fileName: string): P
   URL.revokeObjectURL(url);
 }
 
-export function buildVariableCopyHtml(data: any, emailName: string, headingColor?: string): string {
+export function buildVariableCopyHtml(data: any, emailName: string, headingColor?: string, projectTitleColor?: string): string {
   const accent = headingColor || '#FF66CC';
+  const titleColor = projectTitleColor || '#006937';
 
   // Returns true only for values that are real image URLs/data-URIs.
   // Scoped to http(s) URLs and data:image/ URIs — never matches plain text.
@@ -197,7 +198,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
 
   return `
     <div style="box-sizing:border-box;width:100%;max-width:100%;padding:32px;margin:0 auto;background:#fff;font-family:Arial, Helvetica, sans-serif;">
-      <div style="font-size:13px;color:#006937;font-weight:bold;margin:0 0 16px;">${emailName}</div>
+      <div style="font-size:13px;color:${titleColor};font-weight:bold;margin:0 0 16px;">${emailName}</div>
       <div style="font-size:12px;font-weight:bold;margin:0 0 18px;color:${accent};">Variable Copy</div>
       ${(data || []).map((section: any) => {
         if (section.structure === 'table') return renderTableSection(section);

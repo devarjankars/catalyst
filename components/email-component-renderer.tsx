@@ -399,12 +399,12 @@ export function EmailComponentRenderer({
               onChange={(content) => onUpdate({ content })}
               paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
               style={{
-                fontSize: component.fontSize || "16px",
+                fontSize: component.fontSize || "12px",
                 color: component.color || "#000000",
                 textAlign: component.textAlign || "left",
                 fontWeight: component.fontWeight || "normal",
                 backgroundColor: component.backgroundColor || "transparent",
-                lineHeight: component.lineHeight || "18px",
+                lineHeight: component.lineHeight || "14px",
                 fontFamily: component.fontFamily || "Arial, sans-serif",
               }}
             />
@@ -921,9 +921,16 @@ export function EmailComponentRenderer({
               <RichTextEditor
                 isSelected={isSelected}
                 toolbarPlacement="selection"
-                value={component.isiHtml || generatedHtml}
-                onChange={(isiHtml) => onUpdate({ isiHtml })}
-                style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
+                value={generatedHtml}
+                onChange={(isiHtml) => onUpdate({
+                  isiHtml: component.type === "orserdu-isi-animated"
+                    ? isiHtml.replace(
+                        /<table\b[^>]*>\s*<tbody>\s*<tr>\s*<td\b[^>]*data-orserdu-isi-padding-wrapper(?:="true")?[^>]*>([\s\S]*)<\/td>\s*<\/tr>\s*<\/tbody>\s*<\/table>$/,
+                        "$1",
+                      )
+                    : isiHtml,
+                })}
+                style={{ padding: 0, fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
               />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />

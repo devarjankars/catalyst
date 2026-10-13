@@ -162,16 +162,18 @@ const VariablePagePdfView = ({
   emailname,
   data,
   headingColor,
+  projectTitleColor,
 }: {
   emailname: string;
   data: Section[];
   headingColor?: string;
+  projectTitleColor?: string;
 }) => {
   const accent = headingColor || '#FF66CC';
 
   return (
     <div className="w-full max-w-[600px] bg-white p-4">
-      <h1 className="text-[13px] text-[#006937] font-bold mb-4">{emailname}</h1>
+      <h1 className="text-[13px] font-bold mb-4" style={{ color: projectTitleColor || '#006937' }}>{emailname}</h1>
       <h2 className="text-[11px] font-bold mb-[18px]" style={{ color: accent }}>
         Variable Copy
       </h2>

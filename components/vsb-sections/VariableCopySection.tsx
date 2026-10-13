@@ -42,14 +42,14 @@ interface Props {
   data: Section[];
   color?: string;
   onColorChange?: (color: string) => void;
+  projectTitleColor?: string;
+  onProjectTitleColorChange?: (color: string) => void;
   onChange: (data: Section[]) => void;
 }
 
 // ── Mandatory field detection ─────────────────────────────────────────────────
-// These headings are required — marked with * and cannot be removed
-const MANDATORY_PATTERN = /subject line|preheader|header image|friendly from/i
-
-const isMandatorySection = (heading: string) => MANDATORY_PATTERN.test(heading)
+// No sections are mandatory — all can be removed by the user.
+const isMandatorySection = (_heading: string) => false
 
 // ── Shared heading row ────────────────────────────────────────────────────────
 const HeadingRow: React.FC<{
@@ -144,13 +144,7 @@ const NormalSectionRenderer: React.FC<{
   };
 
   return (
-    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-gray-50'}`}>
-      {mandatory && (
-        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
-          Required
-        </span>
-      )}
-
+    <div className="border rounded-lg p-4 relative bg-gray-50">
       {/* Hidden file input for image upload */}
       {isImageSection && (
         <input
@@ -271,12 +265,7 @@ const TableSectionRenderer: React.FC<{
 }> = ({ section, idx, onUpdate, onRemove }) => {
   const mandatory = isMandatorySection(section.heading);
   return (
-    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-gray-50'}`}>
-      {mandatory && (
-        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
-          Required
-        </span>
-      )}
+    <div className="border rounded-lg p-4 relative bg-gray-50">
       <HeadingRow
         heading={section.heading}
         mandatory={mandatory}
@@ -302,12 +291,7 @@ const ThirdPartyPlaceholderRenderer: React.FC<{
 }> = ({ section, onUpdate, onRemove }) => {
   const mandatory = isMandatorySection(section.heading);
   return (
-    <div className={`border rounded-lg p-4 relative ${mandatory ? 'bg-red-50/30 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-      {mandatory && (
-        <span className="absolute top-2 right-10 text-[10px] font-semibold text-red-400 uppercase tracking-wide">
-          Required
-        </span>
-      )}
+    <div className="border rounded-lg p-4 relative bg-amber-50 border-amber-200">
       <HeadingRow
         heading={section.heading}
         mandatory={mandatory}
@@ -334,7 +318,7 @@ const ThirdPartyPlaceholderRenderer: React.FC<{
 };
 
 // ─── Main component ────────────────────────────────────────────────────────────
-const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onChange }) => {
+const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, projectTitleColor, onProjectTitleColorChange, onChange }) => {
   const variableCopy: Section[] = Array.isArray(data) ? data : [];
 
   const addSection = () =>
@@ -349,22 +333,29 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, onCh
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold">Variable Copy</h2>
-          <span className="text-xs text-gray-400 flex items-center gap-1">
-            <span className="text-red-500 font-bold">*</span> = Required field
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-500 font-medium">Theme Color:</label>
-          <input
-            type="color"
-            value={color || '#FF66CC'}
-            onChange={(e) => onColorChange?.(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
-            title="Change theme color"
-          />
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 className="text-xl font-bold">Variable Copy</h2>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500 font-medium">Theme Color:</label>
+            <input
+              type="color"
+              value={color || '#FF66CC'}
+              onChange={(e) => onColorChange?.(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+              title="Change section heading color"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500 font-medium">Title Color:</label>
+            <input
+              type="color"
+              value={projectTitleColor || '#006937'}
+              onChange={(e) => onProjectTitleColorChange?.(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+              title="Change project title color"
+            />
+          </div>
         </div>
       </div>
 

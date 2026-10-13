@@ -214,77 +214,50 @@ function DeferredTextInput({
   );
 }
 
+// ── LineHeightInput ────────────────────────────────────────────────────────
+// Plain free-type input — accepts any CSS size value (e.g. "14px", "1.5", "normal").
+// Replaces the old dropdown+custom combo with a single keyboard-friendly field.
 function LineHeightInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const commonValues = ["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"];
-  const [customValue, setCustomValue] = useState(value || "14px");
-  const [showCustom, setShowCustom] = useState(!commonValues.includes(value));
+  const [local, setLocal] = useState(value || "14px");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    setCustomValue(value || "14px");
-    setShowCustom(!commonValues.includes(value));
-  }, [value]);
+  useEffect(() => { setLocal(value || "14px"); }, [value]);
+
+  const commit = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    // Accept plain numbers → append px; accept "normal", "initial", etc.
+    const normalised = /^\d+(\.\d+)?$/.test(t) ? `${t}px` : t;
+    setError("");
+    setLocal(normalised);
+    onChange(normalised);
+  };
 
   return (
-    <div className="flex items-center gap-2">
-      <Select
-        value={showCustom ? "custom" : value}
-        onValueChange={(nextValue) => {
-          if (nextValue === "custom") {
-            setCustomValue(value || "14px");
-            setShowCustom(true);
-          } else {
-            setShowCustom(false);
-            setCustomValue(nextValue);
-            onChange(nextValue);
-          }
+    <div className="space-y-1">
+      <Input
+        value={local}
+        className="font-mono text-xs"
+        placeholder="e.g. 14px"
+        onChange={(e) => { setLocal(e.target.value); setError(""); }}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(local); return; }
+          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+          e.preventDefault();
+          const m = local.trim().match(/^(-?[\d.]+)(px|pt|rem|em|%)?$/i);
+          if (!m) return;
+          const num = parseFloat(m[1]);
+          const unit = m[2] || "px";
+          const step = e.shiftKey ? 10 : 1;
+          const next = Math.max(0, num + (e.key === "ArrowUp" ? step : -step));
+          const formatted = `${next}${unit}`;
+          setLocal(formatted);
+          setError("");
+          onChange(formatted);
         }}
-      >
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Line height" />
-        </SelectTrigger>
-        <SelectContent>
-          {commonValues.map((lineHeight) => (
-            <SelectItem key={lineHeight} value={lineHeight}>{lineHeight}</SelectItem>
-          ))}
-          <SelectItem value="custom">Custom...</SelectItem>
-        </SelectContent>
-      </Select>
-      {showCustom && (
-        <Input
-          type="number"
-          min="8"
-          max="100"
-          step="1"
-          value={parseInt(customValue, 10) || ""}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setCustomValue(nextValue ? `${nextValue}px` : "");
-          }}
-          onBlur={() => {
-            const nextValue = parseInt(customValue, 10);
-            if (Number.isFinite(nextValue) && nextValue >= 8 && nextValue <= 100) {
-              const formatted = `${nextValue}px`;
-              setCustomValue(formatted);
-              onChange(formatted);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              e.currentTarget.blur();
-              return;
-            }
-            if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-            e.preventDefault();
-            const cur = parseInt(customValue, 10) || 0;
-            const step = e.shiftKey ? 10 : 1;
-            const next = Math.max(8, cur + (e.key === "ArrowUp" ? step : -step));
-            setCustomValue(`${next}px`);
-          }}
-          className="w-[90px]"
-          placeholder="px"
-        />
-      )}
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
@@ -426,11 +399,12 @@ function OrserduIsiSelectPanel({
         </div>
         <div>
           <Label>Line Height</Label>
-          <Input
+          <LineHeightInput
             value={lineHeight}
-            onChange={(e) => setLineHeight(e.target.value)}
-            onBlur={() => commit({ lineHeight })}
-            placeholder="16px"
+            onChange={(value) => {
+              setLineHeight(value);
+              commit({ lineHeight: value });
+            }}
           />
         </div>
         <div>
@@ -974,8 +948,11 @@ export function PropertiesPanel({
 
   const isColumn = component.type === "section" && component.isColumn;
   const hasDedicatedPaddingControl = new Set<EmailComponent["type"]>([
+    "isi",
     "orserdu-references",
     "orserdu-abbreviations",
+    "orserdu-view-in-browser",
+    "elzonris-view-in-browser",
     "elzonris-references",
     "elzonris-abbreviations",
     "elzonris-ref-abbr",
@@ -1389,7 +1366,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="salutationLineHeight">Line Height</Label>
-              <FontSizeInput
+              <LineHeightInput
                 value={component.lineHeight || "18px"}
                 onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
@@ -1402,7 +1379,7 @@ export function PropertiesPanel({
           <div className="space-y-4">
             <div>
               <Label>Font Size</Label>
-              <FontSizeInput value={component.fontSize || "16px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
+              <FontSizeInput value={component.fontSize || "12px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
             </div>
             <div>
               <Label htmlFor="color">Text Color</Label>
@@ -1450,8 +1427,8 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="lineHeight">Line Height</Label>
-              <FontSizeInput
-                value={component.lineHeight || "18px"}
+              <LineHeightInput
+                value={component.lineHeight || "14px"}
                 onChange={(v) => onUpdateComponent({ lineHeight: v })}
               />
             </div>
@@ -2160,13 +2137,9 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="lineHeight">Line Height</Label>
-              <Input
-                id="lineHeight"
-                type="number"
-                min={0}
-                value={(component.lineHeight || "18px").replace(/px$/i, "")}
-                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value ? `${e.target.value}px` : "18px" })}
-                placeholder="18"
+              <LineHeightInput
+                value={component.lineHeight || "18px"}
+                onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
               />
             </div>
 
@@ -2529,10 +2502,9 @@ export function PropertiesPanel({
                 </div>
                 <div>
                   <Label>Line Height</Label>
-                  <Input
+                  <LineHeightInput
                     value={component.lineHeight || "18px"}
-                    onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
-                    placeholder="18px"
+                    onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
                   />
                 </div>
               </div>
@@ -2611,7 +2583,8 @@ export function PropertiesPanel({
           <div className="space-y-4">
             <div>
               <Label>Link URL</Label>
-              <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />            </div>
+              <Input value={component.href || "#"} onChange={(e) => onUpdateComponent({ href: e.target.value })} placeholder="#" />
+            </div>
             <div>
               <Label>Link Title</Label>
               <Input value={component.linkTitle || ""} onChange={(e) => onUpdateComponent({ linkTitle: e.target.value })} placeholder='title="…" tooltip on hover' />
@@ -2643,7 +2616,7 @@ export function PropertiesPanel({
               <LineHeightInput value={component.lineHeight || "16px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
             </div>
             <div>
-              <Label>Padding (top/bottom sides)</Label>
+              <Label>Padding</Label>
               <PaddingInput value={component.padding || "10px 20px"} onChange={(padding) => onUpdateComponent({ padding })} />
             </div>
           </div>
@@ -3233,7 +3206,7 @@ export function PropertiesPanel({
               </div>
               <div>
                 <Label>Line Height</Label>
-                <FontSizeInput
+                <LineHeightInput
                   value={c.boxLineHeight ?? "18px"}
                   onChange={(v) => onUpdateComponent({ boxLineHeight: v } as any)}
                 />
@@ -3306,8 +3279,59 @@ export function PropertiesPanel({
 
         case "isi":
           return (
-            <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
-              Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
+            <div className="space-y-4">
+              <div>
+                <Label>Padding</Label>
+                <PaddingInput
+                  value={component.padding || "0 20px 10px 20px"}
+                  onChange={(padding) => onUpdateComponent({ padding }, true)}
+                />
+              </div>
+              <div>
+                <Label>Background Color</Label>
+                <ColorInput
+                  value={component.backgroundColor || "#ffffff"}
+                  onChange={(v) => onUpdateComponent({ backgroundColor: v })}
+                />
+              </div>
+              <div>
+                <Label>ISI Heading Color</Label>
+                <ColorInput
+                  value={(component as any).isiHeadingColor || "#006937"}
+                  onChange={(v) => onUpdateComponent({ isiHeadingColor: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Indication Heading Color</Label>
+                <ColorInput
+                  value={(component as any).indicationHeadingColor || "#006937"}
+                  onChange={(v) => onUpdateComponent({ indicationHeadingColor: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Bullet Color</Label>
+                <ColorInput
+                  value={(component as any).isiBulletColor || "#69d6b5"}
+                  onChange={(v) => onUpdateComponent({ isiBulletColor: v } as any)}
+                />
+              </div>
+              <div>
+                <Label>Font Size</Label>
+                <FontSizeInput
+                  value={component.fontSize || "12px"}
+                  onChange={(fontSize) => onUpdateComponent({ fontSize })}
+                />
+              </div>
+              <div>
+                <Label>Line Height</Label>
+                <LineHeightInput
+                  value={component.lineHeight || "14px"}
+                  onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
+                />
+              </div>
+              <p className="text-[11px] text-gray-400">
+                To edit bullet content, select text on the canvas and use the inline toolbar.
+              </p>
             </div>
           );
 
@@ -3946,10 +3970,9 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Line Height</Label>
-              <Input
+              <LineHeightInput
                 value={component.lineHeight || "14px"}
-                onChange={(e) => onUpdateComponent({ lineHeight: e.target.value })}
-                placeholder="14px"
+                onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
               />
             </div>
             <div>
@@ -4081,8 +4104,8 @@ export function PropertiesPanel({
           <div>
             <Label htmlFor="padding">Padding</Label>
             <PaddingInput
-              value={component.padding || "0 20px 10px 20px"}
-              onChange={(value) => onUpdateComponent({ padding: value })}
+              value={component.padding || (component.type === "image" ? "0 20px 0 20px" : "0 20px 10px 20px")}
+              onChange={(value) => onUpdateComponent({ padding: value }, true)}
             />
           </div>
         </div>

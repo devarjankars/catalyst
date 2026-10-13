@@ -89,7 +89,7 @@ export default function VSBPage() {
 
     if (includeVC) {
       pages.push({
-        html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor),
+        html: buildVariableCopyHtml(currentVsb.variableCopy, emailName, currentVsb.variableCopyHeadingColor, currentVsb.projectTitleColor),
         width: 600,
         // Use the browser layout so spacing matches the Combined View exactly.
         mode: 'image',
@@ -166,8 +166,7 @@ export default function VSBPage() {
           <div class="${detailsClass}" style="display:table;width:auto;margin:0 0 0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
               <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
-                <span style="font-weight:bold;color:black;">${detail.name}: </span>
-                <span style="font-weight:bold;color:${detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black'};">${detail.value}</span>
+                <span style="font-weight:bold;color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${detail.name === 'Preheader' ? 'normal' : 'bold'};color:${detail.valueColor || ((detail.value.includes('[') || detail.value.includes(']')) ? '#FF66CC' : 'black')};">${detail.value}</span>
               </div>
             `).join('')}
           </div>
@@ -454,8 +453,7 @@ export default function VSBPage() {
       altNamePage: { images: [{ name: '', value: '' }] },
       headerDetails: [
         { name: 'To', value: "[HCP\u2019s email address]" },
-        { name: 'From', value: '[Variable From]' },
-        { name: 'Friendly From', value: 'Stemline Therapeutics, Inc.' },
+        { name: 'From', value: '[Variable friendly from] <[Variable from]>' },
         { name: 'Subject Line', value: '[Variable subject line]' },
         { name: 'Preheader', value: '[Variable preheader]' },
       ],
@@ -565,9 +563,11 @@ export default function VSBPage() {
           return <VariableCopySection 
             data={currentVsb.variableCopy} 
             color={currentVsb.variableCopyHeadingColor}
+            projectTitleColor={currentVsb.projectTitleColor}
             onColorChange={(color) => {
               updateVSB(currentVsb.id, { variableCopyHeadingColor: color });
             }}
+            onProjectTitleColorChange={(color) => updateVSB(currentVsb.id, { projectTitleColor: color })}
             onChange={(data) => handleUpdateData('Variable Copy', data)} 
           />;
         case 'Desktop view':

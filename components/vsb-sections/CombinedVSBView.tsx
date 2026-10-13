@@ -52,7 +52,7 @@ const CombinedVSBView = ({ data, emailName }: Props) => {
 
       <div className="space-y-4 text-black">
         <VSBPageWrapper title="Variable Copy" number={1} showHeader={false} showFooter={false}>
-          <VariablePagePdfView emailname={emailName} data={data.variableCopy} headingColor={data.variableCopyHeadingColor} />
+          <VariablePagePdfView emailname={emailName} data={data.variableCopy} headingColor={data.variableCopyHeadingColor} projectTitleColor={data.projectTitleColor} />
         </VSBPageWrapper>
 
         <VSBPageWrapper title="Desktop View" number={2} wide={currentTemplate?.optionMode === 'three'}>

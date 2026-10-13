@@ -24,10 +24,11 @@ export const componentTypes = [
     category : "basic",
     defaultProps: {
       content: "Your text here",
-      fontSize: "16px",
+      fontSize: "12px",
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
+      lineHeight: "14px",
       fontFamily: "Arial, sans-serif",
       paragraphSpacingPx: 0,
     },
@@ -42,6 +43,7 @@ export const componentTypes = [
       alt: "Image",
       width: "100%",
       height: "auto",
+      padding: "0 20px 0 20px",
     },
   },
   {
@@ -126,6 +128,7 @@ export const componentTypes = [
       isiHeadingColor: "#006937",
       indicationHeadingColor: "#006937",
       isiBulletColor: "#69d6b5",
+      padding: "0 20px 10px 20px",
       importantSafetyInformation: {
         sections: [
           {

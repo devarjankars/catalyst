@@ -13,6 +13,8 @@ export interface AltnamePage {
 export interface HeaderDetail {
   name: string;
   value: string;
+  nameColor?: string;   // color for the left "label" cell
+  valueColor?: string;  // color for the right "value" cell
 }
 
 export interface VSBData {
@@ -21,6 +23,7 @@ export interface VSBData {
   name?: string;
   variableCopy: VariableCopy[];
   variableCopyHeadingColor?: string;
+  projectTitleColor?: string;
   altNamePage: { images: AltnamePage[], headingColor?: string };
   headerDetails?: HeaderDetail[];
   desktopView?: any[];
