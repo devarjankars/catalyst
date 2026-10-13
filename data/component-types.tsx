@@ -499,7 +499,7 @@ export const componentTypes = [
           linkText: "www.fda.gov/medwatch",
           linkHref: "https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program",
           linkColor: "#007bff",
-          suffixText: "",
+          suffixText: ".",
           bold: true,
         },
         {

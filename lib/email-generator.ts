@@ -5,6 +5,7 @@ import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
+import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -707,13 +708,14 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       const rows = linkItems.map((item: any) => {
         const bold = item.bold ? "bold" : "normal";
         const linkColor = item.linkColor || "#007bff";
+        const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
         return `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tbody>
             <tr>
               <td style="padding:${itemPadding};background-color:transparent;">
                 <div style="font-size:${fontSize};color:${color};text-align:left;font-weight:${bold};font-family:${fontFamily};line-height:${lineHeight};background-color:transparent;">
-                  ${item.prefixText || ""}<a href="${item.linkHref || "#"}" target="_blank" rel="noopener noreferrer" style="color:${linkColor};text-decoration:underline;">${item.linkText || ""}</a>${item.suffixText || ""}
+                  ${item.prefixText || ""}<a href="${item.linkHref || "#"}" target="_blank" rel="noopener noreferrer" style="color:${linkColor};text-decoration:underline;">${linkText}</a>${suffixText}
                 </div>
               </td>
             </tr>

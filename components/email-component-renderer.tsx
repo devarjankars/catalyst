@@ -24,6 +24,7 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
 import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator";
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
+import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -749,32 +750,35 @@ export function EmailComponentRenderer({
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
           >
             <div style={{ height: `${parseInt(String(paddingTop), 10) || 15}px` }} />
-            {linkItems.map((item: any, i: number) => (
-              <div
-                key={i}
-                style={{
-                  fontSize,
-                  color,
-                  lineHeight,
-                  fontFamily,
-                  padding: "0 15px 10px 20px",
-                  fontWeight: item.bold ? "bold" : "normal",
-                  textAlign: "left",
-                }}
-              >
-                <span dangerouslySetInnerHTML={{ __html: item.prefixText || "" }} />
-                <a
-                  href={item.linkHref || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: item.linkColor || "#007bff", textDecoration: "underline" }}
-                  onClick={(e) => !previewMode && e.preventDefault()}
+            {linkItems.map((item: any, i: number) => {
+              const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    fontSize,
+                    color,
+                    lineHeight,
+                    fontFamily,
+                    padding: "0 15px 10px 20px",
+                    fontWeight: item.bold ? "bold" : "normal",
+                    textAlign: "left",
+                  }}
                 >
-                  {item.linkText}
-                </a>
-                <span dangerouslySetInnerHTML={{ __html: item.suffixText || "" }} />
-              </div>
-            ))}
+                  <span dangerouslySetInnerHTML={{ __html: item.prefixText || "" }} />
+                  <a
+                    href={item.linkHref || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: item.linkColor || "#007bff", textDecoration: "underline" }}
+                    onClick={(e) => !previewMode && e.preventDefault()}
+                  >
+                    {linkText}
+                  </a>
+                  <span dangerouslySetInnerHTML={{ __html: suffixText }} />
+                </div>
+              );
+            })}
             <div style={{ height: `${parseInt(String(paddingBottom), 10) || 15}px` }} />
           </div>
         );
