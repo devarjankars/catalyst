@@ -198,7 +198,8 @@ export default function VSBPage() {
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'desktop');
       const normalized = normalizeEmailHtml(raw, 600);
-      return injectHeader(normalized, makeHeaderHtml(`Desktop View - ${opt.title}`, false, opt.imageOptionTitle || `Desktop View - ${opt.title}`));
+      const desktopLabel = opt.title === 'Standard View' ? 'Desktop View' : `Desktop View - ${opt.title}`;
+      return injectHeader(normalized, makeHeaderHtml(desktopLabel, false, opt.imageOptionTitle || desktopLabel));
     });
 
     const mobileHtmls = optArray.map((opt, idx) => {
@@ -246,7 +247,8 @@ export default function VSBPage() {
       );
 
       // Mobile: left-aligned title, no centerLabel.
-      return injectHeader(withMobileStyles, makeHeaderHtml(`Mobile View - ${opt.title}`, true));
+      const mobileLabel = opt.title === 'Standard View' ? 'Mobile View' : `Mobile View - ${opt.title}`;
+      return injectHeader(withMobileStyles, makeHeaderHtml(mobileLabel, true));
     });
 
     if (includeDV) {
