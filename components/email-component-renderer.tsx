@@ -920,6 +920,7 @@ export function EmailComponentRenderer({
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
+                toolbarPlacement="selection"
                 value={component.isiHtml || generatedHtml}
                 onChange={(isiHtml) => onUpdate({ isiHtml })}
                 style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
@@ -937,6 +938,7 @@ export function EmailComponentRenderer({
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
+                toolbarPlacement="selection"
                 value={component.html || ""}
                 onChange={(html) => onUpdate({ html })}
                 style={{

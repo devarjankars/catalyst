@@ -80,9 +80,10 @@ interface RichTextEditorProps {
   className?: string
   isSelected?: boolean
   paragraphSpacingPx?: number
+  toolbarPlacement?: "below" | "selection"
 }
 
-export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -91,6 +92,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const lastEditorHtmlRef = useRef<string | null>(null)
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("8")
+  const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
   const savedRangeRef = useRef<Range | null>(null)
 
   // Link dialog state
@@ -108,6 +110,59 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     return Array.from(editor.querySelectorAll<HTMLElement>(blockSelector))
       .filter((element) => !element.querySelector(blockSelector))
       .filter((element) => range.intersectsNode(element))
+  }
+
+  const updateToolbarPosition = () => {
+    if (toolbarPlacement !== "selection") return
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    if (!editor) {
+      setToolbarPosition(null)
+      return
+    }
+
+    const selectionRange = selection && selection.rangeCount > 0
+      ? selection.getRangeAt(0)
+      : null
+    const range = selectionRange &&
+      !selectionRange.collapsed &&
+      editor.contains(selectionRange.startContainer) &&
+      editor.contains(selectionRange.endContainer)
+      ? selectionRange
+      : savedRangeRef.current
+    if (!range || range.collapsed) {
+      setToolbarPosition(null)
+      return
+    }
+    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) {
+      setToolbarPosition(null)
+      return
+    }
+
+    const selectionRect = range.getBoundingClientRect()
+    if (selectionRect.width === 0 && selectionRect.height === 0) {
+      setToolbarPosition(null)
+      return
+    }
+
+    const toolbarWidth = toolbarRef.current?.offsetWidth || 480
+    const toolbarHeight = toolbarRef.current?.offsetHeight || 44
+    const maxLeft = Math.max(8, window.innerWidth - toolbarWidth - 8)
+    const left = Math.max(
+      8,
+      Math.min(
+        selectionRect.left + selectionRect.width / 2 - toolbarWidth / 2,
+        maxLeft,
+      ),
+    )
+    const preferredTop = selectionRect.top >= toolbarHeight + 8
+      ? selectionRect.top - toolbarHeight - 8
+      : selectionRect.bottom + 8
+    const maxTop = Math.max(8, window.innerHeight - toolbarHeight - 8)
+    const top = Math.max(8, Math.min(preferredTop, maxTop))
+    setToolbarPosition((current) =>
+      current?.top === top && current.left === left ? current : { top, left }
+    )
   }
 
   const splitSelectedBreakLines = (range: Range): HTMLElement[] | null => {
@@ -192,6 +247,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         }
       }
     }
+    updateToolbarPosition()
   }
 
   const restoreSelection = () => {
@@ -222,6 +278,21 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   useEffect(() => () => {
     if (changeTimerRef.current) clearTimeout(changeTimerRef.current)
   }, [])
+
+  useLayoutEffect(() => {
+    if (toolbarPlacement === "selection" && toolbarPosition) updateToolbarPosition()
+  }, [toolbarPlacement, toolbarPosition])
+
+  useEffect(() => {
+    if (!focused || toolbarPlacement !== "selection") return
+    const repositionToolbar = () => updateToolbarPosition()
+    window.addEventListener("scroll", repositionToolbar, true)
+    window.addEventListener("resize", repositionToolbar)
+    return () => {
+      window.removeEventListener("scroll", repositionToolbar, true)
+      window.removeEventListener("resize", repositionToolbar)
+    }
+  }, [focused, toolbarPlacement])
 
   const flushInput = () => {
     if (changeTimerRef.current) {
@@ -288,6 +359,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       lastEditorHtmlRef.current = currentHtml
     }
 
+    updateToolbarPosition()
     if (changeTimerRef.current) clearTimeout(changeTimerRef.current)
     changeTimerRef.current = setTimeout(flushInput, 300)
   }
@@ -493,6 +565,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
       if (spanText === selectedText) {
         targetElement.style.color = color
+        savedRangeRef.current = range.cloneRange()
         handleInput()
         return
       }
@@ -503,10 +576,10 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     span.appendChild(range.extractContents())
     range.insertNode(span)
 
-    range.setStartAfter(span)
-    range.setEndAfter(span)
+    range.selectNodeContents(span)
     selection.removeAllRanges()
     selection.addRange(range)
+    savedRangeRef.current = range.cloneRange()
 
     handleInput()
   }
@@ -615,6 +688,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             const active = document.activeElement
             if (toolbarRef.current && active && toolbarRef.current.contains(active)) return
             setFocused(false)
+            if (toolbarPlacement === "selection") setToolbarPosition(null)
           }, 0)
         }}
         style={{ minHeight: "min-content", outline: "none", ...style }}
@@ -622,39 +696,46 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {isSelected && focused && (
+      {isSelected && focused && (toolbarPlacement !== "selection" || toolbarPosition) && (
         <div
           ref={toolbarRef}
-          className="mt-2 w-fit max-w-full bg-white border rounded shadow-lg p-1.5 flex flex-wrap items-center gap-1 z-50"
+          aria-label="Rich text formatting toolbar"
+          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-50 ${toolbarPlacement === "selection" ? "fixed" : "mt-2"}`}
+          style={toolbarPlacement === "selection" && toolbarPosition
+            ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
+            : undefined}
           tabIndex={-1}
           onMouseDown={saveSelection}
         >
-          <button type="button" className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-black"
+          <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => { document.execCommand("bold"); handleInput() }}>
             <strong>B</strong>
           </button>
-          <button type="button" className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-black"
+          <button type="button" title="Italic" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => { document.execCommand("italic"); handleInput() }}>
             <Italic className="h-3 w-3" />
           </button>
-          <button type="button" className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-black"
+          <button type="button" title="Underline" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => { document.execCommand("underline"); handleInput() }}>
             <u>U</u>
           </button>
-          <button type="button" className="px-2 py-1 text-xs hover:bg-gray-100 rounded text-black"
+          <button type="button" title="Insert link" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => LinkifyText()}>
             <Link className="h-3 w-3" />
           </button>
-          <button type="button" className="px-2 py-1 text-md hover:bg-gray-100 rounded text-black"
+          <button type="button" title="Superscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => toggleSuperscript()}>
             <Superscript className="h-4 w-4" />
           </button>
-          <div className="relative">
-            <input type="color" className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+          <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
+          <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
+            Color
+            <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
               onMouseDown={saveSelection}
               onChange={(e) => applyColor(e.currentTarget.value)}
-              title="Text Color" />
-          </div>
+              title="Text color"
+              aria-label="Text color" />
+          </label>
           <select
             className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
             value=""
