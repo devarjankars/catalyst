@@ -365,6 +365,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const LinkifyText = () => {
+    restoreSelection()
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
 
@@ -449,6 +450,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const toggleSuperscript = () => {
+    restoreSelection()
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
 
@@ -584,6 +586,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     handleInput()
   }
 
+  const applyFormattingCommand = (command: "bold" | "italic" | "underline") => {
+    restoreSelection()
+    document.execCommand(command)
+    handleInput()
+  }
+
   const getSelectedParagraphs = (): HTMLElement[] => {
     const editor = editorRef.current
     const range = savedRangeRef.current
@@ -708,15 +716,15 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           onMouseDown={saveSelection}
         >
           <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => { document.execCommand("bold"); handleInput() }}>
+            onClick={() => applyFormattingCommand("bold")}>
             <strong>B</strong>
           </button>
           <button type="button" title="Italic" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => { document.execCommand("italic"); handleInput() }}>
+            onClick={() => applyFormattingCommand("italic")}>
             <Italic className="h-3 w-3" />
           </button>
           <button type="button" title="Underline" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => { document.execCommand("underline"); handleInput() }}>
+            onClick={() => applyFormattingCommand("underline")}>
             <u>U</u>
           </button>
           <button type="button" title="Insert link" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"

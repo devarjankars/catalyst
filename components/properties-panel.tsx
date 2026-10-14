@@ -2530,7 +2530,7 @@ export function PropertiesPanel({
               <RichTextEditor
                 isSelected
                 value={comp.boxText ?? ""}
-                onChange={(boxText) => onUpdateComponent({ boxText })}
+                onChange={(boxText) => onUpdateComponent({ boxText }, true)}
                 style={{ minHeight: "100px" }}
               />
               <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
@@ -3177,7 +3177,7 @@ export function PropertiesPanel({
                 <RichTextEditor
                   isSelected
                   value={c.boxText ?? ""}
-                  onChange={(boxText) => onUpdateComponent({ boxText })}
+                  onChange={(boxText) => onUpdateComponent({ boxText }, true)}
                   style={{ minHeight: "100px" }}
                 />
                 <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
