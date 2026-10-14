@@ -149,6 +149,18 @@ export interface EmailComponent {
   imageTextGap?: number
   imageTextVerticalAlign?: "top" | "middle" | "bottom"
 
+  // Orserdu highlight box properties
+  boxText?: string
+  boxBgColor?: string
+  boxTextColor?: string
+  boxFontSize?: string
+  boxLineHeight?: string
+  boxFontWeight?: string
+  boxBorderRadius?: string
+  boxPadding?: string
+  outerPadding?: string
+  spacingAfterBox?: string
+
   // orserdu-emerald-stats properties
   emeraldLeftIconSrc?: string
   emeraldLeftIconAlt?: string

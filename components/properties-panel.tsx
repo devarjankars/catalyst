@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
+import { getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
 // Used by FontSizeInput and per-link font-size inputs throughout this file.
@@ -280,7 +281,7 @@ function OrserduIsiSelectPanel({
   const [heading,         setHeading]         = useState<string>(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
   const [headingColor,    setHeadingColor]    = useState<string>(component.headingColor    ?? "#006937");
   const [headingFontSize, setHeadingFontSize] = useState<string>(component.headingFontSize ?? "16px");
-  const [headingPadding,  setHeadingPadding]  = useState<string>(component.headingPadding  ?? "10px 20px 10px 20px");
+  const [headingPadding,  setHeadingPadding]  = useState<string>(getOrserduIsiPadding(component.headingPadding));
   const [bulletItems,     setBulletItems]     = useState<BulletItem[]>(component.bulletItems ?? []);
   const [bulletColor,     setBulletColor]     = useState<string>(component.bulletColor     ?? "#69d6b5");
   const [textColor,       setTextColor]       = useState<string>(component.textColor       ?? "#000000");
@@ -289,9 +290,9 @@ function OrserduIsiSelectPanel({
   const [spaceBetweenBullets, setSpaceBetweenBullets] = useState<string>(component.spaceBetweenBullets ?? "5");
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
-  const [footerPadding,   setFooterPadding]   = useState<string>(component.footerPadding   ?? "15px 20px 12px 20px");
+  const [footerPadding,   setFooterPadding]   = useState<string>(getOrserduIsiPadding(component.footerPadding));
   const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
-  const [trialDesignPadding, setTrialDesignPadding] = useState<string>(component.trialDesignPadding ?? "0 20px 10px 20px");
+  const [trialDesignPadding, setTrialDesignPadding] = useState<string>(getOrserduIsiPadding(component.trialDesignPadding));
   const [showFooter,      setShowFooter]      = useState<boolean>(!!(component.footerLine));
   const [showTrialDesign, setShowTrialDesign] = useState<boolean>(!!(component.trialDesignHtml));
 
@@ -300,7 +301,7 @@ function OrserduIsiSelectPanel({
     setHeading(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
     setHeadingColor(component.headingColor    ?? "#006937");
     setHeadingFontSize(component.headingFontSize ?? "16px");
-    setHeadingPadding(component.headingPadding  ?? "10px 20px 10px 20px");
+    setHeadingPadding(getOrserduIsiPadding(component.headingPadding));
     setBulletItems(component.bulletItems   ?? []);
     setBulletColor(component.bulletColor    ?? "#69d6b5");
     setTextColor(component.textColor       ?? "#000000");
@@ -309,9 +310,9 @@ function OrserduIsiSelectPanel({
     setSpaceBetweenBullets(component.spaceBetweenBullets ?? "5");
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
-    setFooterPadding(component.footerPadding   ?? "15px 20px 12px 20px");
+    setFooterPadding(getOrserduIsiPadding(component.footerPadding));
     setTrialDesignHtml(component.trialDesignHtml ?? "");
-    setTrialDesignPadding(component.trialDesignPadding ?? "0 20px 10px 20px");
+    setTrialDesignPadding(getOrserduIsiPadding(component.trialDesignPadding));
     setShowFooter(!!(component.footerLine));
     setShowTrialDesign(!!(component.trialDesignHtml));
   }, [component.id]);
@@ -2521,39 +2522,40 @@ export function PropertiesPanel({
         );
             
       case "orserdu-highlight-box": {
-        const comp = component as any;
+        const comp = component;
         return (
           <div className="space-y-4">
             <div>
               <Label>Box Text</Label>
-              <textarea
-                className="w-full min-h-[100px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
-                value={comp.boxText || ""}
-                onChange={(e) => onUpdateComponent({ boxText: e.target.value } as any)}
-                placeholder="Box content…"
+              <RichTextEditor
+                isSelected
+                value={comp.boxText ?? ""}
+                onChange={(boxText) => onUpdateComponent({ boxText })}
+                style={{ minHeight: "100px" }}
               />
+              <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
                 <Label>Box Background</Label>
-                <ColorInput value={comp.boxBgColor || "#FFD500"} onChange={(v) => onUpdateComponent({ boxBgColor: v } as any)} />
+                <ColorInput value={comp.boxBgColor || "#FFD500"} onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })} />
               </div>
               <div className="flex-1">
                 <Label>Text Color</Label>
-                <ColorInput value={comp.boxTextColor || "#002E6D"} onChange={(v) => onUpdateComponent({ boxTextColor: v } as any)} />
+                <ColorInput value={comp.boxTextColor || "#002E6D"} onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })} />
               </div>
             </div>
             <div>
               <Label>Font Size</Label>
-              <FontSizeInput value={comp.boxFontSize || "14px"} onChange={(v) => onUpdateComponent({ boxFontSize: v } as any)} />
+              <FontSizeInput value={comp.boxFontSize || "14px"} onChange={(boxFontSize) => onUpdateComponent({ boxFontSize })} />
             </div>
             <div>
               <Label>Line Height</Label>
-              <LineHeightInput value={comp.boxLineHeight || "18px"} onChange={(v) => onUpdateComponent({ boxLineHeight: v } as any)} />
+              <LineHeightInput value={comp.boxLineHeight || "18px"} onChange={(boxLineHeight) => onUpdateComponent({ boxLineHeight })} />
             </div>
             <div>
               <Label>Font Weight</Label>
-              <Select value={comp.boxFontWeight || "700"} onValueChange={(v) => onUpdateComponent({ boxFontWeight: v } as any)}>
+              <Select value={comp.boxFontWeight || "700"} onValueChange={(boxFontWeight) => onUpdateComponent({ boxFontWeight })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="400">Normal</SelectItem>
@@ -2563,15 +2565,15 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Border Radius</Label>
-              <Input value={comp.boxBorderRadius || "12px"} onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value } as any)} placeholder="12px" />
+              <Input value={comp.boxBorderRadius || "12px"} onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value })} placeholder="12px" />
             </div>
             <div>
               <Label>Inner Padding</Label>
-              <PaddingInput value={comp.boxPadding || "16px 18px"} onChange={(v) => onUpdateComponent({ boxPadding: v } as any)} />
+              <PaddingInput value={comp.boxPadding || "16px 18px"} onChange={(boxPadding) => onUpdateComponent({ boxPadding })} />
             </div>
             <div>
               <Label>Space below box (px)</Label>
-              <Input type="number" min={0} value={comp.spacingAfterBox ?? "20"} onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value } as any)} />
+              <Input type="number" min={0} value={comp.spacingAfterBox ?? "20"} onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value })} />
             </div>
           </div>
         );
@@ -3166,18 +3168,19 @@ export function PropertiesPanel({
         );
 
         case "orserdu-highlight-box": {
-          const c = component as any;
+          const c = component;
           return (
             <div className="space-y-4">
               {/* Box text */}
               <div>
-                <Label>Box Text (HTML supported)</Label>
-                <textarea
-                  className="w-full min-h-[100px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                <Label>Box Text</Label>
+                <RichTextEditor
+                  isSelected
                   value={c.boxText ?? ""}
-                  onChange={(e) => onUpdateComponent({ boxText: e.target.value } as any)}
-                  placeholder="Enter highlighted box text..."
+                  onChange={(boxText) => onUpdateComponent({ boxText })}
+                  style={{ minHeight: "100px" }}
                 />
+                <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
               </div>
 
               {/* Colors */}
@@ -3185,14 +3188,14 @@ export function PropertiesPanel({
                 <Label>Box Background Color</Label>
                 <ColorInput
                   value={c.boxBgColor ?? "#FFD500"}
-                  onChange={(v) => onUpdateComponent({ boxBgColor: v } as any)}
+                  onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })}
                 />
               </div>
               <div>
                 <Label>Text Color</Label>
                 <ColorInput
                   value={c.boxTextColor ?? "#002E6D"}
-                  onChange={(v) => onUpdateComponent({ boxTextColor: v } as any)}
+                  onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })}
                 />
               </div>
 
@@ -3201,21 +3204,21 @@ export function PropertiesPanel({
                 <Label>Font Size</Label>
                 <FontSizeInput
                   value={c.boxFontSize ?? "14px"}
-                  onChange={(v) => onUpdateComponent({ boxFontSize: v } as any)}
+                  onChange={(boxFontSize) => onUpdateComponent({ boxFontSize })}
                 />
               </div>
               <div>
                 <Label>Line Height</Label>
                 <LineHeightInput
                   value={c.boxLineHeight ?? "18px"}
-                  onChange={(v) => onUpdateComponent({ boxLineHeight: v } as any)}
+                  onChange={(boxLineHeight) => onUpdateComponent({ boxLineHeight })}
                 />
               </div>
               <div>
                 <Label>Font Weight</Label>
                 <Select
                   value={c.boxFontWeight ?? "700"}
-                  onValueChange={(v) => onUpdateComponent({ boxFontWeight: v } as any)}
+                  onValueChange={(boxFontWeight) => onUpdateComponent({ boxFontWeight })}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

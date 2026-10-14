@@ -25,6 +25,7 @@ import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
+import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -713,7 +714,7 @@ export function EmailComponentRenderer({
 
         return (
           <div
-            style={{ padding: component.padding || "0 20px 10px 20px" }}
+            style={{ padding: component.outerPadding ?? component.padding ?? "0 20px 10px 20px" }}
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
           >
             <div
@@ -1753,7 +1754,7 @@ export function EmailComponentRenderer({
               heading = "SELECT IMPORTANT SAFETY INFORMATION",
               headingColor = "#006937",
               headingFontSize = "16px",
-              headingPadding = "10px 20px 10px 20px",
+              headingPadding = "0",
               bulletItems = [],
               bulletColor = "#69d6b5",
               textColor = "#000000",
@@ -1761,17 +1762,17 @@ export function EmailComponentRenderer({
               lineHeight = "16px",
               backgroundColor = "#ffffff",
               footerLine = "",
-              footerPadding = "15px 20px 12px 20px",
+              footerPadding = "0",
               trialDesignHtml = "",
-              trialDesignPadding = "0 20px 10px 20px",
+              trialDesignPadding = "0",
             } = component as any;
 
             return (
-              <div style={baseStyle} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiOuterPadding(component.padding) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>
-                    <td style={{ padding: headingPadding, backgroundColor: "transparent" }}>
+                    <td style={{ padding: getOrserduIsiPadding(headingPadding), backgroundColor: "transparent" }}>
                       <div style={{ fontSize: headingFontSize, color: headingColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}>
                         <b>{heading}</b>
                       </div>
@@ -1782,7 +1783,7 @@ export function EmailComponentRenderer({
                 {/* Bullet items */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0} style={{ backgroundColor }}>
                   <tbody><tr>
-                    <td style={{ padding: "0 20px 0 20px", backgroundColor: "transparent" }}>
+                    <td style={{ padding: 0, backgroundColor: "transparent" }}>
                       <table cellPadding={0} cellSpacing={0} border={0} width="100%" style={{ backgroundColor }}>
                         <tbody>
                           {(bulletItems as any[]).map((item: any, i: number) => {
@@ -1816,7 +1817,7 @@ export function EmailComponentRenderer({
                 {footerLine && (
                   <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                     <tbody><tr>
-                      <td style={{ padding: footerPadding, backgroundColor: "transparent" }}>
+                      <td style={{ padding: getOrserduIsiPadding(footerPadding), backgroundColor: "transparent" }}>
                         <div style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}>
                           <b>{footerLine}</b>
                         </div>
@@ -1829,7 +1830,7 @@ export function EmailComponentRenderer({
                 {trialDesignHtml && (
                   <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                     <tbody><tr>
-                      <td style={{ padding: trialDesignPadding, backgroundColor: "transparent" }}>
+                      <td style={{ padding: getOrserduIsiPadding(trialDesignPadding), backgroundColor: "transparent" }}>
                         <div
                           style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}
                           dangerouslySetInnerHTML={{ __html: trialDesignHtml }}

@@ -6,6 +6,7 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
+import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "./orserdu-isi-padding";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -656,7 +657,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
 
     case "orserdu-highlight-box": {
       const {
-        boxText         = "Connect virtually with an expert for a 30-minute, one-on-one presentation.",
+        boxText         = "",
         boxBgColor      = "#FFD500",
         boxTextColor    = "#002E6D",
         boxFontSize     = "14px",
@@ -669,7 +670,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
 
       // Use the standard component.padding for the outer left/right spacing
       // so it aligns with every other component in the email.
-      const outerPad = component.padding || "0 20px 10px 20px";
+      const outerPad = component.outerPadding ?? component.padding ?? "0 20px 10px 20px";
       const spacerPx = parseInt(String(spacingAfterBox), 10) || 20;
 
       return `
@@ -1967,10 +1968,11 @@ case "isi": {
 
     case "orserdu-isi-select": {
       const c = component as any;
+      const outerPadding   = getOrserduIsiOuterPadding(c.padding);
       const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
-      const headingPadding = c.headingPadding ?? "10px 20px 10px 20px";
+      const headingPadding = getOrserduIsiPadding(c.headingPadding);
       const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string }>;
       const bulletColor    = c.bulletColor    ?? "#69d6b5";
       const textColor      = c.textColor      ?? "#000000";
@@ -1978,9 +1980,9 @@ case "isi": {
       const lineHeight     = c.lineHeight     ?? "16px";
       const backgroundColor= c.backgroundColor?? "#ffffff";
       const footerLine     = c.footerLine     ?? "";
-      const footerPadding  = c.footerPadding  ?? "15px 20px 12px 20px";
+      const footerPadding  = getOrserduIsiPadding(c.footerPadding);
       const trialDesignHtml= c.trialDesignHtml?? "";
-      const trialDesignPad = c.trialDesignPadding ?? "0 20px 10px 20px";
+      const trialDesignPad = getOrserduIsiPadding(c.trialDesignPadding);
 
       // Respect the configurable spaceBetweenBullets value
       const spacingPx = parseInt(String(c.spaceBetweenBullets ?? "5").replace(/px$/i, ""), 10) || 5;
@@ -1999,7 +2001,7 @@ case "isi": {
         ${i < bulletItems.length - 1 ? `<tr><td colspan="2" height="${spacingPx}" style="font-size:0px;line-height:${spacingPx}px;mso-line-height-rule:exactly;background-color:${backgroundColor};">&nbsp;</td></tr>` : ""}
       `).join("");
 
-      return `
+      const isiContent = `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tbody><tr>
             <td style="padding:${headingPadding};background-color:transparent;">
@@ -2012,7 +2014,7 @@ case "isi": {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
           bgcolor="${backgroundColor}" style="background-color:${backgroundColor};">
           <tbody><tr>
-            <td bgcolor="${backgroundColor}" style="padding:0 20px 0 20px;background-color:transparent;">
+            <td bgcolor="${backgroundColor}" style="padding:0;background-color:transparent;">
               <table bgcolor="${backgroundColor}" style="background-color:${backgroundColor};"
                 cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tbody>${bulletRows}</tbody>
@@ -2040,6 +2042,14 @@ case "isi": {
             </td>
           </tr></tbody>
         </table>` : ""}
+      `.trim();
+
+      return `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tbody><tr><td style="padding:${outerPadding};">
+            ${isiContent}
+          </td></tr></tbody>
+        </table>
       `.trim();
     }
 
