@@ -675,9 +675,14 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       // so it aligns with every other component in the email.
       const outerPad = component.outerPadding ?? component.padding ?? "0 20px 10px 20px";
       const spacerPx = parseInt(String(spacingAfterBox), 10) || 20;
+      const displayClass = component.displayType === "mobile-only"
+        ? 'class="mbl-show-table"'
+        : component.displayType === "desktop-only"
+          ? 'class="desk-show-table"'
+          : "";
 
       return `
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<table ${displayClass} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tbody><tr>
     <td style="padding:${outerPad};">
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
