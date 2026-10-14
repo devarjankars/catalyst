@@ -7,13 +7,19 @@ const legacyDefaultPadding = new Set([
 
 const isiOuterPadding = "0 20px 10px 20px";
 
-export function getOrserduIsiOuterPadding(value: unknown): string {
+export function getOrserduIsiOuterPadding(value: unknown, isNested = false): string {
   if (typeof value !== "string" || !value.trim() || value.trim() === "0") {
-    return isiOuterPadding;
+    return isNested ? "0" : isiOuterPadding;
   }
 
   const padding = value.trim().replace(/\s+/g, " ");
-  return padding === "0 30px 10px 30px" ? isiOuterPadding : padding;
+  if (padding === "0 30px 10px 30px") {
+    return isNested ? "0" : isiOuterPadding;
+  }
+  if (padding === isiOuterPadding) {
+    return isNested ? "0" : isiOuterPadding;
+  }
+  return padding;
 }
 
 export function getOrserduIsiPadding(value: unknown): string {

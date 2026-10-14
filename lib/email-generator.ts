@@ -52,7 +52,7 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
   return applyPaddingToCell(html, wrapperCellMatch, padding);
 }
 
-export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile'): string {
+export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
     return component.type === "isi"
@@ -63,7 +63,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
     case "section":
       const childrenHTML = (component.children || [])
         .filter((child) => !!child) // Filter out undefined children
-        .map((child) => generateComponentHTML(child, pdfMode))
+        .map((child) => generateComponentHTML(child, pdfMode, true))
         .join("");
 
       const display = (component.displayType ||
@@ -127,10 +127,13 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
           >
             ${
               component.columns && component.columns > 1
-                ? generateColumnHtml({ component, generateComponentHTML })
+                ? generateColumnHtml({
+                    component,
+                    generateComponentHTML: (child) => generateComponentHTML(child, pdfMode, true),
+                  })
                 : generateColumnHtml({
                     component,
-                    generateComponentHTML,
+                    generateComponentHTML: (child) => generateComponentHTML(child, pdfMode, true),
                     childHtml: childrenHTML,
                   })
             }
@@ -1968,7 +1971,7 @@ case "isi": {
 
     case "orserdu-isi-select": {
       const c = component as any;
-      const outerPadding   = getOrserduIsiOuterPadding(c.padding);
+      const outerPadding   = getOrserduIsiOuterPadding(c.padding, isNested);
       const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
@@ -1989,12 +1992,12 @@ case "isi": {
 
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
-          <td align="left" valign="top" width="2%"
+          <td align="left" valign="top"
             style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding-bottom:3px;background-color:transparent;">
             &bull;
           </td>
           <td align="left" valign="middle"
-            style="color:${textColor};font-size:${fontSize};font-weight:normal;text-align:left;line-height:${lineHeight};padding-left:5px;font-family:Arial,sans-serif;background-color:${backgroundColor};">
+            style="color:${textColor};font-size:${fontSize};font-weight:normal;text-align:left;line-height:${lineHeight};font-family:Arial,sans-serif;background-color:${backgroundColor};">
             ${item.boldText ? `<b>${item.boldText}</b>` : ""}${item.normalText ?? ""}
           </td>
         </tr>

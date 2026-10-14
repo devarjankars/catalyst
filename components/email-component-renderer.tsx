@@ -1768,7 +1768,7 @@ export function EmailComponentRenderer({
             } = component as any;
 
             return (
-              <div style={{ ...baseStyle, padding: getOrserduIsiOuterPadding(component.padding) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiOuterPadding(component.padding, parentId !== "root") }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>
@@ -1793,10 +1793,10 @@ export function EmailComponentRenderer({
                             return (
                             <React.Fragment key={i}>
                               <tr>
-                                <td align="left" valign="top" width="2%" style={{ color: bulletColor, fontSize: "16px", lineHeight, paddingBottom: "3px", backgroundColor: "transparent" }}>
+                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, paddingBottom: "3px", backgroundColor: "transparent" }}>
                                   &bull;
                                 </td>
-                                <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, paddingLeft: "5px", fontFamily: "Arial, sans-serif", backgroundColor }}>
+                                <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", backgroundColor }}>
                                   {item.boldText && <b>{item.boldText}</b>}
                                   <span dangerouslySetInnerHTML={{ __html: item.normalText || "" }} />
                                 </td>
