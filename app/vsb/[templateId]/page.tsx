@@ -165,7 +165,7 @@ export default function VSBPage() {
         <div class="${divClass}" style="border-top:1px solid #000;padding-bottom:10px;">
           <div class="${detailsClass}" style="display:table;width:calc(100% - 40px);box-sizing:border-box;margin:0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
             ${headerDetails.map(detail => `
-              <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;">
+              <div class="${rowClass}" style="margin-bottom:2px;text-align:left;white-space:normal;line-height:${detail.name.toLowerCase() === 'preheader' ? '13px' : 'inherit'};">
                 <span style="font-weight:${(detail.nameBold ?? true) ? 'bold' : 'normal'};color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${(detail.valueBold ?? (detail.name.toLowerCase() !== 'preheader')) ? 'bold' : 'normal'};color:${detail.valueColor || ((detail.value.includes('[') || detail.value.includes(']')) ? '#FF66CC' : 'black')};">${detail.value}</span>
               </div>
             `).join('')}

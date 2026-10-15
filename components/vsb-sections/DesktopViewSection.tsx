@@ -91,7 +91,8 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
             ${headerDetails.map(detail => {
               const valueBold = detail.valueBold ?? (detail.name.toLowerCase() !== 'preheader');
               const fv = valueBold ? detail.value.replace(/(\[[^\]]*\])/g, '<b>$1</b>') : detail.value;
-              return `<div style="margin-bottom:2px;"><span style="font-weight:${(detail.nameBold ?? true) ? 'bold' : 'normal'};color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${valueBold ? 'bold' : 'normal'};color:${detail.valueColor || (detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black')};">${fv}</span></div>`;
+              const lineHeight = detail.name.toLowerCase() === 'preheader' ? '13px' : 'inherit';
+              return `<div style="margin-bottom:2px;line-height:${lineHeight};"><span style="font-weight:${(detail.nameBold ?? true) ? 'bold' : 'normal'};color:${detail.nameColor || 'black'};">${detail.name}: </span><span style="font-weight:${valueBold ? 'bold' : 'normal'};color:${detail.valueColor || (detail.value.includes('[') || detail.value.includes(']') ? '#FF66CC' : 'black')};">${fv}</span></div>`;
             }).join('')}
           </div>
         </div>

@@ -119,7 +119,7 @@ export function buildVariableCopyHtml(data: any, emailName: string, headingColor
       const rawValue = typeof options[0] === 'string' ? options[0] : JSON.stringify(options[0]);
       return `
       <div style="box-sizing:border-box;width:100%;padding:0;margin:0 0 16px;">
-        <div style="font-size:12px;color:#111827;line-height:1.4;box-sizing:border-box;">
+        <div style="font-size:12px;color:#111827;line-height:14px;box-sizing:border-box;">
           <span style="font-weight:bold;margin-right:4px;">Preheader:</span>${rawValue}
         </div>
       </div>`;
