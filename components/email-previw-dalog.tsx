@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { EmailComponent } from "@/types/email-builder";
 import { generateEmailHTML } from "@/lib/email-generator";
+import { prepareEmailHtml } from "@/lib/email-dark-mode";
 import { exportToPDF } from "@/lib/pdf-export-utils";
 import { Monitor, Smartphone, Upload, Sun, Moon, Loader2 } from "lucide-react";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
@@ -45,7 +46,7 @@ function buildHtml(
   mobile = false,
   sourceHtml?: string,
 ): string {
-  const base = sourceHtml || generateEmailHTML(components, preheaderText);
+  const base = prepareEmailHtml(sourceHtml || generateEmailHTML(components, preheaderText));
   // Inject a <base href> so relative /public-folder image paths resolve
   // correctly inside the sandboxed preview iframe.
   const origin = typeof window !== 'undefined' ? window.location.origin : '';

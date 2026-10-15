@@ -1,6 +1,7 @@
 "use client"
 
 import { generateEmailHTML } from '@/lib/email-generator';
+import { removeEmailDarkModeStyles } from '@/lib/email-dark-mode';
 import { normalizeHtmlImageSrcs } from '@/lib/asset-url';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { useVSBStore } from '@/store/vsb-store';
@@ -68,7 +69,8 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false,
   const htmls = options.map(opt => {
     const rawHtml = generateEmailHTML(opt.components, preheader, 'mobile');
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const normalizedHtml = origin ? normalizeHtmlImageSrcs(rawHtml, origin) : rawHtml;
+    const previewHtml = removeEmailDarkModeStyles(rawHtml);
+    const normalizedHtml = origin ? normalizeHtmlImageSrcs(previewHtml, origin) : previewHtml;
     const withMobile = normalizedHtml.replace(/<\/head>/i, `${mobileOverride}</head>`);
 
     const headerHtml = `

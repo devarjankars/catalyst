@@ -2,11 +2,13 @@ import type { EmailComponent } from "@/types/email-builder";
 import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
-import { DEFAULT_ORSERDU_FOOTER_LOGO, resolveEmailAssetUrl } from "./asset-url";
+import { DEFAULT_ORSERDU_FOOTER_LOGO, normalizeHtmlImageSrcs, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
-import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "./orserdu-isi-padding";
+import { getOrserduIsiContentPadding, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
+import { preventJobCodeAutoLinking } from "./job-code";
+import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -52,12 +54,12 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
   return applyPaddingToCell(html, wrapperCellMatch, padding);
 }
 
-export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
+function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
     return component.type === "isi"
-      ? applyPaddingToFirstTableCell(component.isiHtml, component.padding || "0 20px 10px 20px")
-      : applyAnimatedIsiPadding(component.isiHtml, component.padding || "0 20px 10px 20px");
+      ? applyPaddingToFirstTableCell(component.isiHtml, getOrserduIsiContentPadding())
+      : applyAnimatedIsiPadding(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested));
   }
   switch (component.type) {
     case "section":
@@ -90,8 +92,6 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       };
 
       return `
-      ${display === "mobile-only" ? "<!--[if !mso]><!-->" : ""}
-      
     <table
       role="presentation"
       width="100%"
@@ -141,7 +141,6 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
         </td>
       </tr>
     </table>
-    ${display === "mobile-only" ? "<!--[endif]-->" : ""}
   `.trim();
 
     case "text": {
@@ -196,11 +195,9 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const imgStyle = `
-      
+        width: ${component.width || "100%"};
         height: ${component.height || "auto"};
-       
         max-width:${component.maxWidth || "100%"};
-       
       `.trim();
 
       return `
@@ -220,7 +217,7 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
                 component.textAlign || "center"
               }' style="padding: ${component.padding || "0 20px 0 20px"}; mso-line-height-rule: exactly;">
                  <img 
-                    width="${(component.width || "100%").toString().replace("px", "")}"
+                    width="${(component.width || "100%").toString().replace(/px$/i, "")}"
                     src="${component.src || ""}" 
                     alt="${component.alt || "Image"}"
                     border="0"
@@ -681,8 +678,12 @@ export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desk
           ? 'class="desk-show-table"'
           : "";
 
+      const displayStyle = component.displayType === "mobile-only"
+        ? 'style="display:none;mso-hide:all;"'
+        : "";
+
       return `
-<table ${displayClass} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<table ${displayClass} ${displayStyle} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tbody><tr>
     <td style="padding:${outerPad};">
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
@@ -824,7 +825,7 @@ case "isi": {
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
-            <td style="padding: ${component.padding || "0 20px 10px 20px"};">
+            <td style="padding: ${getOrserduIsiContentPadding()};">
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
@@ -1064,7 +1065,7 @@ case "isi": {
     </td>
   </tr>
   <tr>
-    <td class="isi-copy" style="padding:20px 20px 10px 20px;background-color:${backgroundColor};">
+    <td class="isi-copy" style="background-color:${backgroundColor};">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tbody>
         <tr><td style="font-weight:600;color:${isiHeadingColor} !important;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">${escapeHtmlText(isiHeading)}</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>
@@ -1448,6 +1449,7 @@ case "isi": {
         font-family: Arial, sans-serif;
         
       `.trim();
+      const jobCode = preventJobCodeAutoLinking(component.footerText?.jobcode || "");
 
       // Resolve the footer logo to an absolute URL.
       // DEFAULT_ORSERDU_FOOTER_LOGO is the canonical fallback (/menarini-stemline-logos.png).
@@ -1520,7 +1522,7 @@ case "isi": {
               <td  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
               }' style="padding: ${component.padding || "0 20px 0px 20px"}; ${itemStyle}">
-                 ${component.footerText?.rights || ""} ${component.footerText?.jobcode || ""}
+                 ${component.footerText?.rights || ""} <span class="apple-no-link">${jobCode}</span>
               </td>
             </tr>
              <tr>
@@ -1632,11 +1634,9 @@ case "isi": {
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
       const imgStyle = `
-      
+        width: ${component.width || "100%"};
         height: ${component.height || "auto"};
-       
         max-width:${component.maxWidth || "100%"};
-       
       `.trim();
 
       return `
@@ -1657,7 +1657,7 @@ case "isi": {
               }' style="padding: ${component.padding || "0 0 0 0"}; mso-line-height-rule: exactly;">
                 <a href="${component.href || "#"}" target="_blank" style="text-decoration: none;">
                  <img 
-                    width="${(component.width || "100%").toString().replace("px", "")}"
+                    width="${(component.width || "100%").toString().replace(/px$/i, "")}"
                     src="${component.src || ""}" 
                     alt="${component.alt || "Image"}"
                     border="0"
@@ -1976,7 +1976,7 @@ case "isi": {
 
     case "orserdu-isi-select": {
       const c = component as any;
-      const outerPadding   = getOrserduIsiOuterPadding(c.padding, isNested);
+      const outerPadding   = getOrserduIsiSelectPadding(c.padding, isNested);
       const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
@@ -1991,6 +1991,7 @@ case "isi": {
       const footerPadding  = getOrserduIsiPadding(c.footerPadding);
       const trialDesignHtml= c.trialDesignHtml?? "";
       const trialDesignPad = getOrserduIsiPadding(c.trialDesignPadding);
+      const bulletTextGap = Math.max(0, Math.min(40, Number.parseInt(String(c.bulletTextGap ?? "4").replace(/px$/i, ""), 10) || 0));
 
       // Respect the configurable spaceBetweenBullets value
       const spacingPx = parseInt(String(c.spaceBetweenBullets ?? "5").replace(/px$/i, ""), 10) || 5;
@@ -1998,7 +1999,7 @@ case "isi": {
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
           <td align="left" valign="top"
-            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding-bottom:3px;background-color:transparent;">
+            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding:0 ${bulletTextGap}px 3px 0;background-color:transparent;white-space:nowrap;">
             &bull;
           </td>
           <td align="left" valign="middle"
@@ -2450,6 +2451,13 @@ return `
   }
 }
 
+export function generateComponentHTML(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
+  const html = generateComponentHTMLInternal(component, pdfMode, isNested);
+  return component?.displayType === "mobile-only"
+    ? `<!--[if !mso]><!-->${html}<!--<![endif]-->`
+    : html;
+}
+
 export function generateEmailHTML(
   components: EmailComponent[],
   preHeaderText?: string,
@@ -2459,7 +2467,7 @@ export function generateEmailHTML(
     .map((component) => generateComponentHTML(component, pdfMode))
     .join("");
 
-  return `
+  const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2474,8 +2482,8 @@ export function generateEmailHTML(
           <meta name="x-apple-disable-message-reformatting">
 
           <!--target dark mode-->
-          <meta name="color-scheme" content="light">
-          <meta name="supported-color-schemes" content="light">
+          <meta name="color-scheme" content="light dark">
+          <meta name="supported-color-schemes" content="light dark">
 
     <title>Email Template</title>
 
@@ -2486,6 +2494,7 @@ export function generateEmailHTML(
               supported-color-schemes: light dark;
           }
     </style>
+    <style ${EMAIL_DARK_MODE_STYLE_MARKER}>${EMAIL_DARK_MODE_CSS}</style>
     <style>
         /* Reset styles */
         body, table, td, p, a, li, blockquote {
@@ -2558,13 +2567,24 @@ export function generateEmailHTML(
             line-height: 100%;
         }
 
-        a[x-apple-data-detectors] {
+        a[x-apple-data-detectors],
+        a[x-apple-data-detectors-type],
+        .apple-no-link a[x-apple-data-detectors] {
             color: inherit !important;
             text-decoration: none !important;
             font-size: inherit !important;
             font-family: inherit !important;
             font-weight: inherit !important;
             line-height: inherit !important;
+        }
+
+        .apple-no-link,
+        .apple-no-link a,
+        .apple-no-link a[x-apple-data-detectors],
+        .apple-no-link a[x-apple-data-detectors-type] {
+            color: inherit !important;
+            text-decoration: none !important;
+            -webkit-text-size-adjust: 100% !important;
         }
 
         .mobile {
@@ -2574,84 +2594,6 @@ export function generateEmailHTML(
         .desktop {
           display: inline-block !important;
         }
-
-        @media (prefers-color-scheme: dark) {
-      .dark-img {
-        display: block !important;
-        width: auto !important;
-        overflow: visible !important;
-        float: none !important;
-        max-height: inherit !important;
-        max-width: inherit !important;
-        line-height: auto !important;
-        margin-top: 0 !important;
-        visibility: inherit !important;
-      }
- 
-      .light-img {
-        display: none !important;
-      }
-   .darkmode {
-            background-color: #ffffff !important;
-            background-image: linear-gradient(#ffffff, #ffffff) !important;
-         }
- 
-               .dm_text {
-            color: #000000 !important;
-         }
- 
-      .linkLightBlue {
-        color: #00acdf !important;
-      }
- 
-      #initial-table {
-        background-color: #eee !important;
-      }
- 
-      .dark_td {
-        background-color: #545252 !important;
-      }
- 
- 
-           /* Force white bg on all content tables */
-         .darkmode, .darkmode td, .darkmode table {
-            background-color: #ffffff !important;
-            background-image: linear-gradient(#ffffff, #ffffff) !important;
-         }
- 
-         /* Dark body text */
-         .dm-text {
-            color: #000000 !important;
-         }
- 
-         /* Green headings */
-         .dm-green {
-            color: #006937 !important;
-         }
- 
-         /* Navy text */
-         .dm-navy {
-            color: #183559 !important;
-         }
- 
-         /* Blue links */
-         .dm-link, .dm-link a {
-            color: #0563C1 !important;
-         }
- 
-         /* Footer grey bg */
-         .dm-footer {
-            background-color: #F1F1F1 !important;
-         }
-
-         /* Elzonris CTA - keep brand colors in dark mode */
-         .elzonris-cta-bg {
-            background-color: #f55a1f !important;
-         }
-         .elzonris-cta-text {
-            color: #ffffff !important;
-         }
-    }
 
         @media only screen and (max-width: 480px) {
 
@@ -2806,4 +2748,9 @@ export function generateEmailHTML(
 </body>
 </html>
   `.trim();
+  const preparedHtml = prepareEmailHtml(html);
+  const assetBaseUrl =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  return assetBaseUrl ? normalizeHtmlImageSrcs(preparedHtml, assetBaseUrl) : preparedHtml;
 }

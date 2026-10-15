@@ -182,6 +182,9 @@ export interface EmailComponent {
   drugInteractionsColor?: string
   specificPopulationsColor?: string
   isiHtml?: string
+  bulletTextGap?: string
+  spaceBetweenBullets?: string
+  bulletItems?: Array<{ boldText?: string; normalText?: string }>
   paragraphSpacingPx?: number
 
   // orserdu-report-links properties

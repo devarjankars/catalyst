@@ -150,8 +150,9 @@ function printStyles(width: number): string {
     .pdf-email-meta__details,
     .pdf-mobile-email-meta__details {
       display: table !important;
-      width: auto !important;
-      margin: 0 0 0 20px !important;
+      width: calc(100% - 40px) !important;
+      box-sizing: border-box !important;
+      margin: 0 20px !important;
       padding-top: 20px !important;
       text-align: left !important;
     }
@@ -416,6 +417,7 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
       // that are below the viewport fold — using 20000px ensures everything renders.
       const measureTab = await browser.newPage({ viewport: { width, height: MAX_PAGE_HEIGHT } });
       try {
+        await measureTab.emulateMedia({ colorScheme: 'light' });
         await measureTab.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
         await waitForAssets(measureTab);
         await measureTab.evaluate(() => new Promise<void>((resolve) =>
@@ -570,6 +572,7 @@ ${bodyContent}
       let pagePdf!: Buffer;
 
     try {
+      await page.emulateMedia({ colorScheme: 'light' });
       await page.setContent(pageHtml, { waitUntil: 'load' });
       await waitForAssets(page);
       await page.evaluate(() => new Promise<void>((resolve) =>

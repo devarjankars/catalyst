@@ -179,7 +179,12 @@ function DeferredInput({
       value={local}
       onChange={(e) => setLocal(e.target.value)}
       onBlur={(e) => commit(e.target.value)}
-      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(local); (e.target as HTMLInputElement).blur(); } }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
     />
   );
 }
@@ -275,7 +280,7 @@ function OrserduIsiSelectPanel({
   onUpdateComponent,
 }: {
   component: any;
-  onUpdateComponent: (updates: any) => void;
+  onUpdateComponent: (updates: any, immediate?: boolean) => void;
 }) {
   // ── Local state mirrors the component props ──────────────────────────────
   const [heading,         setHeading]         = useState<string>(component.heading         ?? "SELECT IMPORTANT SAFETY INFORMATION");
@@ -288,6 +293,7 @@ function OrserduIsiSelectPanel({
   const [fontSize,        setFontSize]        = useState<string>(component.fontSize        ?? "14px");
   const [lineHeight,      setLineHeight]      = useState<string>(component.lineHeight      ?? "16px");
   const [spaceBetweenBullets, setSpaceBetweenBullets] = useState<string>(component.spaceBetweenBullets ?? "5");
+  const [bulletTextGap, setBulletTextGap] = useState<string>(component.bulletTextGap ?? "4");
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
   const [footerPadding,   setFooterPadding]   = useState<string>(getOrserduIsiPadding(component.footerPadding));
@@ -308,6 +314,7 @@ function OrserduIsiSelectPanel({
     setFontSize(component.fontSize        ?? "14px");
     setLineHeight(component.lineHeight      ?? "16px");
     setSpaceBetweenBullets(component.spaceBetweenBullets ?? "5");
+    setBulletTextGap(component.bulletTextGap ?? "4");
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
     setFooterPadding(getOrserduIsiPadding(component.footerPadding));
@@ -318,7 +325,10 @@ function OrserduIsiSelectPanel({
   }, [component.id]);
 
   // ── Commit helpers — only write to store on blur/enter ───────────────────
-  const commit = useCallback((updates: any) => onUpdateComponent(updates), [onUpdateComponent]);
+  const commit = useCallback(
+    (updates: any) => onUpdateComponent(updates, true),
+    [onUpdateComponent],
+  );
 
   const updateBullet = (index: number, field: keyof BulletItem, value: string) => {
     const updated = bulletItems.map((item, i) =>
@@ -381,6 +391,20 @@ function OrserduIsiSelectPanel({
       {/* Bullet items */}
       <div className="border rounded-lg p-3 space-y-3">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bullet Items</p>
+        <div>
+          <Label>Bullet-to-text gap (px)</Label>
+          <Input
+            type="number"
+            min={0}
+            max={40}
+            value={bulletTextGap}
+            onChange={(e) => setBulletTextGap(e.target.value)}
+            onBlur={() => commit({ bulletTextGap })}
+            onKeyDown={(e) => e.key === "Enter" && commit({ bulletTextGap })}
+            placeholder="6"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">Adjusts only the space after each bullet; default: 4px.</p>
+        </div>
         <div>
           <Label>Bullet Color</Label>
           <ColorInput value={bulletColor} onChange={(v) => { setBulletColor(v); commit({ bulletColor: v }); }} />
@@ -451,6 +475,7 @@ function OrserduIsiSelectPanel({
                 value={item.boldText ?? ""}
                 onChange={(e) => updateBullet(i, "boldText", e.target.value)}
                 onBlur={commitBullets}
+                onKeyDown={(e) => e.key === "Enter" && commitBullets()}
                 placeholder="Bold portion of text"
               />
             </div>
@@ -497,6 +522,7 @@ function OrserduIsiSelectPanel({
               value={footerLine}
               onChange={(e) => setFooterLine(e.target.value)}
               onBlur={() => commit({ footerLine })}
+              onKeyDown={(e) => e.key === "Enter" && commit({ footerLine })}
               placeholder="Please see additional Important Safety Information below."
             />
           </div>
@@ -529,6 +555,7 @@ function OrserduIsiSelectPanel({
               value={trialDesignHtml}
               onChange={(e) => setTrialDesignHtml(e.target.value)}
               onBlur={() => commit({ trialDesignHtml })}
+              onKeyDown={(e) => e.key === "Enter" && commit({ trialDesignHtml })}
               placeholder="<b>TRIAL DESIGN:</b> ..."
             />
           </>
@@ -714,6 +741,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
+  onDeleteComponent?: (id: string) => void;
   onSaveAsCustom?: (name?: string) => void;
   onSaveHtmlBlock?: (value: string, name: string) => void;
 }
@@ -898,6 +926,7 @@ function ImageTextBlockProperties({
 export function PropertiesPanel({
   component,
   onUpdateComponent,
+  onDeleteComponent,
   onSaveAsCustom,
   onSaveHtmlBlock,
 }: PropertiesPanelProps) {
@@ -3089,7 +3118,7 @@ export function PropertiesPanel({
              </div>
             );
 
-      case "image-with-link":
+      case "image-with-link": {
         return (
           <div className="space-y-4">
             <div>
@@ -3138,11 +3167,12 @@ export function PropertiesPanel({
               />
             </div>
             <div>
-              <Label htmlFor="iwl-width">Width</Label>
-              <Input
+              <Label htmlFor="iwl-width">Image Width</Label>
+              <DeferredInput
                 id="iwl-width"
                 value={component.width ?? ""}
-                onChange={(e) => onUpdateComponent({ width: e.target.value || "100%" })}
+                fallback="100%"
+                onCommit={(width) => onUpdateComponent({ width }, true)}
                 placeholder="100% or 400px"
               />
             </div>
@@ -3166,6 +3196,7 @@ export function PropertiesPanel({
             </div>
           </div>
         );
+      }
 
         case "orserdu-highlight-box": {
           const c = component;
@@ -3283,13 +3314,6 @@ export function PropertiesPanel({
         case "isi":
           return (
             <div className="space-y-4">
-              <div>
-                <Label>Padding</Label>
-                <PaddingInput
-                  value={component.padding || "0 20px 10px 20px"}
-                  onChange={(padding) => onUpdateComponent({ padding }, true)}
-                />
-              </div>
               <div>
                 <Label>Background Color</Label>
                 <ColorInput
@@ -4094,6 +4118,18 @@ export function PropertiesPanel({
             )}
           </div>
         </div>
+      )}
+
+      {onDeleteComponent && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-red-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-700"
+          onClick={() => onDeleteComponent(component.id)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Remove this component
+        </Button>
       )}
 
       {renderProperties()}

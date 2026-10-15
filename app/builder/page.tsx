@@ -1043,6 +1043,7 @@ if (activeSelectedId) {
                     <div className="p-3">
                       <PropertiesPanel
                         component={selectedComponentData}
+                        onDeleteComponent={deleteComponent}
                         onUpdateComponent={(updates, immediate = false) => {
                           if (!activeSelectedId) return;
                           debouncedUpdateComponent(updates, immediate);

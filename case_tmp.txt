@@ -40,7 +40,7 @@
     </td>
   </tr>
   <tr>
-    <td class="isi-copy" style="padding:20px 20px 10px 20px;background-color:${backgroundColor};">
+    <td class="isi-copy" style="background-color:${backgroundColor};">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tbody>
         <tr><td style="font-weight:600;color:#006937;font-family:Arial,sans-serif;font-size:16px;line-height:18px;">IMPORTANT SAFETY INFORMATION</td></tr>
         <tr><td height="10" style="font-size:0;line-height:10px;">&nbsp;</td></tr>

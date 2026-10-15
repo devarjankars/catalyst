@@ -19,7 +19,7 @@ import {
   listAll,
   getMetadata
 } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { db, firebaseProjectId, storage } from "@/lib/firebase";
 import type { EmailTemplate } from "@/types/template";
 import { EmailComponent } from "@/types/email-builder";
 
@@ -79,6 +79,7 @@ const parseDate = (value: any): Date | null => {
 
 class FirebaseService {
   private templatesCollection = "email-templates";
+  private localTemplatesStorageKey = `email-templates:${firebaseProjectId}`;
   private imagesPath = "template-images";
   private isFirebaseAvailable = false;
   private customComponentsCollection = "custom-components";
@@ -128,6 +129,10 @@ class FirebaseService {
           updatedAt: parseDate(data.updatedAt),
         } as EmailTemplate);
       });
+
+      if (templates.length === 0) {
+        templates.push(...(await this.getLocalTemplates()).filter((template) => !template.isUserCreated));
+      }
 
       this._templateCache = { data: templates, fetchedAt: Date.now() };
       return templates;
@@ -265,7 +270,7 @@ class FirebaseService {
         } as EmailTemplate;
       }
 
-      return null;
+      return id.startsWith("sample-") ? this.getLocalTemplate(id) : null;
     } catch (error) {
       console.error(
         "Failed to get template from Firebase, falling back to localStorage:",
@@ -573,7 +578,7 @@ class FirebaseService {
   // LocalStorage fallback methods
   private async getLocalTemplates(): Promise<EmailTemplate[]> {
     try {
-      const stored = localStorage.getItem("email-templates");
+      const stored = localStorage.getItem(this.localTemplatesStorageKey);
       const STANDARD_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
@@ -588,7 +593,7 @@ class FirebaseService {
             updatedAt: new Date(),
           })
         );
-        localStorage.setItem("email-templates", JSON.stringify(sampleTemplates));
+        localStorage.setItem(this.localTemplatesStorageKey, JSON.stringify(sampleTemplates));
         return sampleTemplates;
       }
 
@@ -613,7 +618,7 @@ class FirebaseService {
           updatedAt: new Date(),
         }));
         templates = [...templates, ...newOnes];
-        localStorage.setItem("email-templates", JSON.stringify(templates));
+        localStorage.setItem(this.localTemplatesStorageKey, JSON.stringify(templates));
       }
 
       return templates;
@@ -639,7 +644,7 @@ class FirebaseService {
       updatedAt: new Date(),
     };
     templates.unshift(newTemplate);
-    localStorage.setItem("email-templates", JSON.stringify(templates));
+    localStorage.setItem(this.localTemplatesStorageKey, JSON.stringify(templates));
     return newTemplate;
   }
 
@@ -656,7 +661,7 @@ class FirebaseService {
       ...updates,
       updatedAt: new Date(),
     };
-    localStorage.setItem("email-templates", JSON.stringify(templates));
+    localStorage.setItem(this.localTemplatesStorageKey, JSON.stringify(templates));
     return templates[index];
   }
 
@@ -665,7 +670,7 @@ class FirebaseService {
     const filtered = templates.filter((t) => t.id !== id);
     if (filtered.length === templates.length) return false;
 
-    localStorage.setItem("email-templates", JSON.stringify(filtered));
+    localStorage.setItem(this.localTemplatesStorageKey, JSON.stringify(filtered));
     return true;
   }
 

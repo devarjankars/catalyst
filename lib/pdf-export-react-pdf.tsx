@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#000',
     borderTopStyle: 'solid',
     marginLeft: 20,
+    marginRight: 20,
     fontFamily: 'Helvetica',
     fontSize: 11,
     lineHeight: 1.5,

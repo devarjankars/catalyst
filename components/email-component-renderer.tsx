@@ -25,7 +25,8 @@ import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
-import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
+import { getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
+import { preventJobCodeAutoLinking } from "@/lib/job-code";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -1268,7 +1269,7 @@ export function EmailComponentRenderer({
             <div style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 0px 20px"}}>{component.footerText?.address}</div>
             <div
               style={{fontSize: component.fontSize || "12px", padding: component.padding || "0 20px 8px 20px"}}
-              dangerouslySetInnerHTML={{ __html: `${component.footerText?.rights || ""} ${component.footerText?.jobcode || ""}` }}
+              dangerouslySetInnerHTML={{ __html: `${component.footerText?.rights || ""} <span class="apple-no-link">${preventJobCodeAutoLinking(component.footerText?.jobcode || "")}</span>` }}
             />
           </div>
         );
@@ -1760,6 +1761,7 @@ export function EmailComponentRenderer({
               textColor = "#000000",
               fontSize = "14px",
               lineHeight = "16px",
+              bulletTextGap = "4",
               backgroundColor = "#ffffff",
               footerLine = "",
               footerPadding = "0",
@@ -1768,7 +1770,7 @@ export function EmailComponentRenderer({
             } = component as any;
 
             return (
-              <div style={{ ...baseStyle, padding: getOrserduIsiOuterPadding(component.padding, parentId !== "root") }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding, parentId !== "root") }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>
@@ -1790,10 +1792,11 @@ export function EmailComponentRenderer({
                             // Respect the spaceBetweenBullets property (strip 'px' for numeric height)
                             const spacingRaw = (component as any).spaceBetweenBullets ?? "5";
                             const spacingPx = parseInt(String(spacingRaw).replace(/px$/i, ""), 10) || 5;
+                            const textGapPx = Math.max(0, Math.min(40, parseInt(String(bulletTextGap).replace(/px$/i, ""), 10) || 0));
                             return (
                             <React.Fragment key={i}>
                               <tr>
-                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, paddingBottom: "3px", backgroundColor: "transparent" }}>
+                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, padding: `0 ${textGapPx}px 3px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
                                   &bull;
                                 </td>
                                 <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", backgroundColor }}>

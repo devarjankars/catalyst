@@ -3,6 +3,21 @@ import JSZip from "jszip"
 import { generateEmailHTML } from "./email-generator"
 import type { EmailComponent } from "@/types/email-builder"
 import { cleanHtmlString } from "./html-cleaner"
+import { prepareEmailHtml } from "./email-dark-mode"
+import { normalizeHtmlImageSrcs } from "./asset-url"
+
+function prepareOptionHtml(
+  sourceHtml: string | undefined,
+  components: EmailComponent[],
+  preHeaderText?: string,
+): string {
+  const html = prepareEmailHtml(sourceHtml || generateEmailHTML(components, preHeaderText))
+  const assetBaseUrl =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
+    (typeof window !== "undefined" ? window.location.origin : "")
+
+  return assetBaseUrl ? normalizeHtmlImageSrcs(html, assetBaseUrl) : html
+}
 
 /** Returns a clean file extension from any URL (handles Firebase Storage query strings). */
 function getImageExtension(url: string): string {
@@ -66,7 +81,7 @@ export async function exportToZip(
       // Images are scoped per-option — no cross-option deduplication
       const downloadedImages = new Map<string, string>()
 
-      let html = option.sourceHtml || generateEmailHTML(option.components, preHeaderText)
+      let html = prepareOptionHtml(option.sourceHtml, option.components, preHeaderText)
 
       const imageRegex = /<img[^>]+src="([^">]+)"/g
       const srcMatches = [...html.matchAll(imageRegex)]
@@ -102,7 +117,7 @@ export async function exportToZip(
     const downloadedImages = new Map<string, string>()
 
     for (const option of options) {
-      let html = option.sourceHtml || generateEmailHTML(option.components, preHeaderText)
+      let html = prepareOptionHtml(option.sourceHtml, option.components, preHeaderText)
 
       const imageRegex = /<img[^>]+src="([^">]+)"/g
       const srcMatches = [...html.matchAll(imageRegex)]
