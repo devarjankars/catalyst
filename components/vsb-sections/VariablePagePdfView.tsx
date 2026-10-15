@@ -1,5 +1,6 @@
 import React from 'react';
 import { getSenderRowSeparator } from '@/lib/sender-table-layout';
+import { resolveEmailAssetUrl } from '@/lib/asset-url';
 
 interface NormalSection {
   heading: string;
@@ -48,7 +49,7 @@ const NormalView = ({ section }: { section: NormalSection }) => {
             {isString ? (
               isImage ? (
                 <img
-                  src={opt}
+                  src={resolveEmailAssetUrl(opt, typeof window !== 'undefined' ? window.location.origin : undefined)}
                   alt={`${listLabel} ${i + 1}`}
                   className="mt-2 border border-gray-100 w-[80%] max-h-[150px] inline-block max-w-[400px]"
                 />

@@ -3,6 +3,7 @@
 import { generateEmailHTML } from '@/lib/email-generator';
 import { removeEmailDarkModeStyles } from '@/lib/email-dark-mode';
 import { normalizeHtmlImageSrcs } from '@/lib/asset-url';
+import { applyVsbHeaderImage, getVsbHeaderImages } from '@/lib/vsb-header-images';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { useVSBStore } from '@/store/vsb-store';
 import React, { useState } from 'react';
@@ -30,13 +31,17 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false,
 
   // Live store components (may differ from currentTemplate after ensureThreeOptions)
   const storeState = useEmailBuilderStore.getState();
-  const opt1 = currentTemplate?.components || [];
-  const opt2 = storeState.option2Components.length > 0
+  const rawOpt1 = currentTemplate?.components || [];
+  const rawOpt2 = storeState.option2Components.length > 0
     ? storeState.option2Components
     : (currentTemplate?.option2Components || []);
-  const opt3 = storeState.option3Components.length > 0
+  const rawOpt3 = storeState.option3Components.length > 0
     ? storeState.option3Components
     : (currentTemplate?.option3Components || []);
+  const vsbHeaders = getVsbHeaderImages(currentVsb?.variableCopy);
+  const opt1 = vsbHeaders[0] ? applyVsbHeaderImage(rawOpt1, vsbHeaders[0]) : rawOpt1;
+  const opt2 = vsbHeaders[1] ? applyVsbHeaderImage(rawOpt2, vsbHeaders[1]) : rawOpt2;
+  const opt3 = vsbHeaders[2] ? applyVsbHeaderImage(rawOpt3, vsbHeaders[2]) : rawOpt3;
 
   const options = isThreeMode
     ? [

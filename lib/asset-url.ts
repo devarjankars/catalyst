@@ -18,8 +18,8 @@ export const DEFAULT_ORSERDU_FOOTER_LOGO = "/menarini-stemline-logos.png"
  *   - /foo without baseUrl → /foo  (canvas / same-origin preview — fine)
  *
  * The baseUrl should be:
- *   - process.env.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL  (production deploy)
- *   - window.location.origin                        (local preview fallback)
+ *   - the explicit baseUrl when provided
+ *   - process.env.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL  (otherwise)
  *   - request.nextUrl.origin                        (server-side PDF route)
  */
 export function resolveEmailAssetUrl(src: string | undefined | null, baseUrl?: string): string {
@@ -39,10 +39,10 @@ export function resolveEmailAssetUrl(src: string | undefined | null, baseUrl?: s
   // Ensure leading slash
   const rooted = stripped.startsWith("/") ? stripped : `/${stripped}`
 
-  // Resolve against configured asset base URL (env var takes priority)
+  // An explicit base URL takes precedence over the configured deployment URL.
   const base =
-    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
     baseUrl ||
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
     ""
 
   if (base) {

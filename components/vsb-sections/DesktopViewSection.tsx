@@ -3,6 +3,7 @@
 import { generateEmailHTML } from '@/lib/email-generator';
 import { removeEmailDarkModeStyles } from '@/lib/email-dark-mode';
 import { normalizeHtmlImageSrcs } from '@/lib/asset-url';
+import { applyVsbHeaderImage, getVsbHeaderImages } from '@/lib/vsb-header-images';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { useVSBStore } from '@/store/vsb-store';
 import React, { useState } from 'react';
@@ -14,26 +15,6 @@ interface Props {
   onChange: (data: any) => void;
   isPreview?: boolean;
   onExportPdf?: () => Promise<void>;
-}
-
-/** Extract header image URLs from VSB variableCopy in order (opt1, opt2, opt3) */
-function getVsbHeaderImages(variableCopy: any[]): string[] {
-  if (!Array.isArray(variableCopy)) return [];
-  const section = variableCopy.find(
-    (s: any) => s.structure === 'normal' &&
-    typeof s.heading === 'string' &&
-    s.heading.toLowerCase().includes('header image')
-  );
-  if (!section || !Array.isArray(section.options)) return [];
-  return section.options.filter((o: any) => typeof o === 'string' && o.trim() !== '');
-}
-
-/** Replace the header-image src in a components array with the given URL */
-function applyHeaderImage(components: any[], src: string): any[] {
-  if (!src) return components;
-  return components.map(c =>
-    c.type === 'header-image' ? { ...c, src } : c
-  );
 }
 
 const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false, onExportPdf }) => {
@@ -58,9 +39,9 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
 
   // Apply VSB header images to each option
   const vsbHeaders = getVsbHeaderImages(currentVsb?.variableCopy || []);
-  const opt1 = vsbHeaders[0] ? applyHeaderImage(rawOpt1, vsbHeaders[0]) : rawOpt1;
-  const opt2 = vsbHeaders[1] ? applyHeaderImage(rawOpt2, vsbHeaders[1]) : rawOpt2;
-  const opt3 = vsbHeaders[2] ? applyHeaderImage(rawOpt3, vsbHeaders[2]) : rawOpt3;
+  const opt1 = vsbHeaders[0] ? applyVsbHeaderImage(rawOpt1, vsbHeaders[0]) : rawOpt1;
+  const opt2 = vsbHeaders[1] ? applyVsbHeaderImage(rawOpt2, vsbHeaders[1]) : rawOpt2;
+  const opt3 = vsbHeaders[2] ? applyVsbHeaderImage(rawOpt3, vsbHeaders[2]) : rawOpt3;
 
   const options = isThreeMode
     ? [
