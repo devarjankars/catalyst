@@ -6,8 +6,9 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO, normalizeHtmlImageSrcs, resolveEmailAssetU
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
-import { getOrserduIsiContentPadding, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
+import { getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "./job-code";
+import { getEmailComponentPadding } from "./email-padding";
 import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
 
 function escapeHtmlText(value: string): string {
@@ -58,7 +59,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
     return component.type === "isi"
-      ? applyPaddingToFirstTableCell(component.isiHtml, getOrserduIsiContentPadding())
+      ? applyPaddingToFirstTableCell(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested))
       : applyAnimatedIsiPadding(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested));
   }
   switch (component.type) {
@@ -175,7 +176,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
           <tbody>
             <tr>
               <td
-                style="padding: ${component.padding || "0 20px 10px 20px"}; background-color: ${bg};"
+                style="padding: ${getEmailComponentPadding(component.padding, "0 20px 10px 20px", isNested)}; background-color: ${bg};"
                 ${bg !== "transparent" ? `bgcolor="${bg}"` : ""}
                 ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
               >
@@ -825,7 +826,7 @@ case "isi": {
        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
        <tbody>
           <tr>
-            <td style="padding: ${getOrserduIsiContentPadding()};">
+            <td style="padding: ${getOrserduIsiOuterPadding(component.padding, isNested)};">
                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tbody>
                    <tr>
@@ -1011,7 +1012,7 @@ case "isi": {
           `;
       return applyAnimatedIsiPadding(
         html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`),
-        component.padding || "0 20px 10px 20px",
+        getOrserduIsiOuterPadding(component.padding, isNested),
       );
     }
 

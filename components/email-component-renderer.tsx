@@ -27,6 +27,7 @@ import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
 import { getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
+import { getEmailComponentPadding } from "@/lib/email-padding";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -395,7 +396,7 @@ export function EmailComponentRenderer({
 
       case "text": {
         return (
-          <div style={{ padding: component.padding || "0 20px 10px 20px" }} className="mt-2 z-50">
+          <div style={{ padding: getEmailComponentPadding(component.padding, "0 20px 10px 20px", parentId !== "root") }} className="mt-2 z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
@@ -917,7 +918,7 @@ export function EmailComponentRenderer({
     
       case "isi":
       case "orserdu-isi-animated": {
-        const generatedHtml = generateComponentHTML(component);
+        const generatedHtml = generateComponentHTML(component, undefined, parentId !== "root");
         return (
           <div
             style={{ ...baseStyle, backgroundColor: '#ffffff', padding: 0 }}
@@ -937,6 +938,7 @@ export function EmailComponentRenderer({
                     : isiHtml,
                 })}
                 style={{ padding: 0, fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
+                className="!p-0"
               />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />

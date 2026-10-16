@@ -128,7 +128,7 @@ export const componentTypes = [
       isiHeadingColor: "#006937",
       indicationHeadingColor: "#006937",
       isiBulletColor: "#69d6b5",
-      padding: "0 20px 10px 20px",
+      padding: "0 0 10px 4px",
       importantSafetyInformation: {
         sections: [
           {
@@ -240,6 +240,7 @@ export const componentTypes = [
       copyFadeDelay: 500,
       // ── Background ────────────────────────────────────────────────────
       backgroundColor: "#ffffff",
+      padding: "0 0 10px 4px",
     },
   },
 {

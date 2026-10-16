@@ -1,3 +1,5 @@
+import { getEmailComponentPadding } from "./email-padding";
+
 const legacyDefaultPadding = new Set([
   "10px 0 10px 0",
   "15px 0 10px 0",
@@ -5,15 +7,15 @@ const legacyDefaultPadding = new Set([
   "0 0 10px 0",
 ]);
 
-const isiOuterPadding = "0 0 10px 0";
+const isiOuterPadding = "0 0 10px 4px";
 
-function removeHorizontalPadding(padding: string): string {
+function removeLegacyDefaultHorizontalPadding(padding: string): string {
   const values = padding.split(" ");
-  if (values.length === 1) return `${values[0]} 0`;
-  if (values.length === 2) return `${values[0]} 0`;
-  if (values.length === 3) return `${values[0]} 0 ${values[2]}`;
-  if (values.length === 4) return `${values[0]} 0 ${values[2]} 0`;
-  return padding;
+  if (values.length === 4 && values[1] === "20px" && values[3] === "20px") {
+    values[1] = "0";
+    values[3] = "0";
+  }
+  return values.join(" ");
 }
 
 export function getOrserduIsiOuterPadding(value: unknown, isNested = false): string {
@@ -21,11 +23,7 @@ export function getOrserduIsiOuterPadding(value: unknown, isNested = false): str
     return isNested ? "0" : isiOuterPadding;
   }
 
-  const padding = removeHorizontalPadding(value.trim().replace(/\s+/g, " "));
-  if (padding === isiOuterPadding) {
-    return isNested ? "0" : isiOuterPadding;
-  }
-  return padding;
+  return getEmailComponentPadding(value, isiOuterPadding, isNested);
 }
 
 export function getOrserduIsiSelectPadding(value: unknown, isNested = false): string {
@@ -40,12 +38,8 @@ export function getOrserduIsiSelectPadding(value: unknown, isNested = false): st
   return `${top} 20px ${bottom} 20px`;
 }
 
-export function getOrserduIsiContentPadding(): string {
-  return "0";
-}
-
 export function getOrserduIsiPadding(value: unknown): string {
   if (typeof value !== "string" || !value.trim()) return "0";
-  const padding = removeHorizontalPadding(value.trim().replace(/\s+/g, " "));
+  const padding = removeLegacyDefaultHorizontalPadding(value.trim().replace(/\s+/g, " "));
   return legacyDefaultPadding.has(padding) ? "0" : padding;
 }

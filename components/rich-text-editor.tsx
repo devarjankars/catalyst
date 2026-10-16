@@ -4,6 +4,7 @@
 import { Italic, Link, Superscript } from "lucide-react"
 import type React from "react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
 
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect
@@ -288,9 +289,27 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const repositionToolbar = () => updateToolbarPosition()
     window.addEventListener("scroll", repositionToolbar, true)
     window.addEventListener("resize", repositionToolbar)
+    const handleSelectionChange = () => {
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (
+        editor &&
+        selection &&
+        selection.rangeCount > 0 &&
+        !selection.isCollapsed
+      ) {
+        const range = selection.getRangeAt(0)
+        if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
+          savedRangeRef.current = range.cloneRange()
+        }
+      }
+      updateToolbarPosition()
+    }
+    document.addEventListener("selectionchange", handleSelectionChange)
     return () => {
       window.removeEventListener("scroll", repositionToolbar, true)
       window.removeEventListener("resize", repositionToolbar)
+      document.removeEventListener("selectionchange", handleSelectionChange)
     }
   }, [focused, toolbarPlacement])
 
@@ -704,16 +723,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {isSelected && focused && (toolbarPlacement !== "selection" || toolbarPosition) && (
+      {typeof document !== "undefined" && isSelected && focused && (toolbarPlacement !== "selection" || toolbarPosition) && createPortal(
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
-          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-50 ${toolbarPlacement === "selection" ? "fixed" : "mt-2"}`}
+          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${toolbarPlacement === "selection" ? "fixed" : "mt-2"}`}
           style={toolbarPlacement === "selection" && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
           tabIndex={-1}
           onMouseDown={saveSelection}
+          onClick={(event) => event.stopPropagation()}
         >
           <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => applyFormattingCommand("bold")}>
@@ -819,7 +839,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             />
             px
           </label>
-        </div>
+        </div>,
+        toolbarPlacement === "selection" ? document.body : editorRef.current?.parentElement ?? document.body,
       )}
 
       {/* Link insert dialog */}

@@ -979,6 +979,7 @@ export function PropertiesPanel({
   const isColumn = component.type === "section" && component.isColumn;
   const hasDedicatedPaddingControl = new Set<EmailComponent["type"]>([
     "isi",
+    "orserdu-isi-animated",
     "orserdu-references",
     "orserdu-abbreviations",
     "orserdu-view-in-browser",
@@ -3306,14 +3307,30 @@ export function PropertiesPanel({
 
         case "orserdu-isi-animated":
           return (
-            <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
-              Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
+            <div className="space-y-4">
+              <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
+                Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
+              </div>
+              <div>
+                <Label>Padding (top, right, bottom, left)</Label>
+                <PaddingInput
+                  value={component.padding || "0 0 10px 4px"}
+                  onChange={(padding) => onUpdateComponent({ padding }, true)}
+                />
+              </div>
             </div>
           );
 
         case "isi":
           return (
             <div className="space-y-4">
+              <div>
+                <Label>Padding (top, right, bottom, left)</Label>
+                <PaddingInput
+                  value={component.padding || "0 0 10px 4px"}
+                  onChange={(padding) => onUpdateComponent({ padding }, true)}
+                />
+              </div>
               <div>
                 <Label>Background Color</Label>
                 <ColorInput
