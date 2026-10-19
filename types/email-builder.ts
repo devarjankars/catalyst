@@ -184,7 +184,12 @@ export interface EmailComponent {
   isiHtml?: string
   bulletTextGap?: string
   spaceBetweenBullets?: string
-  bulletItems?: Array<{ boldText?: string; normalText?: string }>
+  bulletItems?: Array<{
+    boldText?: string;
+    normalText?: string;
+    paddingTop?: string;
+    paddingBottom?: string;
+  }>
   paragraphSpacingPx?: number
 
   // orserdu-report-links properties

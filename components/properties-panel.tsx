@@ -273,7 +273,12 @@ function LineHeightInput({ value, onChange }: { value: string; onChange: (v: str
 // Uses fully LOCAL state so every keystroke is instant — the store is only
 // updated when the user leaves a field (onBlur) or presses Enter.
 // ─────────────────────────────────────────────────────────────────────────────
-interface BulletItem { boldText: string; normalText: string }
+interface BulletItem {
+  boldText: string;
+  normalText: string;
+  paddingTop?: string;
+  paddingBottom?: string;
+}
 
 function OrserduIsiSelectPanel({
   component,
@@ -489,6 +494,30 @@ function OrserduIsiSelectPanel({
                 placeholder=" rest of the bullet text"
               />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Space above (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={200}
+                  value={item.paddingTop ?? "0"}
+                  onChange={(e) => updateBullet(i, "paddingTop", e.target.value)}
+                  onBlur={commitBullets}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Space below (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={200}
+                  value={item.paddingBottom ?? "0"}
+                  onChange={(e) => updateBullet(i, "paddingBottom", e.target.value)}
+                  onBlur={commitBullets}
+                />
+              </div>
+            </div>
           </div>
         ))}
         <Button
@@ -516,15 +545,27 @@ function OrserduIsiSelectPanel({
           </label>
         </div>
         {showFooter && (
-          <div>
-            <Label>Text (shown in bold)</Label>
-            <Input
-              value={footerLine}
-              onChange={(e) => setFooterLine(e.target.value)}
-              onBlur={() => commit({ footerLine })}
-              onKeyDown={(e) => e.key === "Enter" && commit({ footerLine })}
-              placeholder="Please see additional Important Safety Information below."
-            />
+          <div className="space-y-3">
+            <div>
+              <Label>Text (shown in bold)</Label>
+              <Input
+                value={footerLine}
+                onChange={(e) => setFooterLine(e.target.value)}
+                onBlur={() => commit({ footerLine })}
+                onKeyDown={(e) => e.key === "Enter" && commit({ footerLine })}
+                placeholder="Please see additional Important Safety Information below."
+              />
+            </div>
+            <div>
+              <Label>Padding (top, right, bottom, left)</Label>
+              <PaddingInput
+                value={footerPadding}
+                onChange={(value) => {
+                  setFooterPadding(value);
+                  commit({ footerPadding: value });
+                }}
+              />
+            </div>
           </div>
         )}
       </div>

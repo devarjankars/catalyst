@@ -1060,14 +1060,20 @@ export const componentTypes = [
         {
           boldText: "The labeling for ORSERDU contains warnings and precautions",
           normalText: " for dyslipidemia and embryo-fetal toxicity.",
+          paddingTop: "0",
+          paddingBottom: "0",
         },
         {
           boldText: "The most common serious adverse reactions",
           normalText: " in ≥1% of patients who received ORSERDU were musculoskeletal pain and nausea.",
+          paddingTop: "0",
+          paddingBottom: "0",
         },
         {
           boldText: "The most common adverse reactions,",
           normalText: " including laboratory abnormalities, in ≥10% of patients who received ORSERDU were musculoskeletal pain, nausea, increased cholesterol, increased AST, increased triglycerides, fatigue, decreased hemoglobin, vomiting, increased ALT, decreased sodium, increased creatinine, decreased appetite, diarrhea, headache, constipation, abdominal pain, hot flush, and dyspepsia.",
+          paddingTop: "0",
+          paddingBottom: "0",
         },
       ],
       bulletColor: "#69d6b5",

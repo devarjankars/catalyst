@@ -25,7 +25,7 @@ import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
-import { getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
+import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 
@@ -86,6 +86,7 @@ export function EmailComponentRenderer({
   showCopyToOption,
   onCopyToOptions,
 }: EmailComponentRendererProps) {
+  const isNested = parentId !== undefined && parentId !== "root";
   const ref = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
 
@@ -396,7 +397,7 @@ export function EmailComponentRenderer({
 
       case "text": {
         return (
-          <div style={{ padding: getEmailComponentPadding(component.padding, "0 20px 10px 20px", parentId !== "root") }} className="mt-2 z-50">
+          <div style={{ padding: getEmailComponentPadding(component.padding, "0 20px 10px 20px", isNested) }} className="mt-2 z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
@@ -918,7 +919,7 @@ export function EmailComponentRenderer({
     
       case "isi":
       case "orserdu-isi-animated": {
-        const generatedHtml = generateComponentHTML(component, undefined, parentId !== "root");
+        const generatedHtml = generateComponentHTML(component, undefined, isNested);
         return (
           <div
             style={{ ...baseStyle, backgroundColor: '#ffffff', padding: 0 }}
@@ -1772,7 +1773,7 @@ export function EmailComponentRenderer({
             } = component as any;
 
             return (
-              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding, parentId !== "root") }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding, isNested) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>
@@ -1795,13 +1796,15 @@ export function EmailComponentRenderer({
                             const spacingRaw = (component as any).spaceBetweenBullets ?? "5";
                             const spacingPx = parseInt(String(spacingRaw).replace(/px$/i, ""), 10) || 5;
                             const textGapPx = Math.max(0, Math.min(40, parseInt(String(bulletTextGap).replace(/px$/i, ""), 10) || 0));
+                            const paddingTop = getOrserduIsiBulletSpacing(item.paddingTop);
+                            const paddingBottom = getOrserduIsiBulletSpacing(item.paddingBottom);
                             return (
                             <React.Fragment key={i}>
                               <tr>
-                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, padding: `0 ${textGapPx}px 3px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
+                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, padding: `${paddingTop}px ${textGapPx}px ${paddingBottom}px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
                                   &bull;
                                 </td>
-                                <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", backgroundColor }}>
+                                <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", padding: `${paddingTop}px 0 ${paddingBottom}px`, backgroundColor }}>
                                   {item.boldText && <b>{item.boldText}</b>}
                                   <span dangerouslySetInnerHTML={{ __html: item.normalText || "" }} />
                                 </td>

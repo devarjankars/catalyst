@@ -6,7 +6,7 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO, normalizeHtmlImageSrcs, resolveEmailAssetU
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
-import { getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
+import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "./job-code";
 import { getEmailComponentPadding } from "./email-padding";
 import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
@@ -1982,7 +1982,7 @@ case "isi": {
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
       const headingPadding = getOrserduIsiPadding(c.headingPadding);
-      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string }>;
+      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string; paddingTop?: string; paddingBottom?: string }>;
       const bulletColor    = c.bulletColor    ?? "#69d6b5";
       const textColor      = c.textColor      ?? "#000000";
       const fontSize       = c.fontSize       ?? "14px";
@@ -2000,11 +2000,11 @@ case "isi": {
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
           <td align="left" valign="top"
-            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding:0 ${bulletTextGap}px 3px 0;background-color:transparent;white-space:nowrap;">
+            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px ${bulletTextGap}px ${getOrserduIsiBulletSpacing(item.paddingBottom)}px 0;background-color:transparent;white-space:nowrap;">
             &bull;
           </td>
           <td align="left" valign="middle"
-            style="color:${textColor};font-size:${fontSize};font-weight:normal;text-align:left;line-height:${lineHeight};font-family:Arial,sans-serif;background-color:${backgroundColor};">
+            style="color:${textColor};font-size:${fontSize};font-weight:normal;text-align:left;line-height:${lineHeight};font-family:Arial,sans-serif;padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px 0 ${getOrserduIsiBulletSpacing(item.paddingBottom)}px;background-color:${backgroundColor};">
             ${item.boldText ? `<b>${item.boldText}</b>` : ""}${item.normalText ?? ""}
           </td>
         </tr>

@@ -1,22 +1,6 @@
 import { getEmailComponentPadding } from "./email-padding";
 
-const legacyDefaultPadding = new Set([
-  "10px 0 10px 0",
-  "15px 0 10px 0",
-  "15px 0 12px 0",
-  "0 0 10px 0",
-]);
-
 const isiOuterPadding = "0 0 10px 4px";
-
-function removeLegacyDefaultHorizontalPadding(padding: string): string {
-  const values = padding.split(" ");
-  if (values.length === 4 && values[1] === "20px" && values[3] === "20px") {
-    values[1] = "0";
-    values[3] = "0";
-  }
-  return values.join(" ");
-}
 
 export function getOrserduIsiOuterPadding(value: unknown, isNested = false): string {
   if (typeof value !== "string" || !value.trim() || value.trim() === "0") {
@@ -40,6 +24,10 @@ export function getOrserduIsiSelectPadding(value: unknown, isNested = false): st
 
 export function getOrserduIsiPadding(value: unknown): string {
   if (typeof value !== "string" || !value.trim()) return "0";
-  const padding = removeLegacyDefaultHorizontalPadding(value.trim().replace(/\s+/g, " "));
-  return legacyDefaultPadding.has(padding) ? "0" : padding;
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function getOrserduIsiBulletSpacing(value: unknown): number {
+  const parsed = Number.parseFloat(String(value ?? "0").trim().replace(/px$/i, ""));
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(200, parsed)) : 0;
 }
