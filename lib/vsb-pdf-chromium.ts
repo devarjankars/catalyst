@@ -17,6 +17,7 @@ const CHROMIUM_REMOTE_EXEC_URL =
 
 const DEFAULT_WIDTH = 600;
 const MAX_PAGE_HEIGHT = 20000;
+const PAGE_CONTENT_TIMEOUT_MS = 30000;
 
 function extractDocumentParts(source: string): { styles: string; body: string } {
   const head = source.match(/<head[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? '';
@@ -392,7 +393,10 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
 
     if (isVercel) {
       const diagnosticPage = await browser.newPage();
-      await diagnosticPage.setContent('<html><body>Hello</body></html>');
+      await diagnosticPage.setContent('<html><body>Hello</body></html>', {
+        waitUntil: 'load',
+        timeout: PAGE_CONTENT_TIMEOUT_MS,
+      });
       const testPdf = await diagnosticPage.pdf({ printBackground: true });
       console.log('[PDF] minimal PDF success', testPdf.length);
       await diagnosticPage.close();
@@ -418,7 +422,10 @@ export async function generateVsbPdfBuffer(pages: VsbPdfPageSpec[], baseUrl?: st
       const measureTab = await browser.newPage({ viewport: { width, height: MAX_PAGE_HEIGHT } });
       try {
         await measureTab.emulateMedia({ colorScheme: 'light' });
-        await measureTab.setContent(buildPageHtml(spec, baseUrl), { waitUntil: 'load' });
+        await measureTab.setContent(buildPageHtml(spec, baseUrl), {
+          waitUntil: 'load',
+          timeout: PAGE_CONTENT_TIMEOUT_MS,
+        });
         await waitForAssets(measureTab);
         await measureTab.evaluate(() => new Promise<void>((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -573,7 +580,10 @@ ${bodyContent}
 
     try {
       await page.emulateMedia({ colorScheme: 'light' });
-      await page.setContent(pageHtml, { waitUntil: 'load' });
+      await page.setContent(pageHtml, {
+        waitUntil: 'load',
+        timeout: PAGE_CONTENT_TIMEOUT_MS,
+      });
       await waitForAssets(page);
       await page.evaluate(() => new Promise<void>((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))

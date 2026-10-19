@@ -45,16 +45,16 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
 
   const options = isThreeMode
     ? [
-        { title: 'Option 1', components: opt1 },
-        { title: 'Option 2', components: opt2 },
-        { title: 'Option 3', components: opt3 },
+        { components: opt1 },
+        { components: opt2 },
+        { components: opt3 },
       ]
     : isTwoMode
     ? [
-        { title: 'Option 1', components: opt1 },
-        { title: 'Option 2', components: opt2 },
+        { components: opt1 },
+        { components: opt2 },
       ]
-    : [{ title: 'Standard View', components: opt1 }];
+    : [{ components: opt1 }];
 
   const htmls = options.map(opt => {
     const rawHtml = generateEmailHTML(opt.components, preheader, 'desktop');
@@ -65,7 +65,7 @@ const DesktopViewSection: React.FC<Props> = ({ data, onChange, isPreview = false
     const headerHtml = `
       <div>
         <div style="margin-left:20px;width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;margin-top:10px;font-size:13px;font-weight:bold;">
-          Desktop View${isMultiMode ? ` — ${opt.title}` : ''}
+          Desktop View
         </div>
         <div style="border-top:1px solid #000;">
           <div style="margin-bottom:20px;margin-left:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;padding-top:20px;">

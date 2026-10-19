@@ -251,7 +251,11 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
           {components.map((component, index) => {
             if (!component) return null
             return (
-              <div key={component.id || index} className="relative mb-2" data-component-id={component.id}>
+              <div
+                key={component.id || index}
+                className={`relative ${component.type === "text" || component.type === "Salutation" ? "" : "mb-2"}`}
+                data-component-id={component.id}
+              >
                 {/* Drop indicator line ABOVE this component */}
                 {dropIndex === index && isOver && !previewMode && (
                   <div className="pointer-events-none mx-3 mb-2 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />

@@ -176,7 +176,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
           <tbody>
             <tr>
               <td
-                style="padding: ${getEmailComponentPadding(component.padding, "0 20px 10px 20px", isNested)}; background-color: ${bg};"
+                style="padding: ${getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested)}; background-color: ${bg};"
                 ${bg !== "transparent" ? `bgcolor="${bg}"` : ""}
                 ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""}
               >
@@ -423,13 +423,17 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
           const isLast = j === row.length - 1;
           const linkColor = link.color || color;
           const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
+          const nextLink = row[j + 1];
+          const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
+            ? nextLink.color || "#000000"
+            : "#000000";
           const preferencesPrefix = isEmailPreferences
             ? `<span style="color:${linkColor};">[</span>`
             : "";
           const preferencesSuffix = isEmailPreferences
             ? `<span style="color:${linkColor};">]</span>`
             : "";
-          const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+          const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
           return `${preferencesPrefix}<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${preferencesSuffix}${pipe}`;
         }).join("");
         mobileRows.push(`<tr><td style="padding-bottom:4px;font-family:Arial,sans-serif;">${rowHTML}</td></tr>`);
@@ -441,13 +445,17 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         const isLast = index === links.length - 1;
         const linkColor = link.color || color;
         const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
+        const nextLink = links[index + 1];
+        const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
+          ? nextLink.color || "#000000"
+          : "#000000";
         const preferencesPrefix = isEmailPreferences
           ? `<span style="color:${linkColor};">[</span>`
           : "";
         const preferencesSuffix = isEmailPreferences
           ? `<span style="color:${linkColor};">]</span>`
           : "";
-        const pipe = isLast ? "" : `<span style="color:#000000;font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
+        const pipe = isLast ? "" : `<span style="color:${pipeColor};font-size:${fontSize};">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
         return `${preferencesPrefix}<a href="${link.href || "#"}" title="${link.title || ""}" style="color:${linkColor};font-size:${link.fontSize || fontSize};font-family:Arial,sans-serif;text-decoration:underline;">${link.text.trim()}</a>${preferencesSuffix}${pipe}`;
       }).join("");
 
@@ -1362,7 +1370,7 @@ case "isi": {
             <tr>
               <td width="${component.width}" ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} align='${
                 component.textAlign || "center"
-              }' style="padding: ${component.padding || "0 16px 16px 16px"}; ${itemStyle}">
+              }' style="padding: ${getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested)}; ${itemStyle}">
                  ${component.content || ""}
               </td>
             </tr>
@@ -2425,7 +2433,9 @@ return `
       const gapCell = `
                 <td width="${imageTextGap}" style="width:${imageTextGap}px;font-size:0;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td>`;
       const rawTextContent = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
-      const textContent = isOrserdu ? applyTextParagraphSpacing(rawTextContent, 0, false) : rawTextContent;
+      const textContent = isOrserdu
+        ? applyTextParagraphSpacing(rawTextContent, component.paragraphSpacingPx ?? 0, false)
+        : rawTextContent;
       const textCell = `
                 <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
                   <div>${textContent}</div>

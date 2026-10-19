@@ -31,6 +31,7 @@ export const componentTypes = [
       lineHeight: "14px",
       fontFamily: "Arial, sans-serif",
       paragraphSpacingPx: 0,
+      padding: "15px 20px 15px 20px",
     },
   },
   {
@@ -128,7 +129,7 @@ export const componentTypes = [
       isiHeadingColor: "#006937",
       indicationHeadingColor: "#006937",
       isiBulletColor: "#69d6b5",
-      padding: "0 0 10px 4px",
+      padding: "0 10px 10px 10px",
       importantSafetyInformation: {
         sections: [
           {
@@ -240,7 +241,7 @@ export const componentTypes = [
       copyFadeDelay: 500,
       // ── Background ────────────────────────────────────────────────────
       backgroundColor: "#ffffff",
-      padding: "0 0 10px 4px",
+      padding: "0 10px 10px 10px",
     },
   },
 {
@@ -341,6 +342,7 @@ export const componentTypes = [
       color: "#000000",
       textAlign: "left",
       fontWeight: "normal",
+      padding: "15px 20px 15px 20px",
   },
   
 },

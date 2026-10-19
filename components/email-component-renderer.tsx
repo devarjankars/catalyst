@@ -397,12 +397,13 @@ export function EmailComponentRenderer({
 
       case "text": {
         return (
-          <div style={{ padding: getEmailComponentPadding(component.padding, "0 20px 10px 20px", isNested) }} className="mt-2 z-50">
+          <div style={{ padding: getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested) }} className="z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
               paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
+              className="!p-0"
               style={{
                 fontSize: component.fontSize || "12px",
                 color: component.color || "#000000",
@@ -1194,11 +1195,12 @@ export function EmailComponentRenderer({
 
         case "Salutation":
         return (
-          <div className="mt-2 z-50">
+          <div style={{ padding: getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested) }} className="z-50">
             <RichTextEditor
               isSelected={isSelected}
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
+              className="!p-0"
               style={{
                 fontSize: component.fontSize || "16px",
                 color: component.color || "#000000",
@@ -1472,7 +1474,7 @@ export function EmailComponentRenderer({
           const imageTextImageAlt = component.imageTextImageAlt;
           const imageTextText1 = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
           const normalizedText = isOrserdu
-            ? applyTextParagraphSpacing(imageTextText1, 0, false)
+            ? applyTextParagraphSpacing(imageTextText1, component.paragraphSpacingPx ?? 0, false)
             : imageTextText1;
           const editorText = isOrserdu ? removeTextParagraphSpacing(imageTextText1) : imageTextText1;
           const verticalAlign = component.imageTextVerticalAlign || "top";
@@ -1519,6 +1521,7 @@ export function EmailComponentRenderer({
                           imageTextText1: html,
                           ...(isOrserdu ? { imageTextSections: undefined } : {}),
                         })}
+                        paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
                         className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
                         style={{ fontSize: "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
                       />

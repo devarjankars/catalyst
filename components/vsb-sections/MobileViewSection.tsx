@@ -45,16 +45,16 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false,
 
   const options = isThreeMode
     ? [
-        { title: 'Option 1', components: opt1 },
-        { title: 'Option 2', components: opt2 },
-        { title: 'Option 3', components: opt3 },
+        { components: opt1 },
+        { components: opt2 },
+        { components: opt3 },
       ]
     : isTwoMode
     ? [
-        { title: 'Option 1', components: opt1 },
-        { title: 'Option 2', components: opt2 },
+        { components: opt1 },
+        { components: opt2 },
       ]
-    : [{ title: 'Standard View', components: opt1 }];
+    : [{ components: opt1 }];
 
   // Mobile override styles — force mobile media queries unconditionally for preview
   const mobileOverride = `<style>
@@ -81,7 +81,7 @@ const MobileViewSection: React.FC<Props> = ({ data, onChange, isPreview = false,
     const headerHtml = `
       <div style="background-color:#fff;padding-top:10px;padding-bottom:20px;">
         <div style="margin-left:20px;width:fit-content;border:1px solid #000;padding:5px;margin-bottom:10px;font-size:13px;background-color:#fff;color:black;font-weight:bold;">
-          Mobile View${isMultiMode ? ` — ${opt.title}` : ''}
+          Mobile View
         </div>
         <div style="border-top:1px solid #000;">
           <div style="margin-left:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;padding-top:20px;">

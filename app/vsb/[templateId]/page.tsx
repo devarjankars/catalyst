@@ -98,7 +98,6 @@ export default function VSBPage() {
 
     const isThreeMode = currentTemplate?.optionMode === 'three';
     const isTwoMode   = currentTemplate?.optionMode === 'two';
-    const isMultiMode = isThreeMode || isTwoMode;
     const headerDetails = currentVsb?.headerDetails || [];
 
     // Link-footer types — the ones that carry the 5-link row.
@@ -125,42 +124,32 @@ export default function VSBPage() {
 
     const optArray = isThreeMode
       ? [
-          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: ensureFooters(opt1Components) },
-          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: ensureFooters(live2) },
-          { title: 'Option 3', imageOptionTitle: 'Option 3 - Image Option 3', components: ensureFooters(live3) },
+            { components: ensureFooters(opt1Components) },
+            { components: ensureFooters(live2) },
+            { components: ensureFooters(live3) },
         ]
       : isTwoMode
       ? [
-          { title: 'Option 1', imageOptionTitle: 'Option 1 - Image Option 1', components: ensureFooters(opt1Components) },
-          { title: 'Option 2', imageOptionTitle: 'Option 2 - Image Option 2', components: ensureFooters(live2) },
+            { components: ensureFooters(opt1Components) },
+            { components: ensureFooters(live2) },
         ]
-      : [{ title: 'Standard View', imageOptionTitle: '', components: ensureFooters(opt1Components) }];
+        : [{ components: ensureFooters(opt1Components) }];
 
     // ── Header block ──────────────────────────────────────────────────────────
-    // label       : the left-aligned label used for mobile (e.g. "Mobile View - Option 1")
-    //               also used as fallback for desktop when no centerLabel is given.
-    // centerLabel : when provided (desktop three-mode), the title box is
-    //               centered within its column (e.g. "Option 1 - Image Option 1").
-    //               Metadata below it stays left-aligned regardless.
-    // mobile      : switches class names to the pdf-mobile-email-meta BEM tree.
-    const makeHeaderHtml = (label: string, mobile = false, centerLabel?: string) => {
+    // mobile switches class names to the pdf-mobile-email-meta BEM tree.
+    const makeHeaderHtml = (label: string, mobile = false) => {
       const baseClass    = mobile ? 'pdf-mobile-email-meta'          : 'pdf-email-meta';
       const titleClass   = mobile ? 'pdf-mobile-email-meta__title'   : 'pdf-email-meta__title';
       const divClass     = mobile ? 'pdf-mobile-email-meta__divider' : 'pdf-email-meta__divider';
       const detailsClass = mobile ? 'pdf-mobile-email-meta__details' : 'pdf-email-meta__details';
       const rowClass     = mobile ? 'pdf-mobile-email-meta__row'     : 'pdf-email-meta__row';
 
-      // Title box is always LEFT-ALIGNED at 20px from the column edge.
-      // centerLabel is kept as the display text (e.g. "Option 1 - Image Option 1")
-      // but it is no longer centered — it aligns with the metadata beneath it.
       const titleStyle = 'display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:black;font-weight:bold;text-align:left;';
-
-      const titleText = centerLabel && !mobile ? centerLabel : label;
 
       return `
       <div class="${baseClass}" style="width:100%;box-sizing:border-box;background-color:#fff;text-align:left;">
         <div class="${titleClass}" style="${titleStyle}">
-          ${titleText}
+          ${label}
         </div>
         <div class="${divClass}" style="border-top:1px solid #000;padding-bottom:10px;">
           <div class="${detailsClass}" style="display:table;width:calc(100% - 40px);box-sizing:border-box;margin:0 20px;padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.5;text-align:left;">
@@ -198,8 +187,7 @@ export default function VSBPage() {
     const desktopHtmls = optArray.map(opt => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'desktop');
       const normalized = normalizeEmailHtml(raw, 600);
-      const desktopLabel = opt.title === 'Standard View' ? 'Desktop View' : `Desktop View - ${opt.title}`;
-      return injectHeader(normalized, makeHeaderHtml(desktopLabel, false, opt.imageOptionTitle || desktopLabel));
+      return injectHeader(normalized, makeHeaderHtml('Desktop View'));
     });
 
     const mobileHtmls = optArray.map((opt, idx) => {
@@ -246,9 +234,8 @@ export default function VSBPage() {
         `${mobileOverrideStyle}</head>`,
       );
 
-      // Mobile: left-aligned title, no centerLabel.
-      const mobileLabel = opt.title === 'Standard View' ? 'Mobile View' : `Mobile View - ${opt.title}`;
-      return injectHeader(withMobileStyles, makeHeaderHtml(mobileLabel, true));
+      // Mobile headings use the same generic label for every option.
+      return injectHeader(withMobileStyles, makeHeaderHtml('Mobile View', true));
     });
 
     if (includeDV) {

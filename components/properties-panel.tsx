@@ -33,7 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
-import { getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
+import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
+import { getEmailComponentPadding } from "@/lib/email-padding";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
 // Used by FontSizeInput and per-link font-size inputs throughout this file.
@@ -902,6 +903,9 @@ function ImageTextBlockProperties({
           value={component.type === "orserdu-image-text-block"
             ? removeTextParagraphSpacing(getOrserduImageTextContent(component))
             : component.imageTextText1 || ""}
+          paragraphSpacingPx={component.type === "orserdu-image-text-block"
+            ? component.paragraphSpacingPx ?? 0
+            : undefined}
           onChange={(html) => onUpdateComponent({
             imageTextText1: html,
             ...(component.type === "orserdu-image-text-block" ? { imageTextSections: undefined } : {}),
@@ -914,15 +918,35 @@ function ImageTextBlockProperties({
         </p>
       </div>
       {component.type === "orserdu-image-text-block" && (
-        <div>
-          <Label>Line Height</Label>
-          <LineHeightInput
-            value={component.lineHeight || "20px"}
-            onChange={(lineHeight) => onUpdateComponent({ lineHeight }, true)}
-          />
-          <p className="mt-1 text-[11px] text-gray-400">
-            Applies a default line height; use the text toolbar to change selected paragraphs.
-          </p>
+        <div className="space-y-3">
+          <div>
+            <Label>Line Height</Label>
+            <LineHeightInput
+              value={component.lineHeight || "20px"}
+              onChange={(lineHeight) => onUpdateComponent({ lineHeight }, true)}
+            />
+            <p className="mt-1 text-[11px] text-gray-400">
+              Applies a default line height; use the text toolbar to change selected paragraphs.
+            </p>
+          </div>
+          <div>
+            <Label htmlFor={`image-text-paragraph-spacing-${component.id}`}>Paragraph Spacing (px)</Label>
+            <Input
+              id={`image-text-paragraph-spacing-${component.id}`}
+              type="number"
+              min={0}
+              max={200}
+              step={1}
+              value={component.paragraphSpacingPx ?? 0}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
+              }}
+            />
+            <p className="mt-1 text-[11px] text-gray-400">
+              Sets the extra gap between paragraphs. No extra space is added before the first or after the last paragraph.
+            </p>
+          </div>
         </div>
       )}
       <div>
@@ -3355,7 +3379,7 @@ export function PropertiesPanel({
               <div>
                 <Label>Padding (top, right, bottom, left)</Label>
                 <PaddingInput
-                  value={component.padding || "0 0 10px 4px"}
+                  value={getOrserduIsiOuterPadding(component.padding)}
                   onChange={(padding) => onUpdateComponent({ padding }, true)}
                 />
               </div>
@@ -3368,7 +3392,7 @@ export function PropertiesPanel({
               <div>
                 <Label>Padding (top, right, bottom, left)</Label>
                 <PaddingInput
-                  value={component.padding || "0 0 10px 4px"}
+                  value={getOrserduIsiOuterPadding(component.padding)}
                   onChange={(padding) => onUpdateComponent({ padding }, true)}
                 />
               </div>
@@ -4201,7 +4225,15 @@ export function PropertiesPanel({
           <div>
             <Label htmlFor="padding">Padding</Label>
             <PaddingInput
-              value={component.padding || (component.type === "image" ? "0 20px 0 20px" : "0 20px 10px 20px")}
+              value={component.padding || (
+                component.type === "image"
+                  ? "0 20px 0 20px"
+                  : component.type === "text" || component.type === "Salutation"
+                    ? getEmailComponentPadding(component.padding, "15px 20px 15px 20px", false)
+                    : component.type === "isi" || component.type === "orserdu-isi-animated"
+                      ? "0 10px 10px 10px"
+                      : "0 20px 10px 20px"
+              )}
               onChange={(value) => onUpdateComponent({ padding: value }, true)}
             />
           </div>
