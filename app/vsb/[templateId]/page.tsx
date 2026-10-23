@@ -137,14 +137,14 @@ export default function VSBPage() {
 
     // ── Header block ──────────────────────────────────────────────────────────
     // mobile switches class names to the pdf-mobile-email-meta BEM tree.
-    const makeHeaderHtml = (label: string, mobile = false) => {
+    const makeHeaderHtml = (label: string, mobile = false, showTitle = true) => {
       const baseClass    = mobile ? 'pdf-mobile-email-meta'          : 'pdf-email-meta';
       const titleClass   = mobile ? 'pdf-mobile-email-meta__title'   : 'pdf-email-meta__title';
       const divClass     = mobile ? 'pdf-mobile-email-meta__divider' : 'pdf-email-meta__divider';
       const detailsClass = mobile ? 'pdf-mobile-email-meta__details' : 'pdf-email-meta__details';
       const rowClass     = mobile ? 'pdf-mobile-email-meta__row'     : 'pdf-email-meta__row';
 
-      const titleStyle = 'display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:black;font-weight:bold;text-align:left;';
+      const titleStyle = `display:table;width:fit-content;margin-top:18px;margin-right:0;margin-bottom:18px;margin-left:20px;border:1px solid #000;padding:5px 10px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:black;font-weight:bold;text-align:left;${showTitle ? "" : "visibility:hidden;"}`;
 
       return `
       <div class="${baseClass}" style="width:100%;box-sizing:border-box;background-color:#fff;text-align:left;">
@@ -184,21 +184,21 @@ export default function VSBPage() {
       },
     );
 
-    const desktopHtmls = optArray.map(opt => {
+    const desktopHtmls = optArray.map((opt, optionIndex) => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'desktop');
       const normalized = normalizeEmailHtml(raw, 600);
-      return injectHeader(normalized, makeHeaderHtml('Desktop View'));
+      return injectHeader(normalized, makeHeaderHtml('Desktop View', false, optionIndex === 0));
     });
 
-    const mobileHtmls = optArray.map((opt, idx) => {
+    const mobileHtmls = optArray.map((opt, optionIndex) => {
       const raw = generateEmailHTML(opt.components, currentTemplate?.preheaderText || '', 'mobile');
       // Write each option's raw HTML for debugging
       if (typeof window === 'undefined') {
         try {
           const fs = require('fs');
           const path = process.platform === 'win32'
-            ? `C:\\Users\\Public\\mobile-opt${idx+1}.html`
-            : `/tmp/mobile-opt${idx+1}.html`;
+            ? `C:\\Users\\Public\\mobile-opt${optionIndex+1}.html`
+            : `/tmp/mobile-opt${optionIndex+1}.html`;
           fs.writeFileSync(path, raw);
           console.log(`[PDF] wrote ${path}`);
         } catch(e) {}
@@ -241,7 +241,7 @@ export default function VSBPage() {
       );
 
       // Mobile headings use the same generic label for every option.
-      return injectHeader(withMobileStyles, makeHeaderHtml('Mobile View', true));
+      return injectHeader(withMobileStyles, makeHeaderHtml('Mobile View', true, optionIndex === 0));
     });
 
     if (includeDV) {
