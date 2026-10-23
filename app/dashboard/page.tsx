@@ -16,7 +16,7 @@ import { useLoggedInUserStore } from "@/store/logged-in-user"
 
 // ── Category metadata ────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: "rte",       label: "RTE",       description: "Rep triggered emailers",          color: "#BC2030", bg: "#fff5f5", icon: Mail },
+  { id: "rte",       label: "RTE",       description: "RTE emailers",                    color: "#BC2030", bg: "#fff5f5", icon: Mail },
   { id: "sfmc",      label: "SFMC",      description: "Salesforce Marketing Cloud",      color: "#7e22ce", bg: "#faf5ff", icon: Send },
   { id: "unbranded", label: "Unbranded", description: "Disease-state emailers",          color: "#1a56db", bg: "#eff6ff", icon: Globe },
   { id: "other",     label: "Other",     description: "Other email formats",             color: "#374151", bg: "#f9fafb", icon: Layers },

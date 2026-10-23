@@ -225,6 +225,12 @@ export default function VSBPage() {
         .desktop { display: none !important; }
         .deskDisp { display: none !important; }
         .mbDisp   { display: table !important; }
+        .geron-footer-table,
+        .geron-footer-table td,
+        .geron-footer-table table { background-color: #173782 !important; }
+        .geron-footer-table { width: 100% !important; }
+        .geron-footer-table td.deskDisp { display: none !important; }
+        .geron-footer-table td.mbDisp { display: table-cell !important; }
       </style>`;
 
       // Inject the override into <head> so it has higher specificity than the

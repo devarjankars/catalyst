@@ -30,6 +30,12 @@ const DARK_CSS = `
 const MOBILE_CSS = `
   .deskDisp { display: none !important; }
   .mbDisp   { display: table !important; }
+  .geron-footer-table,
+  .geron-footer-table td,
+  .geron-footer-table table { background-color: #173782 !important; }
+  .geron-footer-table { width: 100% !important; }
+  .geron-footer-table td.deskDisp { display: none !important; }
+  .geron-footer-table td.mbDisp { display: table-cell !important; }
   .desk-show-table { display: none !important; }
   .desk-show-cell  { display: none !important; }
   .desk-show-tr    { display: none !important; }

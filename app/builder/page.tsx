@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import { matchesBrand } from "@/lib/brand-filter"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
+import type { BrandId } from "@/types/template";
+import type { Brand } from "@/components/brand-selection-modal";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
 import React from "react";
@@ -76,11 +78,7 @@ export default function EmailBuilder() {
   const keepImages = searchParams.get("keepImages") === "true";
   const urlTemplateName = searchParams.get("name") || "";
   // Brand selected on the landing page — defaults to "orserdu" if not set
-  const selectedBrand = (searchParams.get("brand") || "orserdu") as
-    | "orserdu"
-    | "ferring"
-    | "idorsia"
-    | "elzonris";
+  const selectedBrand = (searchParams.get("brand") || "orserdu") as Brand;
 
   const {
     currentTemplate,
@@ -534,7 +532,7 @@ function replaceImagesInComponents(components: any[]): any[] {
     name: string,
     description: string,
     category: string,
-    brand: "orserdu" | "ferring" | "idorsia" | "elzonris"
+    brand: BrandId
   ) => {
     flushPendingUpdates();
     setSaving(true);
@@ -786,7 +784,7 @@ if (activeSelectedId) {
 
             {/* Category breadcrumb */}
             <span className="text-xs text-gray-400 shrink-0 uppercase">
-              {currentTemplate?.category || (selectedBrand === "elzonris" ? "Elzonris" : selectedBrand === "ferring" ? "Ferring" : selectedBrand === "idorsia" ? "Idorsia" : "Orserdu")}
+              {currentTemplate?.category || (selectedBrand === "elzonris" ? "Elzonris" : selectedBrand === "geron" ? "Geron" : selectedBrand === "idorsia" ? "Idorsia" : "Orserdu")}
             </span>
 
             <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />

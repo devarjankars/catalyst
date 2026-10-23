@@ -13,6 +13,7 @@ import type { EmailTemplate, BrandId } from "@/types/template"
 const BRAND_KEYWORDS: Record<BrandId, string[]> = {
   orserdu:  ["orserdu", "orserdu", "elacestrant", "emerald", "stemline", "menarini"],
   ferring:  ["ferring", "rekovelle", "firmagon", "minirin", "desmopressin"],
+  geron:    ["geron"],
   idorsia:  ["idorsia", "tryvio", "aprocitentan", "pivlaz", "selatogrel"],
   elzonris: ["elzonris", "tagraxofusp", "bpdcn", "cd123"],
 }

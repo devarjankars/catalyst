@@ -111,7 +111,7 @@ export function SaveTemplateDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rte">Rep Triggered</SelectItem>
+                <SelectItem value="rte">RTE</SelectItem>
                 <SelectItem value="sfmc">SFMC</SelectItem>
                 <SelectItem value="unbranded">Unbranded</SelectItem>
                 <SelectItem value="other">Other</SelectItem>

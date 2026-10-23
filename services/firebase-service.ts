@@ -23,6 +23,21 @@ import { db, firebaseProjectId, storage } from "@/lib/firebase";
 import type { EmailTemplate } from "@/types/template";
 import { EmailComponent } from "@/types/email-builder";
 
+const GERON_STANDARD_RTE_TEMPLATE_NAME = "RTE Standard Template";
+const GERON_STANDARD_RTE_TEMPLATE_NAMES = new Set([
+  "standard templet",
+  "standard template",
+  GERON_STANDARD_RTE_TEMPLATE_NAME.toLowerCase(),
+]);
+
+function isGeronStandardRteTemplate(template: EmailTemplate): boolean {
+  return (
+    GERON_STANDARD_RTE_TEMPLATE_NAMES.has(template.name.trim().toLowerCase()) &&
+    template.brand === "geron" &&
+    template.category === "rte"
+  );
+}
+
 function removeUndefinedDeep(value: any): any {
   if (value === undefined) return undefined;
   if (value === null) return null;
@@ -102,10 +117,35 @@ class FirebaseService {
     this._templateCache = null;
   }
 
-  // Template operations — pure read, no side effects
+  // Promote the explicitly requested existing Geron RTE once; new saves remain user-created.
   async getAllTemplates(): Promise<EmailTemplate[]> {
     if (!this.isFirebaseAvailable) {
-      return this.getLocalTemplates();
+      const templates = await this.getLocalTemplates();
+      const matchingTemplates = templates.filter(isGeronStandardRteTemplate);
+      if (matchingTemplates.length !== 1) {
+        if (matchingTemplates.length > 1) {
+          console.error(
+            `Found multiple Geron RTE templates named "${GERON_STANDARD_RTE_TEMPLATE_NAME}"; none were promoted.`,
+          );
+        }
+        return templates;
+      }
+
+      const matchingTemplate = matchingTemplates[0];
+      if (
+        matchingTemplate.name === GERON_STANDARD_RTE_TEMPLATE_NAME &&
+        !matchingTemplate.isUserCreated
+      ) {
+        return templates;
+      }
+
+      const promoted = await this.updateLocalTemplate(matchingTemplate.id, {
+        name: GERON_STANDARD_RTE_TEMPLATE_NAME,
+        isUserCreated: false,
+      });
+      return templates.map((template) =>
+        template.id === matchingTemplate.id && promoted ? promoted : template,
+      );
     }
 
     // Return cached result if still fresh
@@ -132,6 +172,32 @@ class FirebaseService {
 
       if (templates.length === 0) {
         templates.push(...(await this.getLocalTemplates()).filter((template) => !template.isUserCreated));
+      }
+
+      const geronRteTemplates = templates.filter(isGeronStandardRteTemplate);
+      if (geronRteTemplates.length === 1) {
+        const template = geronRteTemplates[0];
+        if (
+          template.name !== GERON_STANDARD_RTE_TEMPLATE_NAME ||
+          template.isUserCreated
+        ) {
+          try {
+            await updateDoc(doc(db, this.templatesCollection, template.id), {
+              name: GERON_STANDARD_RTE_TEMPLATE_NAME,
+              isUserCreated: false,
+              updatedAt: new Date(),
+            });
+            template.name = GERON_STANDARD_RTE_TEMPLATE_NAME;
+            template.isUserCreated = false;
+            template.updatedAt = new Date();
+          } catch (error) {
+            console.error("Failed to promote the Geron RTE standard template:", error);
+          }
+        }
+      } else if (geronRteTemplates.length > 1) {
+        console.error(
+          `Found multiple Geron RTE templates named "${GERON_STANDARD_RTE_TEMPLATE_NAME}"; none were promoted.`,
+        );
       }
 
       this._templateCache = { data: templates, fetchedAt: Date.now() };
@@ -163,14 +229,17 @@ class FirebaseService {
       const CANONICAL_NAMES = [
         "Orserdu RTE", "Orserdu SFMC", "Orserdu Unbranded",
         "Elzonris RTE", "Elzonris SFMC", "Elzonris Unbranded",
-        "Ferring RTE", "Idorsia_RTE",
+        "Ferring RTE", "Idorsia_RTE", GERON_STANDARD_RTE_TEMPLATE_NAME,
       ];
+      const canonicalNames = new Set(CANONICAL_NAMES.map((name) => name.toLowerCase()));
 
       const standardTemplates = templates.filter(t => !t.isUserCreated);
       const userTemplates = templates.filter(t => t.isUserCreated);
 
       // Delete legacy / unknown standard templates
-      const legacyToDelete = standardTemplates.filter(t => !CANONICAL_NAMES.includes(t.name));
+      const legacyToDelete = standardTemplates.filter(
+        (template) => !canonicalNames.has(template.name.trim().toLowerCase()),
+      );
       for (const t of legacyToDelete) {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}
       }
@@ -179,9 +248,12 @@ class FirebaseService {
       const seen = new Set<string>();
       const dupes: EmailTemplate[] = [];
       const canonical: EmailTemplate[] = [];
-      for (const t of standardTemplates.filter(t => CANONICAL_NAMES.includes(t.name))) {
-        if (seen.has(t.name)) { dupes.push(t); }
-        else { seen.add(t.name); canonical.push(t); }
+      for (const t of standardTemplates.filter(
+        (template) => canonicalNames.has(template.name.trim().toLowerCase()),
+      )) {
+        const normalizedName = t.name.trim().toLowerCase();
+        if (seen.has(normalizedName)) { dupes.push(t); }
+        else { seen.add(normalizedName); canonical.push(t); }
       }
       for (const t of dupes) {
         try { await deleteDoc(doc(db, this.templatesCollection, t.id)); } catch {}

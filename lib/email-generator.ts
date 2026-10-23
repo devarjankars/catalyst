@@ -10,6 +10,20 @@ import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPad
 import { preventJobCodeAutoLinking } from "./job-code";
 import { getEmailComponentPadding } from "./email-padding";
 import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
+import {
+  GERON_ISI_HTML,
+  GERON_MEDICATION_GUIDE_URL,
+  GERON_PRESCRIBING_INFORMATION_URL,
+  renderGeronIsiHtml,
+} from "@/data/geron-isi-html";
+import {
+  GERON_FOOTER_COPYRIGHT,
+  GERON_FOOTER_HTML,
+  GERON_FOOTER_JOB_CODE,
+  GERON_LOGO_HREF,
+  GERON_RYTELO_LOGO_HREF,
+  renderGeronFooterHtml,
+} from "@/data/geron-footer-html";
 
 function escapeHtmlText(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
@@ -348,6 +362,22 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       
       `;
 
+    case "geron-isi":
+      return renderGeronIsiHtml(
+        component.html ?? GERON_ISI_HTML,
+        component.padding ?? "0 0 10px 0",
+        component.geronPrescribingInformationUrl ?? GERON_PRESCRIBING_INFORMATION_URL,
+        component.geronMedicationGuideUrl ?? GERON_MEDICATION_GUIDE_URL,
+      );
+
+    case "geron-footer":
+      return renderGeronFooterHtml(component.html ?? GERON_FOOTER_HTML, {
+        ryteloLogoHref: component.geronRyteloLogoHref ?? GERON_RYTELO_LOGO_HREF,
+        geronLogoHref: component.geronLogoHref ?? GERON_LOGO_HREF,
+        copyright: component.geronFooterCopyright ?? GERON_FOOTER_COPYRIGHT,
+        jobCode: component.geronFooterJobCode ?? GERON_FOOTER_JOB_CODE,
+      }, preventJobCodeAutoLinking);
+
     case "cta-button": {
       const ctaDisplay = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -664,7 +694,8 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       </table>`.trim();
     }
 
-    case "orserdu-highlight-box": {
+    case "orserdu-highlight-box":
+    case "geron-highlight-box": {
       const {
         boxText         = "",
         boxBgColor      = "#FFD500",
@@ -672,7 +703,6 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         boxFontSize     = "14px",
         boxLineHeight   = "18px",
         boxFontWeight   = "700",
-        boxBorderRadius = "12px",
         boxPadding      = "16px 18px",
         spacingAfterBox = "20",
       } = component as any;
@@ -696,7 +726,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
   <tbody><tr>
     <td style="padding:${outerPad};">
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
-        style="background-color:${boxBgColor};border-radius:${boxBorderRadius};">
+        style="background-color:${boxBgColor};">
         <tbody><tr>
           <td style="padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};color:${boxTextColor};mso-line-height-rule:exactly;">
             ${boxText}
@@ -1874,11 +1904,18 @@ case "isi": {
       </table>`.trim();
 
     case "orserdu-abbreviations":
-    case "orserdu-references": {
-      const value = component.type === "orserdu-references" ? component.references : component.abbreviations;
+    case "geron-abbreviations":
+    case "orserdu-references":
+    case "geron-references": {
+      const value = component.type === "orserdu-references" || component.type === "geron-references"
+        ? component.references
+        : component.abbreviations;
+      const defaultPadding = component.type === "geron-abbreviations" || component.type === "geron-references"
+        ? "0 0 10px 0"
+        : "0 20px 10px 20px";
       return `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${component.backgroundColor || "#ffffff"}">
-        <tbody><tr><td style="padding:${component.padding || "0 20px 10px 20px"};font-family:${component.fontFamily || "Arial, sans-serif"};font-size:${component.fontSize || "12px"};color:${component.color || "#646464"};font-weight:${component.fontWeight || "normal"};text-align:${component.textAlign || "left"};line-height:${component.lineHeight || "14px"};background-color:${component.backgroundColor || "#ffffff"};">
+        <tbody><tr><td style="padding:${component.padding || defaultPadding};font-family:${component.fontFamily || "Arial, sans-serif"};font-size:${component.fontSize || "12px"};color:${component.color || "#646464"};font-weight:${component.fontWeight || "normal"};text-align:${component.textAlign || "left"};line-height:${component.lineHeight || "14px"};background-color:${component.backgroundColor || "#ffffff"};">
           ${value || ""}
         </td></tr></tbody>
       </table>`.trim();
@@ -2554,6 +2591,11 @@ export function generateEmailHTML(
         /* emerald stats default: show desktop, hide mobile */
         .deskDisp { display: table !important; }
         .mbDisp   { display: none  !important; }
+        .geron-footer-table,
+        .geron-footer-table td,
+        .geron-footer-table table { background-color: #173782 !important; }
+        .geron-footer-table td.deskDisp { display: table-cell !important; }
+        .geron-footer-table td.mbDisp { display: none !important; }
        
 
         sup {
@@ -2648,6 +2690,10 @@ export function generateEmailHTML(
             .mbDisp {
                 display: table !important;
             }
+
+            .geron-footer-table { width: 100% !important; }
+            .geron-footer-table td.deskDisp { display: none !important; }
+            .geron-footer-table td.mbDisp { display: table-cell !important; }
            
        
 

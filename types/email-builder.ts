@@ -1,8 +1,8 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated" | "orserdu-report-links" | "orserdu-highlight-box"
+  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated" | "orserdu-report-links" | "orserdu-highlight-box" | "geron-highlight-box" | "geron-isi" | "geron-abbreviations" | "geron-references" | "geron-footer"
 
-  category: "basic" | "custom" | "orserdu" | "ferring" | "user-created" | "idorsia"
+  category: "basic" | "custom" | "orserdu" | "ferring" | "geron" | "user-created" | "idorsia"
 
   // Custom component properties
   isCustom?: boolean
@@ -156,10 +156,15 @@ export interface EmailComponent {
   boxFontSize?: string
   boxLineHeight?: string
   boxFontWeight?: string
-  boxBorderRadius?: string
   boxPadding?: string
   outerPadding?: string
   spacingAfterBox?: string
+  geronPrescribingInformationUrl?: string
+  geronMedicationGuideUrl?: string
+  geronRyteloLogoHref?: string
+  geronLogoHref?: string
+  geronFooterCopyright?: string
+  geronFooterJobCode?: string
 
   // orserdu-emerald-stats properties
   emeraldLeftIconSrc?: string

@@ -34,6 +34,16 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { getOrserduIsiOuterPadding, getOrserduIsiPadding } from "@/lib/orserdu-isi-padding";
+import {
+  GERON_MEDICATION_GUIDE_URL,
+  GERON_PRESCRIBING_INFORMATION_URL,
+} from "@/data/geron-isi-html";
+import {
+  GERON_FOOTER_COPYRIGHT,
+  GERON_FOOTER_JOB_CODE,
+  GERON_LOGO_HREF,
+  GERON_RYTELO_LOGO_HREF,
+} from "@/data/geron-footer-html";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
@@ -737,6 +747,69 @@ function OrseduFooterPanel({
   );
 }
 
+function GeronFooterPanel({
+  component,
+  onUpdateComponent,
+}: {
+  component: EmailComponent;
+  onUpdateComponent: (updates: Partial<EmailComponent>) => void;
+}) {
+  const [copyright, setCopyright] = useState(
+    component.geronFooterCopyright ?? GERON_FOOTER_COPYRIGHT,
+  );
+  const [jobCode, setJobCode] = useState(
+    component.geronFooterJobCode ?? GERON_FOOTER_JOB_CODE,
+  );
+
+  useEffect(() => {
+    setCopyright(component.geronFooterCopyright ?? GERON_FOOTER_COPYRIGHT);
+    setJobCode(component.geronFooterJobCode ?? GERON_FOOTER_JOB_CODE);
+  }, [component.id]);
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>Footer Copyright Text</Label>
+        <textarea
+          value={copyright}
+          onChange={(e) => setCopyright(e.target.value)}
+          onBlur={() => onUpdateComponent({ geronFooterCopyright: copyright })}
+          className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <Label>Job Code</Label>
+        <Input
+          value={jobCode}
+          onChange={(e) => setJobCode(e.target.value)}
+          onBlur={() => onUpdateComponent({ geronFooterJobCode: jobCode })}
+        />
+      </div>
+      <div>
+        <Label>RYTELO Logo Link URL</Label>
+        <Input
+          type="url"
+          value={component.geronRyteloLogoHref ?? GERON_RYTELO_LOGO_HREF}
+          onChange={(e) => onUpdateComponent({ geronRyteloLogoHref: e.target.value })}
+          placeholder={GERON_RYTELO_LOGO_HREF}
+        />
+      </div>
+      <div>
+        <Label>Geron Logo Link URL</Label>
+        <Input
+          type="url"
+          value={component.geronLogoHref ?? GERON_LOGO_HREF}
+          onChange={(e) => onUpdateComponent({ geronLogoHref: e.target.value })}
+          placeholder={GERON_LOGO_HREF}
+        />
+      </div>
+      <p className="text-xs text-gray-500">
+        Footer text and logo links are editable above. Logos and layout are fixed to the Geron footer design.
+      </p>
+    </div>
+  );
+}
+
 // Ensures value is always a valid 7-char hex string for <input type="color">
 function toHex(value: string): string {
   const cleaned = value?.trim() ?? "";
@@ -1047,6 +1120,8 @@ export function PropertiesPanel({
     "orserdu-isi-animated",
     "orserdu-references",
     "orserdu-abbreviations",
+    "geron-references",
+    "geron-abbreviations",
     "orserdu-view-in-browser",
     "elzonris-view-in-browser",
     "elzonris-references",
@@ -2616,7 +2691,8 @@ export function PropertiesPanel({
           />
         );
             
-      case "orserdu-highlight-box": {
+      case "orserdu-highlight-box":
+      case "geron-highlight-box": {
         const comp = component;
         return (
           <div className="space-y-4">
@@ -2657,10 +2733,6 @@ export function PropertiesPanel({
                   <SelectItem value="700">Bold</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label>Border Radius</Label>
-              <Input value={comp.boxBorderRadius || "12px"} onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value })} placeholder="12px" />
             </div>
             <div>
               <Label>Inner Padding</Label>
@@ -3264,7 +3336,8 @@ export function PropertiesPanel({
         );
       }
 
-        case "orserdu-highlight-box": {
+        case "orserdu-highlight-box":
+        case "geron-highlight-box": {
           const c = component;
           return (
             <div className="space-y-4">
@@ -3323,16 +3396,6 @@ export function PropertiesPanel({
                     <SelectItem value="700">Bold</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* Shape */}
-              <div>
-                <Label>Border Radius</Label>
-                <Input
-                  value={c.boxBorderRadius ?? "12px"}
-                  onChange={(e) => onUpdateComponent({ boxBorderRadius: e.target.value } as any)}
-                  placeholder="12px"
-                />
               </div>
 
               {/* Inner padding (inside the box) */}
@@ -3956,6 +4019,49 @@ export function PropertiesPanel({
                 <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Add or Edit HTML</Button>
               </div>
             )
+          case "geron-isi":
+            return (
+              <div className="space-y-4">
+                <div>
+                  <Label>Outer Padding (top, right, bottom, left)</Label>
+                  <PaddingInput
+                    value={component.padding || "0 0 10px 0"}
+                    onChange={(padding) => onUpdateComponent({ padding }, true)}
+                  />
+                </div>
+                <div>
+                  <Label>Prescribing Information URL</Label>
+                  <Input
+                    type="url"
+                    value={component.geronPrescribingInformationUrl ?? GERON_PRESCRIBING_INFORMATION_URL}
+                    onChange={(e) => onUpdateComponent({ geronPrescribingInformationUrl: e.target.value })}
+                    placeholder={GERON_PRESCRIBING_INFORMATION_URL}
+                  />
+                </div>
+                <div>
+                  <Label>Medication Guide URL</Label>
+                  <Input
+                    type="url"
+                    value={component.geronMedicationGuideUrl ?? GERON_MEDICATION_GUIDE_URL}
+                    onChange={(e) => onUpdateComponent({ geronMedicationGuideUrl: e.target.value })}
+                    placeholder={GERON_MEDICATION_GUIDE_URL}
+                  />
+                </div>
+                <Button className="w-full" variant="outline" onClick={() => setIsRawHtmlEditorOpen(true)}>
+                  <Code className="mr-2 h-4 w-4" /> Edit Geron ISI HTML
+                </Button>
+                <p className="text-xs text-gray-500">
+                  This ISI is pre-filled with the supplied RYTELO safety information.
+                </p>
+              </div>
+            )
+          case "geron-footer":
+            return (
+              <GeronFooterPanel
+                component={component}
+                onUpdateComponent={onUpdateComponent}
+              />
+            )
           case "elzonris-isi":
             return (
               <div className="space-y-4">
@@ -3988,10 +4094,14 @@ export function PropertiesPanel({
             )
       case "sisi":
       case "orserdu-references":
-      case "orserdu-abbreviations": {
+      case "orserdu-abbreviations":
+      case "geron-references":
+      case "geron-abbreviations": {
         const textProperty = component.type === "sisi"
           ? "html"
-          : component.type === "orserdu-references" ? "references" : "abbreviations";
+          : component.type === "orserdu-references" || component.type === "geron-references"
+            ? "references"
+            : "abbreviations";
         const textValue = component[textProperty] || "";
 
         return (
@@ -4000,13 +4110,23 @@ export function PropertiesPanel({
               <Button className="w-full" variant="outline" onClick={() => setIsRawHtmlEditorOpen(true)}>
                 <Code /> Edit SISI HTML
               </Button>
-            ) : component.type === "orserdu-references" ? (
+            ) : component.type === "orserdu-references" || component.type === "geron-references" ? (
               <div>
                 <Label>References</Label>
                 <textarea
                   value={textValue}
                   onChange={(e) => onUpdateComponent({ [textProperty]: e.target.value })}
                   className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            ) : component.type === "geron-abbreviations" ? (
+              <div>
+                <Label>Abbreviations</Label>
+                <textarea
+                  value={textValue}
+                  onChange={(e) => onUpdateComponent({ [textProperty]: e.target.value })}
+                  className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Add Geron-specific abbreviations"
                 />
               </div>
             ) : null}
@@ -4055,7 +4175,11 @@ export function PropertiesPanel({
             <div>
               <Label>Padding</Label>
               <PaddingInput
-                value={component.padding || "0px 20px 10px 20px"}
+                value={component.padding || (
+                  component.type === "geron-abbreviations" || component.type === "geron-references"
+                    ? "0 0 10px 0"
+                    : "0px 20px 10px 20px"
+                )}
                 onChange={(padding) => onUpdateComponent({ padding }, true)}
               />
             </div>

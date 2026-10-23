@@ -1,6 +1,6 @@
 import type { EmailComponent } from "./email-builder"
 
-export type BrandId = "orserdu" | "ferring" | "idorsia" | "elzonris"
+export type BrandId = "orserdu" | "ferring" | "geron" | "idorsia" | "elzonris"
 
 export interface EmailTemplate {
   id: string

@@ -21,7 +21,7 @@ import { BRANDS, type Brand } from "./brand-selection-modal"
 /** Categories shown for each brand — can include multiple categories */
 const BRAND_CATEGORY_MAP: Record<Brand, string[]> = {
   orserdu:  ["custom"],
-  ferring:  ["ferring"],
+  geron:    ["geron"],
   idorsia:  ["idorsia"],
   elzonris: ["elzonris"],
 }

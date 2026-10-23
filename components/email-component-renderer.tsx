@@ -28,6 +28,20 @@ import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
 import { getEmailComponentPadding } from "@/lib/email-padding";
+import {
+  GERON_ISI_HTML,
+  GERON_MEDICATION_GUIDE_URL,
+  GERON_PRESCRIBING_INFORMATION_URL,
+  renderGeronIsiHtml,
+} from "@/data/geron-isi-html";
+import {
+  GERON_FOOTER_COPYRIGHT,
+  GERON_FOOTER_HTML,
+  GERON_FOOTER_JOB_CODE,
+  GERON_LOGO_HREF,
+  GERON_RYTELO_LOGO_HREF,
+  renderGeronFooterHtml,
+} from "@/data/geron-footer-html";
 
 interface EmailComponentRendererProps {
   component: EmailComponent;
@@ -704,7 +718,8 @@ export function EmailComponentRenderer({
           </div>
         );
 
-      case "orserdu-highlight-box": {
+      case "orserdu-highlight-box":
+      case "geron-highlight-box": {
         const {
           boxText         = "",
           boxBgColor      = "#FFD500",
@@ -712,7 +727,6 @@ export function EmailComponentRenderer({
           boxFontSize     = "14px",
           boxLineHeight   = "18px",
           boxFontWeight   = "700",
-          boxBorderRadius = "12px",
           boxPadding      = "16px 18px",
         } = component as any;
 
@@ -724,7 +738,6 @@ export function EmailComponentRenderer({
             <div
               style={{
                 backgroundColor: boxBgColor,
-                borderRadius: boxBorderRadius,
                 padding: boxPadding,
                 fontFamily: "Arial, sans-serif",
                 fontSize: boxFontSize,
@@ -985,8 +998,9 @@ export function EmailComponentRenderer({
         );
 
       case "orserdu-abbreviations":
+      case "geron-abbreviations":
         return (
-          <div style={{ backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: component.padding || (component.type === "geron-abbreviations" ? '0 0 10px 0' : '0 20px 10px 20px') }}>
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
@@ -1021,8 +1035,9 @@ export function EmailComponentRenderer({
         );
 
       case "orserdu-references":
+      case "geron-references":
         return (
-          <div style={{ backgroundColor: '#ffffff', padding: component.padding || '0 20px 10px 20px' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: component.padding || (component.type === "geron-references" ? '0 0 10px 0' : '0 20px 10px 20px') }}>
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
@@ -1918,6 +1933,38 @@ export function EmailComponentRenderer({
             style={baseStyle}
             onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
             dangerouslySetInnerHTML={{ __html: component.html || "" }}
+          />
+        );
+
+      case "geron-isi":
+        return (
+          <div
+            style={{ ...baseStyle, padding: 0, width: "100%" }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+            dangerouslySetInnerHTML={{
+              __html: renderGeronIsiHtml(
+                component.html ?? GERON_ISI_HTML,
+                component.padding ?? "0 0 10px 0",
+                component.geronPrescribingInformationUrl ?? GERON_PRESCRIBING_INFORMATION_URL,
+                component.geronMedicationGuideUrl ?? GERON_MEDICATION_GUIDE_URL,
+              ),
+            }}
+          />
+        );
+
+      case "geron-footer":
+        return (
+          <div
+            style={{ ...baseStyle, padding: 0, width: "100%" }}
+            onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}
+            dangerouslySetInnerHTML={{
+              __html: renderGeronFooterHtml(component.html ?? GERON_FOOTER_HTML, {
+                ryteloLogoHref: component.geronRyteloLogoHref ?? GERON_RYTELO_LOGO_HREF,
+                geronLogoHref: component.geronLogoHref ?? GERON_LOGO_HREF,
+                copyright: component.geronFooterCopyright ?? GERON_FOOTER_COPYRIGHT,
+                jobCode: component.geronFooterJobCode ?? GERON_FOOTER_JOB_CODE,
+              }, preventJobCodeAutoLinking),
+            }}
           />
         );
 

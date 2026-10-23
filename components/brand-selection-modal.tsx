@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, ChevronRight } from "lucide-react";
 
-export type Brand = "orserdu" | "ferring" | "idorsia" | "elzonris";
+export type Brand = "orserdu" | "geron" | "idorsia" | "elzonris";
 
 export interface BrandConfig {
   id: Brand;
@@ -35,13 +35,13 @@ export const BRANDS: BrandConfig[] = [
     symbol: "EL",
   },
   {
-    id: "ferring",
-    label: "Ferring",
-    tagline: "Rekovelle · Firmagon",
+    id: "geron",
+    label: "Geron",
+    tagline: "Geron",
     accentColor: "#0057a8",
     iconBg: "#e5effa",
     iconText: "#0057a8",
-    symbol: "FE",
+    symbol: "GE",
   },
   {
     id: "idorsia",
