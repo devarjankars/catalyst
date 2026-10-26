@@ -4,8 +4,8 @@ import { Toaster } from 'sonner'
 import AppShell from '@/components/app-shell'
 
 export const metadata: Metadata = {
-  title: 'Omnichannel Catalyst',
-  description: 'Build responsive email templates with ease using our intuitive drag-and-drop interface.',
+  title: 'Cipher | AI-Enabled Content Platform for Healthcare | MedTrix',
+  description: 'Cipher is MedTrix’s AI-enabled platform for pharma and healthcare content creation, digital production, and review workflows.',
   icons: {
     icon: '/Medtrixlogo.png',
   },

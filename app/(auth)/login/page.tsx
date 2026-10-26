@@ -66,7 +66,7 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div className="flex mx-auto w-[65%] items-center gap-2.5 mb-14 max-md:mb-8">
-            <img src="/catalyst_logo.png" className="w-[50%]"/>
+            <img src="/cipher_logo.png" className="w-[50%]"/>
           </div>
 
           {/* Form Card */}
@@ -168,7 +168,7 @@ export default function LoginPage() {
               autoPlay loop muted playsInline
               className="absolute inset-0 w-full h-full object-[100% 100%]"
             >
-              <source src="/Orb2.mp4" type="video/mp4" />
+              <source src="/Orb3.mp4" type="video/mp4" />
             </video>
          
 

@@ -7,10 +7,12 @@ import { FileText, LogOut, Home, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BrandSelectionModal, BRANDS, type Brand } from "./brand-selection-modal";
+import logo from "../public/Cipher_logo.png";
 
 const menus = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Storyboard Creator", href: "/wsb", icon: FileText },
+  { name: "Home", href: "/", icon: Home, },
+  { name: "Cipher Storyboard", href: "http://192.168.1.20/static/emailer.html", icon: FileText , target: "_blank" },
+  { name: "Cipher Banner", href: "http://192.168.1.20:8002", icon: FileText , target: "_blank" },
 ];
 
 export default function TopNav() {
@@ -97,15 +99,10 @@ export default function TopNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-[#121822] shadow-sm">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#BC2030] text-white font-semibold">
-            AI
-          </div>
-          <div className="hidden flex-col text-sm sm:flex">
-            <span className="font-semibold text-slate-900">Omnichannel Catalyst</span>
-          </div>
+          <img src={logo.src} alt="Cipher Logo" className="h-8" />
         </div>
 
         <nav className="flex items-center gap-2">
@@ -115,8 +112,9 @@ export default function TopNav() {
               <Link
                 key={href}
                 href={href}
+                target={href.startsWith("http") ? "_blank" : undefined}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-                  active ? "bg-[#BC2030] text-white" : "text-slate-700 hover:bg-gray-100"
+                  active ? "bg-[#BC2030] text-white" : "text-white hover:bg-red-400"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -129,11 +127,11 @@ export default function TopNav() {
             type="button"
             onClick={handleEmailBuilderClick}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-              isDashboardActive ? "bg-[#BC2030] text-white" : "text-slate-700 hover:bg-gray-100"
+              isDashboardActive ? "bg-[#BC2030] text-white" : "text-white hover:bg-red-400"
             }`}
           >
             <FileText className="h-4 w-4" />
-            Email Builder
+            Cipher Email
           </button>
 
           <button
@@ -141,11 +139,11 @@ export default function TopNav() {
             onClick={handleMLRConnect}
             disabled={isConnectingToMRL}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-              isConnectingToMRL ? 'bg-gray-200 text-slate-500 cursor-not-allowed' : 'text-slate-700 hover:bg-gray-100'
+              isConnectingToMRL ? 'bg-gray-200 text-white cursor-not-allowed' : 'text-white hover:bg-red-400'
             }`}
           >
             <FileText className="h-4 w-4" />
-            MLR Catalyst
+            Cipher Review(MLR)
             {isConnectingToMRL && <Loader2 className="h-4 w-4 animate-spin" />}
           </button>
         </nav>
