@@ -12,7 +12,7 @@ import logo from "../public/Cipher_logo.png";
 const menus = [
   { name: "Home", href: "/", icon: Home, },
   { name: "Cipher Storyboard", href: "http://192.168.1.20/static/emailer.html", icon: FileText , target: "_blank" },
-  { name: "Cipher Banner", href: "http://192.168.1.20:8002", icon: FileText , target: "_blank" },
+  { name: "Cipher Banner", href: "http://192.168.1.20:8004", icon: FileText , target: "_blank" },
 ];
 
 export default function TopNav() {
