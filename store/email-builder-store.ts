@@ -36,11 +36,6 @@ function deleteByIdRecursive(components: any[], targetId: string): any[] {
         const children = deleteByIdRecursive(comp.children, targetId);
         const removedColumn = comp.type === "section" &&
           comp.children.some((child: EmailComponent) => child.id === targetId && child.isColumn);
-        if (removedColumn && children.length === 1) {
-          const [remaining] = children;
-          return { ...comp, backgroundColor: remaining.backgroundColor ?? comp.backgroundColor,
-            columns: 1, direction: "column", children: remaining.children ?? [] };
-        }
         return { ...comp, children, ...(removedColumn ? { columns: Math.max(1, children.length) } : {}) };
       }
 

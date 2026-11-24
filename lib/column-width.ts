@@ -1,8 +1,13 @@
-export function getColumnWidth(columnCount: number, width?: string): string {
-  const configuredWidth = width?.trim();
-  if (configuredWidth && configuredWidth.toLowerCase() !== "auto") {
-    return configuredWidth;
-  }
+export function normalizeColumnSize(value: string | undefined, allowPercent: boolean): string {
+  const match = value?.trim().match(/^(\d+(?:\.\d+)?)(px|%)?$/i);
+  if (!match || (match[2] === "%" && (!allowPercent || Number(match[1]) > 100))) return "";
+  return match[1] + (match[2] || "px").toLowerCase();
+}
 
-  return columnCount > 1 ? `${100 / columnCount}%` : "100%";
+export function getColumnWidth(value?: string): string {
+  return normalizeColumnSize(value, true) || "auto";
+}
+
+export function getColumnHeight(value?: string): string {
+  return normalizeColumnSize(value, false) || "120px";
 }

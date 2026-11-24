@@ -18,7 +18,7 @@ import { DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
-import { AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
@@ -48,6 +48,8 @@ import {
   GERON_LOGO_HREF,
   GERON_RYTELO_LOGO_HREF,
 } from "@/data/geron-footer-html";
+import { normalizeColumnSize } from "@/lib/column-width";
+import { getSectionColumns, resizeSectionColumns } from "@/lib/section-columns";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
@@ -85,6 +87,43 @@ export function isValidCssSize(raw: string): boolean {
 // Pure custom text input — no dropdown.  The user types any valid CSS size.
 // "10" is normalised to "10px" on blur/Enter.
 // Invalid values show an inline message and are not committed.
+function ColumnSizeInput({ id, label, value, width = false, onChange }: {
+  id: string;
+  label: string;
+  value?: string;
+  width?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+
+  return (
+    <div className="min-w-0 space-y-1">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} value={draft ?? value ?? ""} placeholder={width ? "Auto" : "120px"}
+        aria-invalid={invalid}
+        onChange={event => { setDraft(event.target.value); setInvalid(false); }}
+        onBlur={event => {
+          const raw = event.currentTarget.value.trim();
+          const next = normalizeColumnSize(raw, width);
+          if (raw && !next && !(width && raw.toLowerCase() === "auto")) {
+            setInvalid(true);
+            return;
+          }
+          setDraft(null);
+          if (next !== (value ?? "")) onChange(next);
+        }}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+        }} />
+      {invalid && <p role="alert" className="text-xs text-red-600">{width ? "Enter pixels, a percentage up to 100%, or auto." : "Enter a height in pixels."}</p>}
+    </div>
+  );
+}
+
 function PropertyNumberInput({
   id, value, max, onCommit,
 }: {
@@ -1262,314 +1301,134 @@ export function PropertiesPanel({
 
   const renderProperties = () => {
     switch (component.type) {
-      case "section":
+      case "section": {
+        const columns = getSectionColumns(component);
+        const updateColumns = (children: EmailComponent[]) => onUpdateComponent({ children, columns: children.length });
+        const updateColumn = (id: string, updates: Partial<EmailComponent>) => {
+          if (id === component.id) onUpdateComponent(updates);
+          else updateColumns(columns.map(column => column.id === id ? { ...column, ...updates } : column));
+        };
+        const columnFields = (column: EmailComponent, index: number) => {
+          const position = isColumn ? "Column" : `Column ${index + 1}`;
+          return (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <ColumnSizeInput id={`${column.id}-width`} label="Width" width value={column.columnWidth}
+                  onChange={columnWidth => updateColumn(column.id, { columnWidth })} />
+                <ColumnSizeInput id={`${column.id}-height`} label="Min height" value={column.columnMinHeight}
+                  onChange={columnMinHeight => updateColumn(column.id, { columnMinHeight })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={column.columnAlignment || "left"} onValueChange={columnAlignment => updateColumn(column.id, { columnAlignment: columnAlignment as EmailComponent["columnAlignment"] })}>
+                  <SelectTrigger aria-label={`${position} horizontal alignment`}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={column.columnVerticalAlignment || "top"} onValueChange={columnVerticalAlignment => updateColumn(column.id, { columnVerticalAlignment: columnVerticalAlignment as EmailComponent["columnVerticalAlignment"] })}>
+                  <SelectTrigger aria-label={`${position} vertical alignment`}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="middle">Middle</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          );
+        };
         return (
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="backgroundColor">Background Color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
-            </div>
-            <div>
-              <Label htmlFor="borderRadius">Border Radius</Label>
-              <Input
-                id="borderRadius"
-                value={component.borderRadius || "0px"}
-                onChange={(e) =>
-                  onUpdateComponent({ borderRadius: e.target.value })
-                }
-                placeholder="0px"
-              />
-            </div>
-
-            {/* Column-specific properties */}
-            {isColumn && (
-              <>
-                <div className="border-t pt-4">
-                  <h4 className="font-medium text-gray-700 mb-3">
-                    Column Layout
-                  </h4>
-
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="columnAlignment">
-                        Horizontal Alignment
-                      </Label>
-                      <Select
-                        value={component.columnAlignment || "left"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({
-                            columnAlignment: value as
-                              | "left"
-                              | "center"
-                              | "right",
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="left">Left</SelectItem>
-                          <SelectItem value="center">Center</SelectItem>
-                          <SelectItem value="right">Right</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnVerticalAlignment">
-                        Vertical Alignment
-                      </Label>
-                      <Select
-                        value={component.columnVerticalAlignment || "top"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({
-                            columnVerticalAlignment: value as
-                              | "top"
-                              | "middle"
-                              | "bottom",
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="top">Top</SelectItem>
-                          <SelectItem value="middle">Middle</SelectItem>
-                          <SelectItem value="bottom">Bottom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnMinHeight">Minimum Height</Label>
-                      <Input
-                        id="columnMinHeight"
-                        value={component.columnMinHeight || "120px"}
-                        onChange={(e) =>
-                          onUpdateComponent({ columnMinHeight: e.target.value })
-                        }
-                        placeholder="120px"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnWidth">Column Width</Label>
-                      <Input
-                        id="columnWidth"
-                        value={component.columnWidth ?? ""}
-                        onChange={(e) =>
-                          onUpdateComponent({ columnWidth: e.target.value })
-                        }
-                        placeholder="auto, 50%, 200px"
-                      />
-                    </div>
-                    
+            {isColumn ? columnFields(component, 0) : (
+              <section aria-label="Columns" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-slate-900">Columns</h4>
+                  <Button type="button" size="sm" variant="outline" disabled={columns.length >= 6}
+                    onClick={() => onUpdateComponent(resizeSectionColumns(component, columns.length + 1))}>
+                    <Plus className="h-4 w-4" /> Add column
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Count</Label>
+                    <Select value={String(columns.length)} onValueChange={count => onUpdateComponent(resizeSectionColumns(component, Number(count)))}>
+                      <SelectTrigger aria-label="Column count"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6].map(count => <SelectItem key={count} value={String(count)}>{count}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Direction</Label>
+                    <Select value={component.direction || "column"} disabled={columns.length === 1}
+                      onValueChange={direction => onUpdateComponent({ direction: direction as EmailComponent["direction"] })}>
+                      <SelectTrigger aria-label="Column direction"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="row">Side by side</SelectItem>
+                        <SelectItem value="column">Stacked</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </>
+                {columns.length > 1 && (
+                  <p className="text-xs text-slate-600">Reducing the count moves content to the last remaining column.</p>
+                )}
+                {columns.map((column, index) => (
+                  <div key={column.id} role="group" aria-label={`Column ${index + 1}`} className="space-y-2 rounded-md border border-slate-200 p-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-700">Column {index + 1}</p>
+                      {columns.length > 1 && (
+                        <div className="flex gap-1">
+                          {([-1, 1] as const).map(offset => {
+                            const target = index + offset;
+                            const Icon = offset < 0 ? ArrowLeft : ArrowRight;
+                            return <Button key={offset} type="button" variant="ghost" size="icon" className="h-7 w-7"
+                              aria-label={`Move column ${index + 1} ${offset < 0 ? "earlier" : "later"}`}
+                              disabled={target < 0 || target >= columns.length}
+                              onClick={() => {
+                                const reordered = [...columns];
+                                [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+                                updateColumns(reordered);
+                              }}><Icon className="h-4 w-4" /></Button>;
+                          })}
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-600"
+                            aria-label={`Remove column ${index + 1}`} onClick={() => {
+                              if (column.children?.length && !window.confirm("Remove this column and its content?")) return;
+                              updateColumns(columns.filter(item => item.id !== column.id));
+                            }}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      )}
+                    </div>
+                    {columnFields(column, index)}
+                  </div>
+                ))}
+              </section>
             )}
-
-            {/* Regular section properties */}
+            <div>
+              <Label>Background color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+            </div>
+            <div>
+              <Label htmlFor="borderRadius">Border radius</Label>
+              <Input id="borderRadius" value={component.borderRadius || "0px"}
+                onChange={event => onUpdateComponent({ borderRadius: event.target.value })} />
+            </div>
             {!isColumn && (
               <>
-                <div>
-                  <Label htmlFor="direction">Layout Direction</Label>
-                  <Select
-                    value={component.direction || "column"}
-                    onValueChange={(value) =>
-                      onUpdateComponent({
-                        direction: value as "row" | "column",
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="column">Vertical (Column)</SelectItem>
-                      <SelectItem value="row">Horizontal (Row)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="maxWidth">Max Width</Label>
-                  <Input
-                    id="maxWidth"
-                    value={component.maxWidth || "100%"}
-                    onChange={(e) =>
-                      onUpdateComponent({ maxWidth: e.target.value })
-                    }
-                    placeholder="100%"
-                  />
-                </div>
+                <ColumnSizeInput id="maxWidth" label="Max width" width value={component.maxWidth}
+                  onChange={maxWidth => onUpdateComponent({ maxWidth })} />
                 <div>
                   <Label htmlFor="margin">Margin</Label>
-                  <Input
-                    id="margin"
-                    value={component.margin || "0"}
-                    onChange={(e) =>
-                      onUpdateComponent({ margin: e.target.value })
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Column Width Controls for Parent Multi-Column Sections */}
-            {!isColumn && component.children && component.children.length > 1 && (
-              <>
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium text-gray-700 mb-3">
-                    Column Widths
-                  </h4>
-
-                  {/* Preset Buttons */}
-                  <div className="mb-4">
-                    <Label className="text-sm mb-2 block">Presets</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {component.children.length === 2 && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: "50%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            50/50
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "30%" : "70%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            30/70
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "70%" : "30%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            70/30
-                          </Button>
-                        </>
-                      )}
-                      {component.children.length === 3 && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child) => ({
-                                ...child,
-                                columnWidth: "33.33%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            33/33/33
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 1 ? "50%" : "25%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            25/50/25
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "50%" : "25%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            50/25/25
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Individual Column Width Inputs */}
-                  <div className="space-y-3">
-                    {component.children.map((child, idx) => (
-                      <div key={child.id}>
-                        <Label htmlFor={`column-width-${idx}`}>
-                          Column {idx + 1} Width
-                        </Label>
-                        <div className="flex gap-1 my-1">
-                          {([-1, 1] as const).map((offset) => {
-                            const columns = component.children!;
-                            const target = idx + offset;
-                            const direction = offset < 0 ? "earlier" : "later";
-                            return (
-                              <Button key={offset} type="button" size="sm" variant="outline"
-                                aria-label={`Move column ${idx + 1} ${direction}`}
-                                disabled={target < 0 || target >= columns.length}
-                                onClick={() => {
-                                  const reordered = [...columns];
-                                  [reordered[idx], reordered[target]] = [reordered[target], reordered[idx]];
-                                  onUpdateComponent({ children: reordered });
-                                }}>
-                                Move {direction}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                        <Input
-                          id={`column-width-${idx}`}
-                          value={child.columnWidth ?? ""}
-                          onChange={(e) => {
-                            const updatedChildren = component.children!.map((c, i) =>
-                              i === idx ? { ...c, columnWidth: e.target.value } : c
-                            );
-                            onUpdateComponent({ children: updatedChildren });
-                          }}
-                          placeholder="50%, 200px, auto"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <Input id="margin" value={component.margin || "0"}
+                    onChange={event => onUpdateComponent({ margin: event.target.value })} />
                 </div>
               </>
             )}
           </div>
         );
+      }
 
       case "Salutation":
         return (

@@ -9,13 +9,12 @@ interface SectionDropZoneProps {
   sectionId: string
   children: EmailComponent[]
   onAddToSection?: (sectionId: string, component: EmailComponent, index?: number) => void
-  onMoveWithinSection?: (sectionId: string, dragIndex: number, hoverIndex: number) => void
   onSelect?: (id: string) => void
   renderSectionChild: (child: EmailComponent, childIndex: number, sectionId: string) => React.ReactNode
   isSelected?: boolean
   previewMode: boolean
   isColumn?: boolean
-  columnCount?: number
+  minHeight?: string
   columnAlignment?: "left" | "center" | "right"
 }
 
@@ -27,7 +26,7 @@ export function SectionDropZone({
   renderSectionChild,
   previewMode,
   isColumn = false,
-  columnCount = 1,
+  minHeight,
   columnAlignment = "left",
   isSelected,
 }: SectionDropZoneProps) {
@@ -113,7 +112,7 @@ export function SectionDropZone({
     )
   }
 
-  const minHeight = isColumn ? "min-h-[150px]" : columnCount > 1 ? "min-h-[120px]" : "min-h-[80px]"
+  const minimumClass = minHeight ? "" : isColumn ? "min-h-[150px]" : "min-h-[80px]"
   const activeColor = isColumn ? "ring-green-400 bg-green-50/40" : "ring-blue-400 bg-blue-50/40"
   const indicatorColor = isColumn ? "bg-green-500" : "bg-blue-500"
 
@@ -125,7 +124,7 @@ export function SectionDropZone({
       }}
       data-section-drop-zone={sectionId}
       className={`
-        ${minHeight} relative rounded-lg transition-colors duration-150
+        ${minimumClass} relative rounded-lg transition-colors duration-150
         ${isOver && canDrop && !previewMode ? `ring-2 ring-dashed ${activeColor}` : ""}
         ${!previewMode
           ? `border border-dashed ${
@@ -136,7 +135,7 @@ export function SectionDropZone({
           : ""}
         ${isColumn ? "flex" : "w-full"}
       `}
-      style={{ textAlign: isColumn ? columnAlignment : "left" }}
+      style={{ minHeight, textAlign: columnAlignment }}
       onClick={(e) => { e.stopPropagation(); onSelect?.(sectionId) }}
     >
       {children.length === 0 && !previewMode && (

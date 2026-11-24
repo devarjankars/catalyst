@@ -5,20 +5,14 @@ import React, { useEffect, useRef, useState, useCallback, useContext } from "rea
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
-import { SectionDropZone } from "./section-drop-zone";
+import { ColumnSection } from "./section-components/column-section";
 import { createPortal } from "react-dom";
 import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { RearrangeControls } from "./rearrange-controls";
 import type { EmailComponent } from "@/types/email-builder";
 import { Input } from "./ui/input";
 import BulletList from "./bullet-list";
-import SingleColumnSection from "./section-components/single-column-section";
 import { secondsInDay } from "date-fns/constants";
-import DoubleColumnSection from "./section-components/double-column-section";
-import ThreeColumnSection from "./section-components/three-column-section";
-import FourColumnSection from "./section-components/four-column-section";
-import FiveColumnSection from "./section-components/five-column-section";
-import SixColumnSection from "./section-components/six-column-section";
 import { se } from "date-fns/locale";
 import { firebaseService } from "@/services/firebase-service";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
@@ -293,34 +287,6 @@ export function EmailComponentRenderer({
     "center" : "center"
   }
 
-  const getColumnStyles = (child: EmailComponent) => {
-    if (!child.isColumn) return {};
-
-    const alignment = child.columnAlignment || "left";
-    const verticalAlignment = child.columnVerticalAlignment || "top";
-    const width = child.columnWidth === "auto" ? undefined : child.columnWidth;
-
-    return {
-      textAlign: alignment,
-      display: "flex",
-      flexDirection: "column" as const,
-      justifyContent:
-        verticalAlignment === "top"
-          ? "flex-start"
-          : verticalAlignment === "middle"
-          ? "center"
-          : "flex-end",
-      alignItems:
-        alignment === "left"
-          ? "flex-start"
-          : alignment === "center"
-          ? "center"
-          : "flex-end",
-      width: width,
-      minHeight: child.columnMinHeight || "120px",
-    };
-  };
-
   const renderComponent = () => {
     const baseStyle = {
       padding: component.padding || "16px",
@@ -328,94 +294,9 @@ export function EmailComponentRenderer({
 
     switch (component.type) {
       case "section":
-        switch (component.columns) {
-          case 1:
-            return (
-              <SingleColumnSection
-                component={component}
-                selectedComponent={selectedComponent}
-                onSelectSection={onSelectChild}
-                sectionId={component.id}
-                onUpdateChild={onUpdateChild}
-                renderSectionChild={renderSectionChild}
-                onAddToSection={onAddToSection}
-                onMoveWithinSection={onMoveWithinSection}
-              />
-            );
-
-          case 2:
-            return (
-              <DoubleColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 3:
-            return (
-              <ThreeColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 4:
-            return (
-              <FourColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 5:
-            return (
-              <FiveColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 6:
-            return (
-              <SixColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          default:
-            break;
-        }
+        return <ColumnSection component={component} selectedComponent={selectedComponent}
+          onSelectSection={onSelectChild} onAddToSection={isLockedMode ? undefined : onAddToSection}
+          renderSectionChild={renderSectionChild} previewMode={previewMode} />;
 
       case "text": {
         return (
