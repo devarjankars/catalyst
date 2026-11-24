@@ -13,7 +13,7 @@ import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useEffect, useState, useCallback } from "react";
-import { DEFAULT_NEW_TEXT_COLOR } from "@/lib/email-text-style";
+import { DEFAULT_NEW_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -872,7 +872,7 @@ function ColorInput({ value, onChange, textColor = false }: {
         placeholder="#000000"
         maxLength={7}
       />
-      {[client.accentColor, textColor ? DEFAULT_NEW_TEXT_COLOR : client.iconBg].map(color => (
+      {(textColor ? [DEFAULT_NEW_TEXT_COLOR] : [client.accentColor, client.iconBg]).map(color => (
         <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
           style={{ backgroundColor: color }} aria-label={textColor && color === DEFAULT_NEW_TEXT_COLOR ? "Use magenta text color" : `Use brand color ${color}`} title={color}
           onClick={() => { setText(color); onChange(color); }} />
@@ -1669,6 +1669,20 @@ export function PropertiesPanel({
               <div>
                 <Label>Block color</Label>
                 <ColorInput textColor value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
+              </div>
+              <div role="group" aria-label="Text color presets" className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-600">Color presets</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {TEXT_COLOR_PRESETS.map(({ name, hex }) => (
+                    <button key={hex} type="button" title={`${name} (${hex.toUpperCase()})`}
+                      aria-pressed={(component.color || "#000000").toLowerCase() === hex}
+                      className="flex min-w-0 items-center gap-1.5 rounded-md border border-slate-200 px-1.5 py-1 text-left text-xs text-slate-700 hover:bg-slate-50 aria-pressed:border-slate-500 aria-pressed:bg-slate-100"
+                      onClick={() => onUpdateComponent({ color: hex })}>
+                      <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-black/10" style={{ backgroundColor: hex }} />
+                      {name}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div ref={formattingRef} data-formatting-placement="text-section" className="border-t border-slate-200 pt-2 empty:hidden" />
             </section>
