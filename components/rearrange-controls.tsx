@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowUp, ArrowDown, Copy, Trash2, SendToBack } from "lucide-react"
+import { ArrowUp, ArrowDown, Copy, SendToBack } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,6 @@ interface RearrangeControlsProps {
   onMoveUp: () => void
   onMoveDown: () => void
   onDuplicate: () => void
-  onDelete: () => void
   // Optional: only shown in 3-option completely-different mode
   showCopyToOption?: boolean
   onCopyToOption?: (targetOption: 1 | 2 | 3) => void
@@ -29,13 +28,11 @@ function ToolbarButton({
   onClick,
   disabled,
   title,
-  danger,
   children,
 }: {
   onClick: () => void
   disabled?: boolean
   title: string
-  danger?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -43,9 +40,7 @@ function ToolbarButton({
       type="button"
       size="icon"
       variant="ghost"
-      className={`h-7 w-7 rounded-full p-0 text-gray-600 transition-colors hover:bg-gray-100 ${
-        danger ? "text-red-500 hover:bg-red-50 hover:text-red-600" : ""
-      }`}
+      className="h-7 w-7 rounded-md p-0 text-gray-600 transition-colors hover:bg-gray-100"
       onClick={(e) => {
         e.stopPropagation()
         onClick()
@@ -69,7 +64,6 @@ export function RearrangeControls({
   onMoveUp,
   onMoveDown,
   onDuplicate,
-  onDelete,
   showCopyToOption,
   onCopyToOption,
   activeOption = 1,
@@ -137,13 +131,6 @@ export function RearrangeControls({
         )}
       </div>
 
-      <Divider />
-
-      <div className="flex items-center gap-0.5">
-        <ToolbarButton title="Delete" danger onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </ToolbarButton>
-      </div>
     </div>
   )
 }

@@ -1099,12 +1099,12 @@ if (activeSelectedId) {
 
           {/* Right Panel: Properties */}
           {!previewMode && (selectedComponent || (currentTemplate && isEdit)) && (
-            <div className="w-[304px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
-              <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
+            <aside aria-label="Properties" className="flex w-[304px] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-slate-50">
+              <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-900">Properties</h2>
               </div>
 
-              <div ref={setActionsHost} className="shrink-0 px-3 pb-2 empty:hidden" />
+              <div ref={setActionsHost} className="shrink-0 border-b border-slate-200 bg-white px-3 py-2 empty:hidden" />
               <div className="flex-1 overflow-y-auto">
                   {selectedComponentData?.type !== "text" && (
                     <div ref={setFormattingHost} className="px-3 pt-3 empty:hidden" />
@@ -1133,7 +1133,7 @@ if (activeSelectedId) {
                   )}
                 </div>
 
-            </div>
+            </aside>
           )}
         </div>
       </div>

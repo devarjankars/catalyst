@@ -4404,8 +4404,15 @@ export function PropertiesPanel({
               : (component.type?.charAt(0).toUpperCase() ?? "") +
                 component.type?.slice(1)}
           </h3>
-          <p className="text-xs text-gray-400">Properties</p>
         </div>
+        {onDeleteComponent && (
+          <Button type="button" variant="ghost" size="icon"
+            aria-label="Remove component" title="Remove component"
+            className="ml-auto h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600"
+            onClick={() => onDeleteComponent(component.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {component.type === "section" && (
@@ -4455,18 +4462,6 @@ export function PropertiesPanel({
             )}
           </div>
         </div>
-      )}
-
-      {onDeleteComponent && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full border-red-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => onDeleteComponent(component.id)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remove this component
-        </Button>
       )}
 
       {renderProperties()}
@@ -4532,7 +4527,8 @@ export function PropertiesPanel({
               setBlockName(component.name || "");
               setIsSaveBlockOpen(true);
             }}
-            className="w-full bg-white hover:bg-gray-50"
+            size="sm"
+            className="bg-white hover:bg-gray-50"
           >
             <BookmarkPlus className="h-4 w-4 text-blue-600" />
             Save to Saved Blocks

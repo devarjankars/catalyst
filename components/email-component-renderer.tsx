@@ -2205,7 +2205,6 @@ export function EmailComponentRenderer({
               onMoveUp={handleMoveUp}
               onMoveDown={handleMoveDown}
               onDuplicate={handleDuplicate}
-              onDelete={onDelete}
               showCopyToOption={showCopyToOption}
               onCopyToOption={() => onCopyToOptions?.()}
             />,
