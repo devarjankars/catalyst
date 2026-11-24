@@ -16,7 +16,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
+import { AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
@@ -1600,84 +1600,76 @@ export function PropertiesPanel({
       case "text":
         return (
           <div className="space-y-4">
-            <div>
-              <Label>Font Family</Label>
-              <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
-                <SelectTrigger aria-label="Font family">
-                  <SelectValue>{(component.fontFamily || "Arial").split(",")[0]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {TEXT_FONT_FAMILIES.map(font => (
-                    <SelectItem key={font} value={font}>{font.split(",")[0]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Font Size</Label>
-              <FontSizeInput value={component.fontSize || "12px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
-            </div>
-            <div>
-              <Label htmlFor="color">Text Color</Label>
-              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
-            </div>
-            <div>
-              <Label>Font weight</Label>
-              <Select
-                value={component.fontWeight || "normal"}
-                onValueChange={(value) =>
-                  onUpdateComponent({ fontWeight: value as any })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="bold">Bold</SelectItem>
-                  <SelectItem value="lighter">Lighter</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="backgroundColor">Background color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
-            </div>
-            <div>
-              <Label htmlFor="textAlign">Text Align</Label>
-              <Select
-                value={component.textAlign || "left"}
-                onValueChange={(value) =>
-                  onUpdateComponent({ textAlign: value as any })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="lineHeight">Line Height</Label>
-              <LineHeightInput
-                value={component.lineHeight || "14px"}
-                onChange={(v) => onUpdateComponent({ lineHeight: v })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="paragraphSpacingPx">Extra Space Between Lines (px)</Label>
-              <PropertyNumberInput
-                id="paragraphSpacingPx"
-                max={200}
-                value={component.paragraphSpacingPx ?? 0}
-                onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)}
-              />
-              <p className="mt-1 text-[10px] text-gray-400">Sets the extra gap after each paragraph made with Enter. Press Enter twice for a blank paragraph. No extra space is added before the first or after the last paragraph.</p>
-            </div>
+            <section aria-label="Typography" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+              <h3 className="text-xs font-semibold text-slate-900">Typography</h3>
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-600">Font family</Label>
+                <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
+                  <SelectTrigger aria-label="Font family">
+                    <SelectValue>{(component.fontFamily || "Arial").split(",")[0]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEXT_FONT_FAMILIES.map(font => (
+                      <SelectItem key={font} value={font}>{font.split(",")[0]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Weight</Label>
+                  <Select value={component.fontWeight || "normal"} onValueChange={fontWeight => onUpdateComponent({ fontWeight: fontWeight as EmailComponent["fontWeight"] })}>
+                    <SelectTrigger aria-label="Font weight"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="bold">Bold</SelectItem>
+                      <SelectItem value="lighter">Lighter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Size</Label>
+                  <FontSizeInput value={component.fontSize || "12px"} onChange={fontSize => onUpdateComponent({ fontSize })} />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Line height</Label>
+                  <LineHeightInput value={component.lineHeight || "14px"} onChange={lineHeight => onUpdateComponent({ lineHeight })} />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="paragraphSpacingPx" className="text-xs text-slate-600">Paragraph gap</Label>
+                  <PropertyNumberInput id="paragraphSpacingPx" max={200} value={component.paragraphSpacingPx ?? 0}
+                    onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)} />
+                </div>
+              </div>
+              <div role="group" aria-label="Text alignment" className="grid grid-cols-3 gap-1 rounded-md border border-slate-200 bg-slate-50 p-1">
+                {([
+                  ["left", AlignLeft],
+                  ["center", AlignCenter],
+                  ["right", AlignRight],
+                ] as const).map(([textAlign, Icon]) => {
+                  const selected = (component.textAlign || "left") === textAlign;
+                  return (
+                    <Button key={textAlign} type="button" variant="ghost" size="sm"
+                      aria-label={`Align ${textAlign}`} aria-pressed={selected} title={`Align ${textAlign}`}
+                      className={selected ? "bg-white text-slate-900 shadow-sm hover:bg-white" : "text-slate-500"}
+                      onClick={() => onUpdateComponent({ textAlign })}>
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  );
+                })}
+              </div>
+            </section>
+            <section aria-label="Colors" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+              <h3 className="text-xs font-semibold text-slate-900">Colors</h3>
+              <div>
+                <Label>Text color</Label>
+                <ColorInput value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
+              </div>
+              <div>
+                <Label>Background color</Label>
+                <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+              </div>
+            </section>
             <div className="pt-2">
               <Button
                 variant="outline"
