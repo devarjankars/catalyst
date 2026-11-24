@@ -13,6 +13,7 @@ import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useEffect, useState, useCallback } from "react";
+import { DEFAULT_NEW_TEXT_COLOR } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -833,7 +834,11 @@ function toHex(value: string): string {
   return "#000000";
 }
 
-function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ColorInput({ value, onChange, textColor = false }: {
+  value: string;
+  onChange: (v: string) => void;
+  textColor?: boolean;
+}) {
   const { client } = useClient();
   const [text, setText] = useState(value || "#000000");
 
@@ -859,6 +864,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
       </div>
       <Input
         value={text}
+        aria-label={textColor ? "Text color hex" : undefined}
         onChange={(e) => setText(e.target.value)}
         onBlur={(e) => commit(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && commit(text)}
@@ -866,9 +872,9 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
         placeholder="#000000"
         maxLength={7}
       />
-      {[client.accentColor, client.iconBg].map(color => (
+      {[client.accentColor, textColor ? DEFAULT_NEW_TEXT_COLOR : client.iconBg].map(color => (
         <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
-          style={{ backgroundColor: color }} aria-label={`Use brand color ${color}`} title={color}
+          style={{ backgroundColor: color }} aria-label={textColor && color === DEFAULT_NEW_TEXT_COLOR ? "Use magenta text color" : `Use brand color ${color}`} title={color}
           onClick={() => { setText(color); onChange(color); }} />
       ))}
     </div>
@@ -877,6 +883,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
+  formattingRef?: React.Ref<HTMLDivElement>;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
   onDeleteComponent?: (id: string) => void;
   onSaveAsCustom?: (name?: string) => void;
@@ -1096,6 +1103,7 @@ function ImageTextBlockProperties({
 
 export function PropertiesPanel({
   component,
+  formattingRef,
   onUpdateComponent,
   onDeleteComponent,
   onSaveAsCustom,
@@ -1600,8 +1608,8 @@ export function PropertiesPanel({
       case "text":
         return (
           <div className="space-y-4">
-            <section aria-label="Typography" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
-              <h3 className="text-xs font-semibold text-slate-900">Typography</h3>
+            <section aria-label="Text" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+              <h3 className="text-xs font-semibold text-slate-900">Text</h3>
               <div className="space-y-1">
                 <Label className="text-xs text-slate-600">Font family</Label>
                 <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
@@ -1658,13 +1666,13 @@ export function PropertiesPanel({
                   );
                 })}
               </div>
-            </section>
-            <section aria-label="Colors" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
-              <h3 className="text-xs font-semibold text-slate-900">Colors</h3>
               <div>
-                <Label>Text color</Label>
-                <ColorInput value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
+                <Label>Block color</Label>
+                <ColorInput textColor value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
               </div>
+              <div ref={formattingRef} data-formatting-placement="text-section" className="border-t border-slate-200 pt-2 empty:hidden" />
+            </section>
+            <section aria-label="Background" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
               <div>
                 <Label>Background color</Label>
                 <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />

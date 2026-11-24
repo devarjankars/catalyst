@@ -1,3 +1,4 @@
+import { DEFAULT_NEW_TEXT_COLOR } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
 import {
   ImageIcon,
@@ -44,7 +45,7 @@ export const componentTypes = [
     defaultProps: {
       content: "Your text here",
       fontSize: "12px",
-      color: "#000000",
+      color: DEFAULT_NEW_TEXT_COLOR,
       textAlign: "left",
       fontWeight: "normal",
       lineHeight: "14px",

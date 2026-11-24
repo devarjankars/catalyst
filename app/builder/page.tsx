@@ -1106,12 +1106,15 @@ if (activeSelectedId) {
 
               <div ref={setActionsHost} className="shrink-0 px-3 pb-2 empty:hidden" />
               <div className="flex-1 overflow-y-auto">
-                  <div ref={setFormattingHost} className="px-3 pt-3 empty:hidden" />
+                  {selectedComponentData?.type !== "text" && (
+                    <div ref={setFormattingHost} className="px-3 pt-3 empty:hidden" />
+                  )}
                   {selectedComponent ? (
                     <div className="p-3">
                       <PropertiesPanel
                         key={activeSelectedId}
                         component={selectedComponentData}
+                        formattingRef={setFormattingHost}
                         onDeleteComponent={deleteComponent}
                         onUpdateComponent={(updates) => {
                           if (!activeSelectedId) return;

@@ -4,6 +4,7 @@
 import { Italic, Link, Subscript, Superscript } from "lucide-react"
 import type React from "react"
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { DEFAULT_NEW_TEXT_COLOR } from "@/lib/email-text-style"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
@@ -87,6 +88,7 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
   const { formatting: formattingHost } = useContext(BuilderToolbarContext)
+  const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -763,7 +765,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
           className={formattingHost
-            ? "flex w-full flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-2"
+            ? `flex w-full flex-wrap items-center gap-1 ${inTextSection ? "" : "rounded-lg border border-slate-200 bg-white p-2"}`
             : `w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : "mt-2"}`}
           style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
@@ -773,7 +775,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           onClick={(event) => event.stopPropagation()}
         >
           {formattingHost && (
-            <h3 className="basis-full px-1 pb-1 text-xs font-semibold text-slate-900">Text formatting</h3>
+            <h3 className="basis-full px-1 pb-1 text-xs font-semibold text-slate-900">{inTextSection ? "Selection formatting" : "Text formatting"}</h3>
           )}
           <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => applyFormattingCommand("bold")}>
@@ -812,6 +814,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
               {selectionColors.join(", ")}
             </span>
           </label>
+          {inTextSection && (
+            <button type="button" aria-label="Use magenta for selected text" title="Magenta"
+              className="h-6 w-6 rounded border border-slate-200"
+              style={{ backgroundColor: DEFAULT_NEW_TEXT_COLOR }}
+              onClick={() => applyColor(DEFAULT_NEW_TEXT_COLOR)} />
+          )}
           <select
             className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
             value=""
