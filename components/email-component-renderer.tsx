@@ -421,6 +421,7 @@ export function EmailComponentRenderer({
           <div style={{ padding: getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested) }} className="z-50">
             <RichTextEditor
               isSelected={isSelected}
+              useBlockColorPresets
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
               paragraphSpacingPx={component.paragraphSpacingPx ?? 0}

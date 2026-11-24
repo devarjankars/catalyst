@@ -197,6 +197,7 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
+  const applySelectionColor = useRef<((color: string) => boolean) | null>(null);
   const [formattingHost, setFormattingHost] = useState<HTMLDivElement | null>(null);
   const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
@@ -833,7 +834,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <BuilderToolbarContext.Provider value={{ formatting: formattingHost, actions: actionsHost }}>
+    <BuilderToolbarContext.Provider value={{ formatting: formattingHost, actions: actionsHost, applySelectionColor }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}

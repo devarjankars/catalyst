@@ -10,9 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { EmailComponent } from "@/types/email-builder";
+import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { DEFAULT_NEW_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
@@ -1109,6 +1110,7 @@ export function PropertiesPanel({
   onSaveAsCustom,
   onSaveHtmlBlock,
 }: PropertiesPanelProps) {
+  const { applySelectionColor } = useContext(BuilderToolbarContext);
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
@@ -1677,7 +1679,10 @@ export function PropertiesPanel({
                     <button key={hex} type="button" title={`${name} (${hex.toUpperCase()})`}
                       aria-pressed={(component.color || "#000000").toLowerCase() === hex}
                       className="flex min-w-0 items-center gap-1.5 rounded-md border border-slate-200 px-1.5 py-1 text-left text-xs text-slate-700 hover:bg-slate-50 aria-pressed:border-slate-500 aria-pressed:bg-slate-100"
-                      onClick={() => onUpdateComponent({ color: hex })}>
+                      onMouseDown={event => event.preventDefault()}
+                      onClick={() => {
+                        if (!applySelectionColor?.current?.(hex)) onUpdateComponent({ color: hex });
+                      }}>
                       <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-black/10" style={{ backgroundColor: hex }} />
                       {name}
                     </button>

@@ -83,11 +83,12 @@ interface RichTextEditorProps {
   className?: string
   isSelected?: boolean
   paragraphSpacingPx?: number
+  useBlockColorPresets?: boolean
   toolbarPlacement?: "below" | "selection"
 }
 
-export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
-  const { formatting: formattingHost } = useContext(BuilderToolbarContext)
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, toolbarPlacement = "below" }: RichTextEditorProps) {
+  const { formatting: formattingHost, applySelectionColor } = useContext(BuilderToolbarContext)
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
@@ -641,6 +642,27 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
     handleInput()
   }
+
+  useBrowserLayoutEffect(() => {
+    if (!applySelectionColor || !useBlockColorPresets || !isSelected || !focused) return;
+
+    const applyPreset = (color: string) => {
+      const selection = window.getSelection();
+      const editor = editorRef.current;
+      if (!editor || !selection?.rangeCount) return false;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return false;
+
+      savedRangeRef.current = range.cloneRange();
+      applyColor(color);
+      return true;
+    };
+
+    applySelectionColor.current = applyPreset;
+    return () => {
+      if (applySelectionColor.current === applyPreset) applySelectionColor.current = null;
+    };
+  });
 
   const applyFormattingCommand = (command: "bold" | "italic" | "underline") => {
     restoreSelection()
