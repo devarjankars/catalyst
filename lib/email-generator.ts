@@ -1,3 +1,4 @@
+import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
 import { getEmailFontFaceCss } from "./email-fonts";
 import { getDisplayAttributes } from "./style-generator";
@@ -1362,7 +1363,7 @@ case "isi": {
       const opts = component.customTextOptions || [];
       const token = opts.length ? `{{customText[${opts.join("|")}]}}` : "";
       const fontSize = component.fontSize || "12px";
-      const color = component.color || "#5D5D5D";
+      const color = component.color || DEFAULT_CUSTOM_TEXT_COLOR;
       const fontFamily = component.fontFamily || "Arial, sans-serif";
       const fontWeight = component.fontWeight || "normal";
       const lineHeight = component.lineHeight || "14px";

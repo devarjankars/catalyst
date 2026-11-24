@@ -14,7 +14,7 @@ import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
+import { DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -883,6 +883,26 @@ function ColorInput({ value, onChange, textColor = false, showBrandSwatches = tr
   );
 }
 
+function TextColorPresets({ value, onChange }: { value: string; onChange: (color: string) => void }) {
+  return (
+    <div role="group" aria-label="Text color presets" className="space-y-1.5">
+      <p className="text-xs font-medium text-slate-600">Color presets</p>
+      <div className="grid grid-cols-2 gap-1">
+        {TEXT_COLOR_PRESETS.map(({ name, hex }) => (
+          <button key={hex} type="button" title={`${name} (${hex.toUpperCase()})`}
+            aria-pressed={value.toLowerCase() === hex}
+            className="flex min-w-0 items-center gap-1.5 rounded-md border border-slate-200 px-1.5 py-1 text-left text-xs text-slate-700 hover:bg-slate-50 aria-pressed:border-slate-500 aria-pressed:bg-slate-100"
+            onMouseDown={event => event.preventDefault()}
+            onClick={() => onChange(hex)}>
+            <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-black/10" style={{ backgroundColor: hex }} />
+            {name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
   formattingRef?: React.Ref<HTMLDivElement>;
@@ -1673,23 +1693,9 @@ export function PropertiesPanel({
                 <Label>Block color</Label>
                 <ColorInput textColor showBrandSwatches={false} value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
               </div>
-              <div role="group" aria-label="Text color presets" className="space-y-1.5">
-                <p className="text-xs font-medium text-slate-600">Color presets</p>
-                <div className="grid grid-cols-2 gap-1">
-                  {TEXT_COLOR_PRESETS.map(({ name, hex }) => (
-                    <button key={hex} type="button" title={`${name} (${hex.toUpperCase()})`}
-                      aria-pressed={(component.color || "#000000").toLowerCase() === hex}
-                      className="flex min-w-0 items-center gap-1.5 rounded-md border border-slate-200 px-1.5 py-1 text-left text-xs text-slate-700 hover:bg-slate-50 aria-pressed:border-slate-500 aria-pressed:bg-slate-100"
-                      onMouseDown={event => event.preventDefault()}
-                      onClick={() => {
-                        if (!applySelectionColor?.current?.(hex)) onUpdateComponent({ color: hex });
-                      }}>
-                      <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-black/10" style={{ backgroundColor: hex }} />
-                      {name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <TextColorPresets value={component.color || "#000000"} onChange={hex => {
+                if (!applySelectionColor?.current?.(hex)) onUpdateComponent({ color: hex });
+              }} />
               <div ref={formattingRef} data-formatting-placement="text-section" className="border-t border-slate-200 pt-2 empty:hidden" />
             </section>
             <section aria-label="Background" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
@@ -2673,11 +2679,16 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Text Color</Label>
-              <ColorInput value={component.color || "#5D5D5D"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput textColor showBrandSwatches={false} value={component.color || DEFAULT_CUSTOM_TEXT_COLOR}
+                onChange={color => onUpdateComponent({ color })} />
+              <div className="mt-2">
+                <TextColorPresets value={component.color || DEFAULT_CUSTOM_TEXT_COLOR}
+                  onChange={color => onUpdateComponent({ color })} />
+              </div>
             </div>
             <div>
               <Label>Background Color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+              <ColorInput showBrandSwatches={false} value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label>Text Align</Label>

@@ -1,3 +1,4 @@
+import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
 import {
   ImageIcon,
@@ -326,7 +327,7 @@ export const componentTypes = [
       "I am reaching out to share some information you may find helpful.",
     ],
     fontSize: "12px",
-    color: "#ff00ff",
+    color: DEFAULT_CUSTOM_TEXT_COLOR,
     textAlign: "left",
     fontWeight: "normal",
     lineHeight: "14px",

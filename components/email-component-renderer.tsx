@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
@@ -1210,7 +1211,7 @@ export function EmailComponentRenderer({
               {opts.map((opt, i) => (
                 <div key={i} style={{
                   fontSize: component.fontSize || "12px",
-                  color: component.color || "#5D5D5D",
+                  color: component.color || DEFAULT_CUSTOM_TEXT_COLOR,
                   fontFamily: component.fontFamily || "Arial, sans-serif",
                   fontWeight: component.fontWeight || "normal",
                   lineHeight: component.lineHeight || "14px",
