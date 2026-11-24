@@ -22,6 +22,8 @@ import React from "react";
 // EmailCanvas uses forwardRef internally, so we import it directly to preserve
 // ref forwarding. next/dynamic's LoadableComponent wrapper drops refs even with
 // the React.forwardRef workaround, causing the console warning.
+import { BuilderToolbarContext } from "@/components/builder-toolbar-context";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailCanvas } from "@/components/email-canvas";
 const ComponentPalette = nextDynamic(
   () => import("@/components/component-palette").then((m) => ({ default: m.ComponentPalette })),
@@ -195,6 +197,8 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
+  const [formattingHost, setFormattingHost] = useState<HTMLDivElement | null>(null);
+  const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [versions, setVersions] = useState<EmailTemplateVersion[]>([]);
   const [versionName, setVersionName] = useState("");
@@ -552,6 +556,9 @@ function replaceImagesInComponents(components: any[]): any[] {
   const handleSaveComponentChanges = async () => {
     if (!currentTemplate) return false;
 
+    const {
+      components, optionMode, optionSubMode, option2Components, option3Components, preheaderText,
+    } = useEmailBuilderStore.getState();
     setSaving(true);
     try {
       const updatedTemplate = await firebaseService.updateTemplate(
@@ -575,9 +582,32 @@ function replaceImagesInComponents(components: any[]): any[] {
       );
 
       if (!updatedTemplate) throw new Error('Failed to save emailer');
-      setCurrentTemplate(updatedTemplate);
-      setOriginalTemplate(updatedTemplate);
-      markComponentsSaved();
+      const editor = useEmailBuilderStore.getState();
+      if (editor.currentTemplate?.id === currentTemplate.id) {
+        useEmailBuilderStore.setState({
+          currentTemplate: updatedTemplate,
+          originalTemplate: updatedTemplate,
+          originalComponents: components,
+          originalOption2Components: option2Components,
+          originalOption3Components: option3Components,
+        });
+        editor.checkForChanges();
+      }
+
+      if (currentTemplate.isUserCreated) {
+        try {
+          await firebaseService.saveTemplateVersion(currentTemplate.id, "Before draft save", {
+            components: currentTemplate.components,
+            optionMode: currentTemplate.optionMode,
+            optionSubMode: currentTemplate.optionSubMode,
+            option2Components: currentTemplate.option2Components,
+            option3Components: currentTemplate.option3Components,
+            preheaderText: currentTemplate.preheaderText,
+          });
+        } catch {
+          toast.warning("Draft saved. The previous version could not be archived.");
+        }
+      }
       return true;
     } catch (error) {
       console.error("Failed to save component changes:", error);
@@ -803,7 +833,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <>
+    <BuilderToolbarContext.Provider value={{ formatting: formattingHost, actions: actionsHost }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}
@@ -945,6 +975,9 @@ if (activeSelectedId) {
         </div>
 
         {/* Main Content */}
+        {!previewMode && (
+          <div ref={setFormattingHost} className="h-12 shrink-0 overflow-x-auto border-b bg-white" />
+        )}
         <div className="flex-1 flex overflow-hidden">
 
           {/* Components panel */}
@@ -988,25 +1021,16 @@ if (activeSelectedId) {
             {(optionMode === "two" || optionMode === "three") && (
               <div className="mb-5 w-full max-w-[600px] sticky top-0 z-20 pt-4 pb-3 bg-[#f0f2f5]">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  {/* Tab row */}
-                  <div className="flex border-b border-gray-100">
-                    {(optionMode === "two" ? [1, 2] : [1, 2, 3] as const).map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => setActiveOption(opt as 1 | 2 | 3)}
-                        className={`flex-1 py-2.5 text-sm font-medium transition-colors relative ${
-                          activeOption === opt
-                            ? "text-[#BC2030] bg-red-50"
-                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-                        }`}
-                      >
-                        Option {opt}
-                        {activeOption === opt && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BC2030] rounded-t-full" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <Tabs value={String(activeOption)} onValueChange={(value) => setActiveOption(Number(value) as 1 | 2 | 3)}>
+                    <TabsList aria-label="Email options" className="grid h-auto w-full grid-flow-col auto-cols-fr gap-1 rounded-none bg-slate-100 p-1.5">
+                      {(optionMode === "two" ? [1, 2] : [1, 2, 3]).map(option => (
+                        <TabsTrigger key={option} value={String(option)}
+                          className="rounded-md px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-[#BC2030] data-[state=active]:shadow-sm">
+                          Option {option}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
                   {/* Info row */}
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
                     <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
@@ -1078,15 +1102,17 @@ if (activeSelectedId) {
 
           {/* Right Panel: Properties */}
           {!previewMode && (selectedComponent || (currentTemplate && isEdit)) && (
-            <div className="w-[272px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
+            <div className="w-[304px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
               <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
                 <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
               </div>
 
+              <div ref={setActionsHost} className="shrink-0 px-3 pb-2 empty:hidden" />
               <div className="flex-1 overflow-y-auto">
                   {selectedComponent ? (
                     <div className="p-3">
                       <PropertiesPanel
+                        key={activeSelectedId}
                         component={selectedComponentData}
                         onDeleteComponent={deleteComponent}
                         onUpdateComponent={(updates) => {
@@ -1159,7 +1185,7 @@ if (activeSelectedId) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Version history</DialogTitle>
-            <DialogDescription>Save named versions of this emailer. Restoring loads a version into your draft so you can review it before saving.</DialogDescription>
+            <DialogDescription>Draft saves archive the previous saved version. You can also name a snapshot of the current draft. Loading a version puts it back in your draft for review.</DialogDescription>
           </DialogHeader>
           <form className="flex gap-2" onSubmit={event => { event.preventDefault(); void saveVersion(); }}>
             <input aria-label="Version name" className="flex-1 rounded-md border px-3 text-sm" required maxLength={100}
@@ -1246,6 +1272,6 @@ if (activeSelectedId) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </BuilderToolbarContext.Provider>
   );
 }

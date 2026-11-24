@@ -59,7 +59,7 @@ function ToolbarButton({
 }
 
 function Divider() {
-  return <div className="my-1 h-px w-4 bg-gray-200" aria-hidden="true" />
+  return <div className="mx-1 h-4 w-px bg-gray-200" aria-hidden="true" />
 }
 
 export function RearrangeControls({
@@ -78,10 +78,10 @@ export function RearrangeControls({
 
   return (
     <div
-      className="absolute -right-10 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center rounded-full border border-gray-200 bg-white/95 py-1.5 pl-1 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
+      className="flex flex-wrap items-center gap-0.5 rounded-md border border-gray-200 bg-white p-1"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
         <ToolbarButton title="Move up" onClick={onMoveUp} disabled={index === 0}>
           <ArrowUp className="h-3.5 w-3.5" />
         </ToolbarButton>
@@ -92,7 +92,7 @@ export function RearrangeControls({
 
       <Divider />
 
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
         <ToolbarButton title="Duplicate" onClick={onDuplicate}>
           <Copy className="h-3.5 w-3.5" />
         </ToolbarButton>
@@ -139,7 +139,7 @@ export function RearrangeControls({
 
       <Divider />
 
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
         <ToolbarButton title="Delete" danger onClick={onDelete}>
           <Trash2 className="h-3.5 w-3.5" />
         </ToolbarButton>

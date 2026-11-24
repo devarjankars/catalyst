@@ -2050,8 +2050,6 @@ case "isi": {
       const backgroundColor= c.backgroundColor?? "#ffffff";
       const footerLine     = c.footerLine     ?? "";
       const footerPadding  = getOrserduIsiPadding(c.footerPadding);
-      const trialDesignHtml= c.trialDesignHtml?? "";
-      const trialDesignPad = getOrserduIsiPadding(c.trialDesignPadding);
       const bulletTextGap = Math.max(0, Math.min(40, Number.parseInt(String(c.bulletTextGap ?? "4").replace(/px$/i, ""), 10) || 0));
 
       // Respect the configurable spaceBetweenBullets value
@@ -2098,16 +2096,6 @@ case "isi": {
             <td style="padding:${footerPadding};background-color:transparent;">
               <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
                 <b>${footerLine}</b>
-              </div>
-            </td>
-          </tr></tbody>
-        </table>` : ""}
-        ${trialDesignHtml ? `
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-          <tbody><tr>
-            <td style="padding:${trialDesignPad};background-color:transparent;">
-              <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
-                ${trialDesignHtml}
               </div>
             </td>
           </tr></tbody>

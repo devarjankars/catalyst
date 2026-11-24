@@ -67,21 +67,6 @@ export const componentTypes = [
     },
   },
   {
-    type: "button",
-    label: "Button",
-    category : "basic",
-    icon: Square,
-    defaultProps: {
-      text: "Button",
-      href: "#",
-      backgroundColor: "#0563C1",
-      color: "#ffffff",
-      borderRadius: "4px",
-      buttonPadding: "12px 24px",
-      textAlign: "center",
-    },
-  },
-  {
     type: "section",
     label: "Section",
     category : "basic",
@@ -1174,10 +1159,7 @@ export const componentTypes = [
       // Footer line
       footerLine: "Please see additional Important Safety Information below.",
       footerPadding: "0",
-      // Trial design paragraph (supports basic HTML: <b>, <i>, <sup>, <a>)
-      trialDesignHtml: `<b>TRIAL DESIGN:</b> EMERALD was an open-label, global, phase 3 trial of postmenopausal women or men with confirmed ER+/HER2- advanced or metastatic breast cancer (N=478) who had progressed after 1-2 lines of ET, at least one in combination with a CDK4/6i, randomized (1:1) to receive ORSERDU or endocrine therapy (fulvestrant) or an aromatase inhibitor (anastrozole, letrozole, or exemestane). A major efficacy endpoint was PFS by BIRC in patients with <i>ESR1</i>m (n=228). An exploratory post hoc analysis evaluated efficacy and safety in patients with <i>ESR1</i>m treated with prior ET + CDK4/6i for ≥12 months (n=159).<sup>1,2</sup>`,
-      trialDesignPadding: "0",
-      padding: "0 20px 10px 20px",
+      padding: "0 10px 10px 10px",
     },
   },
 ];

@@ -82,6 +82,37 @@ export function isValidCssSize(raw: string): boolean {
 // Pure custom text input — no dropdown.  The user types any valid CSS size.
 // "10" is normalised to "10px" on blur/Enter.
 // Invalid values show an inline message and are not committed.
+function PropertyNumberInput({
+  id, value, max, onCommit,
+}: {
+  id?: string;
+  value: number;
+  max?: number;
+  onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <Input id={id} type="number" min={0} max={max} step={1}
+      value={draft ?? String(value)}
+      onChange={event => setDraft(event.target.value)}
+      onKeyDown={event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+      onBlur={event => {
+        const next = event.currentTarget.valueAsNumber;
+        setDraft(null);
+        if (!Number.isFinite(next)) return;
+        const clamped = Math.max(0, Math.min(max ?? Infinity, next));
+        if (clamped !== value) onCommit(clamped);
+      }}
+    />
+  );
+}
+
 function FontSizeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [local, setLocal] = useState(value);
   const [error, setError] = useState("");
@@ -315,10 +346,7 @@ function OrserduIsiSelectPanel({
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
   const [footerPadding,   setFooterPadding]   = useState<string>(getOrserduIsiPadding(component.footerPadding));
-  const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
-  const [trialDesignPadding, setTrialDesignPadding] = useState<string>(getOrserduIsiPadding(component.trialDesignPadding));
   const [showFooter,      setShowFooter]      = useState<boolean>(!!(component.footerLine));
-  const [showTrialDesign, setShowTrialDesign] = useState<boolean>(!!(component.trialDesignHtml));
 
   // Sync if component id changes (different component selected)
   useEffect(() => {
@@ -336,10 +364,7 @@ function OrserduIsiSelectPanel({
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
     setFooterPadding(getOrserduIsiPadding(component.footerPadding));
-    setTrialDesignHtml(component.trialDesignHtml ?? "");
-    setTrialDesignPadding(getOrserduIsiPadding(component.trialDesignPadding));
     setShowFooter(!!(component.footerLine));
-    setShowTrialDesign(!!(component.trialDesignHtml));
   }, [component.id]);
 
   // ── Commit helpers — only write to store on blur/enter ───────────────────
@@ -602,38 +627,7 @@ function OrserduIsiSelectPanel({
         )}
       </div>
 
-      {/* Trial design paragraph — toggleable */}
-      <div className="border rounded-lg p-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Trial Design Paragraph</p>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <span className="text-xs text-gray-500">{showTrialDesign ? "Enabled" : "Disabled"}</span>
-            <div
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showTrialDesign ? "bg-green-500" : "bg-gray-300"}`}
-              onClick={() => {
-                const next = !showTrialDesign;
-                setShowTrialDesign(next);
-                if (!next) { setTrialDesignHtml(""); commit({ trialDesignHtml: "" }); }
-              }}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${showTrialDesign ? "translate-x-[18px]" : "translate-x-1"}`} />
-            </div>
-          </label>
-        </div>
-        {showTrialDesign && (
-          <>
-            <p className="text-[11px] text-gray-400">Supports HTML: &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a href=""&gt;</p>
-            <textarea
-              className="w-full min-h-[120px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring font-mono resize-y"
-              value={trialDesignHtml}
-              onChange={(e) => setTrialDesignHtml(e.target.value)}
-              onBlur={() => commit({ trialDesignHtml })}
-              onKeyDown={(e) => e.key === "Enter" && commit({ trialDesignHtml })}
-              placeholder="<b>TRIAL DESIGN:</b> ..."
-            />
-          </>
-        )}
-      </div>
+
     </div>
   );
 }
@@ -1048,17 +1042,11 @@ function ImageTextBlockProperties({
           </div>
           <div>
             <Label htmlFor={`image-text-paragraph-spacing-${component.id}`}>Paragraph Spacing (px)</Label>
-            <Input
+            <PropertyNumberInput
               id={`image-text-paragraph-spacing-${component.id}`}
-              type="number"
-              min={0}
               max={200}
-              step={1}
               value={component.paragraphSpacingPx ?? 0}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
-              }}
+              onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)}
             />
             <p className="mt-1 text-[11px] text-gray-400">
               Sets the extra gap between paragraphs. No extra space is added before the first or after the last paragraph.
@@ -1679,17 +1667,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="paragraphSpacingPx">Extra Space Between Lines (px)</Label>
-              <Input
+              <PropertyNumberInput
                 id="paragraphSpacingPx"
-                type="number"
-                min={0}
                 max={200}
-                step={1}
                 value={component.paragraphSpacingPx ?? 0}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
-                }}
+                onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)}
               />
               <p className="mt-1 text-[10px] text-gray-400">Sets the extra gap after each paragraph made with Enter. Press Enter twice for a blank paragraph. No extra space is added before the first or after the last paragraph.</p>
             </div>
@@ -2493,13 +2475,10 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="spaceBetweenItems">Space Between Items (px)</Label>
-              <Input
+              <PropertyNumberInput
                 id="spaceBetweenItems"
-                type="number"
-                min={0}
-                value={(component.spaceBetweenItems || "5px").replace(/px$/i, "")}
-                onChange={(e) => onUpdateComponent({ spaceBetweenItems: e.target.value ? `${e.target.value}px` : "5px" })}
-                placeholder="5"
+                value={Number.parseFloat(component.spaceBetweenItems ?? "5") || 0}
+                onCommit={value => onUpdateComponent({ spaceBetweenItems: `${value}px` })}
               />
             </div>
 

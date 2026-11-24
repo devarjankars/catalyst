@@ -3,7 +3,8 @@
 
 import { Italic, Link, Subscript, Superscript } from "lucide-react"
 import type React from "react"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
 
@@ -85,6 +86,8 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
+  const { formatting: formattingHost } = useContext(BuilderToolbarContext)
+  const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -115,7 +118,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const updateToolbarPosition = () => {
-    if (toolbarPlacement !== "selection") return
+    if (!floating) return
     const editor = editorRef.current
     const selection = window.getSelection()
     if (!editor) {
@@ -302,11 +305,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }, [])
 
   useLayoutEffect(() => {
-    if (toolbarPlacement === "selection" && toolbarPosition) updateToolbarPosition()
-  }, [toolbarPlacement, toolbarPosition])
+    if (floating && toolbarPosition) updateToolbarPosition()
+  }, [floating, toolbarPosition])
 
   useEffect(() => {
-    if (!focused || toolbarPlacement !== "selection") return
+    if (!focused || !floating) return
     const repositionToolbar = () => updateToolbarPosition()
     window.addEventListener("scroll", repositionToolbar, true)
     window.addEventListener("resize", repositionToolbar)
@@ -332,7 +335,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       window.removeEventListener("resize", repositionToolbar)
       document.removeEventListener("selectionchange", handleSelectionChange)
     }
-  }, [focused, toolbarPlacement])
+  }, [focused, floating])
 
   const flushInput = () => {
     if (changeTimerRef.current) {
@@ -747,7 +750,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             const active = document.activeElement
             if (toolbarRef.current && active && toolbarRef.current.contains(active)) return
             setFocused(false)
-            if (toolbarPlacement === "selection") setToolbarPosition(null)
+            if (floating) setToolbarPosition(null)
           }, 0)
         }}
         style={{ minHeight: "min-content", outline: "none", ...style }}
@@ -755,12 +758,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {typeof document !== "undefined" && isSelected && focused && (toolbarPlacement !== "selection" || toolbarPosition) && createPortal(
+      {typeof document !== "undefined" && isSelected && focused && (!floating || toolbarPosition) && createPortal(
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
-          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${toolbarPlacement === "selection" ? "fixed" : "mt-2"}`}
-          style={toolbarPlacement === "selection" && toolbarPosition
+          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : formattingHost ? "!w-max !max-w-none !flex-nowrap !border-0 !shadow-none !ring-0 whitespace-nowrap" : "mt-2"}`}
+          style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
           tabIndex={-1}
@@ -870,7 +873,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             px
           </label>
         </div>,
-        toolbarPlacement === "selection" ? document.body : editorRef.current?.parentElement ?? document.body,
+        formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
       )}
 
       {/* Link insert dialog */}

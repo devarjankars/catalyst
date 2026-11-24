@@ -1,10 +1,12 @@
 ﻿"use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
 import { SectionDropZone } from "./section-drop-zone";
+import { createPortal } from "react-dom";
+import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { RearrangeControls } from "./rearrange-controls";
 import type { EmailComponent } from "@/types/email-builder";
 import { Input } from "./ui/input";
@@ -25,7 +27,7 @@ import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
-import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
+import { getOrserduIsiBulletSpacing, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
 import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "@/lib/email-padding";
@@ -184,6 +186,8 @@ export function EmailComponentRenderer({
     }
   }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
 
+  const { actions: actionsHost } = useContext(BuilderToolbarContext);
+
   const [{ handlerId }, drop] = useDrop({
     accept: "component",
     collect(monitor) {
@@ -207,12 +211,14 @@ export function EmailComponentRenderer({
       const hoverMiddleY =
         (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
-      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
+      if (!clientOffset) return;
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
+      item.index = hoverIndex;
     },
   });
 
@@ -271,7 +277,7 @@ export function EmailComponentRenderer({
           onSelectChild={onSelectChild}
           selectedComponent={selectedComponent}
           previewMode={previewMode}
-          totalComponents={component.children?.length || 0}
+          totalComponents={component.children?.find(column => column.id === sectionId)?.children?.length ?? component.children?.length ?? 0}
           parentId={sectionId} // Pass sectionId as parentId for children
           isLockedMode={isLockedMode}
         />
@@ -1798,8 +1804,6 @@ export function EmailComponentRenderer({
               backgroundColor = "#ffffff",
               footerLine = "",
               footerPadding = "0",
-              trialDesignHtml = "",
-              trialDesignPadding = "0",
             } = component as any;
 
             return (
@@ -1864,19 +1868,6 @@ export function EmailComponentRenderer({
                   </table>
                 )}
 
-                {/* Trial design paragraph */}
-                {trialDesignHtml && (
-                  <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
-                    <tbody><tr>
-                      <td style={{ padding: getOrserduIsiPadding(trialDesignPadding), backgroundColor: "transparent" }}>
-                        <div
-                          style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}
-                          dangerouslySetInnerHTML={{ __html: trialDesignHtml }}
-                        />
-                      </td>
-                    </tr></tbody>
-                  </table>
-                )}
               </div>
             );
           }
@@ -2199,14 +2190,14 @@ export function EmailComponentRenderer({
             <div
               ref={dragHandleRef}
               title="Drag to reorder"
-              className="absolute -left-6 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 opacity-0 shadow-sm transition-opacity hover:text-gray-600 hover:shadow group-hover:opacity-100 z-10"
+              className="absolute -left-7 top-1/2 cursor-grab active:cursor-grabbing flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 opacity-40 shadow-sm transition-opacity hover:opacity-100 hover:text-gray-600 hover:shadow group-hover:opacity-100 z-10"
             >
               <GripVertical className="h-4 w-4 cursor-grab" />
             </div>
           }
 
           {/* Rearrange Controls */}
-          {isSelected && !isLockedMode && (
+          {isSelected && !isLockedMode && actionsHost && createPortal(
             <RearrangeControls
               componentId={component.id}
               index={index}
@@ -2217,7 +2208,8 @@ export function EmailComponentRenderer({
               onDelete={onDelete}
               showCopyToOption={showCopyToOption}
               onCopyToOption={() => onCopyToOptions?.()}
-            />
+            />,
+            actionsHost
           )}
         </>
       )}
