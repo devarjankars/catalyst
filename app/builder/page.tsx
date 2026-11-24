@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/loading-spinner";
@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import { toast } from "sonner";
-import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import { matchesBrand } from "@/lib/brand-filter"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
 import type { BrandId } from "@/types/template";
@@ -491,7 +490,6 @@ function replaceImagesInComponents(components: any[]): any[] {
   const handleSaveComponentChanges = async () => {
     if (!currentTemplate) return false;
 
-    flushPendingUpdates();
     setSaving(true);
     try {
       const updatedTemplate = await firebaseService.updateTemplate(
@@ -534,7 +532,6 @@ function replaceImagesInComponents(components: any[]): any[] {
     category: string,
     brand: BrandId
   ) => {
-    flushPendingUpdates();
     setSaving(true);
     try {
       const normalizedName = name.trim().toLowerCase();
@@ -668,25 +665,6 @@ if (activeSelectedId) {
   selectedComponentData = null;
   parentId = null;
 }
-
-  // ── Debounced properties update ─────────────────────────────────────────
-  // Capture latest ids in a ref so the debounced callback stays stable
-  const activeIdRef = useRef(activeSelectedId);
-  const parentIdRef = useRef(parentId);
-  activeIdRef.current = activeSelectedId;
-  parentIdRef.current = parentId;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const {
-    debouncedUpdate: debouncedUpdateComponent,
-    flush: flushPendingUpdates,
-  } = useDebouncedUpdate(
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useCallback((updates: any) => {
-      if (!activeIdRef.current) return;
-      updateComponent(activeIdRef.current, updates, parentIdRef.current);
-    }, [updateComponent])
-  );
 
   if (loading) {
     return (
@@ -1042,9 +1020,9 @@ if (activeSelectedId) {
                       <PropertiesPanel
                         component={selectedComponentData}
                         onDeleteComponent={deleteComponent}
-                        onUpdateComponent={(updates, immediate = false) => {
+                        onUpdateComponent={(updates) => {
                           if (!activeSelectedId) return;
-                          debouncedUpdateComponent(updates, immediate);
+                          updateComponent(activeSelectedId, updates, parentId);
                         }}
                         onSaveAsCustom={(name) => saveAsCustomComponent(name)}
                       />

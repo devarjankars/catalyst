@@ -1506,12 +1506,12 @@ export function EmailComponentRenderer({
                   display: "flex",
                   flexDirection: imagePosition === "right" ? "row-reverse" : "row",
                   alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start",
-                  gap: `${imageTextGap}px`,
+                  gap: imageTextImageSrc ? `${imageTextGap}px` : 0,
                   width: "100%",
                   transition: "gap 140ms ease",
                 }}
               >
-                <div
+                {imageTextImageSrc && <div
                   style={{
                     flex: `0 0 ${imageWidth}px`,
                     width: `${imageWidth}px`,
@@ -1520,12 +1520,12 @@ export function EmailComponentRenderer({
                   }}
                 >
                   <img
-                    src={imageTextImageSrc || "/placeholder.svg"}
+                    src={imageTextImageSrc}
                     alt={imageTextImageAlt || ""}
                     width={imageWidth}
                     style={{ display: "block", width: `${imageWidth}px`, maxWidth: "100%", height: "auto" }}
                   />
-                </div>
+                </div>}
                 <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
                   <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (

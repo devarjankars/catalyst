@@ -1,6 +1,7 @@
 "use client"
 
 import type { EmailComponent } from "@/types/email-builder"
+import { getColumnWidth } from "./column-width";
 import { getDisplayAttributes } from "./style-generator";
 
 /*
@@ -27,13 +28,6 @@ const { children, columns, columnsType, gap , direction} = component;
 const { classAttr, innerStyle } = getDisplayAttributes(component.displayType);
 
 
-const getWidth = (colCount: number | undefined,width : string): string => {
-    if (width && width !== "auto") return width;
-    if (!colCount || colCount <= 1) return "100%";
-    return `${100 / colCount}%`;
-}
-
-
 function generateTdHTML(
   child: EmailComponent,
   index: number,
@@ -43,19 +37,21 @@ function generateTdHTML(
   const verticalAlign = child.columnVerticalAlignment || "center";
   const alignment = child.columnAlignment || "center";
 
+  const width = getColumnWidth(totalColumns, child.columnWidth);
+
   return `
     <td
     
       bgcolor="${child.backgroundColor || "transparent"}"
       valign="${verticalAlign}"
       align="${alignment }"
-      width="${getWidth(totalColumns,child.columnWidth || "")}"
+      width="${width}"
       ${child.displayType === "mobile-only" ? 'class="mbl-show-cell"' : child.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
       style="
         vertical-align: ${verticalAlign};
         background-color: ${child.backgroundColor || "transparent"};
         border-radius: ${child.borderRadius || "0px"};
-        width: ${getWidth(totalColumns,child.columnWidth || "")};
+        width: ${width};
         min-height: ${child.columnMinHeight || "120px"};
         padding : ${child.padding || 0}
        ${ innerStyle ? innerStyle : "" }

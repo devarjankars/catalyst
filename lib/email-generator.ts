@@ -2477,9 +2477,11 @@ return `
                 <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
                   <div>${textContent}</div>
                 </td>`;
-      const contentCells = imagePosition === "right"
-        ? `${textCell}${gapCell}${imageCell}`
-        : `${imageCell}${gapCell}${textCell}`;
+      const contentCells = !imageSrc
+        ? textCell
+        : imagePosition === "right"
+          ? `${textCell}${gapCell}${imageCell}`
+          : `${imageCell}${gapCell}${textCell}`;
       return `
       <table class="${visibilityClass}" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
         <tbody><tr>
@@ -2598,7 +2600,7 @@ export function generateEmailHTML(
         .geron-footer-table td.mbDisp { display: none !important; }
        
 
-        sup {
+        sup, sub {
             line-height: 0;
             font-size: 60%;
             mso-ansi-font-size: 95%;

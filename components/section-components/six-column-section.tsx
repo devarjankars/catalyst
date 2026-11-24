@@ -1,5 +1,6 @@
 "use client";
 
+import { getColumnWidth } from "@/lib/column-width";
 import { SectionDropZone } from "../section-drop-zone";
 import type { EmailComponent } from "@/types/email-builder";
 
@@ -38,7 +39,8 @@ export default function SixColumnSection({
                 <div key={child.id} 
                 style={{
                     backgroundColor: child.backgroundColor || "#ffffff",
-                    width : child.columnWidth ? `${child.columnWidth}` : "100%",
+                    width: direction === "row" ? getColumnWidth(component.children?.length ?? 0, child.columnWidth) : "100%",
+                    minWidth: 0,
                     
                 }}
                 >

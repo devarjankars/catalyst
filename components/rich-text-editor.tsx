@@ -1,7 +1,7 @@
 "use client"
 
 
-import { Italic, Link, Superscript } from "lucide-react"
+import { Italic, Link, Subscript, Superscript } from "lucide-react"
 import type React from "react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
@@ -468,7 +468,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     handleInput()
   }
 
-  const toggleSuperscript = () => {
+  const toggleScript = (command: "superscript" | "subscript") => {
     restoreSelection()
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
@@ -487,14 +487,14 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
     if (
       targetElement &&
-      targetElement.nodeName === 'SUP' &&
+      targetElement.nodeName === (command === "superscript" ? "SUP" : "SUB") &&
       targetElement.contains(range.startContainer) &&
       targetElement.contains(range.endContainer)
     ) {
-      const supText = targetElement.textContent?.trim() || ''
+      const scriptText = targetElement.textContent?.trim() || ''
       const selectedText = range.toString().trim()
 
-      if (supText === selectedText) {
+      if (scriptText === selectedText) {
         const textNode = document.createTextNode(targetElement.textContent || '')
         targetElement.parentNode?.replaceChild(textNode, targetElement)
         const newRange = document.createRange()
@@ -506,7 +506,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       }
     }
 
-    document.execCommand("superscript")
+    document.execCommand(command)
     handleInput()
   }
 
@@ -752,8 +752,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             <Link className="h-3 w-3" />
           </button>
           <button type="button" title="Superscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => toggleSuperscript()}>
+            onClick={() => toggleScript("superscript")}>
             <Superscript className="h-4 w-4" />
+          </button>
+          <button type="button" title="Subscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
+            onClick={() => toggleScript("subscript")}>
+            <Subscript className="h-4 w-4" />
           </button>
           <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
           <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
@@ -803,7 +807,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             <option value="32px">32px line</option>
           </select>
           <label className="flex items-center gap-1 border-l pl-2 px-1 text-xs text-black">
-            Top space
+            Paragraph spacing
             <input
               type="number"
               min="0"
@@ -813,27 +817,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault()
-                  const padding = Number(paragraphPadding)
-                  if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                    applyParagraphPadding(`${padding}px`)
-                  }
+                  e.currentTarget.blur()
                 }
               }}
               onMouseDown={saveSelection}
               onBlur={() => {
                 const padding = Number(paragraphPadding)
-                if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                if (paragraphPadding !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
                   applyParagraphPadding(`${padding}px`)
                 }
               }}
-              onChange={(e) => {
-                const value = e.target.value
-                setParagraphPadding(value)
-                const padding = Number(value)
-                if (value !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                  applyParagraphPadding(`${padding}px`)
-                }
-              }}
+              onChange={(e) => setParagraphPadding(e.target.value)}
               className="w-14 rounded border border-gray-300 px-1 py-1 text-xs text-black"
               aria-label="Space above selected paragraph in pixels"
             />

@@ -908,6 +908,16 @@ function ImageTextBlockProperties({
           currentImage={component.imageTextImageSrc}
           onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })}
         />
+        {component.imageTextImageSrc && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onUpdateComponent({ imageTextImageSrc: "" }, true)}
+          >
+            Remove image
+          </Button>
+        )}
         <div>
           <Label htmlFor={`image-text-alt-${component.id}`}>Alt Text</Label>
           <Input
@@ -1283,7 +1293,7 @@ export function PropertiesPanel({
                       <Label htmlFor="columnWidth">Column Width</Label>
                       <Input
                         id="columnWidth"
-                        value={component.columnWidth || "auto"}
+                        value={component.columnWidth ?? ""}
                         onChange={(e) =>
                           onUpdateComponent({ columnWidth: e.target.value })
                         }
@@ -1459,7 +1469,7 @@ export function PropertiesPanel({
                         </Label>
                         <Input
                           id={`column-width-${idx}`}
-                          value={child.columnWidth || (component.children!.length === 2 ? "50%" : "33.33%")}
+                          value={child.columnWidth ?? ""}
                           onChange={(e) => {
                             const updatedChildren = component.children!.map((c, i) =>
                               i === idx ? { ...c, columnWidth: e.target.value } : c
