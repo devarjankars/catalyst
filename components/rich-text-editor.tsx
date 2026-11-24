@@ -4,7 +4,6 @@
 import { Italic, Link, Subscript, Superscript } from "lucide-react"
 import type React from "react"
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { DEFAULT_NEW_TEXT_COLOR } from "@/lib/email-text-style"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
@@ -824,23 +823,19 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             <Subscript className="h-4 w-4" />
           </button>
           <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
-          <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
-            Color
-            <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
-              value={selectionColors[0] || "#000000"}
-              onMouseDown={saveSelection}
-              onChange={(e) => applyColor(e.currentTarget.value)}
-              title="Text color"
-              aria-label="Text color" />
-            <span className="max-w-40 truncate font-mono" title={selectionColors.join(", ")}>
-              {selectionColors.join(", ")}
-            </span>
-          </label>
-          {inTextSection && (
-            <button type="button" aria-label="Use magenta for selected text" title="Magenta"
-              className="h-6 w-6 rounded border border-slate-200"
-              style={{ backgroundColor: DEFAULT_NEW_TEXT_COLOR }}
-              onClick={() => applyColor(DEFAULT_NEW_TEXT_COLOR)} />
+          {!inTextSection && (
+            <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
+              Color
+              <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+                value={selectionColors[0] || "#000000"}
+                onMouseDown={saveSelection}
+                onChange={(e) => applyColor(e.currentTarget.value)}
+                title="Text color"
+                aria-label="Text color" />
+              <span className="max-w-40 truncate font-mono" title={selectionColors.join(", ")}>
+                {selectionColors.join(", ")}
+              </span>
+            </label>
           )}
           <select
             className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
