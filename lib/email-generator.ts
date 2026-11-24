@@ -738,14 +738,23 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         ? 'style="display:none;mso-hide:all;"'
         : "";
 
+      const preserveOrserduColors = component.type === "orserdu-highlight-box";
+      const backgroundStyle = preserveOrserduColors
+        ? `background-color:${boxBgColor} !important;background-image:linear-gradient(${boxBgColor},${boxBgColor}) !important;`
+        : `background-color:${boxBgColor};`;
+      const textColorStyle = preserveOrserduColors
+        ? `color:${boxTextColor} !important;-webkit-text-fill-color:${boxTextColor} !important;`
+        : `color:${boxTextColor};`;
+
       return `
 <table ${displayClass} ${displayStyle} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tbody><tr>
     <td style="padding:${outerPad};">
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
-        style="background-color:${boxBgColor};">
+        style="${backgroundStyle}">
         <tbody><tr>
-          <td style="padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};color:${boxTextColor};mso-line-height-rule:exactly;">
+          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy" bgcolor="${boxBgColor}"` : ""}
+            style="${preserveOrserduColors ? backgroundStyle : ""}padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};${textColorStyle}mso-line-height-rule:exactly;">
             ${boxText}
           </td>
         </tr></tbody>

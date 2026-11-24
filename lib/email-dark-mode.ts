@@ -113,6 +113,11 @@ export const EMAIL_DARK_MODE_CSS = `
     background-color: #242426 !important;
   }
 
+  .orserdu-highlight-copy * {
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
+  }
+
   .elzonris-cta-bg {
     background-color: #f55a1f !important;
   }

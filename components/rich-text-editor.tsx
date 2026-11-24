@@ -91,6 +91,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
+  const selectionColorInputRef = useRef<HTMLInputElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const undoHistoryRef = useRef<string[]>([])
@@ -647,6 +648,15 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   useBrowserLayoutEffect(() => {
+    const input = selectionColorInputRef.current
+    if (!input) return
+    input.value = selectionColors[0] || "#000000"
+    const applyChosenColor = () => applyColor(input.value)
+    input.addEventListener("input", applyChosenColor)
+    return () => input.removeEventListener("input", applyChosenColor)
+  })
+
+  useBrowserLayoutEffect(() => {
     if (!applySelectionColor || !useBlockColorPresets || !isSelected || !focused) return;
 
     const applyPreset = (color: string) => {
@@ -828,20 +838,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           </button>
           <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
           {inTextSection ? (
-            <form className="flex items-center gap-1" onSubmit={event => {
-              event.preventDefault()
-              const raw = new FormData(event.currentTarget).get("color")?.toString().trim()
-              if (raw && /^#?[0-9a-f]{6}$/i.test(raw)) {
-                applyColor(raw.startsWith("#") ? raw : `#${raw}`)
-              }
-            }}>
-              <input key={selectionColors.join(",")} name="color" aria-label="Selection color hex"
-                className="h-7 w-20 rounded border border-slate-200 px-1.5 font-mono text-xs"
-                placeholder="#000000" maxLength={7} pattern="#?[0-9a-fA-F]{6}" required
-                defaultValue={selectionColors.length === 1 ? selectionColors[0] : ""} />
-              <button type="submit" className="h-7 rounded px-1.5 text-xs hover:bg-slate-100"
-                onMouseDown={event => event.preventDefault()}>Apply color</button>
-            </form>
+            <input ref={selectionColorInputRef} type="color" aria-label="Selection color"
+              title="Selection color" className="h-7 w-8 cursor-pointer rounded border border-slate-200 bg-white p-0.5"
+              onMouseDown={saveSelection} onFocus={saveSelection} />
           ) : (
             <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
               Color

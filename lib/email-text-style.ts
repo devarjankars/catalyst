@@ -7,5 +7,6 @@ export const TEXT_COLOR_PRESETS = [
   { name: "Black", hex: "#000000" },
   { name: "Gray", hex: "#4d4d4f" },
   { name: "Dark teal", hex: "#61ae9a" },
-  { name: "Pink", hex: DEFAULT_CUSTOM_TEXT_COLOR },
+  { name: "Magenta", hex: DEFAULT_CUSTOM_TEXT_COLOR },
+  { name: "Blue", hex: "#183559" },
 ] as const;

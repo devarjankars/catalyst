@@ -835,11 +835,12 @@ function toHex(value: string): string {
   return "#000000";
 }
 
-function ColorInput({ value, onChange, textColor = false, showBrandSwatches = true }: {
+function ColorInput({ value, onChange, textColor = false, showBrandSwatches = true, label }: {
   value: string;
   onChange: (v: string) => void;
   textColor?: boolean;
   showBrandSwatches?: boolean;
+  label?: string;
 }) {
   const { client } = useClient();
   const [text, setText] = useState(value || "#000000");
@@ -847,32 +848,42 @@ function ColorInput({ value, onChange, textColor = false, showBrandSwatches = tr
   useEffect(() => { setText(value || "#000000"); }, [value]);
 
   const commit = (raw: string) => {
-    const val = raw.startsWith("#") ? raw : `#${raw}`;
-    if (/^#[0-9a-fA-F]{6}$/.test(val)) onChange(val);
+    const hex = raw.trim().replace(/^#/, "").toLowerCase();
+    if (/^[0-9a-f]{6}$/.test(hex) && `#${hex}` !== value.toLowerCase()) onChange(`#${hex}`);
   };
 
   return (
     <div className="mt-1.5 flex items-center gap-2">
       <div
-        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow"
+        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-slate-200"
+        style={{ backgroundColor: toHex(text) }}
         title="Pick color"
       >
         <input
           type="color"
+          aria-label={label ? `Choose ${label.toLowerCase()}` : undefined}
           value={toHex(text)}
           onChange={(e) => { setText(e.target.value); onChange(e.target.value); }}
-          className="absolute inset-0 h-[140%] w-[140%] -translate-x-[14%] -translate-y-[14%] cursor-pointer border-0 p-0"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 focus-visible:opacity-100"
         />
       </div>
       <Input
         value={text}
-        aria-label={textColor ? "Text color hex" : undefined}
-        onChange={(e) => setText(e.target.value)}
+        aria-label={label ? `${label} hex` : textColor ? "Text color hex" : undefined}
+        onChange={(e) => {
+          const next = e.target.value;
+          setText(next);
+          if (textColor) commit(next);
+        }}
         onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && commit(text)}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit(event.currentTarget.value);
+          }
+        }}
         className="font-mono uppercase"
         placeholder="#000000"
-        maxLength={7}
       />
       {showBrandSwatches && [client.accentColor, client.iconBg].map(color => (
         <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
@@ -2866,15 +2877,25 @@ export function PropertiesPanel({
               />
               <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
             </div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label>Box Background</Label>
-                <ColorInput value={comp.boxBgColor || "#FFD500"} onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })} />
-              </div>
-              <div className="flex-1">
-                <Label>Text Color</Label>
-                <ColorInput value={comp.boxTextColor || "#002E6D"} onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })} />
-              </div>
+            <div className="space-y-2">
+              {([
+                ["Background color", "boxBgColor", "#FFD500"],
+                ["Text color", "boxTextColor", "#002E6D"],
+              ] as const).map(([label, property, fallback]) => (
+                <details key={property} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                    {label}
+                    <span aria-hidden="true" className="float-right h-5 w-5 rounded border border-slate-200"
+                      style={{ backgroundColor: comp[property] || fallback }} />
+                  </summary>
+                  <ColorInput label={label} showBrandSwatches={false} value={comp[property] || fallback}
+                    onChange={color => onUpdateComponent({ [property]: color })} />
+                  <div className="mt-2">
+                    <TextColorPresets value={comp[property] || fallback}
+                      onChange={color => onUpdateComponent({ [property]: color })} />
+                  </div>
+                </details>
+              ))}
             </div>
             <div>
               <Label>Font Size</Label>
