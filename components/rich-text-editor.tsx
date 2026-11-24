@@ -86,8 +86,8 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
-  const { inlineFormatting } = useContext(BuilderToolbarContext)
-  const floating = !inlineFormatting && toolbarPlacement === "selection"
+  const { formatting: formattingHost } = useContext(BuilderToolbarContext)
+  const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -762,7 +762,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
-          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : "mt-2"}`}
+          className={formattingHost
+            ? "flex w-full flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-2"
+            : `w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : "mt-2"}`}
           style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
@@ -770,6 +772,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           onMouseDown={saveSelection}
           onClick={(event) => event.stopPropagation()}
         >
+          {formattingHost && (
+            <h3 className="basis-full px-1 pb-1 text-xs font-semibold text-slate-900">Text formatting</h3>
+          )}
           <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
             onClick={() => applyFormattingCommand("bold")}>
             <strong>B</strong>
@@ -873,7 +878,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             px
           </label>
         </div>,
-        floating ? document.body : editorRef.current?.parentElement ?? document.body,
+        formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
       )}
 
       {/* Link insert dialog */}
