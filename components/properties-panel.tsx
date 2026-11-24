@@ -14,7 +14,7 @@ import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { DEFAULT_NEW_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
+import { TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -835,10 +835,11 @@ function toHex(value: string): string {
   return "#000000";
 }
 
-function ColorInput({ value, onChange, textColor = false }: {
+function ColorInput({ value, onChange, textColor = false, showBrandSwatches = true }: {
   value: string;
   onChange: (v: string) => void;
   textColor?: boolean;
+  showBrandSwatches?: boolean;
 }) {
   const { client } = useClient();
   const [text, setText] = useState(value || "#000000");
@@ -873,9 +874,9 @@ function ColorInput({ value, onChange, textColor = false }: {
         placeholder="#000000"
         maxLength={7}
       />
-      {(textColor ? [DEFAULT_NEW_TEXT_COLOR] : [client.accentColor, client.iconBg]).map(color => (
+      {showBrandSwatches && [client.accentColor, client.iconBg].map(color => (
         <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
-          style={{ backgroundColor: color }} aria-label={textColor && color === DEFAULT_NEW_TEXT_COLOR ? "Use magenta text color" : `Use brand color ${color}`} title={color}
+          style={{ backgroundColor: color }} aria-label={`Use brand color ${color}`} title={color}
           onClick={() => { setText(color); onChange(color); }} />
       ))}
     </div>
@@ -1670,7 +1671,7 @@ export function PropertiesPanel({
               </div>
               <div>
                 <Label>Block color</Label>
-                <ColorInput textColor value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
+                <ColorInput textColor showBrandSwatches={false} value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
               </div>
               <div role="group" aria-label="Text color presets" className="space-y-1.5">
                 <p className="text-xs font-medium text-slate-600">Color presets</p>
@@ -1694,7 +1695,7 @@ export function PropertiesPanel({
             <section aria-label="Background" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
               <div>
                 <Label>Background color</Label>
-                <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+                <ColorInput showBrandSwatches={false} value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
               </div>
             </section>
             <div className="pt-2">

@@ -584,13 +584,18 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const applyColor = (color: string) => {
-    restoreSelection()
-
     const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
+    const editor = editorRef.current
+    if (!selection || !editor) return
+
+    const isEditorSelection = (range: Range) => !range.collapsed &&
+      editor.contains(range.startContainer) && editor.contains(range.endContainer)
+    const liveRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+    if (!liveRange || !isEditorSelection(liveRange)) restoreSelection()
+    if (selection.rangeCount === 0) return
 
     const range = selection.getRangeAt(0)
-    if (range.collapsed) return
+    if (!isEditorSelection(range)) return
 
     const commonAncestor = range.commonAncestorContainer
     let targetElement: HTMLElement | null = null
@@ -602,7 +607,6 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     }
 
     // The element that draws the underline owns its color.
-    const editor = editorRef.current
     for (let element = targetElement; element && element !== editor; element = element.parentElement) {
       if (!element.contains(range.startContainer) || !element.contains(range.endContainer)) break
       const decoration = window.getComputedStyle(element).textDecorationLine
@@ -823,7 +827,22 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             <Subscript className="h-4 w-4" />
           </button>
           <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
-          {!inTextSection && (
+          {inTextSection ? (
+            <form className="flex items-center gap-1" onSubmit={event => {
+              event.preventDefault()
+              const raw = new FormData(event.currentTarget).get("color")?.toString().trim()
+              if (raw && /^#?[0-9a-f]{6}$/i.test(raw)) {
+                applyColor(raw.startsWith("#") ? raw : `#${raw}`)
+              }
+            }}>
+              <input key={selectionColors.join(",")} name="color" aria-label="Selection color hex"
+                className="h-7 w-20 rounded border border-slate-200 px-1.5 font-mono text-xs"
+                placeholder="#000000" maxLength={7} pattern="#?[0-9a-fA-F]{6}" required
+                defaultValue={selectionColors.length === 1 ? selectionColors[0] : ""} />
+              <button type="submit" className="h-7 rounded px-1.5 text-xs hover:bg-slate-100"
+                onMouseDown={event => event.preventDefault()}>Apply color</button>
+            </form>
+          ) : (
             <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
               Color
               <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
