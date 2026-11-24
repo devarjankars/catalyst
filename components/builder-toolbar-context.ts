@@ -1,6 +1,6 @@
 import { createContext } from "react"
 
 export const BuilderToolbarContext = createContext<{
-  formatting: HTMLElement | null
+  inlineFormatting: boolean
   actions: HTMLElement | null
-}>({ formatting: null, actions: null })
+}>({ inlineFormatting: false, actions: null })

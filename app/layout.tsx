@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { getEmailFontFaceCss } from '@/lib/email-fonts'
 import { Toaster } from 'sonner'
 import AppShell from '@/components/app-shell'
 
@@ -18,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head><style>{getEmailFontFaceCss("")}</style></head>
       <body suppressHydrationWarning className="h-screen overflow-hidden">
         <AppShell>{children}</AppShell>
         <Toaster richColors={true} position='top-center' />

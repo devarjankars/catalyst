@@ -13,6 +13,7 @@ import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useEffect, useState, useCallback } from "react";
+import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
@@ -1602,9 +1603,11 @@ export function PropertiesPanel({
             <div>
               <Label>Font Family</Label>
               <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
-                <SelectTrigger aria-label="Font family"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Font family">
+                  <SelectValue>{(component.fontFamily || "Arial").split(",")[0]}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
-                  {["Arial, sans-serif", "Verdana, sans-serif", "Tahoma, sans-serif", "Georgia, serif", "Times New Roman, serif", "Courier New, monospace"].map(font => (
+                  {TEXT_FONT_FAMILIES.map(font => (
                     <SelectItem key={font} value={font}>{font.split(",")[0]}</SelectItem>
                   ))}
                 </SelectContent>

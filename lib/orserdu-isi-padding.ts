@@ -11,10 +11,9 @@ export function getOrserduIsiOuterPadding(value: unknown, _isNested = false): st
   return normalizeIsiOuterPadding(value);
 }
 
-export function getOrserduIsiSelectPadding(value: unknown, isNested = false): string {
-  const padding = getOrserduIsiOuterPadding(value, isNested);
-  // Earlier ISI Select blocks saved a separate default. Keep edited padding.
-  return padding === "0 20px 10px 20px" ? isiOuterPadding : padding;
+export function getOrserduIsiSelectPadding(value: unknown): string {
+  const [top, , bottom = top] = normalizeIsiOuterPadding(value).split(" ");
+  return `${top} 20px ${bottom} 20px`;
 }
 
 export function getOrserduIsiPadding(value: unknown): string {

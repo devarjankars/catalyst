@@ -1,4 +1,5 @@
 import type { EmailComponent } from "@/types/email-builder";
+import { getEmailFontFaceCss } from "./email-fonts";
 import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
@@ -2037,7 +2038,7 @@ case "isi": {
 
     case "orserdu-isi-select": {
       const c = component as any;
-      const outerPadding   = getOrserduIsiSelectPadding(c.padding, isNested);
+      const outerPadding   = getOrserduIsiSelectPadding(c.padding);
       const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
@@ -2520,6 +2521,10 @@ export function generateEmailHTML(
     .map((component) => generateComponentHTML(component, pdfMode))
     .join("");
 
+  const assetBaseUrl =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const fontFaceCss = getEmailFontFaceCss(assetBaseUrl, componentHTML);
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -2539,6 +2544,7 @@ export function generateEmailHTML(
           <meta name="supported-color-schemes" content="light dark">
 
     <title>Email Template</title>
+    ${fontFaceCss ? `<style>${fontFaceCss}</style>` : ""}
 
     <!--to support dark mode meta tags-->
     <style type="text/css">
@@ -2811,8 +2817,5 @@ export function generateEmailHTML(
 </html>
   `.trim();
   const preparedHtml = prepareEmailHtml(html);
-  const assetBaseUrl =
-    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
-    (typeof window !== "undefined" ? window.location.origin : "");
   return assetBaseUrl ? normalizeHtmlImageSrcs(preparedHtml, assetBaseUrl) : preparedHtml;
 }

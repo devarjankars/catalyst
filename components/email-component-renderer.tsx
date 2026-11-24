@@ -1807,7 +1807,7 @@ export function EmailComponentRenderer({
             } = component as any;
 
             return (
-              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding, isNested) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>

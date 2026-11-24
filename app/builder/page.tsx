@@ -197,7 +197,6 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
-  const [formattingHost, setFormattingHost] = useState<HTMLDivElement | null>(null);
   const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [versions, setVersions] = useState<EmailTemplateVersion[]>([]);
@@ -833,7 +832,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <BuilderToolbarContext.Provider value={{ formatting: formattingHost, actions: actionsHost }}>
+    <BuilderToolbarContext.Provider value={{ inlineFormatting: true, actions: actionsHost }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}
@@ -975,9 +974,6 @@ if (activeSelectedId) {
         </div>
 
         {/* Main Content */}
-        {!previewMode && (
-          <div ref={setFormattingHost} className="h-12 shrink-0 overflow-x-auto border-b bg-white" />
-        )}
         <div className="flex-1 flex overflow-hidden">
 
           {/* Components panel */}

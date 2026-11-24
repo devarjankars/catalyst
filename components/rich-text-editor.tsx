@@ -86,8 +86,8 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
-  const { formatting: formattingHost } = useContext(BuilderToolbarContext)
-  const floating = !formattingHost && toolbarPlacement === "selection"
+  const { inlineFormatting } = useContext(BuilderToolbarContext)
+  const floating = !inlineFormatting && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -762,7 +762,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
-          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : formattingHost ? "!w-max !max-w-none !flex-nowrap !border-0 !shadow-none !ring-0 whitespace-nowrap" : "mt-2"}`}
+          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : "mt-2"}`}
           style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
@@ -873,7 +873,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             px
           </label>
         </div>,
-        formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
+        floating ? document.body : editorRef.current?.parentElement ?? document.body,
       )}
 
       {/* Link insert dialog */}

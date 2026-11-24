@@ -1159,7 +1159,7 @@ export const componentTypes = [
       // Footer line
       footerLine: "Please see additional Important Safety Information below.",
       footerPadding: "0",
-      padding: "0 10px 10px 10px",
+      padding: "0 20px 10px 20px",
     },
   },
 ];
