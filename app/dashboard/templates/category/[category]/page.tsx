@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic'
 
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Plus, Search, Mail, Send, Globe, Layers, Loader2 } from "lucide-react"
@@ -33,6 +35,10 @@ export default function CategoryTemplatesPage() {
   const [allTemplates, setAllTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [folderFilter, setFolderFilter] = useState("")
+  const [folderTarget, setFolderTarget] = useState<EmailTemplate | null>(null)
+  const [folderName, setFolderName] = useState("")
+  const [savingFolder, setSavingFolder] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; template: EmailTemplate | null }>({
     open: false,
     template: null,
@@ -63,15 +69,34 @@ export default function CategoryTemplatesPage() {
     [allTemplates, clientId, category]
   )
 
+  const folders = [...new Set(brandCategoryTemplates.map(template => template.folder).filter((folder): folder is string => !!folder))].sort()
+
+  useEffect(() => setFolderFilter(""), [clientId, category])
+
   const filteredTemplates = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return brandCategoryTemplates
-    return brandCategoryTemplates.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q)
-    )
-  }, [brandCategoryTemplates, searchQuery])
+    return brandCategoryTemplates.filter(template => {
+      const matchesFolder = folderFilter === "" || (folderFilter === "unfiled" ? !template.folder : `folder:${template.folder}` === folderFilter)
+      return matchesFolder && (!q || template.name.toLowerCase().includes(q) || template.description.toLowerCase().includes(q))
+    })
+  }, [brandCategoryTemplates, searchQuery, folderFilter])
+
+  const saveFolder = async () => {
+    if (!folderTarget) return
+    setSavingFolder(true)
+    try {
+      const folder = folderName.split("/").map(part => part.trim()).filter(Boolean).join(" / ")
+      const updated = await firebaseService.updateTemplate(folderTarget.id, { folder })
+      if (!updated) throw new Error("Folder update failed")
+      setAllTemplates(templates => templates.map(template => template.id === folderTarget.id ? updated : template))
+      setFolderTarget(null)
+      if (folderFilter !== "" && folders.includes(folderTarget.folder ?? "")) setFolderFilter("")
+    } catch {
+      toast.error("Could not move emailer")
+    } finally {
+      setSavingFolder(false)
+    }
+  }
 
   const handleUseTemplate = (template: EmailTemplate) =>
     router.push(
@@ -188,6 +213,12 @@ export default function CategoryTemplatesPage() {
               {filteredTemplates.length} emailer{filteredTemplates.length !== 1 ? "s" : ""}
               {searchQuery && " matching your search"}
             </span>
+            <select aria-label="Filter by folder" value={folderFilter} onChange={event => setFolderFilter(event.target.value)}
+              className="ml-auto rounded-md border bg-white px-3 py-2 text-sm">
+              <option value="">All folders</option>
+              <option value="unfiled">Unfiled</option>
+              {folders.map(folder => <option key={folder} value={`folder:${folder}`}>{folder}</option>)}
+            </select>
           </div>
         )}
 
@@ -205,16 +236,16 @@ export default function CategoryTemplatesPage() {
               <Icon className="w-7 h-7" style={{ color: client.accentColor }} />
             </div>
             <h3 className="text-base font-semibold text-gray-800 mb-1">
-              {searchQuery
-                ? "No emailers match your search"
+              {searchQuery || folderFilter
+                ? "No emailers match your filters"
                 : `No ${client.label} ${catLabel} emailers yet`}
             </h3>
             <p className="text-sm text-gray-400 mb-6 max-w-xs">
-              {searchQuery
-                ? "Try a different search term."
+              {searchQuery || folderFilter
+                ? "Try a different search or folder."
                 : `Create the first ${catLabel} email for ${client.label} to get started.`}
             </p>
-            {!searchQuery && (
+            {!searchQuery && !folderFilter && (
               <button
                 onClick={() => router.push(`/builder?selectMode=true&brand=${clientId}`)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
@@ -227,18 +258,41 @@ export default function CategoryTemplatesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredTemplates.map((template) => (
+              <div key={template.id} className="flex flex-col gap-2">
               <TemplateCard
-                key={template.id}
                 template={template}
                 onUse={() => handleUseTemplate(template)}
                 onEdit={() => handleEditTemplate(template)}
                 onDelete={() => setDeleteDialog({ open: true, template })}
                 onDuplicate={() => handleDuplicateTemplate(template)}
               />
+              <Button variant="outline" size="sm" onClick={() => {
+                setFolderName(template.folder ?? "")
+                setFolderTarget(template)
+              }}>
+                {template.folder ? `Move from ${template.folder}` : "Move to folder"}
+              </Button>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      <Dialog open={!!folderTarget} onOpenChange={open => { if (!open && !savingFolder) setFolderTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move emailer to folder</DialogTitle>
+            <DialogDescription>Use slashes to nest folders. Leave the field empty to move the emailer to Unfiled.</DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={event => { event.preventDefault(); void saveFolder() }}>
+            <Input aria-label="Folder path" list="emailer-folders" maxLength={120} value={folderName} onChange={event => setFolderName(event.target.value)} />
+            <datalist id="emailer-folders">{folders.map(folder => <option key={folder} value={folder} />)}</datalist>
+            <DialogFooter>
+              <Button type="submit" disabled={savingFolder}>{savingFolder ? "Moving…" : "Move emailer"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <DeleteConfirmDialog
         open={deleteDialog.open}

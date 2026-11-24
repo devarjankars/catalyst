@@ -17,10 +17,23 @@ export interface EmailTemplate {
   option2Components?: EmailComponent[]
   option3Components?: EmailComponent[]
 
+  folder?: string
   thumbnail?: string
   html?: string
   createdAt: Date | null
   updatedAt: Date | null
   isUserCreated?: boolean
   preheaderText?: string
+}
+
+
+export type EmailTemplateVersionContent = Pick<EmailTemplate,
+  "components" | "preheaderText" | "optionMode" | "optionSubMode" | "option2Components" | "option3Components"
+>
+
+export interface EmailTemplateVersion {
+  id: string
+  name: string
+  savedAt: Date | null
+  content: EmailTemplateVersionContent
 }

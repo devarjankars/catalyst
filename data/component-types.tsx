@@ -30,6 +30,13 @@ import {
 
 export const componentTypes = [
   {
+    type: "design-shape",
+    label: "Shape",
+    category: "basic",
+    icon: Square,
+    defaultProps: { shape: "rectangle", width: "140px", height: "60px", backgroundColor: "#006937", textAlign: "center" },
+  },
+  {
     type: "text",
     label: "Text",
     icon: Type,
@@ -334,7 +341,7 @@ export const componentTypes = [
       "I am reaching out to share some information you may find helpful.",
     ],
     fontSize: "12px",
-    color: "#5D5D5D",
+    color: "#ff00ff",
     textAlign: "left",
     fontWeight: "normal",
     lineHeight: "14px",

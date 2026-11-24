@@ -14,7 +14,7 @@ import { firebaseService } from "@/services/firebase-service";
 import { toast } from "sonner";
 import { matchesBrand } from "@/lib/brand-filter"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
-import type { BrandId } from "@/types/template";
+import type { BrandId, EmailTemplateVersion, EmailTemplateVersionContent } from "@/types/template";
 import type { Brand } from "@/components/brand-selection-modal";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
@@ -194,6 +194,68 @@ export default function EmailBuilder() {
   const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
+
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [versions, setVersions] = useState<EmailTemplateVersion[]>([]);
+  const [versionName, setVersionName] = useState("");
+  const [versionBusy, setVersionBusy] = useState(false);
+  const [versionError, setVersionError] = useState("");
+
+  const refreshVersions = async () => {
+    if (!currentTemplate) return;
+    setVersionDialogOpen(true);
+    setVersionBusy(true);
+    setVersionError("");
+    setVersions([]);
+    try {
+      setVersions(await firebaseService.listTemplateVersions(currentTemplate.id));
+    } catch {
+      setVersionError("Could not load version history.");
+    } finally {
+      setVersionBusy(false);
+    }
+  };
+
+  const saveVersion = async () => {
+    if (!currentTemplate) return;
+    setVersionBusy(true);
+    setVersionError("");
+    const editor = useEmailBuilderStore.getState();
+    try {
+      await firebaseService.saveTemplateVersion(currentTemplate.id, versionName.trim(), {
+        components: editor.components,
+        optionMode: editor.optionMode,
+        optionSubMode: editor.optionSubMode,
+        option2Components: editor.option2Components,
+        option3Components: editor.option3Components,
+        preheaderText: editor.preheaderText,
+      });
+      setVersionName("");
+    } catch {
+      setVersionError("Could not save this version.");
+      setVersionBusy(false);
+      return;
+    }
+    await refreshVersions();
+  };
+
+  const restoreVersion = (content: EmailTemplateVersionContent) => {
+    const editor = useEmailBuilderStore.getState();
+    editor.pushHistory();
+    useEmailBuilderStore.setState({
+      components: content.components,
+      optionMode: content.optionMode ?? "single",
+      optionSubMode: content.optionSubMode ?? "header-only",
+      option2Components: content.option2Components ?? [],
+      option3Components: content.option3Components ?? [],
+      preheaderText: content.preheaderText ?? "",
+      activeOption: 1,
+      selectedComponent: null,
+    });
+    editor.checkForChanges();
+    setVersionDialogOpen(false);
+    toast.success("Version loaded into the draft");
+  };
 
   // Run the builder initialization only ONCE per mount. The URL is rewritten
   // after mode selection (history.replaceState), which changes `searchParams`
@@ -844,6 +906,13 @@ if (activeSelectedId) {
               </Button>
             )}
 
+            {currentTemplate?.isUserCreated && isEdit && !isWorkingCopy && (
+              <Button variant="outline" size="sm" onClick={() => void refreshVersions()} title="Version history"
+                aria-label="Version history" className="h-7 w-7 p-0">
+                <HistoryIcon className="w-3.5 h-3.5" />
+              </Button>
+            )}
+
             {canSaveComponentChanges && (
               <Button variant="outline" size="sm" onClick={() => handleSaveComponentChanges()} disabled={saving}
                 className="h-7 px-2.5 text-xs rounded-md border-gray-300 flex items-center gap-1.5">
@@ -1085,6 +1154,36 @@ if (activeSelectedId) {
         onOpenChange={setModeDialogOpen}
         onSelectMode={handleModeSelect}
       />
+
+      <Dialog open={versionDialogOpen} onOpenChange={open => { if (!versionBusy) setVersionDialogOpen(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Version history</DialogTitle>
+            <DialogDescription>Save named versions of this emailer. Restoring loads a version into your draft so you can review it before saving.</DialogDescription>
+          </DialogHeader>
+          <form className="flex gap-2" onSubmit={event => { event.preventDefault(); void saveVersion(); }}>
+            <input aria-label="Version name" className="flex-1 rounded-md border px-3 text-sm" required maxLength={100}
+              value={versionName} onChange={event => setVersionName(event.target.value)} />
+            <Button type="submit" disabled={versionBusy || !versionName.trim()}>Save version</Button>
+          </form>
+          {versionError && <p role="alert" className="text-sm text-red-600">{versionError}</p>}
+          <div className="space-y-2 overflow-auto max-h-64">
+            {versionBusy && <p className="text-sm text-gray-500" role="status">Loading versions…</p>}
+            {!versionBusy && !versionError && versions.length === 0 && <p className="text-sm text-gray-500">No saved versions yet.</p>}
+            {versions.map(version => (
+              <div key={version.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{version.name}</p>
+                  <p className="text-xs text-gray-500">{version.savedAt?.toLocaleString()}</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" disabled={versionBusy} onClick={() => restoreVersion(version.content)}>
+                  Load into draft
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Email Preview Modal */}
       <EmailPreviewModal

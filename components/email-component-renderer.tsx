@@ -27,6 +27,7 @@ import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
+import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 import {
   GERON_ISI_HTML,
@@ -476,6 +477,13 @@ export function EmailComponentRenderer({
         );
       }
 
+      case "design-shape": {
+        const { width, height, borderRadius } = getEmailShapeStyle(component);
+        return <div style={{ textAlign: "center", padding: component.padding }}>
+          <div style={{ width, height, borderRadius, display: "inline-block", backgroundColor: component.backgroundColor || "#006937" }} />
+        </div>;
+      }
+
       case "button":
         return (
           <div
@@ -505,8 +513,11 @@ export function EmailComponentRenderer({
               style={{
                 display: "inline-block",
                 backgroundColor: component.backgroundColor || "#007bff",
+                backgroundImage: component.buttonGradientColor ? `linear-gradient(${component.backgroundColor || "#007bff"}, ${component.buttonGradientColor})` : undefined,
+                boxShadow: component.buttonShadow ? "0 2px 6px #0004" : undefined,
                 color: component.color || "#ffffff",
                 padding: component.buttonPadding || "12px 24px",
+                border: component.buttonOutlineColor ? `1px solid ${component.buttonOutlineColor}` : undefined,
                 borderRadius: component.borderRadius || "4px",
                 textDecoration: "none",
                 fontWeight: "bold",
@@ -539,7 +550,8 @@ export function EmailComponentRenderer({
       case "raw-html":
         return (
           <div
-            className="mt-2 p-5"
+            className="mt-2"
+            style={{ padding: component.padding || "0 20px 20px 20px", backgroundColor: component.backgroundColor }}
             dangerouslySetInnerHTML={{ __html: component.html || "" }}
           ></div>
         );
@@ -1527,7 +1539,7 @@ export function EmailComponentRenderer({
                   />
                 </div>}
                 <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
+                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: component.fontSize || "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (
                       <RichTextEditor
                         isSelected={isSelected}
@@ -1538,7 +1550,7 @@ export function EmailComponentRenderer({
                         })}
                         paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
                         className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
-                        style={{ fontSize: "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
+                        style={{ fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
                       />
                     ) : (
                       <span dangerouslySetInnerHTML={{ __html: normalizedText }} />
@@ -1812,14 +1824,14 @@ export function EmailComponentRenderer({
                           {(bulletItems as any[]).map((item: any, i: number) => {
                             // Respect the spaceBetweenBullets property (strip 'px' for numeric height)
                             const spacingRaw = (component as any).spaceBetweenBullets ?? "5";
-                            const spacingPx = parseInt(String(spacingRaw).replace(/px$/i, ""), 10) || 5;
+                            const spacingPx = getOrserduIsiBulletSpacing(spacingRaw);
                             const textGapPx = Math.max(0, Math.min(40, parseInt(String(bulletTextGap).replace(/px$/i, ""), 10) || 0));
                             const paddingTop = getOrserduIsiBulletSpacing(item.paddingTop);
                             const paddingBottom = getOrserduIsiBulletSpacing(item.paddingBottom);
                             return (
                             <React.Fragment key={i}>
                               <tr>
-                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, padding: `${paddingTop}px ${textGapPx}px ${paddingBottom}px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
+                                <td align="left" valign="top" style={{ color: item.markerColor || bulletColor, fontSize: "16px", lineHeight, padding: `${paddingTop}px ${textGapPx}px ${paddingBottom}px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
                                   &bull;
                                 </td>
                                 <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", padding: `${paddingTop}px 0 ${paddingBottom}px`, backgroundColor }}>

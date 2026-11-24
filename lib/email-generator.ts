@@ -8,6 +8,7 @@ import { getOrserduImageTextContent } from "./orserdu-image-text";
 import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "./job-code";
+import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "./email-padding";
 import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
 import {
@@ -245,6 +246,17 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       `;
     }
 
+    case "design-shape": {
+      const { width, height, borderRadius } = getEmailShapeStyle(component);
+      const color = component.backgroundColor || "#006937";
+      return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
+        <td align="center" style="padding:${component.padding || "0"};">
+          <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="width:${width};"><tr>
+            <td bgcolor="${color}" style="background-color:${color};height:${height};border-radius:${borderRadius};font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+        </td>
+      </tr></table>`;
+    }
     case "button": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -281,6 +293,9 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
                       };
                       border-radius: ${component.borderRadius || "4px"};
                       padding: ${component.buttonPadding || "12px 24px"};
+                      ${component.buttonOutlineColor ? `border: 1px solid ${component.buttonOutlineColor};` : ""}
+                      ${component.buttonGradientColor ? `background-image: linear-gradient(${component.backgroundColor || "#007bff"}, ${component.buttonGradientColor});` : ""}
+                      ${component.buttonShadow ? "box-shadow: 0 2px 6px #0004;" : ""}
                       ${component.width ? `width: ${component.width};` : ""}
                       ${component.height ? `height: ${component.height};` : ""}
                       ${innerStyle ? innerStyle : ""}
@@ -353,7 +368,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
     >
       <tbody>
         <tr>
-          <td  width="100%"  align="center" style="padding: ${component.padding || "0 20px 20px 20px"};" >
+          <td  width="100%"  align="center" style="padding: ${component.padding || "0 20px 20px 20px"};background-color:${component.backgroundColor || "transparent"};" >
             ${component.html}
           </td>
         </tr>
@@ -1156,7 +1171,7 @@ case "isi": {
       const markerType = (component as any).markerType || "bullet";
 
       // Parse spaceBetweenItems ΓÇö strip "px" for the HTML height= attribute
-      const spacePx = parseInt((component.spaceBetweenItems || "5px").replace(/px$/i, ""), 10) || 5;
+      const spacePx = Math.max(0, Number.parseInt(component.spaceBetweenItems ?? "5", 10) || 0);
 
       // Margin ΓÇö only emit when it is set to something other than all-zeros
       const rawMargin = (component as any).margin || "";
@@ -1196,7 +1211,6 @@ case "isi": {
       const isCounter = ["number", "roman", "alpha"].includes(markerType);
 
       const bulletStyle = [
-        `color:${component.markerColor || "#000000"}`,
         `font-size:${component.discSize || "16px"}`,
         `line-height:${component.lineHeight || "18px"}`,
         `font-family:${fontFamily}`,
@@ -1219,15 +1233,16 @@ case "isi": {
 
       const markerWidth = isCounter ? "5%" : "2%";
 
-      const listItemsHTML = (component.listItems || [])
+      const listItems = component.listItems ?? [];
+      const listItemsHTML = listItems
         .map((item, idx) => `
         <tr>
-          <td bgcolor="${bg}" align="left" valign="top" width="${markerWidth}" style="${bulletStyle}">${getMarker(idx)}</td>
+          <td bgcolor="${bg}" align="left" valign="top" width="${markerWidth}" style="color:${component.listMarkerColors?.[idx] || component.markerColor || "#000000"};${bulletStyle}">${getMarker(idx)}</td>
           <td bgcolor="${bg}" align="left" valign="middle" style="${itemStyle}">${item}</td>
         </tr>
-        <tr>
+        ${spacePx > 0 && idx < listItems.length - 1 ? `<tr>
           <td colspan="2" bgcolor="${bg}" height="${spacePx}" style="font-size:0px;line-height:${spacePx}px;mso-line-height-rule:exactly;background-color:${bg};">&nbsp;</td>
-        </tr>`)
+        </tr>` : ""}`)
         .join("");
 
       return `
@@ -2027,7 +2042,7 @@ case "isi": {
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
       const headingPadding = getOrserduIsiPadding(c.headingPadding);
-      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string; paddingTop?: string; paddingBottom?: string }>;
+      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string; paddingTop?: string; paddingBottom?: string; markerColor?: string }>;
       const bulletColor    = c.bulletColor    ?? "#69d6b5";
       const textColor      = c.textColor      ?? "#000000";
       const fontSize       = c.fontSize       ?? "14px";
@@ -2040,12 +2055,12 @@ case "isi": {
       const bulletTextGap = Math.max(0, Math.min(40, Number.parseInt(String(c.bulletTextGap ?? "4").replace(/px$/i, ""), 10) || 0));
 
       // Respect the configurable spaceBetweenBullets value
-      const spacingPx = parseInt(String(c.spaceBetweenBullets ?? "5").replace(/px$/i, ""), 10) || 5;
+      const spacingPx = getOrserduIsiBulletSpacing(c.spaceBetweenBullets ?? "5");
 
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
           <td align="left" valign="top"
-            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px ${bulletTextGap}px ${getOrserduIsiBulletSpacing(item.paddingBottom)}px 0;background-color:transparent;white-space:nowrap;">
+            style="color:${item.markerColor || bulletColor};font-size:16px;line-height:${lineHeight};padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px ${bulletTextGap}px ${getOrserduIsiBulletSpacing(item.paddingBottom)}px 0;background-color:transparent;white-space:nowrap;">
             &bull;
           </td>
           <td align="left" valign="middle"
@@ -2474,7 +2489,7 @@ return `
         ? applyTextParagraphSpacing(rawTextContent, component.paragraphSpacingPx ?? 0, false)
         : rawTextContent;
       const textCell = `
-                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:${component.fontSize || "14px"};line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
                   <div>${textContent}</div>
                 </td>`;
       const contentCells = !imageSrc

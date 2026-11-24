@@ -13,6 +13,7 @@ import type { EmailComponent } from "@/types/email-builder";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useEffect, useState, useCallback } from "react";
+import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
 import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
@@ -289,6 +290,7 @@ interface BulletItem {
   normalText: string;
   paddingTop?: string;
   paddingBottom?: string;
+  markerColor?: string;
 }
 
 function OrserduIsiSelectPanel({
@@ -422,7 +424,7 @@ function OrserduIsiSelectPanel({
           <p className="text-[10px] text-gray-400 mt-1">Adjusts only the space after each bullet; default: 4px.</p>
         </div>
         <div>
-          <Label>Bullet Color</Label>
+          <Label>Default Bullet Color</Label>
           <ColorInput value={bulletColor} onChange={(v) => { setBulletColor(v); commit({ bulletColor: v }); }} />
         </div>
         <div>
@@ -484,6 +486,25 @@ function OrserduIsiSelectPanel({
                 className="h-6 px-2 text-xs text-red-500 hover:bg-red-50"
                 onClick={() => removeBullet(i)}
               >Remove</Button>
+            </div>
+            <div>
+              <Label className="text-xs">Bullet Color</Label>
+              <ColorInput value={item.markerColor || bulletColor} onChange={(markerColor) => {
+                const updated = bulletItems.map((bullet, index) =>
+                  index === i ? { ...bullet, markerColor } : bullet
+                );
+                setBulletItems(updated);
+                commit({ bulletItems: updated });
+              }} />
+              {item.markerColor && (
+                <Button type="button" size="sm" variant="ghost" onClick={() => {
+                  const updated = bulletItems.map((bullet, index) =>
+                    index === i ? { ...bullet, markerColor: "" } : bullet
+                  );
+                  setBulletItems(updated);
+                  commit({ bulletItems: updated });
+                }}>Use default bullet color</Button>
+              )}
             </div>
             <div>
               <Label className="text-xs">Bold text</Label>
@@ -818,6 +839,7 @@ function toHex(value: string): string {
 }
 
 function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { client } = useClient();
   const [text, setText] = useState(value || "#000000");
 
   useEffect(() => { setText(value || "#000000"); }, [value]);
@@ -849,6 +871,11 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
         placeholder="#000000"
         maxLength={7}
       />
+      {[client.accentColor, client.iconBg].map(color => (
+        <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
+          style={{ backgroundColor: color }} aria-label={`Use brand color ${color}`} title={color}
+          onClick={() => { setText(color); onChange(color); }} />
+      ))}
     </div>
   );
 }
@@ -1002,6 +1029,13 @@ function ImageTextBlockProperties({
       </div>
       {component.type === "orserdu-image-text-block" && (
         <div className="space-y-3">
+          <div>
+            <Label>Font Size</Label>
+            <FontSizeInput
+              value={component.fontSize || "14px"}
+              onChange={(fontSize) => onUpdateComponent({ fontSize }, true)}
+            />
+          </div>
           <div>
             <Label>Line Height</Label>
             <LineHeightInput
@@ -1467,6 +1501,25 @@ export function PropertiesPanel({
                         <Label htmlFor={`column-width-${idx}`}>
                           Column {idx + 1} Width
                         </Label>
+                        <div className="flex gap-1 my-1">
+                          {([-1, 1] as const).map((offset) => {
+                            const columns = component.children!;
+                            const target = idx + offset;
+                            const direction = offset < 0 ? "earlier" : "later";
+                            return (
+                              <Button key={offset} type="button" size="sm" variant="outline"
+                                aria-label={`Move column ${idx + 1} ${direction}`}
+                                disabled={target < 0 || target >= columns.length}
+                                onClick={() => {
+                                  const reordered = [...columns];
+                                  [reordered[idx], reordered[target]] = [reordered[target], reordered[idx]];
+                                  onUpdateComponent({ children: reordered });
+                                }}>
+                                Move {direction}
+                              </Button>
+                            );
+                          })}
+                        </div>
                         <Input
                           id={`column-width-${idx}`}
                           value={child.columnWidth ?? ""}
@@ -1558,6 +1611,17 @@ export function PropertiesPanel({
       case "text":
         return (
           <div className="space-y-4">
+            <div>
+              <Label>Font Family</Label>
+              <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
+                <SelectTrigger aria-label="Font family"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Arial, sans-serif", "Verdana, sans-serif", "Tahoma, sans-serif", "Georgia, serif", "Times New Roman, serif", "Courier New, monospace"].map(font => (
+                    <SelectItem key={font} value={font}>{font.split(",")[0]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Font Size</Label>
               <FontSizeInput value={component.fontSize || "12px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
@@ -1765,6 +1829,31 @@ export function PropertiesPanel({
           </div>
         );
 
+      case "design-shape":
+        return (
+          <div className="space-y-4">
+            <Label>Shape</Label>
+            <Select value={component.shape || "rectangle"} onValueChange={(shape) => onUpdateComponent({ shape: shape as EmailComponent["shape"], height: shape === "line" ? "2px" : "60px", width: shape === "circle" ? "60px" : "140px" })}>
+              <SelectTrigger aria-label="Shape"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rectangle">Rectangle</SelectItem>
+                <SelectItem value="circle">Circle</SelectItem>
+                <SelectItem value="line">Line</SelectItem>
+              </SelectContent>
+            </Select>
+            <Label htmlFor="shape-width">{component.shape === "circle" ? "Diameter" : "Width"}</Label>
+            <Input id="shape-width" value={component.width ?? ""} onChange={event => onUpdateComponent({ width: event.target.value })} placeholder="140px" />
+            {component.shape !== "circle" && (
+              <>
+                <Label htmlFor="shape-height">{component.shape === "line" ? "Thickness" : "Height"}</Label>
+                <Input id="shape-height" value={component.height ?? ""} onChange={event => onUpdateComponent({ height: event.target.value })} placeholder="60px" />
+              </>
+            )}
+            <Label>Fill</Label>
+            <ColorInput value={component.backgroundColor || "#006937"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+          </div>
+        );
+
       case "button":
         return (
           <div className="space-y-4">
@@ -1802,6 +1891,39 @@ export function PropertiesPanel({
             <div>
               <Label htmlFor="color">Text Color</Label>
               <ColorInput value={component.color || "#ffffff"} onChange={(v) => onUpdateComponent({ color: v })} />
+            </div>
+            <div>
+              <Label>Button effects</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-transparent" checked={component.backgroundColor === "transparent"}
+                  onCheckedChange={checked => onUpdateComponent({ backgroundColor: checked === true ? "transparent" : "#007bff", buttonGradientColor: "" })} />
+                <Label htmlFor="button-transparent">Transparent fill</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-gradient" checked={!!component.buttonGradientColor} disabled={component.backgroundColor === "transparent"}
+                  onCheckedChange={checked => onUpdateComponent({ buttonGradientColor: checked === true ? "#003b80" : "" })} />
+                <Label htmlFor="button-gradient">Gradient fill</Label>
+              </div>
+              {component.buttonGradientColor && (
+                <ColorInput value={component.buttonGradientColor} onChange={buttonGradientColor => onUpdateComponent({ buttonGradientColor })} />
+              )}
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-shadow" checked={!!component.buttonShadow}
+                  onCheckedChange={checked => onUpdateComponent({ buttonShadow: checked === true })} />
+                <Label htmlFor="button-shadow">Drop shadow</Label>
+              </div>
+              <Label>Button Outline</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="button-outline"
+                  checked={!!component.buttonOutlineColor}
+                  onCheckedChange={(checked) => onUpdateComponent({ buttonOutlineColor: checked === true ? component.color || "#ffffff" : "" })}
+                />
+                <Label htmlFor="button-outline">Show outline</Label>
+              </div>
+              {component.buttonOutlineColor && (
+                <ColorInput value={component.buttonOutlineColor} onChange={(buttonOutlineColor) => onUpdateComponent({ buttonOutlineColor })} />
+              )}
             </div>
             <div>
               <Label htmlFor="borderRadius">Border Radius</Label>
@@ -2347,8 +2469,23 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="bulletColor">Marker Color</Label>
+              <Label htmlFor="bulletColor">Default Marker Color</Label>
               <ColorInput value={component.markerColor || "#000000"} onChange={(v) => onUpdateComponent({ markerColor: v })} />
+            </div>
+            <div>
+              {(component.listItems ?? []).map((_, index) => (
+                <div key={index}>
+                  <Label>Marker {index + 1} Color</Label>
+                  <ColorInput value={component.listMarkerColors?.[index] || component.markerColor || "#000000"}
+                    onChange={(color) => onUpdateComponent({ listMarkerColors: { ...component.listMarkerColors, [index]: color } })} />
+                  {component.listMarkerColors?.[index] && (
+                    <Button type="button" size="sm" variant="ghost"
+                      onClick={() => onUpdateComponent({ listMarkerColors: { ...component.listMarkerColors, [index]: "" } })}>
+                      Use default marker color
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
             <div>
               <Label htmlFor="discSize">Marker Size</Label>
@@ -4025,7 +4162,9 @@ export function PropertiesPanel({
             );
           case "raw-html":
             return (
-              <div className="flex items-center justify-center">
+              <div className="space-y-4">
+                <Label>Background color</Label>
+                <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
                 <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Add or Edit HTML</Button>
               </div>
             )

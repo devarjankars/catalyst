@@ -91,6 +91,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const undoHistoryRef = useRef<string[]>([])
   const redoHistoryRef = useRef<string[]>([])
   const lastEditorHtmlRef = useRef<string | null>(null)
+  const [selectionColors, setSelectionColors] = useState<string[]>([])
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("8")
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
@@ -235,6 +236,25 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     return selectedLines
   }
 
+  const readSelectionColors = (range: Range) => {
+    const colors = new Set<string>()
+    const addColor = (node: Node) => {
+      const element = node instanceof HTMLElement ? node : node.parentElement
+      const channels = element && window.getComputedStyle(element).color.match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+      if (channels) colors.add("#" + channels.slice(1).map(value => Number(value).toString(16).padStart(2, "0")).join(""))
+    }
+    const root = range.commonAncestorContainer
+    if (root.nodeType === Node.TEXT_NODE || range.collapsed) {
+      addColor(range.startContainer)
+    } else {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.textContent?.trim() && range.intersectsNode(node)) addColor(node)
+      }
+    }
+    setSelectionColors([...colors])
+  }
+
   const saveSelection = () => {
     const selection = window.getSelection()
     const editor = editorRef.current
@@ -242,6 +262,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const range = selection.getRangeAt(0)
       if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
         savedRangeRef.current = range.cloneRange()
+        readSelectionColors(range)
         const paragraph = getParagraphsForRange(range)[0]
         if (paragraph) {
           setParagraphPadding(String(Number.parseFloat(paragraph.style.paddingTop) || 0))
@@ -575,6 +596,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       targetElement = commonAncestor as HTMLElement
     }
 
+    // The element that draws the underline owns its color.
+    const editor = editorRef.current
+    for (let element = targetElement; element && element !== editor; element = element.parentElement) {
+      if (!element.contains(range.startContainer) || !element.contains(range.endContainer)) break
+      const decoration = window.getComputedStyle(element).textDecorationLine
+      if (decoration.includes("underline") && element.textContent === range.toString()) {
+        element.style.textDecorationColor = color
+      }
+    }
+    setSelectionColors([color])
+
     if (
       targetElement &&
       targetElement.nodeName === 'SPAN' &&
@@ -763,10 +795,14 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
             Color
             <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+              value={selectionColors[0] || "#000000"}
               onMouseDown={saveSelection}
               onChange={(e) => applyColor(e.currentTarget.value)}
               title="Text color"
               aria-label="Text color" />
+            <span className="max-w-40 truncate font-mono" title={selectionColors.join(", ")}>
+              {selectionColors.join(", ")}
+            </span>
           </label>
           <select
             className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"

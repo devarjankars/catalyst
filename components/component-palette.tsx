@@ -39,6 +39,7 @@ interface ComponentPaletteProps {
 
 function DraggableComponent({
   componentType,
+  defaults,
   onAddComponent,
   isCustom = false,
   isTemplate = false,
@@ -46,6 +47,7 @@ function DraggableComponent({
 }: {
   componentType: (typeof componentTypes)[0] | (typeof sectionTemplates)[0] | EmailComponent
   onAddComponent: (component: EmailComponent, index?: number) => void
+  defaults?: Partial<EmailComponent>
   isCustom?: boolean
   isTemplate?: boolean
   disabled?: boolean
@@ -57,6 +59,7 @@ function DraggableComponent({
       type: componentType.type,
       fromPalette: true,
       ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
+      ...defaults,
       isCustom,
       isTemplate,
     },
@@ -80,6 +83,7 @@ function DraggableComponent({
         id: "",
         type: componentType.type,
         ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
+        ...defaults,
       } as unknown as EmailComponent
       // Always regenerate the top-level id so dropped instances never collide
       componentData.id = ""
@@ -236,7 +240,10 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
                 {componentTypes
                   .filter((type) => type.type !== "section" && type.category === "basic")
                   .map((componentType) => (
-                    <DraggableComponent key={componentType.type} componentType={componentType} onAddComponent={onAddComponent} disabled={disabled} />
+                    <DraggableComponent key={componentType.type}
+                      componentType={componentType}
+                      defaults={selectedBrand === "orserdu" && componentType.type === "text" ? { fontSize: "14px", lineHeight: "20px" } : undefined}
+                      onAddComponent={onAddComponent} disabled={disabled} />
                   ))}
               </div>
             </div>

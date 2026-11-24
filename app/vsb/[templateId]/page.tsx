@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useVSBStore, VSBData } from '@/store/vsb-store';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
@@ -446,6 +446,7 @@ export default function VSBPage() {
       templateId,
       variableCopy: populatedTemplate,
       altNamePage: { images: [{ name: '', value: '' }] },
+      reviewedEmailerUpdatedAt: currentTemplate.updatedAt?.getTime() ?? 0,
       headerDetails: [
         { name: 'To', value: "[HCP\u2019s email address]" },
         { name: 'From', value: '[Variable friendly from] <[Variable from]>' },
@@ -530,16 +531,38 @@ export default function VSBPage() {
   }
 };
 
+  const sectionHistory = useRef(new Map<string, Array<VSBData["variableCopy"] | VSBData["altNamePage"]>>());
+
   const handleUpdateData = (section: string, data: any) => {
     if (!currentVsb) return;
 
-    let updates: Partial<VSBData> = {};
-    if (section === 'Variable Copy') updates.variableCopy = data;
-    if (section === 'alt name page') updates.altNamePage = data;
-    if (section === 'headerDetails') updates.headerDetails = data;
-
-    updateVSB(currentVsb.id, updates);
+    const field = section === 'Variable Copy' ? 'variableCopy' : section === 'alt name page' ? 'altNamePage' : null;
+    if (field) {
+      const key = `${currentVsb.id}:${field}`;
+      const history = sectionHistory.current.get(key) ?? [];
+      const latest = useVSBStore.getState().currentVsb;
+      if (latest?.id !== currentVsb.id) return;
+      sectionHistory.current.set(key, [...history.slice(-99), latest[field]]);
+      updateVSB(currentVsb.id, { [field]: data });
+    } else if (section === 'headerDetails') {
+      updateVSB(currentVsb.id, { headerDetails: data });
+    }
   };
+
+  useEffect(() => {
+    const field = activeSection === 'Variable Copy' ? 'variableCopy' : activeSection === 'alt name page' ? 'altNamePage' : null;
+    if (!field || !currentVsb || currentVsb.templateId !== templateId) return;
+
+    const undo = (event: KeyboardEvent) => {
+      if ((!event.ctrlKey && !event.metaKey) || event.shiftKey || event.altKey || event.key.toLowerCase() !== 'z') return;
+      const history = sectionHistory.current.get(`${currentVsb.id}:${field}`);
+      if (!history?.length) return;
+      event.preventDefault();
+      updateVSB(currentVsb.id, { [field]: history.pop() });
+    };
+    window.addEventListener('keydown', undo);
+    return () => window.removeEventListener('keydown', undo);
+  }, [activeSection, currentVsb?.id, currentVsb?.templateId, templateId, updateVSB]);
 
   const sectionList: SectionType[] = [
     'Variable Copy',
@@ -552,6 +575,10 @@ export default function VSBPage() {
   const isVsbActive = currentVsb?.templateId === templateId;
 
   if (isVsbActive && currentVsb) {
+    const emailerUpdatedAt = currentTemplate?.id === templateId ? currentTemplate.updatedAt?.getTime() ?? 0 : 0;
+    const reviewedUpdatedAt = currentVsb.reviewedEmailerUpdatedAt ?? (Date.parse(currentVsb.createdAt ?? "") || 0);
+    const emailerHasUpdates = reviewedUpdatedAt > 0 && emailerUpdatedAt > reviewedUpdatedAt;
+
     const renderActiveSection = () => {
       switch (activeSection) {
         case 'Variable Copy':
@@ -651,6 +678,14 @@ export default function VSBPage() {
           </div>
         </header>
 
+        {emailerHasUpdates && (
+          <div role="status" className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
+            <span>This emailer was updated. Review the VSB for changes to copy, images, or components.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => updateVSB(currentVsb.id, { reviewedEmailerUpdatedAt: emailerUpdatedAt })}>
+              Mark as reviewed
+            </Button>
+          </div>
+        )}
         <main className="flex-1 flex overflow-hidden">
           <div className="w-64 border-r bg-white flex flex-col p-4 gap-2 shrink-0 overflow-y-auto">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sections</div>

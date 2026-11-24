@@ -20,7 +20,7 @@ import {
   getMetadata
 } from "firebase/storage";
 import { db, firebaseProjectId, storage } from "@/lib/firebase";
-import type { EmailTemplate } from "@/types/template";
+import type { EmailTemplate, EmailTemplateVersion, EmailTemplateVersionContent } from "@/types/template";
 import { EmailComponent } from "@/types/email-builder";
 
 const GERON_STANDARD_RTE_TEMPLATE_NAME = "RTE Standard Template";
@@ -488,6 +488,20 @@ class FirebaseService {
       );
       return this.updateLocalTemplate(id, updates);
     }
+  }
+
+  async listTemplateVersions(templateId: string): Promise<EmailTemplateVersion[]> {
+    const versions = collection(db, this.templatesCollection, templateId, "versions");
+    const snapshot = await getDocs(versions);
+    return snapshot.docs.map(entry => {
+      const data = entry.data();
+      return { id: entry.id, name: data.name, content: data.content, savedAt: parseDate(data.savedAt) };
+    }).sort((left, right) => (right.savedAt?.getTime() ?? 0) - (left.savedAt?.getTime() ?? 0));
+  }
+
+  async saveTemplateVersion(templateId: string, name: string, content: EmailTemplateVersionContent): Promise<void> {
+    const versions = collection(db, this.templatesCollection, templateId, "versions");
+    await addDoc(versions, removeUndefinedDeep({ name, content, savedAt: new Date() }));
   }
 
   async updateTemplateName(id: string, name: string): Promise<EmailTemplate | null> {

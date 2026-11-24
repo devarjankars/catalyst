@@ -32,6 +32,7 @@ export interface VSBData {
   mobileView?: any[];
   /** Legacy URL of the most recently generated PDF; PDFs are not email versions. */
   currentVersion?: string;
+  reviewedEmailerUpdatedAt?: number;
   createdAt?: string;
   updatedAt?: string;
 }
