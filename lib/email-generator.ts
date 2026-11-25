@@ -12,7 +12,7 @@ import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPad
 import { preventJobCodeAutoLinking } from "./job-code";
 import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "./email-padding";
-import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
+import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, orserduColorClass, orserduInkStyle, prepareEmailHtml } from "./email-dark-mode";
 import {
   GERON_ISI_HTML,
   GERON_MEDICATION_GUIDE_URL,
@@ -72,31 +72,42 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
   return applyPaddingToCell(html, wrapperCellMatch, padding);
 }
 
+function paintOrserduInk(tag: string, color: string): string {
+  const colorClass = color === "inherit" ? "" : orserduColorClass(color);
+  const declarations = color === "inherit"
+    ? "color:inherit !important;-webkit-text-fill-color:inherit !important;"
+    : orserduInkStyle(color);
+  const classAttribute = /(\sclass\s*=)(["'])([\s\S]*?)\2/i;
+  const styleAttribute = /(\sstyle\s*=)(["'])([\s\S]*?)\2/i;
+  const ending = /(\s*\/?>)$/;
+  const classified = classAttribute.test(tag)
+    ? tag.replace(classAttribute, (_match, prefix, quote, classes: string) =>
+        `${prefix}${quote}${[...classes.split(/\s+/).filter(name => name && !name.startsWith("orserdu-ink-")), colorClass].filter(Boolean).join(" ")}${quote}`)
+    : colorClass ? tag.replace(ending, ` class="${colorClass}"$1`) : tag;
+  return styleAttribute.test(classified)
+    ? classified.replace(styleAttribute, (_match, prefix, quote, style: string) => {
+        const remaining = style.replace(/(^|;)\s*(?:color|-webkit-text-fill-color|mso-style-textfill-type|mso-style-textfill-fill-color)\s*:[^;]+/gi, "").replace(/^;+/, "");
+        return `${prefix}${quote}${declarations}${remaining}${quote}`;
+      })
+    : classified.replace(ending, ` style="${declarations}"$1`);
+}
+
 function applyOrserduBulletColor(html: string, color?: string): string {
   const defaultColor = color && /^#[0-9a-f]{6}$/i.test(color) ? color : undefined;
 
   const marker = /(<td\b[^>]*>)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(•|&bull;|&#0*8226;|&#x0*2022;)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(<\/td>)/gi;
-  const paint = (tag: string, color: string) => {
-    const declarations = `color:${color} !important;-webkit-text-fill-color:${color} !important;`;
-    if (/\sstyle\s*=/i.test(tag)) {
-      return tag.replace(/(\sstyle\s*=)(["'])([\s\S]*?)\2/i, (_match, prefix, quote, style) => {
-        const remaining = style.replace(/(^|;)\s*(?:color|-webkit-text-fill-color)\s*:[^;]+/gi, "$1");
-        return `${prefix}${quote}${declarations}${remaining}${quote}`;
-      });
-    }
-    return tag.replace(/>$/, ` style="${declarations}">`);
-  };
 
-  return html.replace(marker, (match, cell, before, bullet, after, close) => {
+  return html.replace(marker, (_match, cell, before, bullet, after, close) => {
     const override = cell.match(/\sdata-orserdu-isi-bullet-color=(["'])(#[0-9a-f]{6})\1/i)?.[2];
-    const markerColor = override ?? defaultColor;
-    if (!markerColor) return match;
+    const cellStyle = cell.match(/\sstyle\s*=\s*(["'])(.*?)\1/i)?.[2];
+    const savedColor = cellStyle?.match(/(?:^|;)\s*color\s*:\s*(#[0-9a-f]{6})(?=$|[\s;!])/i)?.[1];
+    const markerColor = override ?? defaultColor ?? savedColor ?? "#69d6b5";
 
     const paintWrappers = (text: string) => text.replace(
       /<(?:span|font|b|strong|i|em|u)\b[^>]*>/gi,
-      (tag) => paint(tag, markerColor),
+      (tag) => paintOrserduInk(tag, markerColor),
     );
-    return paint(cell, markerColor) + paintWrappers(before) + bullet + paintWrappers(after) + close;
+    return paintOrserduInk(cell, markerColor) + paintWrappers(before) + bullet + paintWrappers(after) + close;
   });
 }
 
@@ -719,9 +730,26 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       const backgroundStyle = preserveOrserduColors
         ? `background-color:${boxBgColor} !important;background-image:linear-gradient(${boxBgColor},${boxBgColor}) !important;`
         : `background-color:${boxBgColor};`;
-      const textColorStyle = preserveOrserduColors
-        ? `color:${boxTextColor} !important;-webkit-text-fill-color:${boxTextColor} !important;`
-        : `color:${boxTextColor};`;
+      const ink = /^#[0-9a-f]{3}$/i.test(boxTextColor)
+        ? `#${boxTextColor.slice(1).replace(/./g, (channel: string) => channel + channel)}`
+        : boxTextColor;
+      const protectInk = preserveOrserduColors && /^#[0-9a-f]{6}$/i.test(ink);
+      const textColorStyle = protectInk ? orserduInkStyle(ink) : `color:${boxTextColor};`;
+      const textClass = protectInk ? orserduColorClass(ink) : "";
+      let hasCustomInk = false;
+      let copy = protectInk
+        ? boxText.replace(/<(?:p|div|span|font|b|strong|i|em|u|a|li|ul|ol|blockquote|h[1-6])\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi, (tag: string) => {
+            const style = tag.match(/\sstyle\s*=\s*(["'])(.*?)\1/i)?.[2];
+            if (style && /(?:^|;)\s*color\s*:/i.test(style)) {
+              hasCustomInk = true;
+              return tag;
+            }
+            return paintOrserduInk(tag, "inherit");
+          })
+        : boxText;
+      if (protectInk && ink.toLowerCase() === "#ffffff" && !hasCustomInk) {
+        copy = `<div class="orserdu-gmail-screen"><div class="orserdu-gmail-difference ${textClass}" style="${textColorStyle}">${copy}</div></div>`;
+      }
 
       return `
 <table ${displayClass} ${displayStyle} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -730,9 +758,9 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
         style="${backgroundStyle}">
         <tbody><tr>
-          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy" bgcolor="${boxBgColor}"` : ""}
+          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy ${textClass}" bgcolor="${boxBgColor}"` : ""}
             style="${preserveOrserduColors ? backgroundStyle : ""}padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};${textColorStyle}mso-line-height-rule:exactly;">
-            ${boxText}
+            ${copy}
           </td>
         </tr></tbody>
       </table>
@@ -2786,7 +2814,7 @@ export function generateEmailHTML(
         }
     </style>
 </head>
-<body style=" margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; " topmargin="0"
+<body class="orserdu-email-body" style=" margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; " topmargin="0"
    leftmargin="0" marginheight="0" marginwidth="0">
     <div
         style=" display: none !important; mso-hide: all; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; ">
