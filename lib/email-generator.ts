@@ -73,10 +73,10 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
 }
 
 function applyOrserduBulletColor(html: string, color?: string): string {
-  if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return html;
+  const defaultColor = color && /^#[0-9a-f]{6}$/i.test(color) ? color : undefined;
 
   const marker = /(<td\b[^>]*>)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(•|&bull;|&#0*8226;|&#x0*2022;)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(<\/td>)/gi;
-  const paint = (tag: string) => {
+  const paint = (tag: string, color: string) => {
     const declarations = `color:${color} !important;-webkit-text-fill-color:${color} !important;`;
     if (/\sstyle\s*=/i.test(tag)) {
       return tag.replace(/(\sstyle\s*=)(["'])([\s\S]*?)\2/i, (_match, prefix, quote, style) => {
@@ -87,10 +87,17 @@ function applyOrserduBulletColor(html: string, color?: string): string {
     return tag.replace(/>$/, ` style="${declarations}">`);
   };
 
-  const paintWrappers = (text: string) => text.replace(/<(?:span|font|b|strong|i|em|u)\b[^>]*>/gi, paint);
-  return html.replace(marker, (_match, cell, before, bullet, after, close) =>
-    paint(cell) + paintWrappers(before) + bullet + paintWrappers(after) + close,
-  );
+  return html.replace(marker, (match, cell, before, bullet, after, close) => {
+    const override = cell.match(/\sdata-orserdu-isi-bullet-color=(["'])(#[0-9a-f]{6})\1/i)?.[2];
+    const markerColor = override ?? defaultColor;
+    if (!markerColor) return match;
+
+    const paintWrappers = (text: string) => text.replace(
+      /<(?:span|font|b|strong|i|em|u)\b[^>]*>/gi,
+      (tag) => paint(tag, markerColor),
+    );
+    return paint(cell, markerColor) + paintWrappers(before) + bullet + paintWrappers(after) + close;
+  });
 }
 
 function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {

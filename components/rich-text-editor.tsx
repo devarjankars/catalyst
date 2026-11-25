@@ -83,10 +83,11 @@ interface RichTextEditorProps {
   isSelected?: boolean
   paragraphSpacingPx?: number
   useBlockColorPresets?: boolean
+  allowIsiBulletColorOverride?: boolean
   toolbarPlacement?: "below" | "selection"
 }
 
-export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, toolbarPlacement = "below" }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
   const { formatting: formattingHost, applySelectionColor } = useContext(BuilderToolbarContext)
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const floating = !formattingHost && toolbarPlacement === "selection"
@@ -607,6 +608,20 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       targetElement = commonAncestor as HTMLElement
     }
 
+    const markerCell = allowIsiBulletColorOverride && targetElement?.closest("td")
+    if (markerCell && editor.contains(markerCell) &&
+        markerCell.textContent?.trim() === "•" && range.toString().trim() === "•") {
+      markerCell.setAttribute("data-orserdu-isi-bullet-color", color)
+      for (const element of [markerCell, ...markerCell.querySelectorAll<HTMLElement>("span, font, b, strong, i, em, u")]) {
+        element.style.setProperty("color", color, "important")
+        element.style.setProperty("-webkit-text-fill-color", color, "important")
+      }
+      savedRangeRef.current = range.cloneRange()
+      setSelectionColors([color])
+      handleInput()
+      return
+    }
+
     // The element that draws the underline owns its color.
     for (let element = targetElement; element && element !== editor; element = element.parentElement) {
       if (!element.contains(range.startContainer) || !element.contains(range.endContainer)) break
@@ -844,10 +859,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           ) : (
             <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
               Color
-              <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
-                value={selectionColors[0] || "#000000"}
+              <input ref={selectionColorInputRef} type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
                 onMouseDown={saveSelection}
-                onChange={(e) => applyColor(e.currentTarget.value)}
+                onFocus={saveSelection}
                 title="Text color"
                 aria-label="Text color" />
               <span className="max-w-40 truncate font-mono" title={selectionColors.join(", ")}>

@@ -841,6 +841,7 @@ export function EmailComponentRenderer({
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
+                allowIsiBulletColorOverride
                 toolbarPlacement="selection"
                 value={generatedHtml}
                 onChange={(isiHtml) => {
