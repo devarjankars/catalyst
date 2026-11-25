@@ -13,17 +13,39 @@ import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
 const paragraphSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
 const lineGapAttribute = "data-text-line-gap"
 
+function getLooseParagraphs(editor: HTMLElement): ChildNode[][] {
+  const runs: ChildNode[][] = []
+  let run: ChildNode[] = []
+  for (const child of Array.from(editor.childNodes)) {
+    if (child instanceof HTMLElement &&
+        child.matches(`${paragraphSelector},address,article,aside,dl,figure,footer,header,hr,ol,section,table,ul`)) {
+      if (run.length) runs.push(run)
+      run = []
+    } else {
+      run.push(child)
+    }
+  }
+  if (run.length) runs.push(run)
+  return runs
+}
+
 function getFollowingLineBreak(editor: HTMLElement, range: Range): HTMLBRElement | undefined {
   const anchor = range.startContainer
   const element = anchor instanceof HTMLElement ? anchor : anchor.parentElement
   const paragraph = element?.closest(paragraphSelector)
   const scope = paragraph && editor.contains(paragraph) ? paragraph : editor
+  const cursor = range.cloneRange()
+  cursor.collapse(true)
+  const looseParagraph = scope === editor
+    ? getLooseParagraphs(editor).find(run => run.some(node => cursor.intersectsNode(node) || node === editor.childNodes[cursor.startOffset - 1] && cursor.startContainer === editor))
+    : undefined
+  if (scope === editor && !looseParagraph) return undefined
+
   return Array.from(scope.querySelectorAll("br")).find(lineBreak => {
+    if (looseParagraph && !looseParagraph.some(node => node.contains(lineBreak))) return false
     const parent = lineBreak.parentElement
-    if (parent?.closest(paragraphSelector) !== scope || !parent) return false
+    if (!parent || parent.closest(paragraphSelector) !== scope) return false
     const offset = Array.from<Node>(parent.childNodes).indexOf(lineBreak)
-    const cursor = range.cloneRange()
-    cursor.collapse(true)
     return cursor.comparePoint(parent, offset) >= 0
   })
 }
@@ -671,13 +693,25 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     if (!editor || !range) return []
 
     const paragraphs = getParagraphsForRange(range)
+    const looseParagraphs = getLooseParagraphs(editor).filter(run =>
+      run.some(node => range.intersectsNode(node) ||
+        (range.collapsed && range.startContainer === editor && node === editor.childNodes[range.startOffset - 1])),
+    )
+    const { startContainer, startOffset, endContainer, endOffset } = range
 
-    if (paragraphs.length > 0) return paragraphs
+    for (const run of looseParagraphs) {
+      const paragraph = document.createElement("div")
+      run[0].before(paragraph)
+      paragraph.append(...run)
+      paragraphs.push(paragraph)
+    }
 
-    const paragraph = document.createElement("div")
-    while (editor.firstChild) paragraph.appendChild(editor.firstChild)
-    editor.appendChild(paragraph)
-    return [paragraph]
+    // Moving text nodes collapses a live range at their old parent.
+    if (looseParagraphs.length && startContainer !== editor && endContainer !== editor) {
+      range.setStart(startContainer, startOffset)
+      range.setEnd(endContainer, endOffset)
+    }
+    return paragraphs
   }
 
   const applyParagraphSpacing = (spacing: number) => {
