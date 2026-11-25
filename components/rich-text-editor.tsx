@@ -55,10 +55,10 @@ function getNodePath(root: Node, node: Node): number[] | null {
   return current === root ? path : null;
 }
 
-function getSelectionSnapshot(root: HTMLElement): SelectionSnapshot | null {
+function getSelectionSnapshot(root: HTMLElement, storedRange?: Range | null): SelectionSnapshot | null {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return null;
-  const range = selection.getRangeAt(0);
+  const range = storedRange ?? (selection?.rangeCount ? selection.getRangeAt(0) : null);
+  if (!range) return null;
   const startPath = getNodePath(root, range.startContainer);
   const endPath = getNodePath(root, range.endContainer);
   if (!startPath || !endPath) return null;
@@ -79,16 +79,21 @@ function resolveBoundary(root: Node, boundary: SelectionBoundary): { node: Node;
   return { node, offset: Math.min(boundary.offset, maxOffset) };
 }
 
-function restoreSelectionSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null) {
-  if (!snapshot) return;
+function rangeFromSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null): Range | null {
+  if (!snapshot) return null;
   const start = resolveBoundary(root, snapshot.start);
   const end = resolveBoundary(root, snapshot.end);
-  if (!start || !end) return;
+  if (!start || !end) return null;
   const range = document.createRange();
   range.setStart(start.node, start.offset);
   range.setEnd(end.node, end.offset);
+  return range;
+}
+
+function restoreSelectionSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null) {
+  const range = rangeFromSnapshot(root, snapshot);
   const selection = window.getSelection();
-  if (!selection) return;
+  if (!range || !selection) return;
   selection.removeAllRanges();
   selection.addRange(range);
 }
@@ -123,6 +128,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const [focused, setFocused] = useState(false)
   const [paragraphSpacing, setParagraphSpacing] = useState("0")
   const paragraphSpacingDirty = useRef(false)
+  const paragraphSpacingInputRef = useRef<HTMLInputElement>(null)
+  const committedParagraphSpacing = useRef(0)
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
   const savedRangeRef = useRef<Range | null>(null)
 
@@ -307,7 +314,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         readSelectionStyle(range)
         const paragraph = getParagraphsForRange(range)[0]
         if (!paragraphSpacingDirty.current) {
-          setParagraphSpacing(String(Number.parseFloat(paragraph?.style.marginBottom || "") || 0))
+          committedParagraphSpacing.current = Number.parseFloat(paragraph?.style.marginBottom || "") || 0
+          setParagraphSpacing(String(committedParagraphSpacing.current))
         }
       }
     }
@@ -331,8 +339,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const normalizedTarget = document.createElement("div");
       normalizedTarget.innerHTML = spacedValue;
       if (editor.innerHTML !== normalizedTarget.innerHTML) {
-        const selectionSnapshot = getSelectionSnapshot(editor);
+        const selectionSnapshot = document.activeElement === paragraphSpacingInputRef.current
+          ? null
+          : getSelectionSnapshot(editor);
+        const savedSnapshot = getSelectionSnapshot(editor, savedRangeRef.current);
         editor.innerHTML = normalizedTarget.innerHTML;
+        savedRangeRef.current = rangeFromSnapshot(editor, savedSnapshot);
         restoreSelectionSnapshot(editor, selectionSnapshot);
       }
       lastEditorHtmlRef.current = editor.innerHTML
@@ -391,6 +403,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const editor = editorRef.current
     if (!editor) return
 
+    const selectionSnapshot = getSelectionSnapshot(editor)
     editor.innerHTML = html
     lastEditorHtmlRef.current = html
     const range = document.createRange()
@@ -400,7 +413,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     if (selection) {
       selection.removeAllRanges()
       selection.addRange(range)
-      savedRangeRef.current = range.cloneRange()
+      restoreSelectionSnapshot(editor, selectionSnapshot)
+      saveSelection()
     }
 
     if (changeTimerRef.current) {
@@ -723,16 +737,33 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const applyParagraphSpacing = (spacing: number) => {
-    restoreSelection()
     const range = savedRangeRef.current
     const paragraphs = (range && splitSelectedBreakLines(range)) ?? getSelectedParagraphs()
     for (const paragraph of paragraphs) {
       paragraph.setAttribute(PARAGRAPH_SPACING_OVERRIDE, String(spacing))
       paragraph.style.setProperty("margin-bottom", `${spacing}px`, "important")
     }
-    restoreSelection()
     handleInput()
     flushInput()
+  }
+
+  const commitParagraphSpacing = (spacing: number) => {
+    paragraphSpacingDirty.current = false
+    if (!Number.isFinite(spacing)) {
+      setParagraphSpacing(String(committedParagraphSpacing.current))
+      return
+    }
+
+    const value = Math.round(Math.min(200, Math.max(0, spacing)) * 100) / 100
+    setParagraphSpacing(String(value))
+    if (value === committedParagraphSpacing.current) return
+    committedParagraphSpacing.current = value
+    applyParagraphSpacing(value)
+  }
+
+  const focusEditorSelection = () => {
+    editorRef.current?.focus({ preventScroll: true })
+    restoreSelection()
   }
 
   const applyLineHeight = (lineHeight: string) => {
@@ -766,6 +797,13 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.altKey && e.shiftKey && e.code === "KeyP" && paragraphSpacingInputRef.current) {
+      e.preventDefault()
+      saveSelection()
+      paragraphSpacingInputRef.current.focus()
+      return
+    }
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case "z":
@@ -895,39 +933,53 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
               </button>
             ))}
           </div>
-          <label title="Space below selected paragraph" className="flex items-center gap-2 text-xs text-slate-600">
-            <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="grow">Paragraph spacing after</span>
-            <input
-              type="number"
-              min="0"
-              max="200"
-              step="any"
-              value={paragraphSpacing}
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  e.currentTarget.blur()
-                }
-              }}
-              onBlur={() => {
-                if (!paragraphSpacingDirty.current) return
-                paragraphSpacingDirty.current = false
-                const spacing = Number(paragraphSpacing)
-                if (Number.isFinite(spacing)) {
-                  const value = Math.min(200, Math.max(0, spacing))
-                  setParagraphSpacing(String(value))
-                  applyParagraphSpacing(value)
-                }
-              }}
-              onChange={e => {
-                paragraphSpacingDirty.current = true
-                setParagraphSpacing(e.target.value)
-              }}
-              className={`${typographyControl} max-w-14`}
-              aria-label="Space below selected paragraph in pixels"
-            />
-            px
+          <label title="Paragraph spacing after · Alt/Option + Shift + P" className="flex items-center justify-between gap-2 text-xs text-slate-600">
+            <span className="flex min-w-0 items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Paragraph spacing
+            </span>
+            <span className="flex shrink-0 items-center rounded-md border border-slate-200 bg-white focus-within:border-blue-500">
+              <input
+                ref={paragraphSpacingInputRef}
+                type="number"
+                min="0"
+                max="200"
+                step="any"
+                value={paragraphSpacing}
+                onFocus={e => e.currentTarget.select()}
+                onKeyDown={e => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault()
+                    const current = e.currentTarget.valueAsNumber
+                    const base = Number.isFinite(current) ? current : committedParagraphSpacing.current
+                    commitParagraphSpacing(base + (e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 10 : 1))
+                  } else if (e.key === "Enter" || e.key === "Escape") {
+                    e.preventDefault()
+                    if (e.key === "Enter" && paragraphSpacingDirty.current) {
+                      commitParagraphSpacing(e.currentTarget.value === "" ? 0 : e.currentTarget.valueAsNumber)
+                    } else if (e.key === "Escape") {
+                      paragraphSpacingDirty.current = false
+                      setParagraphSpacing(String(committedParagraphSpacing.current))
+                    }
+                    focusEditorSelection()
+                  }
+                }}
+                onBlur={e => {
+                  if (paragraphSpacingDirty.current) {
+                    commitParagraphSpacing(e.currentTarget.value === "" ? 0 : e.currentTarget.valueAsNumber)
+                  }
+                }}
+                onChange={e => {
+                  paragraphSpacingDirty.current = true
+                  setParagraphSpacing(e.target.value)
+                }}
+                className="!h-7 w-14 !border-0 bg-transparent text-right tabular-nums outline-none"
+                aria-label="Space below selected paragraph in pixels"
+                aria-keyshortcuts="Alt+Shift+P"
+                title="Up/Down: 1 px. Shift + Up/Down: 10 px. Enter: apply. Esc: cancel."
+              />
+              <span className="pr-2 text-[11px] text-slate-500" aria-hidden="true">px</span>
+            </span>
           </label>
         </div>,
         formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
