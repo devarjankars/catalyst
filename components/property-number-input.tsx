@@ -19,8 +19,8 @@ interface PropertyNumberInputProps {
 
 function parseValue(raw: string): { num: number; unit: NumberUnit } {
   const s = (raw || "").trim();
-  const m = s.match(/^(-?[\d.]+)(px|%|rem|em)?$/i);
-  if (!m) return { num: 0, unit: "px" };
+  const m = s.match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))(px|%|rem|em)?$/i);
+  if (!m) return { num: Number.NaN, unit: "px" };
   const num = parseFloat(m[1]);
   const unit = ((m[2] || "").toLowerCase() as NumberUnit) || "";
   return { num, unit };
@@ -48,7 +48,8 @@ export function PropertyNumberInput({
   className,
   disabled = false,
 }: PropertyNumberInputProps) {
-  const { num, unit } = parseValue(value);
+  const { num: parsed, unit } = parseValue(value);
+  const num = Number.isFinite(parsed) ? parsed : 0;
   const [local, setLocal] = useState(formatValue(num, unit));
   const isDirtyRef = useRef(false);
 
@@ -56,17 +57,21 @@ export function PropertyNumberInput({
   useEffect(() => {
     if (!isDirtyRef.current) {
       const { num: n, unit: u } = parseValue(value);
-      setLocal(formatValue(n, u));
+      setLocal(formatValue(Number.isFinite(n) ? n : 0, u));
     }
   }, [value]);
 
   const commit = (raw: string) => {
     isDirtyRef.current = false;
     const { num: n, unit: u } = parseValue(raw);
+    if (!Number.isFinite(n)) {
+      setLocal(formatValue(num, unit));
+      return;
+    }
     const clamped = clamp(n, min, max);
     const committed = formatValue(clamped, u || unit);
     setLocal(committed);
-    onChange(committed);
+    if (committed !== value) onChange(committed);
   };
 
   const clamp = (n: number, lo?: number, hi?: number) => {
@@ -77,6 +82,11 @@ export function PropertyNumberInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+      return;
+    }
     if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
     e.preventDefault(); // prevent cursor movement / browser scroll
 
@@ -84,7 +94,7 @@ export function PropertyNumberInput({
     const { small, large } = getSteps(u || unit);
     const step = e.shiftKey ? large : small;
     const delta = e.key === "ArrowUp" ? step : -step;
-    const next = clamp(current + delta, min, max);
+    const next = clamp((Number.isFinite(current) ? current : num) + delta, min, max);
     const formatted = formatValue(next, u || unit);
     setLocal(formatted);
     isDirtyRef.current = false;

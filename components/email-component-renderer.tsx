@@ -538,28 +538,26 @@ export function EmailComponentRenderer({
         case "footer-link-2" :
         return (
           <div className="flex flex-col gap-3 " style={baseStyle}>
-            <div className="flex items-center justify-between w-full mb-2">
-              <div className="w-[45%]">
-               
-                  <img width={"100%"} src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex}/>
-          
-              </div>
-              <div className="w-[35%]">
-               
-                  <img width={"100%"} src={component?.logoB.imgSrc} alt={component.logoB.altTex}/>
-           
-              </div>
+            <div className="mb-2 flex w-full items-center justify-between">
+              {[component.logoA, component.logoB].map((logo, index) => logo?.imgSrc && (
+                <a key={index} className={index === 0 ? "w-[45%]" : "w-[35%]"} href={logo.href || "#"}
+                  onClick={event => { if (!previewMode) event.preventDefault(); }}>
+                  <img className="block w-full" src={logo.imgSrc} alt={logo.altTex} />
+                </a>
+              ))}
             </div>
             <div className="flex flex-wrap justify-evenly gap-10">
               {component.links?.map((link, linkIndex) => (
                 <React.Fragment key={linkIndex}>
                   <a
                     href={link.href || "#"}
+                    title={link.title || undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
                       color: component.color || "#007bff",
                       textDecoration: "underline",
+                      fontSize: component.fontSize || "14px",
                     }}
                     onClick={(e) => {
                       if (!previewMode) {
@@ -1757,13 +1755,15 @@ export function EmailComponentRenderer({
 
           case "ferring-footer":
           return (
+            <div style={{ padding: component.padding || "20px 0 0" }}>
             <div
-              
-              className="z-50 mt-2 p-[30px] flex flex-col w-full justify-start text-[#ffffff] bg-[#0083BF]"
+              className="z-50 p-[30px] flex flex-col w-full justify-start text-[#ffffff] bg-[#0083BF]"
             >
               <div className="flex items-center justify-between w-full mb-2">
                 <div className="w-[45%]">
-                  <img width={"112"} src={component?.logo?.logoSrc} alt={component?.logo?.altText}/>
+                  <a href={component.logo?.href || "#"} onClick={event => { if (!previewMode) event.preventDefault(); }}>
+                    <img width={112} src={component.logo?.logoSrc} alt={component.logo?.altText} />
+                  </a>
                 </div>
                 <div className="w-[45%] flex justify-end items-center">
                   {component.socialMediaLinks?.map((link, index) => (
@@ -1776,7 +1776,7 @@ export function EmailComponentRenderer({
               <div className="mt-3 flex items-start justify-between">
                   <div className="flex flex-col gap-4">
                     <p className="text-white text-[9.5px]">
-                      Ferring Pharmaceuticals, 100 Interpace Parkway, Parsippany, NJ 07054<br/>
+                      Ferring Pharmaceuticals, {component.address || "100 Interpace Parkway, Parsippany, NJ 07054"}<br/>
                       { isSelected ? 
                        <Input
                        value={component.jobCode || ""}
@@ -1811,6 +1811,7 @@ export function EmailComponentRenderer({
                       ))}
                  </div>
               </div>
+            </div>
             </div>
           );
       case "tryvio-isi":

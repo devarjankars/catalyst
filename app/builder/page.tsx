@@ -1100,13 +1100,13 @@ if (activeSelectedId) {
 
           {/* Right Panel: Properties */}
           {!previewMode && (selectedComponent || (currentTemplate && isEdit)) && (
-            <aside aria-label="Properties" className="flex w-[304px] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-slate-50">
+            <aside aria-label="Properties" className="eb-properties flex w-[304px] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-slate-50">
               <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3">
                 <h2 className="text-sm font-semibold text-slate-900">Properties</h2>
               </div>
 
               <div ref={setActionsHost} className="shrink-0 border-b border-slate-200 bg-white px-3 py-2 empty:hidden" />
-              <div className="flex-1 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                   {selectedComponentData?.type !== "text" && (
                     <div ref={setFormattingHost} className="px-3 pt-3 empty:hidden" />
                   )}

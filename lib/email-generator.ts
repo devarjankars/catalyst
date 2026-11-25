@@ -526,6 +526,31 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
   `.trim();
     }
 
+    case "footer-link-2": {
+      const display = component.displayType;
+      const { innerStyle } = getDisplayAttributes(display);
+      const logos = [component.logoA, component.logoB];
+      const color = component.color || "#007bff";
+      return `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
+          style="${innerStyle}">
+          <tr><td style="padding:${component.padding || "16px"};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>${logos.map((logo, index) => `
+                <td width="50%" align="${index === 0 ? "left" : "right"}">
+                  ${logo?.imgSrc ? `<a href="${escapeHtmlText(logo.href || "#")}"><img width="${index === 0 ? 250 : 190}"
+                    style="display:block;max-width:100%;height:auto;border:0;" src="${escapeHtmlText(logo.imgSrc)}" alt="${escapeHtmlText(logo.altTex || "")}"></a>` : ""}
+                </td>`).join("")}</tr>
+            </table>
+            <p style="margin:12px 0 0;text-align:center;line-height:1.4;">
+              ${(component.links || []).map(link => `<a href="${escapeHtmlText(link.href || "#")}" title="${escapeHtmlText(link.title || "")}"
+                style="color:${color};font-size:${component.fontSize || "14px"};text-decoration:underline;">${escapeHtmlText(link.text || "")}</a>`).join(" &nbsp; ")}
+            </p>
+          </td></tr>
+        </table>`;
+    }
+
     case "footer-links(3)": {
       const footerDisplay = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -1662,6 +1687,10 @@ case "isi": {
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
+      const logo = component.logo;
+      const logoImage = logo?.logoSrc ? `<img src="${escapeHtmlText(logo.logoSrc)}" width="112" alt="${escapeHtmlText(logo.altText || "")}" style="border:0;">` : "";
+      const logoHtml = logo?.href && logoImage ? `<a href="${escapeHtmlText(logo.href)}" target="_blank">${logoImage}</a>` : logoImage;
+
       const socialMediaLinksHtml = (component.socialMediaLinks || [])
         .map(
           (link) => `
@@ -1729,13 +1758,13 @@ case "isi": {
        
         >
             <tr>
-                <td width="100%" style="padding: 20px 0 0px 0;">
+                <td width="100%" style="padding:${component.padding || "20px 0 0"};">
                     <table class="desk-show-table" bgcolor="#0083BF" width="100%" border="0" cellspacing="0" cellpadding="0">
                         <tr bgcolor="#0083BF">
                             <td bgcolor="#0083BF">
                                 <table width="100%" bgcolor="#0083BF">
                                     <td bgcolor="#0083BF" align="left" width="50%" style="padding: 30px 0 20px 30px;">
-                                        <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
+                                        ${logoHtml}
                                     </td>
         
                                     <td valign="top" align="right" bgcolor="#0083BF" width="50%" style="padding: 30px 20px 20px 0;">
@@ -1790,7 +1819,7 @@ case "isi": {
                             <table align="center" bgcolor="#0083BF">
                               <tr bgcolor="#0083BF" align="center">
                                 <td bgcolor="#0083BF" style="padding: 10px 0px 20px 0px;">
-                                  <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
+                                  ${logoHtml}
                                 </td>
                               </tr>
                               <tr bgcolor="#0083BF" align="center">

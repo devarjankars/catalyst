@@ -19,7 +19,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head><style>{getEmailFontFaceCss("")}</style></head>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: getEmailFontFaceCss("") }} />
+      </head>
       <body suppressHydrationWarning className="h-screen overflow-hidden">
         <AppShell>{children}</AppShell>
         <Toaster richColors={true} position='top-center' />

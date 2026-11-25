@@ -1938,76 +1938,28 @@ export function PropertiesPanel({
             </div>
           </div>
         );   
-        case "footer-link-2":  
+      case "footer-link-2":
         return (
-          <div className="space-y-2">
-            <h1 className="font-bold">Logo 1 </h1>
-            <div>
-              <h1 className="font-semibold">image </h1>
-              <ImageUpload
-                currentImage={component.logoA.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoA.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoA);
-                }}
-              />
-            </div>
-            <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-           
-
-            <h1 className="font-bold">Logo 2 </h1>
-            <div>
-              <ImageUpload
-                currentImage={component.logoB.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoB.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoB);
-                }}
-              />
-            </div>
-             <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
+          <div className="space-y-3">
+            {(["logoA", "logoB"] as const).map((key, index) => {
+              const logo = component[key] ?? { imgSrc: "", altTex: "", href: "" };
+              const update = (changes: Partial<EmailComponent["logoA"]>) =>
+                onUpdateComponent({ [key]: { ...logo, ...changes } });
+              return (
+                <section key={key} className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                  <h4>Logo {index + 1}</h4>
+                  <ImageUpload currentImage={logo.imgSrc} onImageUpload={imgSrc => update({ imgSrc })} />
+                  <div>
+                    <Label htmlFor={`${key}-alt`}>Alt text</Label>
+                    <Input id={`${key}-alt`} value={logo.altTex} onChange={event => update({ altTex: event.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor={`${key}-href`}>Link URL</Label>
+                    <Input id={`${key}-href`} type="url" value={logo.href} onChange={event => update({ href: event.target.value })} />
+                  </div>
+                </section>
+              );
+            })}
             <div>
               <Label htmlFor="fontSize">Font Size</Label>
               <Input
@@ -2151,141 +2103,6 @@ export function PropertiesPanel({
 
            </div>
         );   
-      case "footer-link-2":  
-        return (
-          <div className="space-y-2">
-            <h1 className="font-bold">Logo 1 </h1>
-            <div>
-              <h1 className="font-semibold">image </h1>
-              <ImageUpload
-                currentImage={component.logoA.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoA.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoA);
-                }}
-              />
-            </div>
-            <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-           
-
-            <h1 className="font-bold">Logo 2 </h1>
-            <div>
-              <ImageUpload
-                currentImage={component.logoB.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoB.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoB);
-                }}
-              />
-            </div>
-             <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-            <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "14px"}
-                onChange={(e) =>
-                  onUpdateComponent({ fontSize: e.target.value })
-                }
-                placeholder="14px"
-              />
-            </div>
-            <div>
-              <Label htmlFor="color">Text Color</Label>
-              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
-            </div>
-
-            <div className="mt-3">
-              <Label className="text-md mb-2">Links</Label>
-              {component.links?.map((link, index) => (
-                <div
-                  key={index}
-                  className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2"
-                >
-                  <Label>Link text</Label>
-                  <Input
-                    value={link.text}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, text: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link text"
-                  />
-                  <Label>Link url</Label>
-                  <Input
-                    value={link.href}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, href: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link URL"
-                  />
-                  <Label>Link title</Label>
-                  <DeferredTextInput
-                    value={link.title || ""}
-                    onCommit={(value) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: value } : l
-                        ),
-                      })
-                    }
-                    placeholder='title="…" tooltip on hover'
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
       case "bullet-list":
         return (
           <div className="space-y-4">
@@ -3376,103 +3193,6 @@ export function PropertiesPanel({
         );
       }
 
-        case "orserdu-highlight-box":
-        case "geron-highlight-box": {
-          const c = component;
-          return (
-            <div className="space-y-4">
-              {/* Box text */}
-              <div>
-                <Label>Box Text</Label>
-                <RichTextEditor
-                  isSelected
-                  value={c.boxText ?? ""}
-                  onChange={(boxText) => onUpdateComponent({ boxText }, true)}
-                  style={{ minHeight: "100px" }}
-                />
-                <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
-              </div>
-
-              {/* Colors */}
-              <div>
-                <Label>Box Background Color</Label>
-                <ColorInput
-                  value={c.boxBgColor ?? "#FFD500"}
-                  onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })}
-                />
-              </div>
-              <div>
-                <Label>Text Color</Label>
-                <ColorInput
-                  value={c.boxTextColor ?? "#002E6D"}
-                  onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })}
-                />
-              </div>
-
-              {/* Typography */}
-              <div>
-                <Label>Font Size</Label>
-                <FontSizeInput
-                  value={c.boxFontSize ?? "14px"}
-                  onChange={(boxFontSize) => onUpdateComponent({ boxFontSize })}
-                />
-              </div>
-              <div>
-                <Label>Line Height</Label>
-                <LineHeightInput
-                  value={c.boxLineHeight ?? "18px"}
-                  onChange={(boxLineHeight) => onUpdateComponent({ boxLineHeight })}
-                />
-              </div>
-              <div>
-                <Label>Font Weight</Label>
-                <Select
-                  value={c.boxFontWeight ?? "700"}
-                  onValueChange={(boxFontWeight) => onUpdateComponent({ boxFontWeight })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="400">Normal</SelectItem>
-                    <SelectItem value="700">Bold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Inner padding (inside the box) */}
-              <div>
-                <Label>Inner Padding (inside box)</Label>
-                <PaddingInput
-                  value={c.boxPadding ?? "16px 18px"}
-                  onChange={(v) => onUpdateComponent({ boxPadding: v } as any)}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Controls space inside the coloured box.</p>
-              </div>
-
-              {/* Outer padding — left/right are FIXED at 20px to match email standard */}
-              <div>
-                <Label>Outer Padding (around box)</Label>
-                <PaddingInput
-                  value={c.outerPadding ?? "0 20px 20px 20px"}
-                  onChange={(v) => onUpdateComponent({ outerPadding: v } as any)}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Left/right control the side margins. Standard email uses 20px.</p>
-              </div>
-
-              {/* Space after box */}
-              <div>
-                <Label>Space After Box (px)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={c.spacingAfterBox ?? "20"}
-                  onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value } as any)}
-                  placeholder="20"
-                />
-              </div>
-            </div>
-          );
-        }
-
         case "orserdu-isi-animated":
           return (
             <div className="space-y-4">
@@ -3554,58 +3274,6 @@ export function PropertiesPanel({
               onUpdateComponent={onUpdateComponent}
             />
           );
-
-        case "ferring-footer":
-          return (
-            <div className="space-y-4">
-              <div>
-                <Label>Social Media Links</Label>
-                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
-                  {component.socialMediaLinks?.map((link, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2">
-                       <Input
-                      value={link.altText}
-                      />
-                      <Input
-                        value={link.href}
-                        onChange={(e) =>
-                          onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
-                            i === index ? { ...l, href: e.target.value } : l
-                          )})
-                        }
-                        placeholder="Social media URL"
-                      />
-                      </div>
-                     ))}
-                </div>
-              </div>
-              <div>
-                <Label >Footer links</Label>
-                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
-                  {component.links?.map((link, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2">
-                       <Input
-                      value={link.text}
-                      onChange={(e)=> onUpdateComponent({
-                        links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l
-                        ),
-                      })}
-                      />
-                      <Input
-                        value={link.href}
-                        onChange={(e) =>
-                          onUpdateComponent({ links: component.links?.map((l, i) =>
-                            i === index ? { ...l, href: e.target.value } : l
-                          )})
-                        }
-                        placeholder="Footer link URL"
-                      />
-                      </div>
-                     ))}
-                </div>
-              </div>
-            </div>
-          )
 
           case "tryvio-isi":
             return (
