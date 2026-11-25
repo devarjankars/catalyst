@@ -1,12 +1,31 @@
 "use client"
 
 
-import { Italic, Link, Subscript, Superscript } from "lucide-react"
+import { ArrowUpDown, Bold, Italic, Link, Subscript, Superscript, Underline } from "lucide-react"
 import type React from "react"
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
+
+import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
+
+const fontSizes = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px", "48px"]
+const lineHeights = fontSizes.slice(2, 9)
+const typographyControl = "h-8 w-full min-w-0 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 hover:border-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+
+function selectedTextNodes(range: Range): Text[] {
+  const root = range.commonAncestorContainer
+  if (root.nodeType === Node.TEXT_NODE) return [root as Text]
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.textContent && range.intersectsNode(node)) nodes.push(node as Text)
+  }
+  return nodes
+}
+
+const fontLabel = (font: string) => font.split(",")[0].trim().replace(/^["']|["']$/g, "")
 
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect
 
@@ -99,6 +118,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const redoHistoryRef = useRef<string[]>([])
   const lastEditorHtmlRef = useRef<string | null>(null)
   const [selectionColors, setSelectionColors] = useState<string[]>([])
+  const [selectionFont, setSelectionFont] = useState("")
+  const [selectionSize, setSelectionSize] = useState("")
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("8")
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
@@ -154,8 +175,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       return
     }
 
-    const toolbarWidth = toolbarRef.current?.offsetWidth || 480
-    const toolbarHeight = toolbarRef.current?.offsetHeight || 44
+    const toolbarWidth = toolbarRef.current?.offsetWidth || 256
+    const toolbarHeight = toolbarRef.current?.offsetHeight || 190
     const maxLeft = Math.max(8, window.innerWidth - toolbarWidth - 8)
     const left = Math.max(
       8,
@@ -243,23 +264,23 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     return selectedLines
   }
 
-  const readSelectionColors = (range: Range) => {
+  const readSelectionStyle = (range: Range) => {
     const colors = new Set<string>()
-    const addColor = (node: Node) => {
+    const fonts = new Set<string>()
+    const sizes = new Set<string>()
+    const nodes = range.collapsed ? [range.startContainer] : selectedTextNodes(range)
+    for (const node of nodes) {
       const element = node instanceof HTMLElement ? node : node.parentElement
-      const channels = element && window.getComputedStyle(element).color.match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+      if (!element) continue
+      const { color, fontFamily, fontSize } = window.getComputedStyle(element)
+      const channels = color.match(/^rgb\((\d+), (\d+), (\d+)\)$/)
       if (channels) colors.add("#" + channels.slice(1).map(value => Number(value).toString(16).padStart(2, "0")).join(""))
-    }
-    const root = range.commonAncestorContainer
-    if (root.nodeType === Node.TEXT_NODE || range.collapsed) {
-      addColor(range.startContainer)
-    } else {
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        if (node.textContent?.trim() && range.intersectsNode(node)) addColor(node)
-      }
+      fonts.add(fontLabel(fontFamily))
+      sizes.add(fontSize)
     }
     setSelectionColors([...colors])
+    setSelectionFont(fonts.size === 1 ? [...fonts][0] : "")
+    setSelectionSize(sizes.size === 1 ? [...sizes][0] : "")
   }
 
   const saveSelection = () => {
@@ -269,7 +290,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const range = selection.getRangeAt(0)
       if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
         savedRangeRef.current = range.cloneRange()
-        readSelectionColors(range)
+        readSelectionStyle(range)
         const paragraph = getParagraphsForRange(range)[0]
         if (paragraph) {
           setParagraphPadding(String(Number.parseFloat(paragraph.style.paddingTop) || 0))
@@ -538,51 +559,54 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     handleInput()
   }
 
-  const applyFontSize = (size: string) => {
-    restoreSelection()
+  const applyInlineStyle = (
+    selection: Selection,
+    range: Range,
+    property: "fontFamily" | "fontSize" | "color",
+    value: string,
+  ) => {
+    // Format each text run so selections spanning links or paragraphs keep their markup.
+    const runs = selectedTextNodes(range).map(node => ({
+      node,
+      start: node === range.startContainer ? range.startOffset : 0,
+      end: node === range.endContainer ? range.endOffset : node.length,
+    })).filter(({ start, end }) => end > start)
+    if (runs.length === 0) return
 
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
-
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) return
-
-    const commonAncestor = range.commonAncestorContainer
-    let targetElement: HTMLElement | null = null
-
-    if (commonAncestor.nodeType === Node.TEXT_NODE) {
-      targetElement = commonAncestor.parentElement
-    } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
-      targetElement = commonAncestor as HTMLElement
-    }
-
-    if (
-      targetElement &&
-      targetElement.nodeName === 'SPAN' &&
-      targetElement.contains(range.startContainer) &&
-      targetElement.contains(range.endContainer)
-    ) {
-      const spanText = targetElement.textContent?.trim() || ''
-      const selectedText = range.toString().trim()
-
-      if (spanText === selectedText) {
-        targetElement.style.fontSize = size
-        handleInput()
-        return
+    const formatted = runs.map(({ node, start, end }) => {
+      const parent = node.parentElement
+      if (start === 0 && end === node.length && parent?.tagName === "SPAN" && parent.childNodes.length === 1) {
+        parent.style[property] = value
+        return node
       }
-    }
-
-    const span = document.createElement("span")
-    span.style.fontSize = size
-    span.appendChild(range.extractContents())
-    range.insertNode(span)
-
-    range.setStartAfter(span)
-    range.setEndAfter(span)
+      if (end < node.length) node.splitText(end)
+      const selected = start > 0 ? node.splitText(start) : node
+      const span = document.createElement("span")
+      span.style[property] = value
+      selected.replaceWith(span)
+      span.appendChild(selected)
+      return selected
+    })
+    const last = formatted[formatted.length - 1]
+    range.setStart(formatted[0], 0)
+    range.setEnd(last, last.length)
     selection.removeAllRanges()
     selection.addRange(range)
-
+    savedRangeRef.current = range.cloneRange()
+    readSelectionStyle(range)
     handleInput()
+    // Publish toolbar edits immediately so a blur save cannot replay older markup.
+    flushInput()
+  }
+
+  const applyTypography = (property: "fontFamily" | "fontSize", value: string) => {
+    restoreSelection()
+    const selection = window.getSelection()
+    const editor = editorRef.current
+    if (!selection?.rangeCount || !editor) return
+    const range = selection.getRangeAt(0)
+    if (range.collapsed || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return
+    applyInlineStyle(selection, range, property, value)
   }
 
   const applyColor = (color: string) => {
@@ -630,36 +654,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         element.style.textDecorationColor = color
       }
     }
-    setSelectionColors([color])
-
-    if (
-      targetElement &&
-      targetElement.nodeName === 'SPAN' &&
-      targetElement.contains(range.startContainer) &&
-      targetElement.contains(range.endContainer)
-    ) {
-      const spanText = targetElement.textContent?.trim() || ''
-      const selectedText = range.toString().trim()
-
-      if (spanText === selectedText) {
-        targetElement.style.color = color
-        savedRangeRef.current = range.cloneRange()
-        handleInput()
-        return
-      }
-    }
-
-    const span = document.createElement("span")
-    span.style.color = color
-    span.appendChild(range.extractContents())
-    range.insertNode(span)
-
-    range.selectNodeContents(span)
-    selection.removeAllRanges()
-    selection.addRange(range)
-    savedRangeRef.current = range.cloneRange()
-
-    handleInput()
+    applyInlineStyle(selection, range, "color", color)
   }
 
   useBrowserLayoutEffect(() => {
@@ -785,6 +780,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     }
   }
 
+  const selectedFontValue = TEXT_FONT_FAMILIES.find(font => fontLabel(font) === selectionFont) ?? ""
+
   return (
     <div className="relative w-full">
       <div
@@ -815,8 +812,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
           className={formattingHost
-            ? `flex w-full flex-wrap items-center gap-1 ${inTextSection ? "" : "rounded-lg border border-slate-200 bg-white p-2"}`
-            : `w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${floating ? "fixed" : "mt-2"}`}
+            ? `grid w-full gap-2 ${inTextSection ? "" : "rounded-lg border border-slate-200 bg-white p-3"}`
+            : `grid w-64 max-w-full gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg z-[10000] ${floating ? "fixed" : "mt-2"}`}
           style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
@@ -824,112 +821,87 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           onMouseDown={saveSelection}
           onClick={(event) => event.stopPropagation()}
         >
-          {formattingHost && (
-            <h3 className="basis-full px-1 pb-1 text-xs font-semibold text-slate-900">{inTextSection ? "Selection formatting" : "Text formatting"}</h3>
-          )}
-          <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("bold")}>
-            <strong>B</strong>
-          </button>
-          <button type="button" title="Italic" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("italic")}>
-            <Italic className="h-3 w-3" />
-          </button>
-          <button type="button" title="Underline" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("underline")}>
-            <u>U</u>
-          </button>
-          <button type="button" title="Insert link" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => LinkifyText()}>
-            <Link className="h-3 w-3" />
-          </button>
-          <button type="button" title="Superscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => toggleScript("superscript")}>
-            <Superscript className="h-4 w-4" />
-          </button>
-          <button type="button" title="Subscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => toggleScript("subscript")}>
-            <Subscript className="h-4 w-4" />
-          </button>
-          <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
-          {inTextSection ? (
-            <input ref={selectionColorInputRef} type="color" aria-label="Selection color"
-              title="Selection color" className="h-7 w-8 cursor-pointer rounded border border-slate-200 bg-white p-0.5"
-              onMouseDown={saveSelection} onFocus={saveSelection} />
-          ) : (
-            <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
-              Color
-              <input ref={selectionColorInputRef} type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
-                onMouseDown={saveSelection}
-                onFocus={saveSelection}
-                title="Text color"
-                aria-label="Text color" />
-              <span className="max-w-40 truncate font-mono" title={selectionColors.join(", ")}>
-                {selectionColors.join(", ")}
-              </span>
-            </label>
-          )}
+          <h3 className="text-xs font-semibold text-slate-900">{inTextSection ? "Selection formatting" : "Text formatting"}</h3>
           <select
-            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
-            value=""
-            onChange={(e) => { if (e.target.value) applyFontSize(e.target.value) }}
-            onMouseDown={() => saveSelection()}
-            title="Font Size"
+            aria-label="Selection font family"
+            title="Font family for selected text"
+            className={typographyControl}
+            value={selectedFontValue}
+            onChange={e => applyTypography("fontFamily", e.currentTarget.value)}
           >
-            <option value="" disabled>Size</option>
-            <option value="10px">10</option>
-            <option value="12px">12</option>
-            <option value="14px">14</option>
-            <option value="16px">16</option>
-            <option value="18px">18</option>
-            <option value="20px">20</option>
-            <option value="24px">24</option>
-            <option value="28px">28</option>
-            <option value="32px">32</option>
-            <option value="40px">40</option>
-            <option value="48px">48</option>
+            <option value="" disabled>{selectionFont || "Font family"}</option>
+            {TEXT_FONT_FAMILIES.map(font => <option key={font} value={font}>{fontLabel(font)}</option>)}
           </select>
-          <select
-            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
-            defaultValue=""
-            onChange={(e) => {
-              if (e.target.value) applyLineHeight(e.target.value)
-              e.currentTarget.value = ""
-            }}
-            title="Line height for selected paragraph"
-          >
-            <option value="" disabled>Line height</option>
-            <option value="14px">14px line</option>
-            <option value="16px">16px line</option>
-            <option value="18px">18px line</option>
-            <option value="20px">20px line</option>
-            <option value="24px">24px line</option>
-            <option value="28px">28px line</option>
-            <option value="32px">32px line</option>
-          </select>
-          <label className="flex items-center gap-1 border-l pl-2 px-1 text-xs text-black">
-            Paragraph spacing
+          <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
+            <select
+              aria-label="Selection font size"
+              title="Font size for selected text"
+              className={typographyControl}
+              value={selectionSize}
+              onChange={e => applyTypography("fontSize", e.currentTarget.value)}
+            >
+              <option value="" disabled>Size</option>
+              {selectionSize && !fontSizes.includes(selectionSize) && <option value={selectionSize} disabled>{selectionSize}</option>}
+              {fontSizes.map(size => <option key={size} value={size}>{size}</option>)}
+            </select>
+            <select
+              aria-label="Line height for selected paragraph"
+              title="Line height for selected paragraph"
+              className={typographyControl}
+              defaultValue=""
+              onChange={e => {
+                if (e.currentTarget.value) applyLineHeight(e.currentTarget.value)
+                e.currentTarget.value = ""
+              }}
+            >
+              <option value="" disabled>Line height</option>
+              {lineHeights.map(size => <option key={size} value={size}>{size}</option>)}
+            </select>
+            <input ref={selectionColorInputRef} type="color"
+              aria-label={inTextSection ? "Selection color" : "Text color"}
+              title={selectionColors.join(", ") || "Text color"}
+              className="h-8 w-9 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+              onFocus={saveSelection} />
+          </div>
+          <div className="flex flex-wrap items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
+            {[
+              { label: "Bold", Icon: Bold, action: () => applyFormattingCommand("bold") },
+              { label: "Italic", Icon: Italic, action: () => applyFormattingCommand("italic") },
+              { label: "Underline", Icon: Underline, action: () => applyFormattingCommand("underline") },
+              { label: "Insert link", Icon: Link, action: LinkifyText },
+              { label: "Superscript", Icon: Superscript, action: () => toggleScript("superscript") },
+              { label: "Subscript", Icon: Subscript, action: () => toggleScript("subscript") },
+            ].map(({ label, Icon, action }) => (
+              <button key={label} type="button" title={label} aria-label={label}
+                className="grid h-7 w-7 place-items-center rounded text-slate-700 hover:bg-white hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                onClick={action}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          <label title="Space above selected paragraph" className="flex items-center gap-2 text-xs text-slate-600">
+            <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="grow">Paragraph spacing</span>
             <input
               type="number"
               min="0"
               max="200"
               step="any"
               value={paragraphPadding}
-              onKeyDown={(e) => {
+              onKeyDown={e => {
                 if (e.key === "Enter") {
                   e.preventDefault()
                   e.currentTarget.blur()
                 }
               }}
-              onMouseDown={saveSelection}
               onBlur={() => {
                 const padding = Number(paragraphPadding)
                 if (paragraphPadding !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
                   applyParagraphPadding(`${padding}px`)
                 }
               }}
-              onChange={(e) => setParagraphPadding(e.target.value)}
-              className="w-14 rounded border border-gray-300 px-1 py-1 text-xs text-black"
+              onChange={e => setParagraphPadding(e.target.value)}
+              className={`${typographyControl} max-w-14`}
               aria-label="Space above selected paragraph in pixels"
             />
             px

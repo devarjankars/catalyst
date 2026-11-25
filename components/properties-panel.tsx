@@ -18,7 +18,7 @@ import { DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
-import { ArrowLeft, ArrowRight, AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MonitorSmartphone, Move, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
@@ -3926,11 +3926,11 @@ export function PropertiesPanel({
   };
 
   return (
-    <div className="eb-props space-y-5">
-      <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+    <div className="eb-props space-y-4">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <div
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+            "flex h-8 w-8 items-center justify-center rounded-lg ring-1",
             isColumn
               ? "bg-green-50 text-green-600 ring-green-100"
               : "bg-blue-50 text-blue-600 ring-blue-100",
@@ -4009,8 +4009,9 @@ export function PropertiesPanel({
 
       {/* Common Properties */}
       {!hasDedicatedPaddingControl && (
-        <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+        <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
           <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <Move className="h-3.5 w-3.5" aria-hidden="true" />
             Spacing
           </h4>
           <div>
@@ -4031,19 +4032,20 @@ export function PropertiesPanel({
         </div>
       )}
 
-      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <MonitorSmartphone className="h-3.5 w-3.5" aria-hidden="true" />
           Responsive
         </h4>
         <div>
-          <Label htmlFor="diplayType">Display on</Label>
+          <Label htmlFor="displayType">Display on</Label>
           <Select
             value={component.displayType || "all"}
             onValueChange={(value) =>
               onUpdateComponent({ displayType: value as "all" | "mobile-only" | "desktop-only" })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id="displayType">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
