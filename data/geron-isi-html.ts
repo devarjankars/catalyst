@@ -1,12 +1,12 @@
 export const GERON_PRESCRIBING_INFORMATION_URL = "https://pi.geron.com/products/US/pi/rytelo_pi.pdf";
 export const GERON_MEDICATION_GUIDE_URL = "https://pi.geron.com/products/US/pi/rytelo_mg.pdf";
 
-export const GERON_ISI_HTML = `<table id="isi" class="mobile-table darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+export const GERON_ISI_HTML = `<table id="isi" class="mobile-table" width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                         <tbody>
                            <tr>
                               <td class="horizontal-spacer" width="25" height="1" style=" font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; ">&nbsp;</td>
                               <td>
-                                 <table class="darkmode" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
+                                 <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
                                     <tbody>
                                        <tr>
                                           <td width="100%" height="15" style=" font-size: 0px; line-height: 15px; mso-line-height-rule: exactly; ">
@@ -206,16 +206,29 @@ function updateGeronIsiLink(html: string, linkText: string, href: string): strin
   });
 }
 
+function removeGeronIsiDarkModeBackground(html: string): string {
+  return html
+    .replace(/\sclass=(["'])([^"']*)\1/gi, (_attribute, quote: string, classNames: string) => {
+      const classes = classNames
+        .split(/\s+/)
+        .filter((className) => className.toLowerCase() !== "darkmode");
+      return classes.length ? ` class=${quote}${classes.join(" ")}${quote}` : "";
+    })
+    .replace(/\sbgcolor\s*=\s*(["'])\s*(?:#fff(?:fff)?|white)\s*\1/gi, "");
+}
+
 export function renderGeronIsiHtml(
   html: string,
   padding: string,
   prescribingInformationUrl: string,
   medicationGuideUrl: string,
 ): string {
-  const linkedHtml = updateGeronIsiLink(
-    updateGeronIsiLink(html, "Prescribing Information", prescribingInformationUrl),
-    "Medication Guide",
-    medicationGuideUrl,
+  const linkedHtml = removeGeronIsiDarkModeBackground(
+    updateGeronIsiLink(
+      updateGeronIsiLink(html, "Prescribing Information", prescribingInformationUrl),
+      "Medication Guide",
+      medicationGuideUrl,
+    ),
   );
   const safePadding = escapeHtmlAttribute(padding);
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr><td style="padding:${safePadding};">${linkedHtml}</td></tr></tbody></table>`;

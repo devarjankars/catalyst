@@ -707,21 +707,7 @@ export default function VSBPage() {
               {renderActiveSection()}
             </div>
           </div>
-{/* 
-          <aside className="w-80 border-l bg-white p-4 overflow-y-auto shrink-0 hidden lg:block">
-            <h3 className="font-semibold mb-4 text-gray-500 uppercase text-xs">Preview</h3>
-            <PreviewSection
-              section={activeSection as any}
-              data={
-                activeSection === 'Variable Copy' ? currentVsb.variableCopy :
-                  activeSection === 'alt name page' ? currentVsb.altNamePage :
-                    activeSection === 'Desktop view' ? currentVsb.desktopView :
-                      currentVsb.mobileView
-              }
-              headerDetails={currentVsb.headerDetails}
-              variableCopyHeadingColor={currentVsb.variableCopyHeadingColor}
-            />
-          </aside> */}
+
         </main>
 
         <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
