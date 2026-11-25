@@ -5,9 +5,22 @@ const VOID_ELEMENTS = new Set([
 const BLOCK_ELEMENTS = new Set([
   "blockquote", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "p", "pre",
 ]);
-export const PARAGRAPH_SPACING_OVERRIDE = "data-text-paragraph-spacing";
 const SPACING_MARKER = "data-text-spacing-original-style";
 const STYLE_PRESENT_MARKER = "data-text-spacing-had-style";
+
+export function setParagraphTopPadding(paragraph: HTMLElement, padding: string): void {
+  paragraph.style.paddingTop = padding;
+  const trackedStyle = paragraph.getAttribute(SPACING_MARKER);
+  if (trackedStyle === null) return;
+
+  // The editor strips temporary paragraph margins before saving. Keep the
+  // authored padding in the original style that this step restores.
+  const original = paragraph.ownerDocument.createElement("div").style;
+  original.cssText = decodeURIComponent(trackedStyle);
+  original.paddingTop = padding;
+  paragraph.setAttribute(SPACING_MARKER, encodeURIComponent(original.cssText));
+  if (original.cssText) paragraph.setAttribute(STYLE_PRESENT_MARKER, "true");
+}
 
 function getBlockOpenings(html: string): { start: number; end: number; hasNestedBlock: boolean }[] {
   const candidates: { start: number; end: number; hasNestedBlock: boolean }[] = [];
@@ -137,10 +150,7 @@ export function applyTextParagraphSpacing(
   for (let index = openings.length - 1; index >= 0; index--) {
     const { start, end } = openings[index];
     const markup = html.slice(start, end);
-    const override = markup.match(/\sdata-text-paragraph-spacing=(["'])(\d+(?:\.\d+)?)\1/i)?.[2];
-    const marginBottom = override === undefined
-      ? (index === openings.length - 1 ? 0 : spacing)
-      : Math.min(200, Number(override));
+    const marginBottom = index === openings.length - 1 ? 0 : spacing;
     const replacement = updateBlockStyle(markup, marginBottom, trackOriginalStyle);
     html = `${html.slice(0, start)}${replacement}${html.slice(end)}`;
   }
