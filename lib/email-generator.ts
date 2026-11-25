@@ -72,12 +72,35 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
   return applyPaddingToCell(html, wrapperCellMatch, padding);
 }
 
+function applyOrserduBulletColor(html: string, color?: string): string {
+  if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return html;
+
+  const marker = /(<td\b[^>]*>)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(•|&bull;|&#0*8226;|&#x0*2022;)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(<\/td>)/gi;
+  const paint = (tag: string) => {
+    const declarations = `color:${color} !important;-webkit-text-fill-color:${color} !important;`;
+    if (/\sstyle\s*=/i.test(tag)) {
+      return tag.replace(/(\sstyle\s*=)(["'])([\s\S]*?)\2/i, (_match, prefix, quote, style) => {
+        const remaining = style.replace(/(^|;)\s*(?:color|-webkit-text-fill-color)\s*:[^;]+/gi, "$1");
+        return `${prefix}${quote}${declarations}${remaining}${quote}`;
+      });
+    }
+    return tag.replace(/>$/, ` style="${declarations}">`);
+  };
+
+  const paintWrappers = (text: string) => text.replace(/<(?:span|font|b|strong|i|em|u)\b[^>]*>/gi, paint);
+  return html.replace(marker, (_match, cell, before, bullet, after, close) =>
+    paint(cell) + paintWrappers(before) + bullet + paintWrappers(after) + close,
+  );
+}
+
 function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
-    return component.type === "isi"
-      ? applyPaddingToFirstTableCell(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested))
-      : applyAnimatedIsiPadding(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested));
+    const padding = getOrserduIsiOuterPadding(component.padding, isNested);
+    const html = component.type === "isi"
+      ? applyPaddingToFirstTableCell(component.isiHtml, padding)
+      : applyAnimatedIsiPadding(component.isiHtml, padding);
+    return applyOrserduBulletColor(html, component.isiBulletColor);
   }
   switch (component.type) {
     case "section":
@@ -1022,7 +1045,7 @@ case "isi": {
           </table>
           `;
       return applyAnimatedIsiPadding(
-        html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`),
+        applyOrserduBulletColor(html, isiBulletColor),
         getOrserduIsiOuterPadding(component.padding, isNested),
       );
     }
@@ -1117,7 +1140,7 @@ case "isi": {
 </tbody>
 </table>
       `;
-      return html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`);
+      return applyOrserduBulletColor(html, isiBulletColor);
     }
     case "bullet-list": {
       const display = (component.displayType ||

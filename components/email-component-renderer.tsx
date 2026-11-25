@@ -843,14 +843,20 @@ export function EmailComponentRenderer({
                 isSelected={isSelected}
                 toolbarPlacement="selection"
                 value={generatedHtml}
-                onChange={(isiHtml) => onUpdate({
-                  isiHtml: component.type === "orserdu-isi-animated"
-                    ? isiHtml.replace(
-                        /<table\b[^>]*>\s*<tbody>\s*<tr>\s*<td\b[^>]*data-orserdu-isi-padding-wrapper(?:="true")?[^>]*>([\s\S]*)<\/td>\s*<\/tr>\s*<\/tbody>\s*<\/table>$/,
-                        "$1",
-                      )
-                    : isiHtml,
-                })}
+                onChange={(isiHtml) => {
+                  const formatted = document.createElement("div");
+                  formatted.innerHTML = generatedHtml;
+                  if (formatted.innerHTML === isiHtml) return;
+
+                  onUpdate({
+                    isiHtml: component.type === "orserdu-isi-animated"
+                      ? isiHtml.replace(
+                          /<table\b[^>]*>\s*<tbody>\s*<tr>\s*<td\b[^>]*data-orserdu-isi-padding-wrapper(?:="true")?[^>]*>([\s\S]*)<\/td>\s*<\/tr>\s*<\/tbody>\s*<\/table>$/,
+                          "$1",
+                        )
+                      : isiHtml,
+                  });
+                }}
                 style={{ padding: 0, fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
                 className="!p-0"
               />

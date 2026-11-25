@@ -8,7 +8,7 @@ import { useVSBStore, VSBData } from '@/store/vsb-store';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Plus, Loader2, Download, Eye, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Download, Eye, Copy, Trash2, Undo2, Redo2 } from 'lucide-react';
 import VariableCopySection from '@/components/vsb-sections/VariableCopySection';
 import DesktopViewSection from '@/components/vsb-sections/DesktopViewSection';
 import MobileViewSection from '@/components/vsb-sections/MobileViewSection';
@@ -531,37 +531,61 @@ export default function VSBPage() {
   }
 };
 
-  const sectionHistory = useRef(new Map<string, Array<VSBData["variableCopy"] | VSBData["altNamePage"]>>());
+  type HistorySection = 'Variable Copy' | 'alt name page';
+  type History = { past: Partial<VSBData>[]; future: Partial<VSBData>[] };
+  const sectionHistory = useRef(new Map<string, History>());
+
+  const captureSection = (vsb: VSBData, section: HistorySection): Partial<VSBData> =>
+    section === 'Variable Copy' ? {
+      variableCopy: vsb.variableCopy,
+      variableCopyHeadingColor: vsb.variableCopyHeadingColor || '#FF66CC',
+      projectTitleColor: vsb.projectTitleColor || '#006937',
+    } : { altNamePage: vsb.altNamePage };
+
+  const editSection = (section: HistorySection, updates: Partial<VSBData>) => {
+    const latest = useVSBStore.getState().currentVsb;
+    if (!latest || latest.id !== currentVsb?.id) return;
+    const key = `${latest.id}:${section}`;
+    const history = sectionHistory.current.get(key);
+    sectionHistory.current.set(key, {
+      past: [...(history?.past.slice(-99) || []), captureSection(latest, section)],
+      future: [],
+    });
+    void updateVSB(latest.id, updates);
+  };
 
   const handleUpdateData = (section: string, data: any) => {
-    if (!currentVsb) return;
+    if (section === 'Variable Copy') editSection(section, { variableCopy: data });
+    if (section === 'alt name page') editSection(section, { altNamePage: data });
+    if (section === 'headerDetails' && currentVsb) void updateVSB(currentVsb.id, { headerDetails: data });
+  };
 
-    const field = section === 'Variable Copy' ? 'variableCopy' : section === 'alt name page' ? 'altNamePage' : null;
-    if (field) {
-      const key = `${currentVsb.id}:${field}`;
-      const history = sectionHistory.current.get(key) ?? [];
-      const latest = useVSBStore.getState().currentVsb;
-      if (latest?.id !== currentVsb.id) return;
-      sectionHistory.current.set(key, [...history.slice(-99), latest[field]]);
-      updateVSB(currentVsb.id, { [field]: data });
-    } else if (section === 'headerDetails') {
-      updateVSB(currentVsb.id, { headerDetails: data });
-    }
+  const traverseHistory = (section: HistorySection, direction: 'past' | 'future') => {
+    const latest = useVSBStore.getState().currentVsb;
+    if (!latest || latest.id !== currentVsb?.id) return false;
+    const history = sectionHistory.current.get(`${latest.id}:${section}`);
+    const snapshot = history?.[direction].pop();
+    if (!history || !snapshot) return false;
+    history[direction === 'past' ? 'future' : 'past'].push(captureSection(latest, section));
+    void updateVSB(latest.id, snapshot);
+    return true;
   };
 
   useEffect(() => {
-    const field = activeSection === 'Variable Copy' ? 'variableCopy' : activeSection === 'alt name page' ? 'altNamePage' : null;
-    if (!field || !currentVsb || currentVsb.templateId !== templateId) return;
+    if ((activeSection !== 'Variable Copy' && activeSection !== 'alt name page') || currentVsb?.templateId !== templateId) return;
 
-    const undo = (event: KeyboardEvent) => {
-      if ((!event.ctrlKey && !event.metaKey) || event.shiftKey || event.altKey || event.key.toLowerCase() !== 'z') return;
-      const history = sectionHistory.current.get(`${currentVsb.id}:${field}`);
-      if (!history?.length) return;
-      event.preventDefault();
-      updateVSB(currentVsb.id, { [field]: history.pop() });
+    const onHistoryKey = (event: KeyboardEvent) => {
+      if ((!event.ctrlKey && !event.metaKey) || event.altKey || event.defaultPrevented) return;
+      if (event.target instanceof HTMLElement && event.target.closest('[role="dialog"], [role="alertdialog"]')) return;
+      const key = event.key.toLowerCase();
+      if (key !== 'z' && key !== 'y') return;
+      const direction = key === 'y' || event.shiftKey ? 'future' : 'past';
+      if (direction === 'future' && activeSection !== 'Variable Copy') return;
+      if (traverseHistory(activeSection, direction)) event.preventDefault();
     };
-    window.addEventListener('keydown', undo);
-    return () => window.removeEventListener('keydown', undo);
+
+    window.addEventListener('keydown', onHistoryKey);
+    return () => window.removeEventListener('keydown', onHistoryKey);
   }, [activeSection, currentVsb?.id, currentVsb?.templateId, templateId, updateVSB]);
 
   const sectionList: SectionType[] = [
@@ -579,6 +603,8 @@ export default function VSBPage() {
     const reviewedUpdatedAt = currentVsb.reviewedEmailerUpdatedAt ?? (Date.parse(currentVsb.createdAt ?? "") || 0);
     const emailerHasUpdates = reviewedUpdatedAt > 0 && emailerUpdatedAt > reviewedUpdatedAt;
 
+    const variableHistory = sectionHistory.current.get(`${currentVsb.id}:Variable Copy`);
+
     const renderActiveSection = () => {
       switch (activeSection) {
         case 'Variable Copy':
@@ -587,9 +613,9 @@ export default function VSBPage() {
             color={currentVsb.variableCopyHeadingColor}
             projectTitleColor={currentVsb.projectTitleColor}
             onColorChange={(color) => {
-              updateVSB(currentVsb.id, { variableCopyHeadingColor: color });
+              editSection('Variable Copy', { variableCopyHeadingColor: color });
             }}
-            onProjectTitleColorChange={(color) => updateVSB(currentVsb.id, { projectTitleColor: color })}
+            onProjectTitleColorChange={(color) => editSection('Variable Copy', { projectTitleColor: color })}
             onChange={(data) => handleUpdateData('Variable Copy', data)} 
           />;
         case 'Desktop view':
@@ -647,6 +673,20 @@ export default function VSBPage() {
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
+            {activeSection === 'Variable Copy' && (
+              <div role="group" aria-label="Variable Copy history" className="flex gap-1">
+                <Button type="button" size="icon" variant="outline" aria-label="Undo Variable Copy edit"
+                  title="Undo (Ctrl/⌘+Z)" disabled={!variableHistory?.past.length}
+                  onClick={() => traverseHistory('Variable Copy', 'past')}>
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+                <Button type="button" size="icon" variant="outline" aria-label="Redo Variable Copy edit"
+                  title="Redo (Ctrl/⌘+Shift+Z)" disabled={!variableHistory?.future.length}
+                  onClick={() => traverseHistory('Variable Copy', 'future')}>
+                  <Redo2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             {activeSection === 'Combined Preview' && 
             (<Button className='bg-red-500' onClick={handleMLRconnection}>
               {isConnectingToMRL && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Connect to MLR
