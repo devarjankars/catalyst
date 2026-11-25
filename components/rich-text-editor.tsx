@@ -6,7 +6,7 @@ import type React from "react"
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
-import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
+import { applyTextParagraphSpacing, PARAGRAPH_SPACING_OVERRIDE, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
 
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
 
@@ -121,7 +121,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const [selectionFont, setSelectionFont] = useState("")
   const [selectionSize, setSelectionSize] = useState("")
   const [focused, setFocused] = useState(false)
-  const [paragraphPadding, setParagraphPadding] = useState("8")
+  const [paragraphSpacing, setParagraphSpacing] = useState("0")
+  const paragraphSpacingDirty = useRef(false)
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
   const savedRangeRef = useRef<Range | null>(null)
 
@@ -204,6 +205,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       .filter((element) => !element.querySelector(blockSelector) && range.intersectsNode(element))
     if (blocks.length === 0 && editor.querySelector("br")) blocks.push(editor)
 
+    const wasCollapsed = range.collapsed
     const startContainer = range.startContainer
     const startOffset = range.startOffset
     const endContainer = range.endContainer
@@ -213,7 +215,10 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
     blocks.forEach((block) => {
       const childNodes = Array.from(block.childNodes)
-      if (!childNodes.some((node) => node.nodeName === "BR")) return
+      if (!childNodes.some((node) => node.nodeName === "BR")) {
+        selectedLines.push(block)
+        return
+      }
 
       didSplit = true
       const lines: Node[][] = [[]]
@@ -221,8 +226,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         if (node.nodeName === "BR") lines.push([])
         else lines[lines.length - 1].push(node)
       })
-      const selectedLineFlags = lines.map((nodes) =>
-        nodes.some((node) => range.intersectsNode(node))
+      const caretLine = wasCollapsed && startContainer === block
+        ? childNodes.slice(0, startOffset).filter(node => node.nodeName === "BR").length
+        : -1
+      const selectedLineFlags = lines.map((nodes, index) =>
+        caretLine !== -1 ? index === caretLine : nodes.some(node => range.intersectsNode(node))
       )
 
       const lineElements = lines.map((nodes, index) => {
@@ -232,9 +240,14 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         if (line !== block) {
           line.removeAttribute("id")
           if (index > 0) line.style.paddingTop = ""
+          if (index < lines.length - 1) {
+            line.removeAttribute(PARAGRAPH_SPACING_OVERRIDE)
+            line.style.marginBottom = ""
+          }
         }
         if (selectedLineFlags[index]) selectedLines.push(line)
         nodes.forEach((node) => line.appendChild(node))
+        if (!nodes.length) line.appendChild(document.createElement("br"))
         return line
       })
 
@@ -253,10 +266,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       updatedRange.setEnd(endContainer, endOffset)
     } else if (selectedLines.length > 0) {
       updatedRange.selectNodeContents(selectedLines[0])
-      updatedRange.setEnd(
-        selectedLines[selectedLines.length - 1],
-        selectedLines[selectedLines.length - 1].childNodes.length,
-      )
+      if (wasCollapsed) updatedRange.collapse(true)
+      else {
+        const last = selectedLines[selectedLines.length - 1]
+        updatedRange.setEnd(last, last.childNodes.length)
+      }
     } else {
       return []
     }
@@ -292,8 +306,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         savedRangeRef.current = range.cloneRange()
         readSelectionStyle(range)
         const paragraph = getParagraphsForRange(range)[0]
-        if (paragraph) {
-          setParagraphPadding(String(Number.parseFloat(paragraph.style.paddingTop) || 0))
+        if (!paragraphSpacingDirty.current) {
+          setParagraphSpacing(String(Number.parseFloat(paragraph?.style.marginBottom || "") || 0))
         }
       }
     }
@@ -708,15 +722,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     return [paragraph]
   }
 
-  const applyParagraphPadding = (paddingTop: string) => {
+  const applyParagraphSpacing = (spacing: number) => {
     restoreSelection()
     const range = savedRangeRef.current
-    const splitParagraphs = range ? splitSelectedBreakLines(range) : null
-    const paragraphs = splitParagraphs ?? getSelectedParagraphs()
-    paragraphs.forEach((paragraph) => {
-      paragraph.style.paddingTop = paddingTop === "0px" ? "" : paddingTop
-    })
+    const paragraphs = (range && splitSelectedBreakLines(range)) ?? getSelectedParagraphs()
+    for (const paragraph of paragraphs) {
+      paragraph.setAttribute(PARAGRAPH_SPACING_OVERRIDE, String(spacing))
+      paragraph.style.setProperty("margin-bottom", `${spacing}px`, "important")
+    }
+    restoreSelection()
     handleInput()
+    flushInput()
   }
 
   const applyLineHeight = (lineHeight: string) => {
@@ -879,15 +895,15 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
               </button>
             ))}
           </div>
-          <label title="Space above selected paragraph" className="flex items-center gap-2 text-xs text-slate-600">
+          <label title="Space below selected paragraph" className="flex items-center gap-2 text-xs text-slate-600">
             <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="grow">Paragraph spacing</span>
+            <span className="grow">Paragraph spacing after</span>
             <input
               type="number"
               min="0"
               max="200"
               step="any"
-              value={paragraphPadding}
+              value={paragraphSpacing}
               onKeyDown={e => {
                 if (e.key === "Enter") {
                   e.preventDefault()
@@ -895,14 +911,21 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
                 }
               }}
               onBlur={() => {
-                const padding = Number(paragraphPadding)
-                if (paragraphPadding !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                  applyParagraphPadding(`${padding}px`)
+                if (!paragraphSpacingDirty.current) return
+                paragraphSpacingDirty.current = false
+                const spacing = Number(paragraphSpacing)
+                if (Number.isFinite(spacing)) {
+                  const value = Math.min(200, Math.max(0, spacing))
+                  setParagraphSpacing(String(value))
+                  applyParagraphSpacing(value)
                 }
               }}
-              onChange={e => setParagraphPadding(e.target.value)}
+              onChange={e => {
+                paragraphSpacingDirty.current = true
+                setParagraphSpacing(e.target.value)
+              }}
               className={`${typographyControl} max-w-14`}
-              aria-label="Space above selected paragraph in pixels"
+              aria-label="Space below selected paragraph in pixels"
             />
             px
           </label>

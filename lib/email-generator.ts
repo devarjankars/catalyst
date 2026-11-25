@@ -1,4 +1,4 @@
-import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
 import { getEmailFontFaceCss } from "./email-fonts";
 import { getDisplayAttributes } from "./style-generator";
@@ -410,7 +410,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       const { innerStyle } = getDisplayAttributes(footerDisplay);
       const links = component.links || [];
       const fontSize = component.fontSize || "12px";
-      const color = component.color || "#0563C1";
+      const color = getOrserduFooterLinkColor(component.color);
       const padding = component.padding || "10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
@@ -431,7 +431,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         const row = links.slice(i, i + 2);
         const rowHTML = row.map((link, j) => {
           const isLast = j === row.length - 1;
-          const linkColor = link.color || color;
+          const linkColor = getOrserduFooterLinkColor(link.color || color);
           const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
           const nextLink = row[j + 1];
           const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
@@ -453,7 +453,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       // ΓöÇΓöÇ Desktop layout: all links inline ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       const desktopHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
-        const linkColor = link.color || color;
+        const linkColor = getOrserduFooterLinkColor(link.color || color);
         const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
         const nextLink = links[index + 1];
         const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
@@ -521,7 +521,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         .map(
           (link, index) => `
       <a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${
-        link.color || component.color || "#0463c1"
+        getOrserduFooterLinkColor(link.color || component.color)
       }; text-decoration: underline; font-size: ${
         link.fontSize || component.fontSize || "12px"
       }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
@@ -555,7 +555,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
           <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${
             component.textAlign || "left"
           }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
-            <div style="color: ${component.color || "#0463c1"}; font-size: ${
+            <div style="color: ${getOrserduFooterLinkColor(component.color)}; font-size: ${
               component.fontSize || "14px"
             }; line-height: ${component.lineHeight};">
               ${linksHTML}

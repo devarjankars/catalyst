@@ -10,3 +10,10 @@ export const TEXT_COLOR_PRESETS = [
   { name: "Magenta", hex: DEFAULT_CUSTOM_TEXT_COLOR },
   { name: "Blue", hex: "#183559" },
 ] as const;
+
+export function getOrserduFooterLinkColor(color?: string): string {
+  const normalized = color?.trim().toLowerCase();
+  return !normalized || normalized === "#0463c1" || normalized === "#007bff"
+    ? "#0563C1"
+    : color ?? "#0563C1";
+}

@@ -14,7 +14,7 @@ import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -1916,7 +1916,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Default Link Color</Label>
-              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput value={getOrserduFooterLinkColor(component.color)} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div className="mt-3">
               <Label className="text-md mb-2">Links</Label>
@@ -1930,7 +1930,7 @@ export function PropertiesPanel({
                   <Label className="text-xs">Title</Label>
                   <Input value={link.title || ""} onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, title: e.target.value } : l) })} placeholder='title="…" tooltip on hover' />
                   <Label className="text-xs">Color</Label>
-                  <ColorInput value={link.color || component.color || "#007bff"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })} />
+                  <ColorInput value={getOrserduFooterLinkColor(link.color || component.color)} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })} />
                   <Label className="text-xs">Font Size</Label>
                   <FontSizeInput value={(link as any).fontSize || component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } as any : l) })} />
                 </div>
@@ -2906,7 +2906,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Link Color</Label>
-              <ColorInput value={component.color || "#0563C1"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput value={getOrserduFooterLinkColor(component.color)} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background Color</Label>
@@ -2963,7 +2963,7 @@ export function PropertiesPanel({
                   />
                   <Label className="text-xs">Color</Label>
                   <ColorInput
-                    value={link.color || component.color || "#0563C1"}
+                    value={getOrserduFooterLinkColor(link.color || component.color)}
                     onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })}
                   />
                   <Label className="text-xs">Font Size</Label>

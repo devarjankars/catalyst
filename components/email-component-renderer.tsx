@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
@@ -510,7 +510,7 @@ export function EmailComponentRenderer({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: link.color || component.color || "#007bff",
+                      color: getOrserduFooterLinkColor(link.color || component.color),
                       fontSize: link.fontSize || component.fontSize || "14px",
                       textDecoration: "underline",
                       fontFamily: "Arial, sans-serif",
@@ -752,7 +752,7 @@ export function EmailComponentRenderer({
               {links.map((link, linkIndex) => {
                 const isLast = linkIndex === links.length - 1;
                 const isEven = (linkIndex + 1) % 2 === 0;
-                const linkColor = link.color || component.color || "#0563C1";
+                const linkColor = getOrserduFooterLinkColor(link.color || component.color);
                 const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
                 const pipeColor = !isLast ? (links[linkIndex + 1].color || "#000000") : "#000000";
                 return (
