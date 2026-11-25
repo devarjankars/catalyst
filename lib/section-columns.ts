@@ -9,7 +9,8 @@ export function getSectionColumns(section: EmailComponent): EmailComponent[] {
 
 export function newSectionColumn(section: EmailComponent, children: EmailComponent[] = []): EmailComponent {
   return {
-    id: crypto.randomUUID(),
+    id: globalThis.crypto?.randomUUID?.() ??
+      `section-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     type: "section",
     category: section.category,
     logoA: section.logoA,
