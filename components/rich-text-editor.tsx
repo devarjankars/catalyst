@@ -1,7 +1,7 @@
 "use client"
 
 
-import { ArrowUpDown, Bold, Italic, Link, Subscript, Superscript, Underline } from "lucide-react"
+import { ArrowUpDown, Bold, Italic, Link, RotateCcw, Subscript, Superscript, Underline } from "lucide-react"
 import type React from "react"
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
@@ -710,8 +710,10 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const applyParagraphPadding = (paddingTop: string) => {
-    restoreSelection()
     const range = savedRangeRef.current
+    if (paddingTop === "0px" && (!range || !getParagraphsForRange(range).some(paragraph => paragraph.style.paddingTop))) return
+
+    restoreSelection()
     const splitParagraphs = range ? splitSelectedBreakLines(range) : null
     const paragraphs = splitParagraphs ?? getSelectedParagraphs()
     paragraphs.forEach((paragraph) => {
@@ -881,42 +883,60 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
               </button>
             ))}
           </div>
-          <label title="Space above selected paragraph" className="flex items-center gap-2 text-xs text-slate-600">
-            <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="grow">Paragraph spacing</span>
-            <input
-              type="number"
-              min="0"
-              max="200"
-              step="any"
-              value={paragraphPadding}
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  e.currentTarget.blur()
-                }
-              }}
-              onBlur={e => {
-                if (!paragraphPaddingDirty.current) return
+          <div className="flex items-center gap-1">
+            <label title="Space above selected paragraph" className="flex min-w-0 flex-1 items-center gap-2 text-xs text-slate-600">
+              <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="grow">Paragraph spacing</span>
+              <input
+                type="number"
+                min="0"
+                max="200"
+                step="any"
+                value={paragraphPadding}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                  }
+                }}
+                onBlur={e => {
+                  if (!paragraphPaddingDirty.current) return
+                  paragraphPaddingDirty.current = false
+                  const field = e.currentTarget
+                  const padding = !field.validity.badInput && field.value === "" ? 0 : field.valueAsNumber
+                  if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                    setParagraphPadding(String(padding))
+                    applyParagraphPadding(`${padding}px`)
+                  } else {
+                    const range = savedRangeRef.current
+                    const paragraph = range ? getParagraphsForRange(range)[0] : undefined
+                    setParagraphPadding(String(Number.parseFloat(paragraph?.style.paddingTop || "") || 0))
+                  }
+                }}
+                onChange={e => {
+                  paragraphPaddingDirty.current = true
+                  setParagraphPadding(e.target.value)
+                }}
+                className={`${typographyControl} max-w-14`}
+                aria-label="Space above selected paragraph in pixels"
+              />
+              px
+            </label>
+            <button
+              type="button"
+              title="Reset paragraph spacing"
+              aria-label="Reset paragraph spacing"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
                 paragraphPaddingDirty.current = false
-                const padding = e.currentTarget.valueAsNumber
-                if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                  applyParagraphPadding(`${padding}px`)
-                } else {
-                  const range = savedRangeRef.current
-                  const paragraph = range ? getParagraphsForRange(range)[0] : undefined
-                  setParagraphPadding(String(Number.parseFloat(paragraph?.style.paddingTop || "") || 0))
-                }
+                setParagraphPadding("0")
+                applyParagraphPadding("0px")
               }}
-              onChange={e => {
-                paragraphPaddingDirty.current = true
-                setParagraphPadding(e.target.value)
-              }}
-              className={`${typographyControl} max-w-14`}
-              aria-label="Space above selected paragraph in pixels"
-            />
-            px
-          </label>
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
         </div>,
         formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
       )}
