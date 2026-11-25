@@ -3194,78 +3194,40 @@ export function PropertiesPanel({
       }
 
         case "orserdu-isi-animated":
+        case "isi": {
+          const bulletColor = component.isiBulletColor || "#69d6b5";
           return (
-            <div className="space-y-4">
-              <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
-                Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
-              </div>
-              <div>
-                <Label>Padding (top, right, bottom, left)</Label>
-                <PaddingInput
-                  value={getOrserduIsiOuterPadding(component.padding)}
-                  onChange={(padding) => onUpdateComponent({ padding }, true)}
-                />
-              </div>
+            <div className="space-y-3">
+              <section aria-label="Bullet markers" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                <h4>Bullet markers</h4>
+                <ColorInput label="Bullet color" textColor showBrandSwatches={false} value={bulletColor}
+                  onChange={isiBulletColor => onUpdateComponent({ isiBulletColor })} />
+                <TextColorPresets value={bulletColor} onChange={isiBulletColor => onUpdateComponent({ isiBulletColor })} />
+              </section>
+              {component.type === "isi" && !component.isiHtml && (
+                <section aria-label="Heading colors" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                  <h4>Heading colors</h4>
+                  <div>
+                    <Label>ISI heading</Label>
+                    <ColorInput label="ISI heading color" showBrandSwatches={false} value={component.isiHeadingColor || "#006937"}
+                      onChange={isiHeadingColor => onUpdateComponent({ isiHeadingColor })} />
+                  </div>
+                  <div>
+                    <Label>Indication heading</Label>
+                    <ColorInput label="Indication heading color" showBrandSwatches={false} value={component.indicationHeadingColor || "#006937"}
+                      onChange={indicationHeadingColor => onUpdateComponent({ indicationHeadingColor })} />
+                  </div>
+                </section>
+              )}
+              <section aria-label="ISI spacing" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                <h4>Spacing</h4>
+                <PaddingInput value={getOrserduIsiOuterPadding(component.padding)}
+                  onChange={padding => onUpdateComponent({ padding }, true)} />
+              </section>
+              <p className="text-xs text-slate-600">Select words on the canvas to format the copy.</p>
             </div>
           );
-
-        case "isi":
-          return (
-            <div className="space-y-4">
-              <div>
-                <Label>Padding (top, right, bottom, left)</Label>
-                <PaddingInput
-                  value={getOrserduIsiOuterPadding(component.padding)}
-                  onChange={(padding) => onUpdateComponent({ padding }, true)}
-                />
-              </div>
-              <div>
-                <Label>Background Color</Label>
-                <ColorInput
-                  value={component.backgroundColor || "#ffffff"}
-                  onChange={(v) => onUpdateComponent({ backgroundColor: v })}
-                />
-              </div>
-              <div>
-                <Label>ISI Heading Color</Label>
-                <ColorInput
-                  value={(component as any).isiHeadingColor || "#006937"}
-                  onChange={(v) => onUpdateComponent({ isiHeadingColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Indication Heading Color</Label>
-                <ColorInput
-                  value={(component as any).indicationHeadingColor || "#006937"}
-                  onChange={(v) => onUpdateComponent({ indicationHeadingColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Bullet Color</Label>
-                <ColorInput
-                  value={(component as any).isiBulletColor || "#69d6b5"}
-                  onChange={(v) => onUpdateComponent({ isiBulletColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Font Size</Label>
-                <FontSizeInput
-                  value={component.fontSize || "12px"}
-                  onChange={(fontSize) => onUpdateComponent({ fontSize })}
-                />
-              </div>
-              <div>
-                <Label>Line Height</Label>
-                <LineHeightInput
-                  value={component.lineHeight || "14px"}
-                  onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
-                />
-              </div>
-              <p className="text-[11px] text-gray-400">
-                To edit bullet content, select text on the canvas and use the inline toolbar.
-              </p>
-            </div>
-          );
+        }
 
         case "orserdu-isi-select":
           return (
