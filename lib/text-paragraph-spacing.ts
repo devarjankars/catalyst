@@ -8,16 +8,16 @@ const BLOCK_ELEMENTS = new Set([
 const SPACING_MARKER = "data-text-spacing-original-style";
 const STYLE_PRESENT_MARKER = "data-text-spacing-had-style";
 
-export function setParagraphTopPadding(paragraph: HTMLElement, padding: string): void {
-  paragraph.style.paddingTop = padding;
+export function setTrackedParagraphStyle(paragraph: HTMLElement, property: "paddingTop" | "lineHeight", value: string): void {
+  paragraph.style[property] = value;
   const trackedStyle = paragraph.getAttribute(SPACING_MARKER);
   if (trackedStyle === null) return;
 
   // The editor strips temporary paragraph margins before saving. Keep the
-  // authored padding in the original style that this step restores.
+  // authored style in the original style that this step restores.
   const original = paragraph.ownerDocument.createElement("div").style;
   original.cssText = decodeURIComponent(trackedStyle);
-  original.paddingTop = padding;
+  original[property] = value;
   paragraph.setAttribute(SPACING_MARKER, encodeURIComponent(original.cssText));
   if (original.cssText) paragraph.setAttribute(STYLE_PRESENT_MARKER, "true");
 }

@@ -2,7 +2,7 @@
 
 import { SectionDropZone } from "../section-drop-zone";
 import type { EmailComponent } from "@/types/email-builder";
-import { getColumnHeight, getColumnWidth } from "@/lib/column-width";
+import { getColumnWidth } from "@/lib/column-width";
 import { getSectionColumns } from "@/lib/section-columns";
 
 interface ColumnSectionProps {
@@ -38,7 +38,6 @@ export function ColumnSection({
               {row.map(column => (
                 <td key={column.id} style={{
                   width: horizontal ? getColumnWidth(column.columnWidth) : "100%",
-                  height: getColumnHeight(column.columnMinHeight),
                   verticalAlign: column.columnVerticalAlignment || "top",
                   textAlign: column.columnAlignment || "left",
                   padding: column === component ? 0 : column.padding || "0 20px",
@@ -51,7 +50,7 @@ export function ColumnSection({
                     onSelect={onSelectSection}
                     isSelected={selectedComponent === column.id}
                     isColumn={column !== component}
-                    minHeight={previewMode ? undefined : "24px"}
+                    minHeight={previewMode || column.children?.some(Boolean) ? "0px" : "24px"}
                     columnAlignment={column.columnAlignment}
                     previewMode={previewMode}
                     renderSectionChild={renderSectionChild}

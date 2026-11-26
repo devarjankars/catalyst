@@ -1,5 +1,5 @@
 import type { EmailComponent } from "@/types/email-builder";
-import { getColumnHeight, getColumnWidth } from "./column-width";
+import { getColumnWidth } from "./column-width";
 import { getSectionColumns } from "./section-columns";
 import { getDisplayAttributes } from "./style-generator";
 
@@ -37,16 +37,15 @@ export function generateColumnHtml(
             style="width:${width};max-width:100%;table-layout:fixed;">
             <tr>${row.map(column => {
               const cellWidth = horizontal ? getColumnWidth(column.columnWidth) : "100%";
-              const height = getColumnHeight(column.columnMinHeight);
               const align = column.columnAlignment || "left";
               const valign = column.columnVerticalAlignment || "top";
               const padding = column === section ? "0" : column.padding || "0 20px";
               const display = column === section ? undefined : column.displayType;
               const displayStyle = getDisplayAttributes(display).innerStyle || "";
               return `
-                <td ${widthAttribute(cellWidth)} height="${height.replace(/px$/, "")}" align="${align}" valign="${valign}"
+                <td ${widthAttribute(cellWidth)} align="${align}" valign="${valign}"
                   ${visibility(display, "cell")} bgcolor="${column.backgroundColor || "transparent"}"
-                  style="width:${cellWidth};height:${height};padding:${padding};text-align:${align};vertical-align:${valign};background-color:${column.backgroundColor || "transparent"};border-radius:${column.borderRadius || "0"};${displayStyle}">
+                  style="width:${cellWidth};padding:${padding};text-align:${align};vertical-align:${valign};background-color:${column.backgroundColor || "transparent"};border-radius:${column.borderRadius || "0"};${displayStyle}">
                   ${(column.children ?? []).filter(Boolean).map(renderContent).join("")}
                 </td>`;
             }).join("")}</tr>

@@ -3,16 +3,51 @@
 
 import { ArrowUpDown, Bold, Italic, Link, RotateCcw, Subscript, Superscript, Underline } from "lucide-react"
 import type React from "react"
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
-import { applyTextParagraphSpacing, removeTextParagraphSpacing, setParagraphTopPadding } from "@/lib/text-paragraph-spacing"
+import { applyTextParagraphSpacing, removeTextParagraphSpacing, setTrackedParagraphStyle } from "@/lib/text-paragraph-spacing"
 
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
 
 const fontSizes = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px", "48px"]
 const lineHeights = fontSizes.slice(2, 9)
 const typographyControl = "h-8 w-full min-w-0 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 hover:border-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+
+function PixelInput({ label, placeholder, value, options, onCommit }: {
+  label: string
+  placeholder: string
+  value: string
+  options: string[]
+  onCommit: (value: string) => void
+}) {
+  const listId = useId()
+  const [draft, setDraft] = useState<string | null>(null)
+  return (
+    <>
+      <input type="number" min="1" max="300" step="any" list={listId}
+        aria-label={label} title={`${label} in pixels`} placeholder={placeholder}
+        className={typographyControl} value={draft ?? (value.endsWith("px") ? value.slice(0, -2) : "")}
+        onChange={e => setDraft(e.currentTarget.value)}
+        onBlur={e => {
+          if (draft === null) return
+          setDraft(null)
+          const pixels = e.currentTarget.valueAsNumber
+          if (pixels >= 1 && pixels <= 300) onCommit(`${pixels}px`)
+        }}
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            e.currentTarget.blur()
+          }
+        }}
+      />
+      <datalist id={listId}>
+        {options.map(option => <option key={option} value={option.slice(0, -2)} />)}
+      </datalist>
+    </>
+  )
+}
 
 function selectedTextNodes(range: Range): Text[] {
   const root = range.commonAncestorContainer
@@ -102,7 +137,7 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
-  const { formatting: formattingHost, applySelectionColor } = useContext(BuilderToolbarContext)
+  const { formatting: formattingHost, sidebarFormatting, applySelectionColor } = useContext(BuilderToolbarContext)
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
@@ -115,6 +150,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const [selectionColors, setSelectionColors] = useState<string[]>([])
   const [selectionFont, setSelectionFont] = useState("")
   const [selectionSize, setSelectionSize] = useState("")
+  const [selectionLineHeight, setSelectionLineHeight] = useState("")
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("0")
   const paragraphPaddingDirty = useRef(false)
@@ -227,7 +263,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           : block.cloneNode(false) as HTMLElement
         if (line !== block) {
           line.removeAttribute("id")
-          if (index > 0) setParagraphTopPadding(line, "")
+          if (index > 0) setTrackedParagraphStyle(line, "paddingTop", "")
         }
         if (selectedLineFlags[index]) selectedLines.push(line)
         nodes.forEach((node) => line.appendChild(node))
@@ -288,6 +324,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         savedRangeRef.current = range.cloneRange()
         readSelectionStyle(range)
         const paragraph = getParagraphsForRange(range)[0]
+        setSelectionLineHeight(window.getComputedStyle(paragraph ?? editor).lineHeight)
         if (!paragraphPaddingDirty.current) {
           setParagraphPadding(String(Number.parseFloat(paragraph?.style.paddingTop || "") || 0))
         }
@@ -723,7 +760,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const splitParagraphs = range ? splitSelectedBreakLines(range) : null
     const paragraphs = splitParagraphs ?? getSelectedParagraphs()
     paragraphs.forEach((paragraph) => {
-      setParagraphTopPadding(paragraph, paddingTop === "0px" ? "" : paddingTop)
+      setTrackedParagraphStyle(paragraph, "paddingTop", paddingTop === "0px" ? "" : paddingTop)
     })
     restoreSelection()
     handleInput()
@@ -733,9 +770,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const applyLineHeight = (lineHeight: string) => {
     restoreSelection()
     getSelectedParagraphs().forEach((paragraph) => {
-      paragraph.style.lineHeight = lineHeight
+      setTrackedParagraphStyle(paragraph, "lineHeight", lineHeight)
     })
+    setSelectionLineHeight(lineHeight)
     handleInput()
+    flushInput()
   }
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -761,6 +800,25 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+      const selection = window.getSelection()
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null
+      const paragraph = range?.collapsed ? getParagraphsForRange(range)[0] : null
+      if (range && paragraph && Number.parseFloat(paragraph.style.paddingTop) > 0 && paragraph.contains(range.startContainer)) {
+        const before = document.createRange()
+        before.selectNodeContents(paragraph)
+        before.setEnd(range.startContainer, range.startOffset)
+        const fragment = before.cloneContents()
+        if (!fragment.textContent && !fragment.querySelector("br,img,hr")) {
+          e.preventDefault()
+          savedRangeRef.current = range.cloneRange()
+          applyParagraphPadding("0px")
+          setParagraphPadding("0")
+          return
+        }
+      }
+    }
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case "z":
@@ -818,7 +876,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {typeof document !== "undefined" && isSelected && focused && (!floating || toolbarPosition) && createPortal(
+      {typeof document !== "undefined" && isSelected && focused && (!sidebarFormatting || formattingHost) && (!floating || toolbarPosition) && createPortal(
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
@@ -844,30 +902,10 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             {TEXT_FONT_FAMILIES.map(font => <option key={font} value={font}>{fontLabel(font)}</option>)}
           </select>
           <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
-            <select
-              aria-label="Selection font size"
-              title="Font size for selected text"
-              className={typographyControl}
-              value={selectionSize}
-              onChange={e => applyTypography("fontSize", e.currentTarget.value)}
-            >
-              <option value="" disabled>Size</option>
-              {selectionSize && !fontSizes.includes(selectionSize) && <option value={selectionSize} disabled>{selectionSize}</option>}
-              {fontSizes.map(size => <option key={size} value={size}>{size}</option>)}
-            </select>
-            <select
-              aria-label="Line height for selected paragraph"
-              title="Line height for selected paragraph"
-              className={typographyControl}
-              defaultValue=""
-              onChange={e => {
-                if (e.currentTarget.value) applyLineHeight(e.currentTarget.value)
-                e.currentTarget.value = ""
-              }}
-            >
-              <option value="" disabled>Line height</option>
-              {lineHeights.map(size => <option key={size} value={size}>{size}</option>)}
-            </select>
+            <PixelInput label="Selection font size" placeholder="Size" value={selectionSize}
+              options={fontSizes} onCommit={value => applyTypography("fontSize", value)} />
+            <PixelInput label="Line height for selected paragraph" placeholder="Line height" value={selectionLineHeight}
+              options={lineHeights} onCommit={applyLineHeight} />
             <input ref={selectionColorInputRef} type="color"
               aria-label={inTextSection ? "Selection color" : "Text color"}
               title={selectionColors.join(", ") || "Text color"}

@@ -1,3 +1,4 @@
+import { getDividerDimensions } from "@/lib/email-divider";
 import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
 import { getEmailFontFaceCss } from "./email-fonts";
@@ -288,37 +289,19 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
             ? "desk-show-table"
             : "";
 
-      const dividerStyle = `
-    line-height: ${component.height || "1px"};
-    font-size: 0px;
-    height: ${component.height || "1px"};
-    background-color: ${component.backgroundColor || "#e0e0e0"};
-    mso-line-height-rule: exactly;
-  `.trim();
-
+      const { width, height, color, align, padding } = getDividerDimensions(component);
       return `
-    <table
-      role="presentation"
-      width="100%"
-      cellspacing="0"
-      cellpadding="0"
-      border="0"
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
       ${visibilityClass ? `class="${visibilityClass}"` : ""}
-      ${display === "mobile-only" ? 'style="mso-hide: all;"' : ""}
-    >
-      <tbody>
-        <tr>
-          <td style="padding: ${component.padding || "0 20px 20px 20px"};">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-              <tr>
-                <td style="${dividerStyle}">&nbsp;</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `;
+      ${display === "mobile-only" ? 'style="mso-hide:all;"' : ""}>
+      <tr><td align="${align}" style="padding:${padding};">
+        <table role="presentation" width="${width.replace(/px$/, "")}" align="${align}" cellspacing="0" cellpadding="0" border="0"
+          style="width:${width};max-width:100%;">
+          <tr><td height="${height.replace(/px$/, "")}" bgcolor="${color}"
+            style="height:${height};line-height:${height};font-size:0;background-color:${color};mso-line-height-rule:exactly;">&nbsp;</td></tr>
+        </table>
+      </td></tr>
+    </table>`;
     }
     case "raw-html":
       return `

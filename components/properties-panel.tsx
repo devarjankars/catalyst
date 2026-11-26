@@ -100,7 +100,7 @@ function ColumnSizeInput({ id, label, value, width = false, onChange }: {
   return (
     <div className="min-w-0 space-y-1">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} value={draft ?? value ?? ""} placeholder={width ? "Auto" : "120px"}
+      <Input id={id} value={draft ?? value ?? ""} placeholder={width ? "Auto" : "px"}
         aria-invalid={invalid}
         onChange={event => { setDraft(event.target.value); setInvalid(false); }}
         onBlur={event => {
@@ -119,7 +119,7 @@ function ColumnSizeInput({ id, label, value, width = false, onChange }: {
             event.currentTarget.blur();
           }
         }} />
-      {invalid && <p role="alert" className="text-xs text-red-600">{width ? "Enter pixels, a percentage up to 100%, or auto." : "Enter a height in pixels."}</p>}
+      {invalid && <p role="alert" className="text-xs text-red-600">{width ? "Enter pixels, a percentage up to 100%, or auto." : "Enter a value in pixels."}</p>}
     </div>
   );
 }
@@ -1312,12 +1312,8 @@ export function PropertiesPanel({
           const position = isColumn ? "Column" : `Column ${index + 1}`;
           return (
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <ColumnSizeInput id={`${column.id}-width`} label="Width" width value={column.columnWidth}
-                  onChange={columnWidth => updateColumn(column.id, { columnWidth })} />
-                <ColumnSizeInput id={`${column.id}-height`} label="Min height" value={column.columnMinHeight}
-                  onChange={columnMinHeight => updateColumn(column.id, { columnMinHeight })} />
-              </div>
+              <ColumnSizeInput id={`${column.id}-width`} label="Width" width value={column.columnWidth}
+                onChange={columnWidth => updateColumn(column.id, { columnWidth })} />
               <div className="grid grid-cols-2 gap-2">
                 <Select value={column.columnAlignment || "left"} onValueChange={columnAlignment => updateColumn(column.id, { columnAlignment: columnAlignment as EmailComponent["columnAlignment"] })}>
                   <SelectTrigger aria-label={`${position} horizontal alignment`}><SelectValue /></SelectTrigger>
@@ -1820,24 +1816,44 @@ export function PropertiesPanel({
           </div>
         );
 
-      case "divider":
+      case "divider": {
+        const vertical = component.dividerOrientation === "vertical";
         return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="height">Height</Label>
-              <Input
-                id="height"
-                value={component.height || "1px"}
-                onChange={(e) => onUpdateComponent({ height: e.target.value })}
-                placeholder="1px"
-              />
+          <div className="space-y-3">
+            <Select value={component.dividerOrientation || "horizontal"}
+              onValueChange={dividerOrientation => onUpdateComponent({
+                dividerOrientation: dividerOrientation as EmailComponent["dividerOrientation"],
+                ...(dividerOrientation === "vertical" && component.dividerLength?.endsWith("%") ? { dividerLength: "" } : {}),
+              })}>
+              <SelectTrigger aria-label="Divider orientation"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horizontal">Horizontal</SelectItem>
+                <SelectItem value="vertical">Vertical</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <ColumnSizeInput id="divider-stroke" label="Stroke width" value={component.dividerStroke || component.height || "1px"}
+                onChange={dividerStroke => onUpdateComponent({ dividerStroke: dividerStroke || "1px" })} />
+              <ColumnSizeInput key={String(vertical)} id="divider-length" label={vertical ? "Height" : "Length"}
+                width={!vertical} value={component.dividerLength || (vertical ? "48px" : "100%")}
+                onChange={dividerLength => onUpdateComponent({ dividerLength })} />
             </div>
+            <Select value={component.textAlign || (vertical ? "center" : "left")}
+              onValueChange={textAlign => onUpdateComponent({ textAlign: textAlign as EmailComponent["textAlign"] })}>
+              <SelectTrigger aria-label="Divider alignment"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
             <div>
-              <Label htmlFor="backgroundColor">Color</Label>
-              <ColorInput value={component.backgroundColor || "#e0e0e0"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+              <Label>Color</Label>
+              <ColorInput value={component.backgroundColor || "#e0e0e0"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
             </div>
           </div>
         );
+      }
 
       case "cta-button":
         return (

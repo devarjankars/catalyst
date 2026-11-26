@@ -33,6 +33,11 @@ export interface EmailComponent {
   columnWidth?: string
   columnMinHeight?: string
 
+  // Divider properties
+  dividerOrientation?: "horizontal" | "vertical"
+  dividerStroke?: string
+  dividerLength?: string
+
   // Text properties
   content?: string
   fontSize?: string

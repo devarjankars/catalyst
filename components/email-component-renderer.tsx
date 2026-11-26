@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { getDividerDimensions } from "@/lib/email-divider";
 import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useDrag, useDrop } from "react-dnd";
@@ -423,19 +424,14 @@ export function EmailComponentRenderer({
           </div>
         );
 
-      case "divider":
+      case "divider": {
+        const { width, height, color, align, padding } = getDividerDimensions(component);
         return (
-          <div style={baseStyle} className="mt-2">
-            <hr
-              style={{
-                height: component.height || "1px",
-                backgroundColor: component.backgroundColor || "#e0e0e0",
-                border: "none",
-                margin: component.margin || "20px 0",
-              }}
-            />
+          <div style={{ padding, display: "flex", justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center" }}>
+            <hr style={{ width, height, backgroundColor: color, border: 0, margin: 0 }} />
           </div>
         );
+      }
       case "raw-html":
         return (
           <div

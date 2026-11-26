@@ -834,7 +834,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <BuilderToolbarContext.Provider value={{ formatting: formattingHost, actions: actionsHost, applySelectionColor }}>
+    <BuilderToolbarContext.Provider value={{ sidebarFormatting: true, formatting: formattingHost, actions: actionsHost, applySelectionColor }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}

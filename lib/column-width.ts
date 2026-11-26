@@ -7,7 +7,3 @@ export function normalizeColumnSize(value: string | undefined, allowPercent: boo
 export function getColumnWidth(value?: string): string {
   return normalizeColumnSize(value, true) || "auto";
 }
-
-export function getColumnHeight(value?: string): string {
-  return normalizeColumnSize(value, false) || "120px";
-}

@@ -27,7 +27,6 @@ export function resizeSectionColumns(section: EmailComponent, count: number): Pa
     ? [{
       ...newSectionColumn(section, (section.children ?? []).filter(Boolean)),
       columnWidth: section.columnWidth,
-      columnMinHeight: section.columnMinHeight,
       columnAlignment: section.columnAlignment,
       columnVerticalAlignment: section.columnVerticalAlignment,
     }]
