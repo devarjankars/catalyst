@@ -188,6 +188,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const lastEditorHtmlRef = useRef<string | null>(null)
   const editorId = useId()
   const [hasTextSelection, setHasTextSelection] = useState(false)
+  const [selectionHexDraft, setSelectionHexDraft] = useState<string | null>(null)
+  const [selectionHexError, setSelectionHexError] = useState(false)
   const [selectionColors, setSelectionColors] = useState<string[]>([])
   const [selectionFont, setSelectionFont] = useState("")
   const [selectionSize, setSelectionSize] = useState("")
@@ -1108,17 +1110,52 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             <option value="" disabled>{selectionFont || "Font family"}</option>
             {TEXT_FONT_FAMILIES.map(font => <option key={font} value={font}>{fontLabel(font)}</option>)}
           </select>
-          <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
+          <div className="grid grid-cols-2 items-center gap-2">
             <PixelInput label="Selection font size" placeholder="Size" value={selectionSize}
               options={fontSizes} onCommit={value => applyTypography("fontSize", value)} />
             <PixelInput label="Line height for selected paragraph" placeholder="Line height" value={selectionLineHeight}
               options={lineHeights} onCommit={applyLineHeight} />
+          </div>
+          <div className="flex items-center gap-2">
             <input ref={selectionColorInputRef} type="color"
               aria-label={inTextSection ? "Selection color" : "Text color"}
               title={selectionColors.join(", ") || "Text color"}
-              className="h-8 w-9 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+              className="h-8 w-9 shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
               onFocus={saveSelection} />
+            <input type="text" spellCheck={false} autoComplete="off"
+              aria-label="Selection color hex"
+              aria-invalid={selectionHexError}
+              disabled={!hasTextSelection}
+              placeholder={selectionColors.length > 1 ? "Mixed" : "#RRGGBB"}
+              value={selectionHexDraft ?? (selectionColors.length === 1 ? selectionColors[0].toUpperCase() : "")}
+              className={`${typographyControl} font-mono disabled:opacity-50 aria-invalid:border-red-500`}
+              onChange={event => {
+                setSelectionHexDraft(event.currentTarget.value)
+                setSelectionHexError(false)
+              }}
+              onKeyDown={event => {
+                if (event.key === "Escape") {
+                  setSelectionHexDraft(null)
+                  setSelectionHexError(false)
+                } else if (event.key === "Enter") {
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }
+              }}
+              onBlur={event => {
+                if (selectionHexDraft === null) return
+                const digits = event.currentTarget.value.trim().replace(/^#/, "")
+                if (!/^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(digits)) {
+                  setSelectionHexError(true)
+                  return
+                }
+                const expanded = digits.length === 3 ? digits.replace(/./g, digit => digit + digit) : digits
+                setSelectionHexDraft(null)
+                setSelectionHexError(false)
+                applyColor(`#${expanded.toLowerCase()}`)
+              }} />
           </div>
+          {selectionHexError && <p role="alert" className="text-xs text-red-600">Enter a 3- or 6-digit hex color.</p>}
           <div className="flex flex-wrap items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
             {[
               { label: "Bold", Icon: Bold, action: () => applyFormattingCommand("bold") },
