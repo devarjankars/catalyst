@@ -139,6 +139,7 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
   const { formatting: formattingHost, sidebarFormatting, applySelectionColor } = useContext(BuilderToolbarContext)
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
+  const keepFormattingVisible = sidebarFormatting && inTextSection && useBlockColorPresets
   const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
   const selectionColorInputRef = useRef<HTMLInputElement>(null)
@@ -340,6 +341,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       selection.addRange(savedRangeRef.current)
     }
   }
+
+  useBrowserLayoutEffect(() => {
+    if (isSelected || !useBlockColorPresets) return
+    savedRangeRef.current = null
+  }, [isSelected, useBlockColorPresets])
 
   useBrowserLayoutEffect(() => {
     if (editorRef.current) {
@@ -876,7 +882,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {typeof document !== "undefined" && isSelected && focused && (!sidebarFormatting || formattingHost) && (!floating || toolbarPosition) && createPortal(
+      {typeof document !== "undefined" && isSelected && (focused || keepFormattingVisible) && (!sidebarFormatting || formattingHost?.isConnected) && (!floating || toolbarPosition) && createPortal(
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"

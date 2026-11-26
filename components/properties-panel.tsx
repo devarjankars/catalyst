@@ -1834,7 +1834,7 @@ export function PropertiesPanel({
             <div className="grid grid-cols-2 gap-2">
               <ColumnSizeInput id="divider-stroke" label="Stroke width" value={component.dividerStroke || component.height || "1px"}
                 onChange={dividerStroke => onUpdateComponent({ dividerStroke: dividerStroke || "1px" })} />
-              <ColumnSizeInput key={String(vertical)} id="divider-length" label={vertical ? "Height" : "Length"}
+              <ColumnSizeInput key={String(vertical)} id="divider-length" label={vertical ? "Height" : "Width"}
                 width={!vertical} value={component.dividerLength || (vertical ? "48px" : "100%")}
                 onChange={dividerLength => onUpdateComponent({ dividerLength })} />
             </div>
