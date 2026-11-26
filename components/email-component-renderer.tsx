@@ -1640,43 +1640,38 @@ export function EmailComponentRenderer({
             </div>
           );
 
-          case "image-with-link":
+          case "image-with-link": {
+            const align = component.textAlign || "center";
+            const width = component.width?.trim() || "100%";
+            const maxWidth = component.maxWidth || "100%";
             return (
-              <div
-                style={baseStyle}
-                className={`flex flex-col items-${
-                  ImageAlimentMap[component?.textAlign || "center"] || "center"
-                } mt-2`}
-              >
+              <div style={{
+                padding: component.padding || "0",
+                display: "flex",
+                justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
+              }}>
                 <a
                   href={component.href || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: "block", width: component.width || "100%" }}
-                  onClick={(e) => {
+                  style={{ display: "block", width: /^\d+$/.test(width) ? `${width}px` : width, maxWidth: `min(100%, ${maxWidth})` }}
+                  onClick={(event) => {
                     if (!previewMode) {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      !isLockedMode && onSelect()
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!isLockedMode) onSelect();
                     }
                   }}
                 >
                   <img
-                    src={
-                      component.src ||
-                      "/placeholder.svg?height=200&width=400&text=Click+to+edit"
-                    }
+                    src={component.src || "/placeholder.svg?height=200&width=400&text=Click+to+edit"}
                     alt={component.alt || "Image"}
-                    style={{
-                      width: component.width || "100%",
-                      height: component.height || "auto",
-                      display: "block",
-                      maxWidth: component.maxWidth || "100%",
-                    }}
+                    style={{ display: "block", width: "100%", height: component.height || "auto" }}
                   />
                 </a>
               </div>
             );
+          }
           case "orserdu-isi-select": {
             const {
               heading = "SELECT IMPORTANT SAFETY INFORMATION",

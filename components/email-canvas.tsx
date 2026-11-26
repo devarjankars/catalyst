@@ -188,7 +188,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     }
 
     return (
-      <div className="flex justify-center">
+      <div className="flex w-full justify-center">
         <div
           ref={(node) => {
             canvasInnerRef.current = node
