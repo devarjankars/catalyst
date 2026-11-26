@@ -580,7 +580,6 @@ export default function VSBPage() {
       const key = event.key.toLowerCase();
       if (key !== 'z' && key !== 'y') return;
       const direction = key === 'y' || event.shiftKey ? 'future' : 'past';
-      if (direction === 'future' && activeSection !== 'Variable Copy') return;
       if (traverseHistory(activeSection, direction)) event.preventDefault();
     };
 
@@ -603,7 +602,9 @@ export default function VSBPage() {
     const reviewedUpdatedAt = currentVsb.reviewedEmailerUpdatedAt ?? (Date.parse(currentVsb.createdAt ?? "") || 0);
     const emailerHasUpdates = reviewedUpdatedAt > 0 && emailerUpdatedAt > reviewedUpdatedAt;
 
-    const variableHistory = sectionHistory.current.get(`${currentVsb.id}:Variable Copy`);
+    const historySection = activeSection === 'Variable Copy' || activeSection === 'alt name page' ? activeSection : null;
+    const activeHistory = historySection ? sectionHistory.current.get(`${currentVsb.id}:${historySection}`) : undefined;
+    const historyLabel = historySection === 'alt name page' ? 'Alt Name' : 'Variable Copy';
 
     const renderActiveSection = () => {
       switch (activeSection) {
@@ -673,16 +674,16 @@ export default function VSBPage() {
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
-            {activeSection === 'Variable Copy' && (
-              <div role="group" aria-label="Variable Copy history" className="flex gap-1">
-                <Button type="button" size="icon" variant="outline" aria-label="Undo Variable Copy edit"
-                  title="Undo (Ctrl/⌘+Z)" disabled={!variableHistory?.past.length}
-                  onClick={() => traverseHistory('Variable Copy', 'past')}>
+            {historySection && (
+              <div role="group" aria-label={`${historyLabel} history`} className="flex gap-1">
+                <Button type="button" size="icon" variant="outline" aria-label={`Undo ${historyLabel} edit`}
+                  title="Undo (Ctrl/⌘+Z)" disabled={!activeHistory?.past.length}
+                  onClick={() => traverseHistory(historySection, 'past')}>
                   <Undo2 className="h-4 w-4" />
                 </Button>
-                <Button type="button" size="icon" variant="outline" aria-label="Redo Variable Copy edit"
-                  title="Redo (Ctrl/⌘+Shift+Z)" disabled={!variableHistory?.future.length}
-                  onClick={() => traverseHistory('Variable Copy', 'future')}>
+                <Button type="button" size="icon" variant="outline" aria-label={`Redo ${historyLabel} edit`}
+                  title="Redo (Ctrl/⌘+Shift+Z)" disabled={!activeHistory?.future.length}
+                  onClick={() => traverseHistory(historySection, 'future')}>
                   <Redo2 className="h-4 w-4" />
                 </Button>
               </div>
