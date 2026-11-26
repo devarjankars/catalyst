@@ -116,9 +116,9 @@ export const componentTypes = [
     icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Terms of Use ", href: "#" },
-        { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
+        { text: "Privacy and Terms of Use ", href: "https://stemline.com/privacy-policy" },
+        { text: "CCPA Policy", href: "https://stemline.com/ccpa-policy" },
+        { text: "Cookies Policy", href: "https://stemline.com/cookie-policy" },
         { text: "Unsubscribe", href: "#" },
       ],
     },
@@ -279,10 +279,10 @@ export const componentTypes = [
   icon: PanelBottom,
   defaultProps: {
     links: [
-      { text: "Privacy and Terms of Use", href: "#" },
-      { text: "CCPA Policy", href: "#" },
-      { text: "Cookies Policy", href: "#" },
-      { text: "Unsubscribe", href: "#" },
+      { text: "Privacy and Terms of Use", href: "https://stemline.com/privacy-policy" },
+      { text: "CCPA Policy", href: "https://stemline.com/ccpa-policy" },
+      { text: "Cookies Policy", href: "https://stemline.com/cookie-policy" },
+      { text: "Unsubscribe", href: "https://stemline.com/cookie-policy" },
       { text: "Email Preferences", href: "#", color: "#ff66cc" },
     ],
     fontSize: "12px",
@@ -576,7 +576,7 @@ export const componentTypes = [
         {
           prefixText: "To report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. at 1-877-332-7961 or FDA at 1-800-FDA-1088 or ",
           linkText: "www.fda.gov/medwatch",
-          linkHref: "https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program",
+          linkHref: "https://www.fda.gov/medwatch",
           linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ".",
           bold: true,
@@ -584,7 +584,7 @@ export const componentTypes = [
         {
           prefixText: "Please click ",
           linkText: "here",
-          linkHref: "https://rxmenarinistemline.com/ORSERDU_elacestrant_Full_Prescribing_Information.pdf",
+          linkHref: "http://pi.orserduhcp.com/",
           linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: " to see full Prescribing Information.",
           bold: true,
