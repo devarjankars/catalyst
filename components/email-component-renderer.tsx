@@ -1387,6 +1387,7 @@ export function EmailComponentRenderer({
         case "orserdu-image-text-block":
         case "elzonris-image-text-block": {
           const isOrserdu = component.type === "orserdu-image-text-block";
+          const textColor = isOrserdu ? component.color || "#000000" : "#000000";
           const imageTextImageSrc = component.imageTextImageSrc;
           const imageTextImageAlt = component.imageTextImageAlt;
           const imageTextText1 = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
@@ -1429,10 +1430,11 @@ export function EmailComponentRenderer({
                   />
                 </div>}
                 <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: component.fontSize || "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
+                  <div style={{ color: textColor, fontFamily: "Arial, sans-serif", fontSize: component.fontSize || "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (
                       <RichTextEditor
                         isSelected={isSelected}
+                        useBlockColorPresets={isOrserdu}
                         value={editorText}
                         onChange={(html) => onUpdate({
                           imageTextText1: html,
@@ -1440,7 +1442,7 @@ export function EmailComponentRenderer({
                         })}
                         paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
                         className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
-                        style={{ fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
+                        style={{ fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: textColor }}
                       />
                     ) : (
                       <span dangerouslySetInnerHTML={{ __html: normalizedText }} />

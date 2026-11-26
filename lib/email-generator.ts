@@ -2479,8 +2479,9 @@ return `
       const textContent = isOrserdu
         ? applyTextParagraphSpacing(rawTextContent, component.paragraphSpacingPx ?? 0, false)
         : rawTextContent;
+      const textColor = isOrserdu ? component.color || "#000000" : "#000000";
       const textCell = `
-                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:${component.fontSize || "14px"};line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:${textColor};font-family:Arial,sans-serif;font-size:${component.fontSize || "14px"};line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
                   <div>${textContent}</div>
                 </td>`;
       const contentCells = !imageSrc

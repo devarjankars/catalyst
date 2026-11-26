@@ -969,6 +969,9 @@ function ImageTextBlockProperties({
   component: EmailComponent;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
 }) {
+  const { applySelectionColor } = useContext(BuilderToolbarContext);
+  const isOrserdu = component.type === "orserdu-image-text-block";
+  const textColor = isOrserdu ? component.color || "#000000" : "#000000";
   const [imageWidth, setImageWidth] = useState(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
   const [imageGap, setImageGap] = useState(String(component.imageTextGap ?? 16));
   const [imageAlt, setImageAlt] = useState(component.imageTextImageAlt || "");
@@ -1084,6 +1087,7 @@ function ImageTextBlockProperties({
         <Label>Text</Label>
         <RichTextEditor
           isSelected
+          useBlockColorPresets={isOrserdu}
           value={component.type === "orserdu-image-text-block"
             ? removeTextParagraphSpacing(getOrserduImageTextContent(component))
             : component.imageTextText1 || ""}
@@ -1095,12 +1099,17 @@ function ImageTextBlockProperties({
             ...(component.type === "orserdu-image-text-block" ? { imageTextSections: undefined } : {}),
           })}
           className={component.type === "orserdu-image-text-block" ? "rich-text-editor-reset-block-spacing" : undefined}
-          style={{ minHeight: "100px" }}
+          style={{ minHeight: "100px", color: textColor }}
         />
         <p className="mt-1 text-[11px] text-gray-400">
           Select text to format it, change its color, or add a link.
         </p>
       </div>
+      {isOrserdu && (
+        <TextColorPresets value={textColor} onChange={color => {
+          if (!applySelectionColor?.current?.(color)) onUpdateComponent({ color }, true);
+        }} />
+      )}
       {component.type === "orserdu-image-text-block" && (
         <div className="space-y-3">
           <div>
