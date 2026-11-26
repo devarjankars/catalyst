@@ -22,7 +22,7 @@ import React from "react";
 // EmailCanvas uses forwardRef internally, so we import it directly to preserve
 // ref forwarding. next/dynamic's LoadableComponent wrapper drops refs even with
 // the React.forwardRef workaround, causing the console warning.
-import { BuilderToolbarContext } from "@/components/builder-toolbar-context";
+import { BuilderToolbarContext, type SelectionColor } from "@/components/builder-toolbar-context";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailCanvas } from "@/components/email-canvas";
 const ComponentPalette = nextDynamic(
@@ -197,6 +197,7 @@ export default function EmailBuilder() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
 
+  const [selectionColor, setSelectionColor] = useState<SelectionColor | null>(null);
   const applySelectionColor = useRef<((color: string) => boolean) | null>(null);
   const [formattingHost, setFormattingHost] = useState<HTMLDivElement | null>(null);
   const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
@@ -834,7 +835,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <BuilderToolbarContext.Provider value={{ sidebarFormatting: true, formatting: formattingHost, actions: actionsHost, applySelectionColor }}>
+    <BuilderToolbarContext.Provider value={{ sidebarFormatting: true, formatting: formattingHost, actions: actionsHost, applySelectionColor, selectionColor, setSelectionColor }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}

@@ -169,12 +169,13 @@ interface RichTextEditorProps {
   isSelected?: boolean
   paragraphSpacingPx?: number
   useBlockColorPresets?: boolean
+  selectionColorComponentId?: string
   allowIsiBulletColorOverride?: boolean
   toolbarPlacement?: "below" | "selection"
 }
 
-export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
-  const { formatting: formattingHost, sidebarFormatting, applySelectionColor } = useContext(BuilderToolbarContext)
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, selectionColorComponentId, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
+  const { formatting: formattingHost, sidebarFormatting, applySelectionColor, setSelectionColor } = useContext(BuilderToolbarContext)
   const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
   const keepFormattingVisible = sidebarFormatting && inTextSection && useBlockColorPresets
   const floating = !formattingHost && toolbarPlacement === "selection"
@@ -185,6 +186,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const undoHistoryRef = useRef<string[]>([])
   const redoHistoryRef = useRef<string[]>([])
   const lastEditorHtmlRef = useRef<string | null>(null)
+  const editorId = useId()
+  const [hasTextSelection, setHasTextSelection] = useState(false)
   const [selectionColors, setSelectionColors] = useState<string[]>([])
   const [selectionFont, setSelectionFont] = useState("")
   const [selectionSize, setSelectionSize] = useState("")
@@ -350,6 +353,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   const readSelectionStyle = (range: Range) => {
+    setHasTextSelection(!range.collapsed)
     const colors = new Set<string>()
     const fonts = new Set<string>()
     const sizes = new Set<string>()
@@ -777,6 +781,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     input.addEventListener("input", applyChosenColor)
     return () => input.removeEventListener("input", applyChosenColor)
   })
+
+  useBrowserLayoutEffect(() => {
+    if (!setSelectionColor || !selectionColorComponentId || !isSelected || !focused || !hasTextSelection) return
+    setSelectionColor({ editorId, componentId: selectionColorComponentId, color: selectionColors.length === 1 ? selectionColors[0] : "" })
+    return () => setSelectionColor(current => current?.editorId === editorId ? null : current)
+  }, [setSelectionColor, selectionColorComponentId, editorId, isSelected, focused, hasTextSelection, selectionColors])
 
   useBrowserLayoutEffect(() => {
     if (!applySelectionColor || !useBlockColorPresets || !isSelected || !focused) return;

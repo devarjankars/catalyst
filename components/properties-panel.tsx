@@ -969,7 +969,7 @@ function ImageTextBlockProperties({
   component: EmailComponent;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
 }) {
-  const { applySelectionColor } = useContext(BuilderToolbarContext);
+  const { applySelectionColor, selectionColor } = useContext(BuilderToolbarContext);
   const isOrserdu = component.type === "orserdu-image-text-block";
   const textColor = isOrserdu ? component.color || "#000000" : "#000000";
   const [imageWidth, setImageWidth] = useState(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
@@ -1088,6 +1088,7 @@ function ImageTextBlockProperties({
         <RichTextEditor
           isSelected
           useBlockColorPresets={isOrserdu}
+          selectionColorComponentId={isOrserdu ? component.id : undefined}
           value={component.type === "orserdu-image-text-block"
             ? removeTextParagraphSpacing(getOrserduImageTextContent(component))
             : component.imageTextText1 || ""}
@@ -1106,7 +1107,7 @@ function ImageTextBlockProperties({
         </p>
       </div>
       {isOrserdu && (
-        <TextColorPresets value={textColor} onChange={color => {
+        <TextColorPresets value={selectionColor?.componentId === component.id ? selectionColor.color : textColor} onChange={color => {
           if (!applySelectionColor?.current?.(color)) onUpdateComponent({ color }, true);
         }} />
       )}

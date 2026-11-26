@@ -1435,6 +1435,7 @@ export function EmailComponentRenderer({
                       <RichTextEditor
                         isSelected={isSelected}
                         useBlockColorPresets={isOrserdu}
+                        selectionColorComponentId={isOrserdu ? component.id : undefined}
                         value={editorText}
                         onChange={(html) => onUpdate({
                           imageTextText1: html,
