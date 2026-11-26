@@ -1,3 +1,4 @@
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
@@ -576,7 +577,7 @@ export const componentTypes = [
           prefixText: "To report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. at 1-877-332-7961 or FDA at 1-800-FDA-1088 or ",
           linkText: "www.fda.gov/medwatch",
           linkHref: "https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program",
-          linkColor: "#007bff",
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ".",
           bold: true,
         },
@@ -584,7 +585,7 @@ export const componentTypes = [
           prefixText: "Please click ",
           linkText: "here",
           linkHref: "https://rxmenarinistemline.com/ORSERDU_elacestrant_Full_Prescribing_Information.pdf",
-          linkColor: "#007bff",
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: " to see full Prescribing Information.",
           bold: true,
         },
@@ -592,7 +593,7 @@ export const componentTypes = [
           prefixText: "For State pricing disclosures for ORSERDU<sup>\u00ae</sup>, please click ",
           linkText: "HERE",
           linkHref: "https://stemline.com/state-disclosures/",
-          linkColor: "#007bff",
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ". ",
           bold: false,
         },

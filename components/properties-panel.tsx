@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2680,7 +2681,7 @@ export function PropertiesPanel({
         };
         const addLinkItem = () => {
           onUpdateComponent({
-            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: "#007bff", suffixText: "", bold: false }],
+            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR, suffixText: "", bold: false }],
           } as any);
         };
         const removeLinkItem = (index: number) => {
@@ -2756,7 +2757,7 @@ export function PropertiesPanel({
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Label>Link Color</Label>
-                      <ColorInput value={item.linkColor || "#007bff"} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
+                      <ColorInput value={item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
                     </div>
                     <div className="flex-1">
                       <Label>Bold</Label>

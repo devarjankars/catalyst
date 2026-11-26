@@ -8,7 +8,7 @@ import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, normalizeHtmlImageSrcs, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
-import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, normalizeOrserduReportLinkItem } from "./orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "./job-code";
 import { getEmailShapeStyle } from "@/lib/email-shape";
@@ -770,7 +770,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
 
       const rows = linkItems.map((item: any) => {
         const bold = item.bold ? "bold" : "normal";
-        const linkColor = item.linkColor || "#007bff";
+        const linkColor = item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR;
         const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
         return `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">

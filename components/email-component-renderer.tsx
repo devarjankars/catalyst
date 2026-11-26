@@ -22,7 +22,7 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
 import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator";
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
-import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
 import { getEmailShapeStyle } from "@/lib/email-shape";
@@ -684,7 +684,7 @@ export function EmailComponentRenderer({
                     href={item.linkHref || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: item.linkColor || "#007bff", textDecoration: "underline" }}
+                    style={{ color: item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR, textDecoration: "underline" }}
                     onClick={(e) => !previewMode && e.preventDefault()}
                   >
                     {linkText}

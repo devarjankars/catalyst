@@ -1,3 +1,5 @@
+export const DEFAULT_ORSERDU_REPORT_LINK_COLOR = "#0563C1";
+
 interface OrserduReportLinkItem {
   linkText?: string;
   linkHref?: string;
