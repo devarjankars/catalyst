@@ -6,9 +6,46 @@ import type React from "react"
 import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
-import { applyTextParagraphSpacing, removeTextParagraphSpacing, setTrackedParagraphStyle } from "@/lib/text-paragraph-spacing"
+import { applyTextParagraphSpacing, PARAGRAPH_SPACING_ATTRIBUTE, parseParagraphSpacing, removeTextParagraphSpacing, setTrackedParagraphStyle } from "@/lib/text-paragraph-spacing"
 
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
+
+const paragraphSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
+const paragraphBoundarySelector = `${paragraphSelector},article,aside,dl,figure,footer,header,hr,ol,section,table,ul`
+const paragraphClipboardType = "application/x-catalyst-paragraphs"
+
+function normalizeLooseParagraphs(editor: HTMLElement, range: Range) {
+  const { startContainer, startOffset, endContainer, endOffset } = range
+  const children = Array.from(editor.childNodes)
+  const markers = new Map<number, Comment>()
+  for (const [node, offset] of [[startContainer, startOffset], [endContainer, endOffset]] as const) {
+    if (node === editor && !markers.has(offset)) {
+      const marker = document.createComment("")
+      editor.insertBefore(marker, children[offset] ?? null)
+      markers.set(offset, marker)
+    }
+  }
+  let paragraph: HTMLElement | null = null
+  for (const node of Array.from(editor.childNodes)) {
+    if (node instanceof HTMLElement && node.matches(paragraphBoundarySelector)) {
+      paragraph = null
+    } else if (paragraph || (node.nodeType !== Node.COMMENT_NODE &&
+      (node.nodeType !== Node.TEXT_NODE || node.textContent?.trim()))) {
+      if (!paragraph) {
+        paragraph = document.createElement("div")
+        node.before(paragraph)
+      }
+      paragraph.appendChild(node)
+    }
+  }
+  const startMarker = startContainer === editor ? markers.get(startOffset) : undefined
+  const endMarker = endContainer === editor ? markers.get(endOffset) : undefined
+  if (startMarker) range.setStartBefore(startMarker)
+  else range.setStart(startContainer, startOffset)
+  if (endMarker) range.setEndBefore(endMarker)
+  else range.setEnd(endContainer, endOffset)
+  for (const marker of markers.values()) marker.remove()
+}
 
 const fontSizes = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px", "48px"]
 const lineHeights = fontSizes.slice(2, 9)
@@ -154,6 +191,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   const [selectionLineHeight, setSelectionLineHeight] = useState("")
   const [focused, setFocused] = useState(false)
   const [paragraphPadding, setParagraphPadding] = useState("0")
+  const [mixedParagraphSpacing, setMixedParagraphSpacing] = useState(false)
   const paragraphPaddingDirty = useRef(false)
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
   const savedRangeRef = useRef<Range | null>(null)
@@ -169,10 +207,24 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const editor = editorRef.current
     if (!editor) return []
 
-    const blockSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
-    return Array.from(editor.querySelectorAll<HTMLElement>(blockSelector))
-      .filter((element) => !element.querySelector(blockSelector))
-      .filter((element) => range.intersectsNode(element))
+    const blocks = Array.from(editor.querySelectorAll<HTMLElement>(paragraphSelector))
+      .filter(element => !element.querySelector(paragraphSelector))
+      .filter(element => range.intersectsNode(element))
+    if (paragraphSpacingPx === undefined) return blocks
+    if (range.collapsed) {
+      const anchor = range.startContainer
+      return blocks.filter(block => block.contains(anchor)).slice(0, 1)
+    }
+    return blocks.filter(block => {
+      const boundary = document.createRange()
+      boundary.selectNodeContents(block)
+      if (boundary.collapsed) return true
+      boundary.collapse(true)
+      if (range.compareBoundaryPoints(Range.END_TO_END, boundary) <= 0) return false
+      boundary.selectNodeContents(block)
+      boundary.collapse(false)
+      return range.compareBoundaryPoints(Range.START_TO_START, boundary) < 0
+    })
   }
 
   const updateToolbarPosition = () => {
@@ -316,6 +368,16 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     setSelectionSize(sizes.size === 1 ? [...sizes][0] : "")
   }
 
+  const syncParagraphSpacing = (paragraphs: HTMLElement[]) => {
+    if (paragraphPaddingDirty.current) return
+    const values = paragraphSpacingPx === undefined
+      ? [Number.parseFloat(paragraphs[0]?.style.paddingTop || "") || 0]
+      : paragraphs.map(paragraph => parseParagraphSpacing(paragraph.getAttribute(PARAGRAPH_SPACING_ATTRIBUTE)) ?? paragraphSpacingPx)
+    const mixed = new Set(values).size > 1
+    setMixedParagraphSpacing(mixed)
+    setParagraphPadding(mixed ? "" : String(values[0] ?? 0))
+  }
+
   const saveSelection = () => {
     const selection = window.getSelection()
     const editor = editorRef.current
@@ -324,11 +386,9 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
         savedRangeRef.current = range.cloneRange()
         readSelectionStyle(range)
-        const paragraph = getParagraphsForRange(range)[0]
-        setSelectionLineHeight(window.getComputedStyle(paragraph ?? editor).lineHeight)
-        if (!paragraphPaddingDirty.current) {
-          setParagraphPadding(String(Number.parseFloat(paragraph?.style.paddingTop || "") || 0))
-        }
+        const paragraphs = getParagraphsForRange(range)
+        setSelectionLineHeight(window.getComputedStyle(paragraphs[0] ?? editor).lineHeight)
+        syncParagraphSpacing(paragraphs)
       }
     }
     updateToolbarPosition()
@@ -424,16 +484,21 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const editor = editorRef.current
     if (!editor) return
 
+    const selection = window.getSelection()
+    const snapshot = getSelectionSnapshot(editor, selection?.rangeCount ? selection.getRangeAt(0) : null)
     editor.innerHTML = html
     lastEditorHtmlRef.current = html
-    const range = document.createRange()
-    range.selectNodeContents(editor)
-    range.collapse(false)
-    const selection = window.getSelection()
+    const restoredRange = rangeFromSnapshot(editor, snapshot)
+    const range = restoredRange ?? document.createRange()
+    if (!restoredRange) {
+      range.selectNodeContents(editor)
+      range.collapse(false)
+    }
     if (selection) {
       selection.removeAllRanges()
       selection.addRange(range)
       savedRangeRef.current = range.cloneRange()
+      syncParagraphSpacing(getParagraphsForRange(range))
     }
 
     if (changeTimerRef.current) {
@@ -760,6 +825,20 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
   const applyParagraphPadding = (paddingTop: string) => {
     const range = savedRangeRef.current
+    const editor = editorRef.current
+    if (paragraphSpacingPx !== undefined) {
+      if (!editor || !range || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return
+      normalizeLooseParagraphs(editor, range)
+      const value = String(Math.round(Number.parseFloat(paddingTop) * 100) / 100)
+      for (const paragraph of getParagraphsForRange(range)) {
+        paragraph.setAttribute(PARAGRAPH_SPACING_ATTRIBUTE, value)
+      }
+      restoreSelection()
+      handleInput()
+      flushInput()
+      syncParagraphSpacing(getParagraphsForRange(savedRangeRef.current ?? range))
+      return
+    }
     if (paddingTop === "0px" && (!range || !getParagraphsForRange(range).some(paragraph => paragraph.style.paddingTop))) return
 
     restoreSelection()
@@ -783,8 +862,100 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     flushInput()
   }
 
+  const handleCopy = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    if (paragraphSpacingPx === undefined) return
+    const selection = window.getSelection()
+    if (!selection?.rangeCount || selection.isCollapsed) return
+    const range = selection.getRangeAt(0)
+    const paragraphs = getParagraphsForRange(range)
+    if (!paragraphs.length) return
+    let capturedText = ""
+    const copied = paragraphs.map(paragraph => {
+      const part = document.createRange()
+      part.selectNodeContents(paragraph)
+      if (paragraph.contains(range.startContainer)) part.setStart(range.startContainer, range.startOffset)
+      if (paragraph.contains(range.endContainer)) part.setEnd(range.endContainer, range.endOffset)
+      const fragment = part.cloneContents()
+      capturedText += fragment.textContent ?? ""
+      for (const br of Array.from(fragment.querySelectorAll("br"))) br.replaceWith("\n")
+      return {
+        text: fragment.textContent ?? "",
+        spacing: parseParagraphSpacing(paragraph.getAttribute(PARAGRAPH_SPACING_ATTRIBUTE)) ?? paragraphSpacingPx,
+      }
+    })
+    if (capturedText !== range.toString()) return
+    const richCopy = document.createElement("div")
+    richCopy.appendChild(range.cloneContents())
+    event.clipboardData.setData("text/html", removeTextParagraphSpacing(richCopy.innerHTML))
+    event.clipboardData.setData("text/plain", copied.map(paragraph => paragraph.text).join("\n"))
+    event.clipboardData.setData(paragraphClipboardType, JSON.stringify(copied))
+    event.preventDefault()
+  }
+
+  const pasteParagraphs = (payload: string, range: Range) => {
+    const editor = editorRef.current
+    if (!editor || !payload || paragraphSpacingPx === undefined) return false
+    let records: unknown
+    try {
+      records = JSON.parse(payload)
+    } catch {
+      return false
+    }
+    if (!Array.isArray(records) || !records.length || !records.every(record =>
+      record && typeof record.text === "string" && typeof record.spacing === "number" &&
+      Number.isFinite(record.spacing) && record.spacing >= 0 && record.spacing <= 200
+    )) return false
+
+    range.deleteContents()
+    normalizeLooseParagraphs(editor, range)
+    const paragraph = getParagraphsForRange(range)[0]
+    const inserted = records.map(record => {
+      const block = document.createElement("p")
+      block.setAttribute(PARAGRAPH_SPACING_ATTRIBUTE, String(record.spacing))
+      record.text.split("\n").forEach((line: string, index: number) => {
+        if (index > 0) block.appendChild(document.createElement("br"))
+        block.append(line)
+      })
+      if (!record.text) block.appendChild(document.createElement("br"))
+      return block
+    })
+    if (paragraph) {
+      const trailing = range.cloneRange()
+      trailing.setEnd(paragraph, paragraph.childNodes.length)
+      const rest = trailing.extractContents()
+      paragraph.after(...inserted)
+      if (rest.textContent || rest.querySelector("img,hr")) {
+        const suffix = paragraph.cloneNode(false) as HTMLElement
+        suffix.removeAttribute("id")
+        suffix.appendChild(rest)
+        inserted[inserted.length - 1].after(suffix)
+      }
+      if (!paragraph.textContent && !paragraph.querySelector("img,hr")) paragraph.remove()
+    } else {
+      if (range.startContainer === editor) {
+        const fragment = document.createDocumentFragment()
+        fragment.append(...inserted)
+        range.insertNode(fragment)
+      } else {
+        editor.append(...inserted)
+      }
+    }
+    range.selectNodeContents(inserted[inserted.length - 1])
+    range.collapse(false)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+    savedRangeRef.current = range.cloneRange()
+    handleInput()
+    flushInput()
+    return true
+  }
+
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
+    const selected = window.getSelection()
+    const clipboardRange = selected?.rangeCount ? selected.getRangeAt(0) : null
+    if (clipboardRange && pasteParagraphs(e.clipboardData.getData(paragraphClipboardType), clipboardRange)) return
     let text = e.clipboardData.getData("text/plain");
     if (!text && navigator.clipboard) {
       try { text = await navigator.clipboard.readText(); } catch {}
@@ -806,7 +977,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+    if (paragraphSpacingPx === undefined && e.key === "Backspace" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
       const selection = window.getSelection()
       const range = selection?.rangeCount ? selection.getRangeAt(0) : null
       const paragraph = range?.collapsed ? getParagraphsForRange(range)[0] : null
@@ -867,6 +1038,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         onKeyUp={saveSelection}
         onMouseUp={saveSelection}
         onPaste={handlePaste}
+        onCopy={handleCopy}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
           flushInput()
@@ -935,7 +1107,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
             ))}
           </div>
           <div className="flex items-center gap-1">
-            <label title="Space above selected paragraph" className="flex min-w-0 flex-1 items-center gap-2 text-xs text-slate-600">
+            <label title={paragraphSpacingPx === undefined ? "Space above selected paragraph" : "Space after selected paragraphs"} className="flex min-w-0 flex-1 items-center gap-2 text-xs text-slate-600">
               <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="grow">Paragraph spacing</span>
               <input
@@ -944,6 +1116,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
                 max="200"
                 step="any"
                 value={paragraphPadding}
+                placeholder={mixedParagraphSpacing ? "Mixed" : undefined}
                 onKeyDown={e => {
                   if (e.key === "Enter") {
                     e.preventDefault()
@@ -960,8 +1133,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
                     applyParagraphPadding(`${padding}px`)
                   } else {
                     const range = savedRangeRef.current
-                    const paragraph = range ? getParagraphsForRange(range)[0] : undefined
-                    setParagraphPadding(String(Number.parseFloat(paragraph?.style.paddingTop || "") || 0))
+                    syncParagraphSpacing(range ? getParagraphsForRange(range) : [])
                   }
                 }}
                 onChange={e => {
@@ -969,7 +1141,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
                   setParagraphPadding(e.target.value)
                 }}
                 className={`${typographyControl} max-w-14`}
-                aria-label="Space above selected paragraph in pixels"
+                aria-label={paragraphSpacingPx === undefined ? "Space above selected paragraph in pixels" : "Space after selected paragraphs in pixels"}
               />
               px
             </label>
