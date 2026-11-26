@@ -305,6 +305,7 @@ export function EmailComponentRenderer({
             <RichTextEditor
               isSelected={isSelected}
               useBlockColorPresets
+              selectionColorComponentId={component.id}
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
               paragraphSpacingPx={component.paragraphSpacingPx ?? 0}

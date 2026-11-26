@@ -809,9 +809,12 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const applyPreset = (color: string) => {
       const selection = window.getSelection();
       const editor = editorRef.current;
-      if (!editor || !selection?.rangeCount) return false;
-      const range = selection.getRangeAt(0);
-      if (range.collapsed || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return false;
+      if (!editor) return false;
+      const isInside = (range: Range | null): range is Range =>
+        !!range && editor.contains(range.startContainer) && editor.contains(range.endContainer);
+      const live = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      const range = isInside(live) ? live : hasTextSelection ? savedRangeRef.current : null;
+      if (!isInside(range) || range.collapsed) return false;
 
       savedRangeRef.current = range.cloneRange();
       applyColor(color);

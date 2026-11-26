@@ -1192,7 +1192,7 @@ export function PropertiesPanel({
   onSaveAsCustom,
   onSaveHtmlBlock,
 }: PropertiesPanelProps) {
-  const { applySelectionColor } = useContext(BuilderToolbarContext);
+  const { applySelectionColor, selectionColor } = useContext(BuilderToolbarContext);
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
@@ -1565,7 +1565,7 @@ export function PropertiesPanel({
                 <Label>Block color</Label>
                 <ColorInput textColor showBrandSwatches={false} value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
               </div>
-              <TextColorPresets value={component.color || "#000000"} onChange={hex => {
+              <TextColorPresets value={selectionColor?.componentId === component.id ? selectionColor.color : component.color || "#000000"} onChange={hex => {
                 if (!applySelectionColor?.current?.(hex)) onUpdateComponent({ color: hex });
               }} />
               <div ref={formattingRef} data-formatting-placement="text-section" className="border-t border-slate-200 pt-2 empty:hidden" />
