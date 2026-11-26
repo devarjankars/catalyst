@@ -1532,11 +1532,6 @@ export function PropertiesPanel({
                   <Label className="text-xs text-slate-600">Line height</Label>
                   <LineHeightInput value={component.lineHeight || "14px"} onChange={lineHeight => onUpdateComponent({ lineHeight })} />
                 </div>
-                <div className="min-w-0 space-y-1">
-                  <Label htmlFor="paragraphSpacingPx" className="text-xs text-slate-600">Paragraph gap</Label>
-                  <PropertyNumberInput id="paragraphSpacingPx" max={200} value={component.paragraphSpacingPx ?? 0}
-                    onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)} />
-                </div>
               </div>
               <div role="group" aria-label="Text alignment" className="grid grid-cols-3 gap-1 rounded-md border border-slate-200 bg-slate-50 p-1">
                 {([
