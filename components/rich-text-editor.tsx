@@ -55,10 +55,8 @@ function getNodePath(root: Node, node: Node): number[] | null {
   return current === root ? path : null;
 }
 
-function getSelectionSnapshot(root: HTMLElement): SelectionSnapshot | null {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return null;
-  const range = selection.getRangeAt(0);
+function getSelectionSnapshot(root: HTMLElement, range?: Range | null): SelectionSnapshot | null {
+  if (!range) return null;
   const startPath = getNodePath(root, range.startContainer);
   const endPath = getNodePath(root, range.endContainer);
   if (!startPath || !endPath) return null;
@@ -79,18 +77,15 @@ function resolveBoundary(root: Node, boundary: SelectionBoundary): { node: Node;
   return { node, offset: Math.min(boundary.offset, maxOffset) };
 }
 
-function restoreSelectionSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null) {
-  if (!snapshot) return;
+function rangeFromSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null): Range | null {
+  if (!snapshot) return null;
   const start = resolveBoundary(root, snapshot.start);
   const end = resolveBoundary(root, snapshot.end);
-  if (!start || !end) return;
+  if (!start || !end) return null;
   const range = document.createRange();
   range.setStart(start.node, start.offset);
   range.setEnd(end.node, end.offset);
-  const selection = window.getSelection();
-  if (!selection) return;
-  selection.removeAllRanges();
-  selection.addRange(range);
+  return range;
 }
 
 interface RichTextEditorProps {
@@ -318,9 +313,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const normalizedTarget = document.createElement("div");
       normalizedTarget.innerHTML = spacedValue;
       if (editor.innerHTML !== normalizedTarget.innerHTML) {
-        const selectionSnapshot = getSelectionSnapshot(editor);
+        const selection = window.getSelection();
+        const liveRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        const liveSnapshot = getSelectionSnapshot(editor, liveRange);
+        const savedSnapshot = getSelectionSnapshot(editor, savedRangeRef.current);
         editor.innerHTML = normalizedTarget.innerHTML;
-        restoreSelectionSnapshot(editor, selectionSnapshot);
+        const restoredRange = rangeFromSnapshot(editor, liveSnapshot);
+        savedRangeRef.current = rangeFromSnapshot(editor, savedSnapshot) ?? restoredRange?.cloneRange() ?? null;
+        if (selection && restoredRange && document.activeElement === editor) {
+          selection.removeAllRanges();
+          selection.addRange(restoredRange);
+        }
       }
       lastEditorHtmlRef.current = editor.innerHTML
     }
@@ -704,8 +707,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     if (paragraphs.length > 0) return paragraphs
 
     const paragraph = document.createElement("div")
+    const { startContainer, startOffset, endContainer, endOffset } = range
     while (editor.firstChild) paragraph.appendChild(editor.firstChild)
     editor.appendChild(paragraph)
+    range.setStart(startContainer === editor ? paragraph : startContainer, startOffset)
+    range.setEnd(endContainer === editor ? paragraph : endContainer, endOffset)
     return [paragraph]
   }
 
@@ -719,6 +725,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     paragraphs.forEach((paragraph) => {
       setParagraphTopPadding(paragraph, paddingTop === "0px" ? "" : paddingTop)
     })
+    restoreSelection()
     handleInput()
     flushInput()
   }
