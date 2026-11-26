@@ -1,3 +1,4 @@
+import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
 import {
@@ -88,7 +89,7 @@ export const componentTypes = [
     icon: Minus,
     defaultProps: {
       height: "1px",
-      backgroundColor: "#e0e0e0",
+      backgroundColor: DEFAULT_DIVIDER_COLOR,
       margin: "20px 0",
     },
   },

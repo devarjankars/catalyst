@@ -783,6 +783,21 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   })
 
   useBrowserLayoutEffect(() => {
+    const editor = editorRef.current
+    const range = savedRangeRef.current
+    if (!sidebarFormatting || !isSelected || !hasTextSelection || !focused || !editor || !range ||
+        range.collapsed || !editor.contains(range.commonAncestorContainer) ||
+        typeof Highlight === "undefined" || !CSS.highlights) return
+    const highlight = new Highlight(range)
+    CSS.highlights.set("builder-text-selection", highlight)
+    return () => {
+      if (CSS.highlights.get("builder-text-selection") === highlight) {
+        CSS.highlights.delete("builder-text-selection")
+      }
+    }
+  })
+
+  useBrowserLayoutEffect(() => {
     if (!setSelectionColor || !selectionColorComponentId || !isSelected || !focused || !hasTextSelection) return
     setSelectionColor({ editorId, componentId: selectionColorComponentId, color: selectionColors.length === 1 ? selectionColors[0] : "" })
     return () => setSelectionColor(current => current?.editorId === editorId ? null : current)
@@ -1054,7 +1069,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           flushInput()
           setTimeout(() => {
             const active = document.activeElement
-            if (toolbarRef.current && active && toolbarRef.current.contains(active)) return
+            if (active && (toolbarRef.current?.contains(active) ||
+                (sidebarFormatting && active.closest(".eb-properties, [data-radix-popper-content-wrapper]")))) return
             setFocused(false)
             if (floating) setToolbarPosition(null)
           }, 0)

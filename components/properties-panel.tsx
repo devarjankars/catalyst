@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -1854,7 +1855,7 @@ export function PropertiesPanel({
             </Select>
             <div>
               <Label>Color</Label>
-              <ColorInput value={component.backgroundColor || "#e0e0e0"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+              <ColorInput value={component.backgroundColor || DEFAULT_DIVIDER_COLOR} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
             </div>
           </div>
         );
