@@ -1,6 +1,6 @@
 import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
-import { DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
+import { DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
 import {
   ImageIcon,
@@ -328,11 +328,11 @@ export const componentTypes = [
       "I have the information that you requested during our previous discussion.",
       "I am reaching out to share some information you may find helpful.",
     ],
-    fontSize: "12px",
+    fontSize: DEFAULT_CUSTOM_TEXT_FONT_SIZE,
     color: DEFAULT_CUSTOM_TEXT_COLOR,
     textAlign: "left",
     fontWeight: "normal",
-    lineHeight: "14px",
+    lineHeight: DEFAULT_CUSTOM_TEXT_LINE_HEIGHT,
     fontFamily: "Arial, sans-serif",
     padding: "0 20px 10px 20px",
     backgroundColor: "#ffffff",

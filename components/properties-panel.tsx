@@ -16,7 +16,7 @@ import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
 import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
 import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
@@ -2366,11 +2366,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Font Size</Label>
-              <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
+              <FontSizeInput value={component.fontSize || DEFAULT_CUSTOM_TEXT_FONT_SIZE} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
             </div>
             <div>
               <Label>Line Height</Label>
-              <LineHeightInput value={component.lineHeight || "14px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
+              <LineHeightInput value={component.lineHeight || DEFAULT_CUSTOM_TEXT_LINE_HEIGHT} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
             </div>
             <div>
               <Label>Font Family</Label>

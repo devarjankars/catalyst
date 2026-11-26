@@ -1,3 +1,5 @@
+export const DEFAULT_CUSTOM_TEXT_FONT_SIZE = "14px";
+export const DEFAULT_CUSTOM_TEXT_LINE_HEIGHT = "16px";
 export const DEFAULT_CUSTOM_TEXT_COLOR = "#ff66cc";
 
 export const TEXT_COLOR_PRESETS = [

@@ -1,5 +1,5 @@
 import { getDividerDimensions } from "@/lib/email-divider";
-import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR } from "@/lib/email-text-style";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
 import { getEmailFontFaceCss } from "./email-fonts";
 import { getDisplayAttributes } from "./style-generator";
@@ -1359,11 +1359,11 @@ case "isi": {
       const { innerStyle } = getDisplayAttributes(display);
       const opts = component.customTextOptions || [];
       const token = opts.length ? `{{customText[${opts.join("|")}]}}` : "";
-      const fontSize = component.fontSize || "12px";
+      const fontSize = component.fontSize || DEFAULT_CUSTOM_TEXT_FONT_SIZE;
       const color = component.color || DEFAULT_CUSTOM_TEXT_COLOR;
       const fontFamily = component.fontFamily || "Arial, sans-serif";
       const fontWeight = component.fontWeight || "normal";
-      const lineHeight = component.lineHeight || "14px";
+      const lineHeight = component.lineHeight || DEFAULT_CUSTOM_TEXT_LINE_HEIGHT;
       const textAlign = component.textAlign || "left";
       const padding = component.padding || "0 20px 10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
