@@ -980,26 +980,24 @@ if (activeSelectedId) {
 
           {/* Components panel */}
           {!previewMode && (
-            <div className="w-72 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Components</h4>
+            <aside aria-label="Component library" className="flex w-[260px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+              <div className="shrink-0 border-b border-slate-200 px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-900">Components</h2>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">
-                <ComponentPalette
-                  onAddComponent={addComponent}
-                  customComponents={customComponents}
-                  disabled={isHeaderOnlyLocked}
-                  selectedBrand={selectedBrand}
-                  getSelectionInfo={() => {
-                    return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
-                  }}
-                  applyUpdates={(updates, parentId) => {
-                    if (!activeSelectedId) return
-                    updateComponent(activeSelectedId, updates, parentId)
-                  }}
-                />
-              </div>
-            </div>
+              <ComponentPalette
+                onAddComponent={addComponent}
+                customComponents={customComponents}
+                disabled={isHeaderOnlyLocked}
+                selectedBrand={selectedBrand}
+                getSelectionInfo={() => {
+                  return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
+                }}
+                applyUpdates={(updates, parentId) => {
+                  if (!activeSelectedId) return
+                  updateComponent(activeSelectedId, updates, parentId)
+                }}
+              />
+            </aside>
           )}
 
           {/* Canvas */}

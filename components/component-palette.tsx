@@ -1,11 +1,11 @@
 ﻿"use client"
 
+import { useState } from "react"
 import { useDrag } from "react-dnd"
-import { Trash2, Type, Image as ImageIcon, Boxes, Pill, Building2, Sparkles, LayoutGrid, Bookmark, FlaskConical } from "lucide-react"
+import { Trash2, Type, Image as ImageIcon, Boxes, LayoutGrid, Bookmark, Search, Plus, X } from "lucide-react"
 import type { EmailComponent } from "@/types/email-builder"
 import { componentTypes } from "@/data/component-types"
 import { sectionTemplates } from "@/data/section-templates"
-import { CustomComponentCreator } from "./custom-component-creator"
 import { Button } from "./ui/button"
 import { useEmailBuilderStore } from "@/store/email-builder-store"
 import { toast } from "sonner"
@@ -37,6 +37,12 @@ interface ComponentPaletteProps {
   applyUpdates?: (updates: any, parentId?: string | null) => void
 }
 
+type PaletteComponent = (typeof componentTypes)[number] | (typeof sectionTemplates)[number] | EmailComponent
+
+function getComponentLabel(component: PaletteComponent) {
+  return "label" in component ? component.label : component.name || `Custom ${component.type}`
+}
+
 function DraggableComponent({
   componentType,
   defaults,
@@ -45,13 +51,29 @@ function DraggableComponent({
   isTemplate = false,
   disabled = false,
 }: {
-  componentType: (typeof componentTypes)[0] | (typeof sectionTemplates)[0] | EmailComponent
+  componentType: PaletteComponent
   onAddComponent: (component: EmailComponent, index?: number) => void
   defaults?: Partial<EmailComponent>
   isCustom?: boolean
   isTemplate?: boolean
   disabled?: boolean
 }) {
+  const addComponent = (index?: number) => {
+    const component = {
+      type: componentType.type,
+      ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
+      ...defaults,
+      id: "",
+    } as EmailComponent
+    const assignChildIds = (children: EmailComponent[]): EmailComponent[] => children.map(child => ({
+      ...child,
+      id: `${child.type}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+      ...(child.children ? { children: assignChildIds(child.children) } : {}),
+    }))
+    if (component.children) component.children = assignChildIds(component.children)
+    onAddComponent(component, index)
+  }
+
   const [{ isDragging }, drag] = useDrag({
     type: "component",
     canDrag: () => !disabled,
@@ -78,25 +100,7 @@ function DraggableComponent({
       // index. Don't append to the bottom; bail out.
       if (dropResult.dropIndex === undefined) return
 
-      // Generate unique IDs for children if they exist
-      const componentData = {
-        id: "",
-        type: componentType.type,
-        ...("defaultProps" in componentType ? componentType.defaultProps : componentType),
-        ...defaults,
-      } as unknown as EmailComponent
-      // Always regenerate the top-level id so dropped instances never collide
-      componentData.id = ""
-
-      // Generate unique IDs for nested components
-      if (componentData.children) {
-        componentData.children = componentData.children.map((child: any) => ({
-          ...child,
-          id: `${child.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        }))
-      }
-
-      onAddComponent(componentData, dropResult.dropIndex)
+      addComponent(dropResult.dropIndex)
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -104,44 +108,32 @@ function DraggableComponent({
   })
 
   const Icon = "icon" in componentType ? componentType.icon : Type
-  const label =
-    "label" in componentType ? componentType.label : (componentType as any).name || `Custom ${componentType.type}`
-
+  const label = getComponentLabel(componentType)
   const { deleteCustomComponent } = useEmailBuilderStore()
 
   return (
     <div
-      ref={(node) => {
-        if (node) drag(node)
-      }}
-      className={`
-        group relative flex flex-col items-center gap-2 rounded-xl border bg-white p-4
-        transition-all cursor-grabbing
-        hover:border-blue-300 hover:shadow-md hover:shadow-blue-100 hover:-translate-y-0.5
-        ${isDragging ? "opacity-50 scale-95" : ""}
-        ${disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}
-        ${isCustom ? "border-purple-200 bg-purple-50/50 hover:border-purple-300 hover:shadow-purple-100" : ""}
-        ${isTemplate ? "border-green-200 bg-green-50/50 hover:border-green-300 hover:shadow-green-100" : ""}
-        ${!isCustom && !isTemplate ? "border-gray-200" : ""}
-      `}
+      ref={(node) => { if (node) drag(node) }}
+      className={`group flex min-h-8 items-center gap-2 rounded-md px-2 transition-colors
+        ${disabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:bg-slate-100 active:cursor-grabbing"}
+        ${isDragging ? "opacity-40" : ""}`}
     >
-      <div className={`
-        flex h-10 w-10 items-center justify-center rounded-lg transition-colors
-        ring-1
-        ${isCustom ? "bg-purple-100 text-purple-600 ring-purple-200 group-hover:bg-purple-200/70" : ""}
-        ${isTemplate ? "bg-green-100 text-green-600 ring-green-200 group-hover:bg-green-200/70" : ""}
-        ${!isCustom && !isTemplate ? "bg-gray-50 text-gray-500 ring-gray-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:ring-blue-200" : ""}
-      `}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <span className="text-center text-sm font-medium leading-tight text-gray-700">{label}</span>
+      <Icon className={`h-4 w-4 shrink-0 ${isCustom ? "text-violet-600" : isTemplate ? "text-teal-700" : "text-slate-500"}`} aria-hidden="true" />
+      <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700" title={label}>{label}</span>
+      <button type="button" disabled={disabled} aria-label={`Add ${label}`} title={`Add ${label}`}
+        className="grid h-6 w-6 shrink-0 place-items-center rounded text-slate-500 hover:bg-white hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:opacity-40"
+        onClick={() => addComponent()}>
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
       {isCustom && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
           title="Delete saved block"
-          className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/80 p-0 text-red-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+          aria-label={`Delete ${label}`}
+          disabled={disabled}
+          className="h-6 w-6 shrink-0 rounded text-slate-400 hover:bg-red-50 hover:text-red-600"
           onClick={async () => {
             const ok = await deleteCustomComponent((componentType as EmailComponent).id)
             if (ok) {
@@ -159,195 +151,82 @@ function DraggableComponent({
 }
 
 export function ComponentPalette({ onAddComponent, customComponents, disabled = false, selectedBrand, getSelectionInfo, applyUpdates }: ComponentPaletteProps) {
-
-  const sectionItem =
-    "overflow-hidden rounded-xl border border-gray-200/80 bg-white transition-all duration-200 data-[state=open]:border-gray-300 data-[state=open]:shadow-[0_2px_10px_rgba(17,24,39,0.06)]"
-  const sectionTrigger =
-    "px-3.5 py-3 text-[13px] font-semibold tracking-wide text-gray-700 transition-colors duration-200 hover:no-underline hover:bg-gray-50/80 data-[state=open]:text-gray-900"
-
-  // Resolve the active brand config — fallback to Orserdu if none provided
-  const activeBrandId: Brand = selectedBrand ?? "orserdu"
-  const brandConfig = BRANDS.find((b) => b.id === activeBrandId) ?? BRANDS[0]
-  const brandCategories = BRAND_CATEGORY_MAP[activeBrandId]
-  const brandComponents = componentTypes.filter(
-    (type) =>
-      type.type !== "section" &&
-      type.type !== "orserdu-isi-animated" &&
-      brandCategories.includes(type.category ?? "")
-  )
-
-  // Pick a brand icon colour class based on the brand
-  const brandIconStyle = {
-    backgroundColor: brandConfig.iconBg,
-    color: brandConfig.iconText,
-  }
+  const [search, setSearch] = useState("")
+  const [openSections, setOpenSections] = useState(["basic"])
+  const query = search.trim().toLowerCase()
+  const brand = BRANDS.find(entry => entry.id === (selectedBrand ?? "orserdu")) ?? BRANDS[0]
+  const standard = componentTypes.filter(component => component.type !== "section")
+  const groups = [
+    { id: "basic", label: "Basic", icon: Boxes, items: standard.filter(component => component.category === "basic") },
+    { id: "brand", label: brand.label, icon: null, items: standard.filter(component =>
+      component.type !== "orserdu-isi-animated" && BRAND_CATEGORY_MAP[brand.id].includes(component.category ?? "")) },
+    { id: "sections", label: "Sections", icon: LayoutGrid, items: sectionTemplates },
+    { id: "saved", label: "Saved Blocks", icon: Bookmark, items: customComponents },
+  ].map(group => ({
+    ...group,
+    items: group.items.filter(component => `${getComponentLabel(component)} ${component.type}`.toLowerCase().includes(query)),
+  }))
+  const visibleGroups = query ? groups.filter(group => group.items.length) : groups
+  const triggerClass = "rounded-md px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100 hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
 
   return (
-    <div className="space-y-4 overflow-y-auto h-full relative overflow-x-hidden">
-      {disabled && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-          Components are locked in header-only mode for Options 2 and 3.
-        </p>
-      )}
-
-      {/* Active brand badge */}
-      <div
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold"
-        style={{ backgroundColor: brandConfig.iconBg, color: brandConfig.accentColor }}
-      >
-        <span
-          className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold"
-          style={{ backgroundColor: brandConfig.accentColor, color: "#fff" }}
-        >
-          {brandConfig.symbol}
-        </span>
-        {brandConfig.label} · Brand active
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-slate-100 px-3 py-3">
+        <div className="flex h-8 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 focus-within:border-blue-500 focus-within:bg-white">
+          <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+          <input type="text" value={search} onChange={event => setSearch(event.currentTarget.value)}
+            placeholder="Find a component" aria-label="Find a component"
+            className="min-w-0 flex-1 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-500"
+            onKeyDown={event => { if (event.key === "Escape") setSearch("") }} />
+          {search && <button type="button" aria-label="Clear component search" onClick={() => setSearch("")}
+            className="grid h-5 w-5 place-items-center rounded text-slate-500 hover:bg-slate-200 focus-visible:outline focus-visible:outline-blue-500">
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>}
+        </div>
       </div>
-
-      <Accordion
-        type="single"
-        collapsible
-        className="w-full space-y-2.5 pr-0.5"
-        defaultValue="item-1"
-      >
-        <AccordionItem value="item-gallery" className={sectionItem}>
-          <AccordionTrigger className={sectionTrigger}>
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                <ImageIcon className="h-3.5 w-3.5" />
-              </span>
-              Images
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="px-2.5 pb-3 pt-0.5">
-            <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* ── Always visible: Basic Components ── */}
-        <AccordionItem value="item-1" className={sectionItem}>
-          <AccordionTrigger className={sectionTrigger}>
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
-                <Boxes className="h-3.5 w-3.5" />
-              </span>
-              Basic Components
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="px-2.5 pb-3 pt-1">
-            <div className="flex flex-col gap-3 text-balance">
-              <div className="grid grid-cols-2 gap-2">
-                {componentTypes
-                  .filter((type) => type.type !== "section" && type.category === "basic")
-                  .map((componentType) => (
-                    <DraggableComponent key={componentType.type}
-                      componentType={componentType}
-                      defaults={selectedBrand === "orserdu" && componentType.type === "text" ? { fontSize: "14px", lineHeight: "20px" } : undefined}
-                      onAddComponent={onAddComponent} disabled={disabled} />
-                  ))}
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* ── Dynamic: Active brand's components only ── */}
-        <AccordionItem value="item-brand" className={sectionItem}>
-          <AccordionTrigger className={sectionTrigger}>
-            <span className="flex items-center gap-2.5">
-              <span
-                className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold"
-                style={brandIconStyle}
-              >
-                {brandConfig.symbol}
-              </span>
-              {brandConfig.label} Components
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="px-2.5 pb-3 pt-1">
-            {brandComponents.length === 0 ? (
-              <p className="text-xs text-gray-400 px-1">
-                No components defined for {brandConfig.label} yet.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-3 text-balance">
-                <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-                  {brandComponents.map((componentType) => (
-                    <DraggableComponent
-                      key={componentType.type}
-                      componentType={componentType}
-                      onAddComponent={onAddComponent}
-                      disabled={disabled}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* ── Always visible: Sections ── */}
-        <AccordionItem value="item-3" className={sectionItem}>
-          <AccordionTrigger className={sectionTrigger}>
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-50 text-violet-600">
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </span>
-              Sections
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="px-2.5 pb-3 pt-1">
-            <div className="grid grid-cols-2 gap-2">
-              {sectionTemplates.map((template, index) => (
-                <DraggableComponent
-                  key={`${template.type}-${index}`}
-                  componentType={template}
-                  onAddComponent={onAddComponent}
-                  isTemplate={true}
-                  disabled={disabled}
-                />
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* ── Always visible: Saved Blocks ── */}
-        <AccordionItem value="item-saved-blocks" className={sectionItem}>
-          <AccordionTrigger className={sectionTrigger}>
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50 text-amber-600">
-                <Bookmark className="h-3.5 w-3.5" />
-              </span>
-              Saved Blocks
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="px-2.5 pb-3 pt-1">
-            {customComponents.length === 0 ? (
-              <p className="text-xs text-gray-400 px-1">
-                No saved blocks yet. Select a component on the canvas and use "Save to Saved Blocks".
-              </p>
-            ) : (
-              <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1">
-                {customComponents.map((customComponent) => (
-                  <DraggableComponent
-                    key={customComponent.id}
-                    componentType={customComponent}
-                    onAddComponent={onAddComponent}
-                    isCustom={true}
-                    disabled={disabled}
-                  />
-                ))}
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      {/* for super admin only */}
-      {/* <div className="pt-4 absolute bottom-0 w-full">
-        <CustomComponentCreator />
-      </div> */}
-
-
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-1">
+        {disabled && (
+          <p className="mx-1 my-2 rounded-md bg-amber-50 px-2 py-2 text-xs text-amber-800">
+            Components are locked in header-only mode for Options 2 and 3.
+          </p>
+        )}
+        {visibleGroups.length === 0 && <p role="status" className="px-2 py-3 text-xs text-slate-600">No components found.</p>}
+        <Accordion type="multiple" value={query ? visibleGroups.map(group => group.id) : openSections}
+          onValueChange={value => { if (!query) setOpenSections(value) }}>
+          {visibleGroups.map(({ id, label, icon: Icon, items }) => (
+            <AccordionItem key={id} value={id} className="border-slate-100 py-1">
+              <AccordionTrigger className={triggerClass}>
+                <span className="flex items-center gap-2">
+                  {Icon ? <Icon className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                    : <span className="grid h-4 w-4 place-items-center rounded text-[9px]" aria-hidden="true"
+                        style={{ backgroundColor: brand.iconBg, color: brand.iconText }}>{brand.symbol}</span>}
+                  {label}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-1 pt-0">
+                {items.length ? items.map((component, index) => (
+                  <DraggableComponent key={`${component.type}-${"id" in component ? component.id : index}`}
+                    componentType={component} onAddComponent={onAddComponent}
+                    defaults={selectedBrand === "orserdu" && component.type === "text" && id === "basic" ? { fontSize: "14px", lineHeight: "20px" } : undefined}
+                    isCustom={id === "saved"} isTemplate={id === "sections"} disabled={disabled} />
+                )) : <p className="px-2 py-2 text-xs text-slate-500">{id === "saved" ? "No saved blocks yet." : "No components available."}</p>}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+          {!query && (
+            <AccordionItem value="images" className="border-slate-100 py-1">
+              <AccordionTrigger className={triggerClass}>
+                <span className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />Images
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-1 pb-2">
+                <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
+      </div>
     </div>
   )
 }
