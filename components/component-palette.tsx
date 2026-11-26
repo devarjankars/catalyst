@@ -195,6 +195,18 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
         {visibleGroups.length === 0 && <p role="status" className="px-2 py-3 text-xs text-slate-600">No components found.</p>}
         <Accordion type="multiple" value={query ? visibleGroups.map(group => group.id) : openSections}
           onValueChange={value => { if (!query) setOpenSections(value) }}>
+          {!query && (
+            <AccordionItem value="images" className="border-slate-100 py-1">
+              <AccordionTrigger className={triggerClass}>
+                <span className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />Images
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-1 pb-2">
+                <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
+              </AccordionContent>
+            </AccordionItem>
+          )}
           {visibleGroups.map(({ id, label, icon: Icon, items }) => (
             <AccordionItem key={id} value={id} className="border-slate-100 py-1">
               <AccordionTrigger className={triggerClass}>
@@ -215,18 +227,6 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
               </AccordionContent>
             </AccordionItem>
           ))}
-          {!query && (
-            <AccordionItem value="images" className="border-slate-100 py-1">
-              <AccordionTrigger className={triggerClass}>
-                <span className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />Images
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="px-1 pb-2">
-                <ImageGallery getSelectionInfo={getSelectionInfo} applyUpdates={applyUpdates} />
-              </AccordionContent>
-            </AccordionItem>
-          )}
         </Accordion>
       </div>
     </div>
