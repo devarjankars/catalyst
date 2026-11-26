@@ -1443,9 +1443,11 @@ export function EmailComponentRenderer({
                           ...(isOrserdu ? { imageTextSections: undefined } : {}),
                         })}
                         paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
-                        className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
-                        style={{ fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: textColor }}
+                        className={isOrserdu ? "rich-text-editor-reset-block-spacing !p-0" : undefined}
+                        style={isOrserdu ? undefined : { fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: textColor }}
                       />
+                    ) : isOrserdu ? (
+                      <div className="rich-text-editor-reset-block-spacing" dangerouslySetInnerHTML={{ __html: normalizedText }} />
                     ) : (
                       <span dangerouslySetInnerHTML={{ __html: normalizedText }} />
                     )}
