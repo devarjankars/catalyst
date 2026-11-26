@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useDrag } from "react-dnd"
-import { Trash2, Type, Image as ImageIcon, Boxes, LayoutGrid, Bookmark, Search, Plus, X } from "lucide-react"
+import { Trash2, Type, Image as ImageIcon, Boxes, LayoutGrid, Bookmark, Search, X } from "lucide-react"
 import type { EmailComponent } from "@/types/email-builder"
 import { componentTypes } from "@/data/component-types"
 import { sectionTemplates } from "@/data/section-templates"
@@ -114,16 +114,18 @@ function DraggableComponent({
   return (
     <div
       ref={(node) => { if (node) drag(node) }}
-      className={`group flex min-h-8 items-center gap-2 rounded-md px-2 transition-colors
-        ${disabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:bg-slate-100 active:cursor-grabbing"}
-        ${isDragging ? "opacity-40" : ""}`}
+      className={`group relative rounded-lg border border-slate-200 bg-white transition-colors
+        motion-reduce:transition-none ${isDragging ? "opacity-40" : ""}
+        ${disabled ? "opacity-50" : "hover:border-blue-200 hover:bg-blue-50/40"}`}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${isCustom ? "text-violet-600" : isTemplate ? "text-teal-700" : "text-slate-500"}`} aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700" title={label}>{label}</span>
-      <button type="button" disabled={disabled} aria-label={`Add ${label}`} title={`Add ${label}`}
-        className="grid h-6 w-6 shrink-0 place-items-center rounded text-slate-500 hover:bg-white hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:opacity-40"
+      <button type="button" disabled={disabled} aria-label={`Add ${label}`} title={label}
+        className="flex min-h-[64px] w-full cursor-grab flex-col items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-center active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed"
         onClick={() => addComponent()}>
-        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-md
+          ${isCustom ? "bg-violet-50 text-violet-600" : isTemplate ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700"}`}>
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span className="line-clamp-2 text-[11px] font-medium leading-tight text-slate-700">{label}</span>
       </button>
       {isCustom && (
         <Button
@@ -133,7 +135,7 @@ function DraggableComponent({
           title="Delete saved block"
           aria-label={`Delete ${label}`}
           disabled={disabled}
-          className="h-6 w-6 shrink-0 rounded text-slate-400 hover:bg-red-50 hover:text-red-600"
+          className="absolute right-0.5 top-0.5 h-6 w-6 rounded bg-white text-slate-500 hover:bg-red-50 hover:text-red-600"
           onClick={async () => {
             const ok = await deleteCustomComponent((componentType as EmailComponent).id)
             if (ok) {
@@ -204,12 +206,12 @@ export function ComponentPalette({ onAddComponent, customComponents, disabled = 
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-1 pt-0">
-                {items.length ? items.map((component, index) => (
+                {items.length ? <div className="grid grid-cols-2 gap-1.5 px-1 pb-1">{items.map((component, index) => (
                   <DraggableComponent key={`${component.type}-${"id" in component ? component.id : index}`}
                     componentType={component} onAddComponent={onAddComponent}
                     defaults={selectedBrand === "orserdu" && component.type === "text" && id === "basic" ? { fontSize: "14px", lineHeight: "20px" } : undefined}
                     isCustom={id === "saved"} isTemplate={id === "sections"} disabled={disabled} />
-                )) : <p className="px-2 py-2 text-xs text-slate-500">{id === "saved" ? "No saved blocks yet." : "No components available."}</p>}
+                ))}</div> : <p className="px-2 py-2 text-xs text-slate-500">{id === "saved" ? "No saved blocks yet." : "No components available."}</p>}
               </AccordionContent>
             </AccordionItem>
           ))}
