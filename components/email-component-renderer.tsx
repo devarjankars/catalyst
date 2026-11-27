@@ -666,7 +666,7 @@ export function EmailComponentRenderer({
           >
             <div style={{ height: `${parseInt(String(paddingTop), 10) || 15}px` }} />
             {linkItems.map((item: any, i: number) => {
-              const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
+              const { linkHref, linkText, suffixText } = normalizeOrserduReportLinkItem(item);
               return (
                 <div
                   key={i}
@@ -682,7 +682,7 @@ export function EmailComponentRenderer({
                 >
                   <span dangerouslySetInnerHTML={{ __html: item.prefixText || "" }} />
                   <a
-                    href={item.linkHref || "#"}
+                    href={linkHref || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR, textDecoration: "underline" }}

@@ -1,5 +1,5 @@
 import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
-import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, ORSERDU_MEDWATCH_URL, ORSERDU_REPORT_PI_URL } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
@@ -577,7 +577,7 @@ export const componentTypes = [
         {
           prefixText: "To report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. at 1-877-332-7961 or FDA at 1-800-FDA-1088 or ",
           linkText: "www.fda.gov/medwatch",
-          linkHref: "https://www.fda.gov/medwatch",
+          linkHref: ORSERDU_MEDWATCH_URL,
           linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ".",
           bold: true,
@@ -585,7 +585,7 @@ export const componentTypes = [
         {
           prefixText: "Please click ",
           linkText: "here",
-          linkHref: "http://pi.orserduhcp.com/",
+          linkHref: ORSERDU_REPORT_PI_URL,
           linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: " to see full Prescribing Information.",
           bold: true,

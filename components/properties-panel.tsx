@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, resolveOrserduReportLinkHref } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2748,7 +2748,7 @@ export function PropertiesPanel({
                   </div>
                   <div>
                     <Label>Link URL</Label>
-                    <Input value={item.linkHref || ""} onChange={(e) => updateLinkItem(i, { linkHref: e.target.value })} placeholder="https://..." />
+                    <Input value={resolveOrserduReportLinkHref(item.linkHref)} onChange={(e) => updateLinkItem(i, { linkHref: e.target.value })} placeholder="https://..." />
                   </div>
                   <div>
                     <Label>Text after link</Label>
