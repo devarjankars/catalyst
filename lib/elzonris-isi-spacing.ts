@@ -17,3 +17,17 @@ export function applyElzonrisIsiSpacing(html: string): string {
     return `${before}${height}${between}${height}${after}`;
   });
 }
+
+const previousIsiLinks = new Map([
+  ["https://rxmenarinistemline.com/ELZONRIS_US_Full_Prescribing_Information.pdf", "http://pi.elzonris.com/"],
+  ["https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program", "https://www.fda.gov/medwatch"],
+]);
+
+export function renderElzonrisIsi(html: string): string {
+  return applyElzonrisIsiSpacing(html).replace(/<a\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi, anchor =>
+    anchor.replace(/(\shref\s*=\s*)(["'])(.*?)\2/i, (attribute, prefix, quote, href) => {
+      const current = previousIsiLinks.get(href);
+      return current ? `${prefix}${quote}${current}${quote}` : attribute;
+    }),
+  );
+}

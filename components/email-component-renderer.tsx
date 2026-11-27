@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
+import { renderElzonrisIsi } from "@/lib/elzonris-isi-spacing";
 import { getDividerDimensions } from "@/lib/email-divider";
 import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
@@ -1461,7 +1461,7 @@ export function EmailComponentRenderer({
 
         case "elzonris-isi":
         return (
-          <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: applyElzonrisIsiSpacing(component.html || "") }} />
+          <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: renderElzonrisIsi(component.html || "") }} />
         );
             case "elzonris-divider":
         return (
