@@ -1,3 +1,4 @@
+import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
 import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
@@ -688,7 +689,7 @@ export const componentTypes = [
     category: "elzonris",
     icon: NotepadText,
     defaultProps: {
-      html: ` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+      html: applyElzonrisIsiSpacing(` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
             <tbody>
                 <tr>
                     <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
@@ -935,7 +936,7 @@ export const componentTypes = [
                     <td align="left" valign="middle"
                         style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
                         <strong>Please see Full <a
-                                href="https://rxmenarinistemline.com/ELZONRIS_US_Full_Prescribing_Information.pdf"
+                                href="http://pi.elzonris.com/"
                                 target="_blank" style="text-decoration:underline;color:#009877;line-height:18px;">Prescribing
                                 Information</a>, including Boxed WARNING.</strong></td>
                 </tr>
@@ -949,7 +950,7 @@ export const componentTypes = [
                         report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. <br>at <span
                             style="color:#646464">1-877-332-7961</span> or contact the FDA at <span
                             style="color:#646464">1-800-FDA-1088</span> or <a
-                            href="https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program"
+                            href="https://www.fda.gov/medwatch"
                             target="_blank"
                             style="text-decoration:underline;color:#009877;line-height:18px;">www.fda.gov/medwatch</a>.</td>
                 </tr>
@@ -958,7 +959,7 @@ export const componentTypes = [
                     </td>
                 </tr>
             </tbody>
-        </table>`,
+        </table>`),
     },
   },
    {

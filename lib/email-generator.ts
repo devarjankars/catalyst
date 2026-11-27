@@ -1,3 +1,4 @@
+import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
 import { getDividerDimensions } from "@/lib/email-divider";
 import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
@@ -1993,7 +1994,7 @@ case "isi": {
           <tr>
             <td style="padding: ${component.padding || "0 20px 0 20px"}; font-family: ${component.fontFamily || "Arial, sans-serif"};">
               <div style="font-family: ${component.fontFamily || "Arial, sans-serif"};">
-                ${component.html || ""}
+                ${applyElzonrisIsiSpacing(component.html || "")}
               </div>
             </td>
           </tr>
