@@ -21,6 +21,7 @@ import {
 } from "firebase/storage";
 import { db, firebaseProjectId, storage } from "@/lib/firebase";
 import type { EmailTemplate, EmailTemplateVersion, EmailTemplateVersionContent } from "@/types/template";
+import { applyStandardTemplateSources, STANDARD_SOURCE_ID_PREFIX } from "@/lib/standard-template-sources";
 import { EmailComponent } from "@/types/email-builder";
 
 const GERON_STANDARD_RTE_TEMPLATE_NAME = "RTE Standard Template";
@@ -128,7 +129,7 @@ class FirebaseService {
             `Found multiple Geron RTE templates named "${GERON_STANDARD_RTE_TEMPLATE_NAME}"; none were promoted.`,
           );
         }
-        return templates;
+        return applyStandardTemplateSources(templates);
       }
 
       const matchingTemplate = matchingTemplates[0];
@@ -136,16 +137,16 @@ class FirebaseService {
         matchingTemplate.name === GERON_STANDARD_RTE_TEMPLATE_NAME &&
         !matchingTemplate.isUserCreated
       ) {
-        return templates;
+        return applyStandardTemplateSources(templates);
       }
 
       const promoted = await this.updateLocalTemplate(matchingTemplate.id, {
         name: GERON_STANDARD_RTE_TEMPLATE_NAME,
         isUserCreated: false,
       });
-      return templates.map((template) =>
+      return applyStandardTemplateSources(templates.map((template) =>
         template.id === matchingTemplate.id && promoted ? promoted : template,
-      );
+      ));
     }
 
     // Return cached result if still fresh
@@ -200,14 +201,15 @@ class FirebaseService {
         );
       }
 
-      this._templateCache = { data: templates, fetchedAt: Date.now() };
-      return templates;
+      const resolved = applyStandardTemplateSources(templates);
+      this._templateCache = { data: resolved, fetchedAt: Date.now() };
+      return resolved;
     } catch (error) {
       console.error(
         "Failed to load templates from Firebase, falling back to localStorage:",
         error
       );
-      return this.getLocalTemplates();
+      return applyStandardTemplateSources(await this.getLocalTemplates());
     }
   }
 
@@ -324,6 +326,9 @@ class FirebaseService {
   }
 
   async getTemplate(id: string): Promise<EmailTemplate | null> {
+    if (id.startsWith(STANDARD_SOURCE_ID_PREFIX)) {
+      return (await this.getAllTemplates()).find(template => template.id === id) ?? null;
+    }
     if (!this.isFirebaseAvailable) {
       return this.getLocalTemplate(id);
     }
