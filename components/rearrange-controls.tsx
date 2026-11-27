@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowUp, ArrowDown, Copy, Trash2, SendToBack } from "lucide-react"
+import { ArrowUp, ArrowDown, Copy, SendToBack } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,6 @@ interface RearrangeControlsProps {
   onMoveUp: () => void
   onMoveDown: () => void
   onDuplicate: () => void
-  onDelete: () => void
   // Optional: only shown in 3-option completely-different mode
   showCopyToOption?: boolean
   onCopyToOption?: (targetOption: 1 | 2 | 3) => void
@@ -29,13 +28,11 @@ function ToolbarButton({
   onClick,
   disabled,
   title,
-  danger,
   children,
 }: {
   onClick: () => void
   disabled?: boolean
   title: string
-  danger?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -43,9 +40,7 @@ function ToolbarButton({
       type="button"
       size="icon"
       variant="ghost"
-      className={`h-7 w-7 rounded-full p-0 text-gray-600 transition-colors hover:bg-gray-100 ${
-        danger ? "text-red-500 hover:bg-red-50 hover:text-red-600" : ""
-      }`}
+      className="h-7 w-7 rounded-md p-0 text-gray-600 transition-colors hover:bg-gray-100"
       onClick={(e) => {
         e.stopPropagation()
         onClick()
@@ -59,7 +54,7 @@ function ToolbarButton({
 }
 
 function Divider() {
-  return <div className="my-1 h-px w-4 bg-gray-200" aria-hidden="true" />
+  return <div className="mx-1 h-4 w-px bg-gray-200" aria-hidden="true" />
 }
 
 export function RearrangeControls({
@@ -69,7 +64,6 @@ export function RearrangeControls({
   onMoveUp,
   onMoveDown,
   onDuplicate,
-  onDelete,
   showCopyToOption,
   onCopyToOption,
   activeOption = 1,
@@ -78,10 +72,10 @@ export function RearrangeControls({
 
   return (
     <div
-      className="absolute -right-10 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center rounded-full border border-gray-200 bg-white/95 py-1.5 pl-1 pr-1 shadow-lg shadow-gray-900/5 backdrop-blur"
+      className="flex flex-wrap items-center gap-0.5 rounded-md border border-gray-200 bg-white p-1"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
         <ToolbarButton title="Move up" onClick={onMoveUp} disabled={index === 0}>
           <ArrowUp className="h-3.5 w-3.5" />
         </ToolbarButton>
@@ -92,7 +86,7 @@ export function RearrangeControls({
 
       <Divider />
 
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
         <ToolbarButton title="Duplicate" onClick={onDuplicate}>
           <Copy className="h-3.5 w-3.5" />
         </ToolbarButton>
@@ -137,13 +131,6 @@ export function RearrangeControls({
         )}
       </div>
 
-      <Divider />
-
-      <div className="flex flex-col items-center gap-0.5">
-        <ToolbarButton title="Delete" danger onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </ToolbarButton>
-      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useDrop } from "react-dnd"
 import type { EmailComponent } from "@/types/email-builder"
 
@@ -9,13 +9,12 @@ interface SectionDropZoneProps {
   sectionId: string
   children: EmailComponent[]
   onAddToSection?: (sectionId: string, component: EmailComponent, index?: number) => void
-  onMoveWithinSection?: (sectionId: string, dragIndex: number, hoverIndex: number) => void
   onSelect?: (id: string) => void
   renderSectionChild: (child: EmailComponent, childIndex: number, sectionId: string) => React.ReactNode
   isSelected?: boolean
   previewMode: boolean
   isColumn?: boolean
-  columnCount?: number
+  minHeight?: string
   columnAlignment?: "left" | "center" | "right"
 }
 
@@ -27,7 +26,7 @@ export function SectionDropZone({
   renderSectionChild,
   previewMode,
   isColumn = false,
-  columnCount = 1,
+  minHeight,
   columnAlignment = "left",
   isSelected,
 }: SectionDropZoneProps) {
@@ -38,8 +37,9 @@ export function SectionDropZone({
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: "component",
+    canDrop: (item: { fromPalette?: boolean; type?: string }) => !!item.fromPalette && item.type !== "section" && !!onAddToSection,
     drop: (item: any, monitor) => {
-      if (monitor.didDrop()) return
+      if (monitor.getDropResult<{ handled?: boolean }>()?.handled) return
 
       if (item.fromPalette && typeof onAddToSection === "function" && item.type !== "section") {
         const idx = lastDropIndex.current ?? children.length
@@ -50,7 +50,7 @@ export function SectionDropZone({
       }
     },
     hover: (item: any, monitor) => {
-      if (!item.fromPalette || !dropRef.current) return
+      if (!item.fromPalette || item.type === "section" || !dropRef.current) return
 
       const clientOffset = monitor.getClientOffset()
       if (!clientOffset) return
@@ -61,7 +61,7 @@ export function SectionDropZone({
 
       let newIndex = children.length
 
-      const childEls = dropRef.current.querySelectorAll(`[data-section-child="${sectionId}"]`)
+      const childEls = dropRef.current.querySelectorAll(`:scope > div > [data-section-child="${sectionId}"]`)
       for (let i = 0; i < childEls.length; i++) {
         const el = childEls[i] as HTMLElement
         const elRect = el.getBoundingClientRect()
@@ -86,11 +86,11 @@ export function SectionDropZone({
     }),
   })
 
-  // Clear indicator when not hovered
-  if (!isOver && dropIndex !== null) {
+  useEffect(() => {
+    if (isOver) return
     setDropIndex(null)
     lastDropIndex.current = null
-  }
+  }, [isOver])
 
   if (!onAddToSection) {
     return (
@@ -112,7 +112,7 @@ export function SectionDropZone({
     )
   }
 
-  const minHeight = isColumn ? "min-h-[150px]" : columnCount > 1 ? "min-h-[120px]" : "min-h-[80px]"
+  const minimumClass = minHeight ? "" : isColumn ? "min-h-[150px]" : "min-h-[80px]"
   const activeColor = isColumn ? "ring-green-400 bg-green-50/40" : "ring-blue-400 bg-blue-50/40"
   const indicatorColor = isColumn ? "bg-green-500" : "bg-blue-500"
 
@@ -122,8 +122,9 @@ export function SectionDropZone({
         dropRef.current = node
         drop(node)
       }}
+      data-section-drop-zone={sectionId}
       className={`
-        ${minHeight} relative rounded-lg transition-colors duration-150
+        ${minimumClass} relative rounded-lg transition-colors duration-150
         ${isOver && canDrop && !previewMode ? `ring-2 ring-dashed ${activeColor}` : ""}
         ${!previewMode
           ? `border border-dashed ${
@@ -134,8 +135,7 @@ export function SectionDropZone({
           : ""}
         ${isColumn ? "flex" : "w-full"}
       `}
-      style={{ textAlign: isColumn ? columnAlignment : "left" }}
-      onDragLeave={() => { setDropIndex(null); lastDropIndex.current = null }}
+      style={{ minHeight, textAlign: columnAlignment }}
       onClick={(e) => { e.stopPropagation(); onSelect?.(sectionId) }}
     >
       {children.length === 0 && !previewMode && (
@@ -148,10 +148,10 @@ export function SectionDropZone({
         {/* Drop indicators and children rendered together */}
         {children.map((child, i) => (
           <React.Fragment key={child.id}>
-            {isOver && canDrop && dropIndex === i && !previewMode && (
-              <div className={`mx-2 mb-2 h-[3px] rounded-full ${indicatorColor}`} />
-            )}
-            <div data-section-child={sectionId} className="mb-2">
+            <div data-section-child={sectionId} className="relative mb-2">
+              {isOver && canDrop && dropIndex === i && !previewMode && (
+                <div className={`pointer-events-none absolute inset-x-2 top-0 z-10 h-[3px] -translate-y-1/2 rounded-full ${indicatorColor}`} />
+              )}
               {renderSectionChild(child, i, sectionId)}
             </div>
           </React.Fragment>
@@ -159,10 +159,6 @@ export function SectionDropZone({
         {/* Drop indicator after last child */}
         {isOver && canDrop && dropIndex === children.length && !previewMode && (
           <div className={`mx-2 mt-2 h-[3px] rounded-full ${indicatorColor}`} />
-        )}
-        {/* Empty state indicator */}
-        {children.length === 0 && isOver && canDrop && !previewMode && (
-          <div className="mx-2 my-2 h-[3px] rounded-full bg-blue-500" />
         )}
       </div>
     </div>

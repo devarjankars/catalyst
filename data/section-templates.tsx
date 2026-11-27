@@ -31,7 +31,6 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
-          columnWidth: "50%",
         },
         {
           id: "col2",
@@ -42,7 +41,6 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
-          columnWidth: "50%",
         },
       ],
       backgroundColor: "#ffffff",
@@ -70,7 +68,6 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
-          columnWidth: "33.33%",
         },
         {
           id: "col2",
@@ -81,7 +78,6 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
-          columnWidth: "33.33%",
         },
         {
           id: "col3",
@@ -92,7 +88,6 @@ export const sectionTemplates = [
           children: [],
           direction: "column",
           isColumn: true,
-          columnWidth: "33.33%",
         },
       ],
       backgroundColor: "#ffffff",

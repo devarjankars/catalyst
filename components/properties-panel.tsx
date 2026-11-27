@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, resolveOrserduReportLinkHref } from "@/lib/orserdu-report-links";
+import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,11 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { EmailComponent } from "@/types/email-builder";
+import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./image-upload";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE, TEXT_COLOR_PRESETS } from "@/lib/email-text-style";
+import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts";
+import { useClient } from "@/lib/use-client";
 import { Checkbox } from "./ui/checkbox";
-import { TriangleAlert, Code, BookmarkPlus, Box, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlignLeft, AlignCenter, AlignRight, TriangleAlert, Code, BookmarkPlus, Box, MonitorSmartphone, Move, MousePointerClick, Layers, Plus, Trash2 } from "lucide-react";
 import PaddingInput from "./padding -inputs";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { HtmlEditorModal } from "./html-editor-modal";
@@ -44,6 +50,8 @@ import {
   GERON_LOGO_HREF,
   GERON_RYTELO_LOGO_HREF,
 } from "@/data/geron-footer-html";
+import { normalizeColumnSize } from "@/lib/column-width";
+import { getSectionColumns, resizeSectionColumns } from "@/lib/section-columns";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 
 // ── Shared CSS-size helpers ────────────────────────────────────────────────
@@ -81,6 +89,74 @@ export function isValidCssSize(raw: string): boolean {
 // Pure custom text input — no dropdown.  The user types any valid CSS size.
 // "10" is normalised to "10px" on blur/Enter.
 // Invalid values show an inline message and are not committed.
+function ColumnSizeInput({ id, label, value, width = false, onChange }: {
+  id: string;
+  label: string;
+  value?: string;
+  width?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+
+  return (
+    <div className="min-w-0 space-y-1">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} value={draft ?? value ?? ""} placeholder={width ? "Auto" : "px"}
+        aria-invalid={invalid}
+        onChange={event => { setDraft(event.target.value); setInvalid(false); }}
+        onBlur={event => {
+          const raw = event.currentTarget.value.trim();
+          const next = normalizeColumnSize(raw, width);
+          if (raw && !next && !(width && raw.toLowerCase() === "auto")) {
+            setInvalid(true);
+            return;
+          }
+          setDraft(null);
+          if (next !== (value ?? "")) onChange(next);
+        }}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+        }} />
+      {invalid && <p role="alert" className="text-xs text-red-600">{width ? "Enter pixels, a percentage up to 100%, or auto." : "Enter a value in pixels."}</p>}
+    </div>
+  );
+}
+
+function PropertyNumberInput({
+  id, value, max, onCommit,
+}: {
+  id?: string;
+  value: number;
+  max?: number;
+  onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <Input id={id} type="number" min={0} max={max} step={1}
+      value={draft ?? String(value)}
+      onChange={event => setDraft(event.target.value)}
+      onKeyDown={event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+      onBlur={event => {
+        const next = event.currentTarget.valueAsNumber;
+        setDraft(null);
+        if (!Number.isFinite(next)) return;
+        const clamped = Math.max(0, Math.min(max ?? Infinity, next));
+        if (clamped !== value) onCommit(clamped);
+      }}
+    />
+  );
+}
+
 function FontSizeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [local, setLocal] = useState(value);
   const [error, setError] = useState("");
@@ -289,6 +365,7 @@ interface BulletItem {
   normalText: string;
   paddingTop?: string;
   paddingBottom?: string;
+  markerColor?: string;
 }
 
 function OrserduIsiSelectPanel({
@@ -313,10 +390,7 @@ function OrserduIsiSelectPanel({
   const [backgroundColor, setBackgroundColor] = useState<string>(component.backgroundColor ?? "#ffffff");
   const [footerLine,      setFooterLine]      = useState<string>(component.footerLine      ?? "");
   const [footerPadding,   setFooterPadding]   = useState<string>(getOrserduIsiPadding(component.footerPadding));
-  const [trialDesignHtml, setTrialDesignHtml] = useState<string>(component.trialDesignHtml ?? "");
-  const [trialDesignPadding, setTrialDesignPadding] = useState<string>(getOrserduIsiPadding(component.trialDesignPadding));
   const [showFooter,      setShowFooter]      = useState<boolean>(!!(component.footerLine));
-  const [showTrialDesign, setShowTrialDesign] = useState<boolean>(!!(component.trialDesignHtml));
 
   // Sync if component id changes (different component selected)
   useEffect(() => {
@@ -334,10 +408,7 @@ function OrserduIsiSelectPanel({
     setBackgroundColor(component.backgroundColor ?? "#ffffff");
     setFooterLine(component.footerLine      ?? "");
     setFooterPadding(getOrserduIsiPadding(component.footerPadding));
-    setTrialDesignHtml(component.trialDesignHtml ?? "");
-    setTrialDesignPadding(getOrserduIsiPadding(component.trialDesignPadding));
     setShowFooter(!!(component.footerLine));
-    setShowTrialDesign(!!(component.trialDesignHtml));
   }, [component.id]);
 
   // ── Commit helpers — only write to store on blur/enter ───────────────────
@@ -422,7 +493,7 @@ function OrserduIsiSelectPanel({
           <p className="text-[10px] text-gray-400 mt-1">Adjusts only the space after each bullet; default: 4px.</p>
         </div>
         <div>
-          <Label>Bullet Color</Label>
+          <Label>Default Bullet Color</Label>
           <ColorInput value={bulletColor} onChange={(v) => { setBulletColor(v); commit({ bulletColor: v }); }} />
         </div>
         <div>
@@ -484,6 +555,25 @@ function OrserduIsiSelectPanel({
                 className="h-6 px-2 text-xs text-red-500 hover:bg-red-50"
                 onClick={() => removeBullet(i)}
               >Remove</Button>
+            </div>
+            <div>
+              <Label className="text-xs">Bullet Color</Label>
+              <ColorInput value={item.markerColor || bulletColor} onChange={(markerColor) => {
+                const updated = bulletItems.map((bullet, index) =>
+                  index === i ? { ...bullet, markerColor } : bullet
+                );
+                setBulletItems(updated);
+                commit({ bulletItems: updated });
+              }} />
+              {item.markerColor && (
+                <Button type="button" size="sm" variant="ghost" onClick={() => {
+                  const updated = bulletItems.map((bullet, index) =>
+                    index === i ? { ...bullet, markerColor: "" } : bullet
+                  );
+                  setBulletItems(updated);
+                  commit({ bulletItems: updated });
+                }}>Use default bullet color</Button>
+              )}
             </div>
             <div>
               <Label className="text-xs">Bold text</Label>
@@ -581,38 +671,7 @@ function OrserduIsiSelectPanel({
         )}
       </div>
 
-      {/* Trial design paragraph — toggleable */}
-      <div className="border rounded-lg p-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Trial Design Paragraph</p>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <span className="text-xs text-gray-500">{showTrialDesign ? "Enabled" : "Disabled"}</span>
-            <div
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showTrialDesign ? "bg-green-500" : "bg-gray-300"}`}
-              onClick={() => {
-                const next = !showTrialDesign;
-                setShowTrialDesign(next);
-                if (!next) { setTrialDesignHtml(""); commit({ trialDesignHtml: "" }); }
-              }}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${showTrialDesign ? "translate-x-[18px]" : "translate-x-1"}`} />
-            </div>
-          </label>
-        </div>
-        {showTrialDesign && (
-          <>
-            <p className="text-[11px] text-gray-400">Supports HTML: &lt;b&gt; &lt;i&gt; &lt;sup&gt; &lt;a href=""&gt;</p>
-            <textarea
-              className="w-full min-h-[120px] text-sm rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring font-mono resize-y"
-              value={trialDesignHtml}
-              onChange={(e) => setTrialDesignHtml(e.target.value)}
-              onBlur={() => commit({ trialDesignHtml })}
-              onKeyDown={(e) => e.key === "Enter" && commit({ trialDesignHtml })}
-              placeholder="<b>TRIAL DESIGN:</b> ..."
-            />
-          </>
-        )}
-      </div>
+
     </div>
   );
 }
@@ -817,44 +876,88 @@ function toHex(value: string): string {
   return "#000000";
 }
 
-function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ColorInput({ value, onChange, textColor = false, showBrandSwatches = true, label }: {
+  value: string;
+  onChange: (v: string) => void;
+  textColor?: boolean;
+  showBrandSwatches?: boolean;
+  label?: string;
+}) {
+  const { client } = useClient();
   const [text, setText] = useState(value || "#000000");
 
   useEffect(() => { setText(value || "#000000"); }, [value]);
 
   const commit = (raw: string) => {
-    const val = raw.startsWith("#") ? raw : `#${raw}`;
-    if (/^#[0-9a-fA-F]{6}$/.test(val)) onChange(val);
+    const hex = raw.trim().replace(/^#/, "").toLowerCase();
+    if (/^[0-9a-f]{6}$/.test(hex) && `#${hex}` !== value.toLowerCase()) onChange(`#${hex}`);
   };
 
   return (
     <div className="mt-1.5 flex items-center gap-2">
       <div
-        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow"
+        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-slate-200"
+        style={{ backgroundColor: toHex(text) }}
         title="Pick color"
       >
         <input
           type="color"
+          aria-label={label ? `Choose ${label.toLowerCase()}` : undefined}
           value={toHex(text)}
           onChange={(e) => { setText(e.target.value); onChange(e.target.value); }}
-          className="absolute inset-0 h-[140%] w-[140%] -translate-x-[14%] -translate-y-[14%] cursor-pointer border-0 p-0"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 focus-visible:opacity-100"
         />
       </div>
       <Input
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        aria-label={label ? `${label} hex` : textColor ? "Text color hex" : undefined}
+        onChange={(e) => {
+          const next = e.target.value;
+          setText(next);
+          if (textColor) commit(next);
+        }}
         onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && commit(text)}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit(event.currentTarget.value);
+          }
+        }}
         className="font-mono uppercase"
         placeholder="#000000"
-        maxLength={7}
       />
+      {showBrandSwatches && [client.accentColor, client.iconBg].map(color => (
+        <button key={color} type="button" className="h-6 w-6 shrink-0 rounded border"
+          style={{ backgroundColor: color }} aria-label={`Use brand color ${color}`} title={color}
+          onClick={() => { setText(color); onChange(color); }} />
+      ))}
+    </div>
+  );
+}
+
+function TextColorPresets({ value, onChange }: { value: string; onChange: (color: string) => void }) {
+  return (
+    <div role="group" aria-label="Text color presets" className="space-y-1.5">
+      <p className="text-xs font-medium text-slate-600">Color presets</p>
+      <div className="grid grid-cols-2 gap-1">
+        {TEXT_COLOR_PRESETS.map(({ name, hex }) => (
+          <button key={hex} type="button" title={`${name} (${hex.toUpperCase()})`}
+            aria-pressed={value.toLowerCase() === hex}
+            className="flex min-w-0 items-center gap-1.5 rounded-md border border-slate-200 px-1.5 py-1 text-left text-xs text-slate-700 hover:bg-slate-50 aria-pressed:border-slate-500 aria-pressed:bg-slate-100"
+            onMouseDown={event => event.preventDefault()}
+            onClick={() => onChange(hex)}>
+            <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-black/10" style={{ backgroundColor: hex }} />
+            {name}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 interface PropertiesPanelProps {
   component: EmailComponent | undefined;
+  formattingRef?: React.Ref<HTMLDivElement>;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
   onDeleteComponent?: (id: string) => void;
   onSaveAsCustom?: (name?: string) => void;
@@ -868,6 +971,9 @@ function ImageTextBlockProperties({
   component: EmailComponent;
   onUpdateComponent: (updates: Partial<EmailComponent>, immediate?: boolean) => void;
 }) {
+  const { applySelectionColor, selectionColor } = useContext(BuilderToolbarContext);
+  const isOrserdu = component.type === "orserdu-image-text-block";
+  const textColor = isOrserdu ? component.color || "#000000" : "#000000";
   const [imageWidth, setImageWidth] = useState(String(component.imageTextImageWidth && component.imageTextImageWidth > 0 ? component.imageTextImageWidth : 167));
   const [imageGap, setImageGap] = useState(String(component.imageTextGap ?? 16));
   const [imageAlt, setImageAlt] = useState(component.imageTextImageAlt || "");
@@ -908,6 +1014,16 @@ function ImageTextBlockProperties({
           currentImage={component.imageTextImageSrc}
           onImageUpload={(imageUrl) => onUpdateComponent({ imageTextImageSrc: imageUrl })}
         />
+        {component.imageTextImageSrc && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onUpdateComponent({ imageTextImageSrc: "" }, true)}
+          >
+            Remove image
+          </Button>
+        )}
         <div>
           <Label htmlFor={`image-text-alt-${component.id}`}>Alt Text</Label>
           <Input
@@ -973,6 +1089,8 @@ function ImageTextBlockProperties({
         <Label>Text</Label>
         <RichTextEditor
           isSelected
+          useBlockColorPresets={isOrserdu}
+          selectionColorComponentId={isOrserdu ? component.id : undefined}
           value={component.type === "orserdu-image-text-block"
             ? removeTextParagraphSpacing(getOrserduImageTextContent(component))
             : component.imageTextText1 || ""}
@@ -984,14 +1102,26 @@ function ImageTextBlockProperties({
             ...(component.type === "orserdu-image-text-block" ? { imageTextSections: undefined } : {}),
           })}
           className={component.type === "orserdu-image-text-block" ? "rich-text-editor-reset-block-spacing" : undefined}
-          style={{ minHeight: "100px" }}
+          style={{ minHeight: "100px", color: textColor }}
         />
         <p className="mt-1 text-[11px] text-gray-400">
           Select text to format it, change its color, or add a link.
         </p>
       </div>
+      {isOrserdu && (
+        <TextColorPresets value={selectionColor?.componentId === component.id ? selectionColor.color : textColor} onChange={color => {
+          if (!applySelectionColor?.current?.(color)) onUpdateComponent({ color }, true);
+        }} />
+      )}
       {component.type === "orserdu-image-text-block" && (
         <div className="space-y-3">
+          <div>
+            <Label>Font Size</Label>
+            <FontSizeInput
+              value={component.fontSize || "14px"}
+              onChange={(fontSize) => onUpdateComponent({ fontSize }, true)}
+            />
+          </div>
           <div>
             <Label>Line Height</Label>
             <LineHeightInput
@@ -1004,17 +1134,11 @@ function ImageTextBlockProperties({
           </div>
           <div>
             <Label htmlFor={`image-text-paragraph-spacing-${component.id}`}>Paragraph Spacing (px)</Label>
-            <Input
+            <PropertyNumberInput
               id={`image-text-paragraph-spacing-${component.id}`}
-              type="number"
-              min={0}
               max={200}
-              step={1}
               value={component.paragraphSpacingPx ?? 0}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
-              }}
+              onCommit={paragraphSpacingPx => onUpdateComponent({ paragraphSpacingPx }, true)}
             />
             <p className="mt-1 text-[11px] text-gray-400">
               Sets the extra gap between paragraphs. No extra space is added before the first or after the last paragraph.
@@ -1063,11 +1187,13 @@ function ImageTextBlockProperties({
 
 export function PropertiesPanel({
   component,
+  formattingRef,
   onUpdateComponent,
   onDeleteComponent,
   onSaveAsCustom,
   onSaveHtmlBlock,
 }: PropertiesPanelProps) {
+  const { applySelectionColor, selectionColor } = useContext(BuilderToolbarContext);
   const [Links, setLinks] = useState<{ href: string; text: string; color: string }[]>([]);
   const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
   const [isRawHtmlEditorOpen, setIsRawHtmlEditorOpen] = useState(false);
@@ -1187,295 +1313,130 @@ export function PropertiesPanel({
 
   const renderProperties = () => {
     switch (component.type) {
-      case "section":
+      case "section": {
+        const columns = getSectionColumns(component);
+        const updateColumns = (children: EmailComponent[]) => onUpdateComponent({ children, columns: children.length });
+        const updateColumn = (id: string, updates: Partial<EmailComponent>) => {
+          if (id === component.id) onUpdateComponent(updates);
+          else updateColumns(columns.map(column => column.id === id ? { ...column, ...updates } : column));
+        };
+        const columnFields = (column: EmailComponent, index: number) => {
+          const position = isColumn ? "Column" : `Column ${index + 1}`;
+          return (
+            <div className="space-y-2">
+              <ColumnSizeInput id={`${column.id}-width`} label="Width" width value={column.columnWidth}
+                onChange={columnWidth => updateColumn(column.id, { columnWidth })} />
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={column.columnAlignment || "left"} onValueChange={columnAlignment => updateColumn(column.id, { columnAlignment: columnAlignment as EmailComponent["columnAlignment"] })}>
+                  <SelectTrigger aria-label={`${position} horizontal alignment`}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={column.columnVerticalAlignment || "top"} onValueChange={columnVerticalAlignment => updateColumn(column.id, { columnVerticalAlignment: columnVerticalAlignment as EmailComponent["columnVerticalAlignment"] })}>
+                  <SelectTrigger aria-label={`${position} vertical alignment`}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="middle">Middle</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          );
+        };
         return (
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="backgroundColor">Background Color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
-            </div>
-            <div>
-              <Label htmlFor="borderRadius">Border Radius</Label>
-              <Input
-                id="borderRadius"
-                value={component.borderRadius || "0px"}
-                onChange={(e) =>
-                  onUpdateComponent({ borderRadius: e.target.value })
-                }
-                placeholder="0px"
-              />
-            </div>
-
-            {/* Column-specific properties */}
-            {isColumn && (
-              <>
-                <div className="border-t pt-4">
-                  <h4 className="font-medium text-gray-700 mb-3">
-                    Column Layout
-                  </h4>
-
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="columnAlignment">
-                        Horizontal Alignment
-                      </Label>
-                      <Select
-                        value={component.columnAlignment || "left"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({
-                            columnAlignment: value as
-                              | "left"
-                              | "center"
-                              | "right",
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="left">Left</SelectItem>
-                          <SelectItem value="center">Center</SelectItem>
-                          <SelectItem value="right">Right</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnVerticalAlignment">
-                        Vertical Alignment
-                      </Label>
-                      <Select
-                        value={component.columnVerticalAlignment || "top"}
-                        onValueChange={(value) =>
-                          onUpdateComponent({
-                            columnVerticalAlignment: value as
-                              | "top"
-                              | "middle"
-                              | "bottom",
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="top">Top</SelectItem>
-                          <SelectItem value="middle">Middle</SelectItem>
-                          <SelectItem value="bottom">Bottom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnMinHeight">Minimum Height</Label>
-                      <Input
-                        id="columnMinHeight"
-                        value={component.columnMinHeight || "120px"}
-                        onChange={(e) =>
-                          onUpdateComponent({ columnMinHeight: e.target.value })
-                        }
-                        placeholder="120px"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="columnWidth">Column Width</Label>
-                      <Input
-                        id="columnWidth"
-                        value={component.columnWidth || "auto"}
-                        onChange={(e) =>
-                          onUpdateComponent({ columnWidth: e.target.value })
-                        }
-                        placeholder="auto, 50%, 200px"
-                      />
-                    </div>
-                    
+            {isColumn ? columnFields(component, 0) : (
+              <section aria-label="Columns" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-slate-900">Columns</h4>
+                  <Button type="button" size="sm" variant="outline" disabled={columns.length >= 6}
+                    onClick={() => onUpdateComponent(resizeSectionColumns(component, columns.length + 1))}>
+                    <Plus className="h-4 w-4" /> Add column
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Count</Label>
+                    <Select value={String(columns.length)} onValueChange={count => onUpdateComponent(resizeSectionColumns(component, Number(count)))}>
+                      <SelectTrigger aria-label="Column count"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6].map(count => <SelectItem key={count} value={String(count)}>{count}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Direction</Label>
+                    <Select value={component.direction || "column"} disabled={columns.length === 1}
+                      onValueChange={direction => onUpdateComponent({ direction: direction as EmailComponent["direction"] })}>
+                      <SelectTrigger aria-label="Column direction"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="row">Side by side</SelectItem>
+                        <SelectItem value="column">Stacked</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </>
+                {columns.length > 1 && (
+                  <p className="text-xs text-slate-600">Reducing the count moves content to the last remaining column.</p>
+                )}
+                {columns.map((column, index) => (
+                  <div key={column.id} role="group" aria-label={`Column ${index + 1}`} className="space-y-2 rounded-md border border-slate-200 p-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-700">Column {index + 1}</p>
+                      {columns.length > 1 && (
+                        <div className="flex gap-1">
+                          {([-1, 1] as const).map(offset => {
+                            const target = index + offset;
+                            const Icon = offset < 0 ? ArrowLeft : ArrowRight;
+                            return <Button key={offset} type="button" variant="ghost" size="icon" className="h-7 w-7"
+                              aria-label={`Move column ${index + 1} ${offset < 0 ? "earlier" : "later"}`}
+                              disabled={target < 0 || target >= columns.length}
+                              onClick={() => {
+                                const reordered = [...columns];
+                                [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+                                updateColumns(reordered);
+                              }}><Icon className="h-4 w-4" /></Button>;
+                          })}
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-600"
+                            aria-label={`Remove column ${index + 1}`} onClick={() => {
+                              if (column.children?.length && !window.confirm("Remove this column and its content?")) return;
+                              updateColumns(columns.filter(item => item.id !== column.id));
+                            }}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      )}
+                    </div>
+                    {columnFields(column, index)}
+                  </div>
+                ))}
+              </section>
             )}
-
-            {/* Regular section properties */}
+            <div>
+              <Label>Background color</Label>
+              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+            </div>
+            <div>
+              <Label htmlFor="borderRadius">Border radius</Label>
+              <Input id="borderRadius" value={component.borderRadius || "0px"}
+                onChange={event => onUpdateComponent({ borderRadius: event.target.value })} />
+            </div>
             {!isColumn && (
               <>
-                <div>
-                  <Label htmlFor="direction">Layout Direction</Label>
-                  <Select
-                    value={component.direction || "column"}
-                    onValueChange={(value) =>
-                      onUpdateComponent({
-                        direction: value as "row" | "column",
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="column">Vertical (Column)</SelectItem>
-                      <SelectItem value="row">Horizontal (Row)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="maxWidth">Max Width</Label>
-                  <Input
-                    id="maxWidth"
-                    value={component.maxWidth || "100%"}
-                    onChange={(e) =>
-                      onUpdateComponent({ maxWidth: e.target.value })
-                    }
-                    placeholder="100%"
-                  />
-                </div>
+                <ColumnSizeInput id="maxWidth" label="Max width" width value={component.maxWidth}
+                  onChange={maxWidth => onUpdateComponent({ maxWidth })} />
                 <div>
                   <Label htmlFor="margin">Margin</Label>
-                  <Input
-                    id="margin"
-                    value={component.margin || "0"}
-                    onChange={(e) =>
-                      onUpdateComponent({ margin: e.target.value })
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Column Width Controls for Parent Multi-Column Sections */}
-            {!isColumn && component.children && component.children.length > 1 && (
-              <>
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium text-gray-700 mb-3">
-                    Column Widths
-                  </h4>
-
-                  {/* Preset Buttons */}
-                  <div className="mb-4">
-                    <Label className="text-sm mb-2 block">Presets</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {component.children.length === 2 && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: "50%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            50/50
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "30%" : "70%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            30/70
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "70%" : "30%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            70/30
-                          </Button>
-                        </>
-                      )}
-                      {component.children.length === 3 && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child) => ({
-                                ...child,
-                                columnWidth: "33.33%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            33/33/33
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 1 ? "50%" : "25%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            25/50/25
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const updatedChildren = component.children!.map((child, idx) => ({
-                                ...child,
-                                columnWidth: idx === 0 ? "50%" : "25%"
-                              }));
-                              onUpdateComponent({ children: updatedChildren });
-                            }}
-                          >
-                            50/25/25
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Individual Column Width Inputs */}
-                  <div className="space-y-3">
-                    {component.children.map((child, idx) => (
-                      <div key={child.id}>
-                        <Label htmlFor={`column-width-${idx}`}>
-                          Column {idx + 1} Width
-                        </Label>
-                        <Input
-                          id={`column-width-${idx}`}
-                          value={child.columnWidth || (component.children!.length === 2 ? "50%" : "33.33%")}
-                          onChange={(e) => {
-                            const updatedChildren = component.children!.map((c, i) =>
-                              i === idx ? { ...c, columnWidth: e.target.value } : c
-                            );
-                            onUpdateComponent({ children: updatedChildren });
-                          }}
-                          placeholder="50%, 200px, auto"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <Input id="margin" value={component.margin || "0"}
+                    onChange={event => onUpdateComponent({ margin: event.target.value })} />
                 </div>
               </>
             )}
           </div>
         );
+      }
 
       case "Salutation":
         return (
@@ -1548,77 +1509,74 @@ export function PropertiesPanel({
       case "text":
         return (
           <div className="space-y-4">
-            <div>
-              <Label>Font Size</Label>
-              <FontSizeInput value={component.fontSize || "12px"} onChange={(v) => onUpdateComponent({ fontSize: v })} />
-            </div>
-            <div>
-              <Label htmlFor="color">Text Color</Label>
-              <ColorInput value={component.color || "#000000"} onChange={(v) => onUpdateComponent({ color: v })} />
-            </div>
-            <div>
-              <Label>Font weight</Label>
-              <Select
-                value={component.fontWeight || "normal"}
-                onValueChange={(value) =>
-                  onUpdateComponent({ fontWeight: value as any })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="bold">Bold</SelectItem>
-                  <SelectItem value="lighter">Lighter</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="backgroundColor">Background color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
-            </div>
-            <div>
-              <Label htmlFor="textAlign">Text Align</Label>
-              <Select
-                value={component.textAlign || "left"}
-                onValueChange={(value) =>
-                  onUpdateComponent({ textAlign: value as any })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="lineHeight">Line Height</Label>
-              <LineHeightInput
-                value={component.lineHeight || "14px"}
-                onChange={(v) => onUpdateComponent({ lineHeight: v })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="paragraphSpacingPx">Extra Space Between Lines (px)</Label>
-              <Input
-                id="paragraphSpacingPx"
-                type="number"
-                min={0}
-                max={200}
-                step={1}
-                value={component.paragraphSpacingPx ?? 0}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  onUpdateComponent({ paragraphSpacingPx: Math.max(0, Math.min(200, value || 0)) }, true);
-                }}
-              />
-              <p className="mt-1 text-[10px] text-gray-400">Sets the extra gap after each paragraph made with Enter. Press Enter twice for a blank paragraph. No extra space is added before the first or after the last paragraph.</p>
-            </div>
+            <section aria-label="Text" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+              <h3 className="text-xs font-semibold text-slate-900">Text</h3>
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-600">Font family</Label>
+                <Select value={component.fontFamily || "Arial, sans-serif"} onValueChange={fontFamily => onUpdateComponent({ fontFamily })}>
+                  <SelectTrigger aria-label="Font family">
+                    <SelectValue>{(component.fontFamily || "Arial").split(",")[0]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEXT_FONT_FAMILIES.map(font => (
+                      <SelectItem key={font} value={font}>{font.split(",")[0]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Weight</Label>
+                  <Select value={component.fontWeight || "normal"} onValueChange={fontWeight => onUpdateComponent({ fontWeight: fontWeight as EmailComponent["fontWeight"] })}>
+                    <SelectTrigger aria-label="Font weight"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="bold">Bold</SelectItem>
+                      <SelectItem value="lighter">Lighter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Size</Label>
+                  <FontSizeInput value={component.fontSize || "12px"} onChange={fontSize => onUpdateComponent({ fontSize })} />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label className="text-xs text-slate-600">Line height</Label>
+                  <LineHeightInput value={component.lineHeight || "14px"} onChange={lineHeight => onUpdateComponent({ lineHeight })} />
+                </div>
+              </div>
+              <div role="group" aria-label="Text alignment" className="grid grid-cols-3 gap-1 rounded-md border border-slate-200 bg-slate-50 p-1">
+                {([
+                  ["left", AlignLeft],
+                  ["center", AlignCenter],
+                  ["right", AlignRight],
+                ] as const).map(([textAlign, Icon]) => {
+                  const selected = (component.textAlign || "left") === textAlign;
+                  return (
+                    <Button key={textAlign} type="button" variant="ghost" size="sm"
+                      aria-label={`Align ${textAlign}`} aria-pressed={selected} title={`Align ${textAlign}`}
+                      className={selected ? "bg-white text-slate-900 shadow-sm hover:bg-white" : "text-slate-500"}
+                      onClick={() => onUpdateComponent({ textAlign })}>
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  );
+                })}
+              </div>
+              <div>
+                <Label>Block color</Label>
+                <ColorInput textColor showBrandSwatches={false} value={component.color || "#000000"} onChange={color => onUpdateComponent({ color })} />
+              </div>
+              <TextColorPresets value={selectionColor?.componentId === component.id ? selectionColor.color : component.color || "#000000"} onChange={hex => {
+                if (!applySelectionColor?.current?.(hex)) onUpdateComponent({ color: hex });
+              }} />
+              <div ref={formattingRef} data-formatting-placement="text-section" className="border-t border-slate-200 pt-2 empty:hidden" />
+            </section>
+            <section aria-label="Background" className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+              <div>
+                <Label>Background color</Label>
+                <ColorInput showBrandSwatches={false} value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+              </div>
+            </section>
             <div className="pt-2">
               <Button
                 variant="outline"
@@ -1755,6 +1713,31 @@ export function PropertiesPanel({
           </div>
         );
 
+      case "design-shape":
+        return (
+          <div className="space-y-4">
+            <Label>Shape</Label>
+            <Select value={component.shape || "rectangle"} onValueChange={(shape) => onUpdateComponent({ shape: shape as EmailComponent["shape"], height: shape === "line" ? "2px" : "60px", width: shape === "circle" ? "60px" : "140px" })}>
+              <SelectTrigger aria-label="Shape"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rectangle">Rectangle</SelectItem>
+                <SelectItem value="circle">Circle</SelectItem>
+                <SelectItem value="line">Line</SelectItem>
+              </SelectContent>
+            </Select>
+            <Label htmlFor="shape-width">{component.shape === "circle" ? "Diameter" : "Width"}</Label>
+            <Input id="shape-width" value={component.width ?? ""} onChange={event => onUpdateComponent({ width: event.target.value })} placeholder="140px" />
+            {component.shape !== "circle" && (
+              <>
+                <Label htmlFor="shape-height">{component.shape === "line" ? "Thickness" : "Height"}</Label>
+                <Input id="shape-height" value={component.height ?? ""} onChange={event => onUpdateComponent({ height: event.target.value })} placeholder="60px" />
+              </>
+            )}
+            <Label>Fill</Label>
+            <ColorInput value={component.backgroundColor || "#006937"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
+          </div>
+        );
+
       case "button":
         return (
           <div className="space-y-4">
@@ -1794,6 +1777,39 @@ export function PropertiesPanel({
               <ColorInput value={component.color || "#ffffff"} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
+              <Label>Button effects</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-transparent" checked={component.backgroundColor === "transparent"}
+                  onCheckedChange={checked => onUpdateComponent({ backgroundColor: checked === true ? "transparent" : "#007bff", buttonGradientColor: "" })} />
+                <Label htmlFor="button-transparent">Transparent fill</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-gradient" checked={!!component.buttonGradientColor} disabled={component.backgroundColor === "transparent"}
+                  onCheckedChange={checked => onUpdateComponent({ buttonGradientColor: checked === true ? "#003b80" : "" })} />
+                <Label htmlFor="button-gradient">Gradient fill</Label>
+              </div>
+              {component.buttonGradientColor && (
+                <ColorInput value={component.buttonGradientColor} onChange={buttonGradientColor => onUpdateComponent({ buttonGradientColor })} />
+              )}
+              <div className="flex items-center gap-2">
+                <Checkbox id="button-shadow" checked={!!component.buttonShadow}
+                  onCheckedChange={checked => onUpdateComponent({ buttonShadow: checked === true })} />
+                <Label htmlFor="button-shadow">Drop shadow</Label>
+              </div>
+              <Label>Button Outline</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="button-outline"
+                  checked={!!component.buttonOutlineColor}
+                  onCheckedChange={(checked) => onUpdateComponent({ buttonOutlineColor: checked === true ? component.color || "#ffffff" : "" })}
+                />
+                <Label htmlFor="button-outline">Show outline</Label>
+              </div>
+              {component.buttonOutlineColor && (
+                <ColorInput value={component.buttonOutlineColor} onChange={(buttonOutlineColor) => onUpdateComponent({ buttonOutlineColor })} />
+              )}
+            </div>
+            <div>
               <Label htmlFor="borderRadius">Border Radius</Label>
               <Input
                 id="borderRadius"
@@ -1807,24 +1823,44 @@ export function PropertiesPanel({
           </div>
         );
 
-      case "divider":
+      case "divider": {
+        const vertical = component.dividerOrientation === "vertical";
         return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="height">Height</Label>
-              <Input
-                id="height"
-                value={component.height || "1px"}
-                onChange={(e) => onUpdateComponent({ height: e.target.value })}
-                placeholder="1px"
-              />
+          <div className="space-y-3">
+            <Select value={component.dividerOrientation || "horizontal"}
+              onValueChange={dividerOrientation => onUpdateComponent({
+                dividerOrientation: dividerOrientation as EmailComponent["dividerOrientation"],
+                ...(dividerOrientation === "vertical" && component.dividerLength?.endsWith("%") ? { dividerLength: "" } : {}),
+              })}>
+              <SelectTrigger aria-label="Divider orientation"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horizontal">Horizontal</SelectItem>
+                <SelectItem value="vertical">Vertical</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <ColumnSizeInput id="divider-stroke" label="Stroke width" value={component.dividerStroke || component.height || "1px"}
+                onChange={dividerStroke => onUpdateComponent({ dividerStroke: dividerStroke || "1px" })} />
+              <ColumnSizeInput key={String(vertical)} id="divider-length" label={vertical ? "Height" : "Width"}
+                width={!vertical} value={component.dividerLength || (vertical ? "48px" : "100%")}
+                onChange={dividerLength => onUpdateComponent({ dividerLength })} />
             </div>
+            <Select value={component.textAlign || (vertical ? "center" : "left")}
+              onValueChange={textAlign => onUpdateComponent({ textAlign: textAlign as EmailComponent["textAlign"] })}>
+              <SelectTrigger aria-label="Divider alignment"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
             <div>
-              <Label htmlFor="backgroundColor">Color</Label>
-              <ColorInput value={component.backgroundColor || "#e0e0e0"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+              <Label>Color</Label>
+              <ColorInput value={component.backgroundColor || DEFAULT_DIVIDER_COLOR} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
             </div>
           </div>
         );
+      }
 
       case "cta-button":
         return (
@@ -1903,7 +1939,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Default Link Color</Label>
-              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput value={getOrserduFooterLinkColor(component.color)} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div className="mt-3">
               <Label className="text-md mb-2">Links</Label>
@@ -1917,7 +1953,7 @@ export function PropertiesPanel({
                   <Label className="text-xs">Title</Label>
                   <Input value={link.title || ""} onChange={(e) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, title: e.target.value } : l) })} placeholder='title="…" tooltip on hover' />
                   <Label className="text-xs">Color</Label>
-                  <ColorInput value={link.color || component.color || "#007bff"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })} />
+                  <ColorInput value={getOrserduFooterLinkColor(link.color || component.color)} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })} />
                   <Label className="text-xs">Font Size</Label>
                   <FontSizeInput value={(link as any).fontSize || component.fontSize || "14px"} onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, fontSize: v } as any : l) })} />
                 </div>
@@ -1925,76 +1961,28 @@ export function PropertiesPanel({
             </div>
           </div>
         );   
-        case "footer-link-2":  
+      case "footer-link-2":
         return (
-          <div className="space-y-2">
-            <h1 className="font-bold">Logo 1 </h1>
-            <div>
-              <h1 className="font-semibold">image </h1>
-              <ImageUpload
-                currentImage={component.logoA.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoA.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoA);
-                }}
-              />
-            </div>
-            <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-           
-
-            <h1 className="font-bold">Logo 2 </h1>
-            <div>
-              <ImageUpload
-                currentImage={component.logoB.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoB.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoB);
-                }}
-              />
-            </div>
-             <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
+          <div className="space-y-3">
+            {(["logoA", "logoB"] as const).map((key, index) => {
+              const logo = component[key] ?? { imgSrc: "", altTex: "", href: "" };
+              const update = (changes: Partial<EmailComponent["logoA"]>) =>
+                onUpdateComponent({ [key]: { ...logo, ...changes } });
+              return (
+                <section key={key} className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                  <h4>Logo {index + 1}</h4>
+                  <ImageUpload currentImage={logo.imgSrc} onImageUpload={imgSrc => update({ imgSrc })} />
+                  <div>
+                    <Label htmlFor={`${key}-alt`}>Alt text</Label>
+                    <Input id={`${key}-alt`} value={logo.altTex} onChange={event => update({ altTex: event.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor={`${key}-href`}>Link URL</Label>
+                    <Input id={`${key}-href`} type="url" value={logo.href} onChange={event => update({ href: event.target.value })} />
+                  </div>
+                </section>
+              );
+            })}
             <div>
               <Label htmlFor="fontSize">Font Size</Label>
               <Input
@@ -2138,141 +2126,6 @@ export function PropertiesPanel({
 
            </div>
         );   
-      case "footer-link-2":  
-        return (
-          <div className="space-y-2">
-            <h1 className="font-bold">Logo 1 </h1>
-            <div>
-              <h1 className="font-semibold">image </h1>
-              <ImageUpload
-                currentImage={component.logoA.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoA.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoA);
-                }}
-              />
-            </div>
-            <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoA.altTex}
-              onChange={(e) => {
-                component.logoA.altTex = e.target.value;
-                onUpdateComponent(component.logoA);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-           
-
-            <h1 className="font-bold">Logo 2 </h1>
-            <div>
-              <ImageUpload
-                currentImage={component.logoB.imgSrc}
-                onImageUpload={(imageUrl) => {
-                  component.logoB.imgSrc = imageUrl;
-                  onUpdateComponent(component.logoB);
-                }}
-              />
-            </div>
-             <div>
-                <Label >alt text</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="alt-text"
-            />
-            </div>
-            <div>
-               <Label>Link</Label>
-            <Input
-              value={component.logoB.altTex}
-              onChange={(e) => {
-                component.logoB.altTex = e.target.value;
-                onUpdateComponent(component.logoB);
-              }}
-              placeholder="Link URL"
-            />
-            </div>
-            <div>
-              <Label htmlFor="fontSize">Font Size</Label>
-              <Input
-                id="fontSize"
-                value={component.fontSize || "14px"}
-                onChange={(e) =>
-                  onUpdateComponent({ fontSize: e.target.value })
-                }
-                placeholder="14px"
-              />
-            </div>
-            <div>
-              <Label htmlFor="color">Text Color</Label>
-              <ColorInput value={component.color || "#007bff"} onChange={(v) => onUpdateComponent({ color: v })} />
-            </div>
-
-            <div className="mt-3">
-              <Label className="text-md mb-2">Links</Label>
-              {component.links?.map((link, index) => (
-                <div
-                  key={index}
-                  className="flex  flex-col border-2 rounded-md p-1 gap-2 mb-2"
-                >
-                  <Label>Link text</Label>
-                  <Input
-                    value={link.text}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, text: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link text"
-                  />
-                  <Label>Link url</Label>
-                  <Input
-                    value={link.href}
-                    onChange={(e) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, href: e.target.value } : l
-                        ),
-                      })
-                    }
-                    placeholder="Link URL"
-                  />
-                  <Label>Link title</Label>
-                  <DeferredTextInput
-                    value={link.title || ""}
-                    onCommit={(value) =>
-                      onUpdateComponent({
-                        links: component.links?.map((l, i) =>
-                          i === index ? { ...l, title: value } : l
-                        ),
-                      })
-                    }
-                    placeholder='title="…" tooltip on hover'
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
       case "bullet-list":
         return (
           <div className="space-y-4">
@@ -2337,8 +2190,23 @@ export function PropertiesPanel({
               </Select>
             </div>
             <div>
-              <Label htmlFor="bulletColor">Marker Color</Label>
+              <Label htmlFor="bulletColor">Default Marker Color</Label>
               <ColorInput value={component.markerColor || "#000000"} onChange={(v) => onUpdateComponent({ markerColor: v })} />
+            </div>
+            <div>
+              {(component.listItems ?? []).map((_, index) => (
+                <div key={index}>
+                  <Label>Marker {index + 1} Color</Label>
+                  <ColorInput value={component.listMarkerColors?.[index] || component.markerColor || "#000000"}
+                    onChange={(color) => onUpdateComponent({ listMarkerColors: { ...component.listMarkerColors, [index]: color } })} />
+                  {component.listMarkerColors?.[index] && (
+                    <Button type="button" size="sm" variant="ghost"
+                      onClick={() => onUpdateComponent({ listMarkerColors: { ...component.listMarkerColors, [index]: "" } })}>
+                      Use default marker color
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
             <div>
               <Label htmlFor="discSize">Marker Size</Label>
@@ -2346,13 +2214,10 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="spaceBetweenItems">Space Between Items (px)</Label>
-              <Input
+              <PropertyNumberInput
                 id="spaceBetweenItems"
-                type="number"
-                min={0}
-                value={(component.spaceBetweenItems || "5px").replace(/px$/i, "")}
-                onChange={(e) => onUpdateComponent({ spaceBetweenItems: e.target.value ? `${e.target.value}px` : "5px" })}
-                placeholder="5"
+                value={Number.parseFloat(component.spaceBetweenItems ?? "5") || 0}
+                onCommit={value => onUpdateComponent({ spaceBetweenItems: `${value}px` })}
               />
             </div>
 
@@ -2501,11 +2366,11 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Font Size</Label>
-              <FontSizeInput value={component.fontSize || "12px"} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
+              <FontSizeInput value={component.fontSize || DEFAULT_CUSTOM_TEXT_FONT_SIZE} onChange={(fontSize) => onUpdateComponent({ fontSize })} />
             </div>
             <div>
               <Label>Line Height</Label>
-              <LineHeightInput value={component.lineHeight || "14px"} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
+              <LineHeightInput value={component.lineHeight || DEFAULT_CUSTOM_TEXT_LINE_HEIGHT} onChange={(lineHeight) => onUpdateComponent({ lineHeight })} />
             </div>
             <div>
               <Label>Font Family</Label>
@@ -2524,11 +2389,16 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label>Text Color</Label>
-              <ColorInput value={component.color || "#5D5D5D"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput textColor showBrandSwatches={false} value={component.color || DEFAULT_CUSTOM_TEXT_COLOR}
+                onChange={color => onUpdateComponent({ color })} />
+              <div className="mt-2">
+                <TextColorPresets value={component.color || DEFAULT_CUSTOM_TEXT_COLOR}
+                  onChange={color => onUpdateComponent({ color })} />
+              </div>
             </div>
             <div>
               <Label>Background Color</Label>
-              <ColorInput value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
+              <ColorInput showBrandSwatches={false} value={component.backgroundColor || "#ffffff"} onChange={(v) => onUpdateComponent({ backgroundColor: v })} />
             </div>
             <div>
               <Label>Text Align</Label>
@@ -2706,15 +2576,25 @@ export function PropertiesPanel({
               />
               <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
             </div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label>Box Background</Label>
-                <ColorInput value={comp.boxBgColor || "#FFD500"} onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })} />
-              </div>
-              <div className="flex-1">
-                <Label>Text Color</Label>
-                <ColorInput value={comp.boxTextColor || "#002E6D"} onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })} />
-              </div>
+            <div className="space-y-2">
+              {([
+                ["Background color", "boxBgColor", "#FFD500"],
+                ["Text color", "boxTextColor", "#002E6D"],
+              ] as const).map(([label, property, fallback]) => (
+                <details key={property} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                    {label}
+                    <span aria-hidden="true" className="float-right h-5 w-5 rounded border border-slate-200"
+                      style={{ backgroundColor: comp[property] || fallback }} />
+                  </summary>
+                  <ColorInput label={label} showBrandSwatches={false} value={comp[property] || fallback}
+                    onChange={color => onUpdateComponent({ [property]: color })} />
+                  <div className="mt-2">
+                    <TextColorPresets value={comp[property] || fallback}
+                      onChange={color => onUpdateComponent({ [property]: color })} />
+                  </div>
+                </details>
+              ))}
             </div>
             <div>
               <Label>Font Size</Label>
@@ -2801,7 +2681,7 @@ export function PropertiesPanel({
         };
         const addLinkItem = () => {
           onUpdateComponent({
-            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: "#007bff", suffixText: "", bold: false }],
+            linkItems: [...linkItems, { prefixText: "", linkText: "", linkHref: "#", linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR, suffixText: "", bold: false }],
           } as any);
         };
         const removeLinkItem = (index: number) => {
@@ -2868,7 +2748,7 @@ export function PropertiesPanel({
                   </div>
                   <div>
                     <Label>Link URL</Label>
-                    <Input value={item.linkHref || ""} onChange={(e) => updateLinkItem(i, { linkHref: e.target.value })} placeholder="https://..." />
+                    <Input value={resolveOrserduReportLinkHref(item.linkHref)} onChange={(e) => updateLinkItem(i, { linkHref: e.target.value })} placeholder="https://..." />
                   </div>
                   <div>
                     <Label>Text after link</Label>
@@ -2877,7 +2757,7 @@ export function PropertiesPanel({
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Label>Link Color</Label>
-                      <ColorInput value={item.linkColor || "#007bff"} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
+                      <ColorInput value={item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR} onChange={(v) => updateLinkItem(i, { linkColor: v })} />
                     </div>
                     <div className="flex-1">
                       <Label>Bold</Label>
@@ -3049,7 +2929,7 @@ export function PropertiesPanel({
             </div>
             <div>
               <Label htmlFor="color">Link Color</Label>
-              <ColorInput value={component.color || "#0563C1"} onChange={(v) => onUpdateComponent({ color: v })} />
+              <ColorInput value={getOrserduFooterLinkColor(component.color)} onChange={(v) => onUpdateComponent({ color: v })} />
             </div>
             <div>
               <Label htmlFor="backgroundColor">Background Color</Label>
@@ -3106,7 +2986,7 @@ export function PropertiesPanel({
                   />
                   <Label className="text-xs">Color</Label>
                   <ColorInput
-                    value={link.color || component.color || "#0563C1"}
+                    value={getOrserduFooterLinkColor(link.color || component.color)}
                     onChange={(v) => onUpdateComponent({ links: component.links?.map((l, i) => i === index ? { ...l, color: v } : l) })}
                   />
                   <Label className="text-xs">Font Size</Label>
@@ -3336,176 +3216,41 @@ export function PropertiesPanel({
         );
       }
 
-        case "orserdu-highlight-box":
-        case "geron-highlight-box": {
-          const c = component;
+        case "orserdu-isi-animated":
+        case "isi": {
+          const bulletColor = component.isiBulletColor || "#69d6b5";
           return (
-            <div className="space-y-4">
-              {/* Box text */}
-              <div>
-                <Label>Box Text</Label>
-                <RichTextEditor
-                  isSelected
-                  value={c.boxText ?? ""}
-                  onChange={(boxText) => onUpdateComponent({ boxText }, true)}
-                  style={{ minHeight: "100px" }}
-                />
-                <p className="mt-1 text-[11px] text-gray-400">Select text to format it, change its color or size, or add a link.</p>
-              </div>
-
-              {/* Colors */}
-              <div>
-                <Label>Box Background Color</Label>
-                <ColorInput
-                  value={c.boxBgColor ?? "#FFD500"}
-                  onChange={(boxBgColor) => onUpdateComponent({ boxBgColor })}
-                />
-              </div>
-              <div>
-                <Label>Text Color</Label>
-                <ColorInput
-                  value={c.boxTextColor ?? "#002E6D"}
-                  onChange={(boxTextColor) => onUpdateComponent({ boxTextColor })}
-                />
-              </div>
-
-              {/* Typography */}
-              <div>
-                <Label>Font Size</Label>
-                <FontSizeInput
-                  value={c.boxFontSize ?? "14px"}
-                  onChange={(boxFontSize) => onUpdateComponent({ boxFontSize })}
-                />
-              </div>
-              <div>
-                <Label>Line Height</Label>
-                <LineHeightInput
-                  value={c.boxLineHeight ?? "18px"}
-                  onChange={(boxLineHeight) => onUpdateComponent({ boxLineHeight })}
-                />
-              </div>
-              <div>
-                <Label>Font Weight</Label>
-                <Select
-                  value={c.boxFontWeight ?? "700"}
-                  onValueChange={(boxFontWeight) => onUpdateComponent({ boxFontWeight })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="400">Normal</SelectItem>
-                    <SelectItem value="700">Bold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Inner padding (inside the box) */}
-              <div>
-                <Label>Inner Padding (inside box)</Label>
-                <PaddingInput
-                  value={c.boxPadding ?? "16px 18px"}
-                  onChange={(v) => onUpdateComponent({ boxPadding: v } as any)}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Controls space inside the coloured box.</p>
-              </div>
-
-              {/* Outer padding — left/right are FIXED at 20px to match email standard */}
-              <div>
-                <Label>Outer Padding (around box)</Label>
-                <PaddingInput
-                  value={c.outerPadding ?? "0 20px 20px 20px"}
-                  onChange={(v) => onUpdateComponent({ outerPadding: v } as any)}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Left/right control the side margins. Standard email uses 20px.</p>
-              </div>
-
-              {/* Space after box */}
-              <div>
-                <Label>Space After Box (px)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={c.spacingAfterBox ?? "20"}
-                  onChange={(e) => onUpdateComponent({ spacingAfterBox: e.target.value } as any)}
-                  placeholder="20"
-                />
-              </div>
+            <div className="space-y-3">
+              <section aria-label="Bullet markers" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                <h4>Bullet markers</h4>
+                <ColorInput label="Bullet color" textColor showBrandSwatches={false} value={bulletColor}
+                  onChange={isiBulletColor => onUpdateComponent({ isiBulletColor })} />
+                <TextColorPresets value={bulletColor} onChange={isiBulletColor => onUpdateComponent({ isiBulletColor })} />
+              </section>
+              {component.type === "isi" && !component.isiHtml && (
+                <section aria-label="Heading colors" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                  <h4>Heading colors</h4>
+                  <div>
+                    <Label>ISI heading</Label>
+                    <ColorInput label="ISI heading color" showBrandSwatches={false} value={component.isiHeadingColor || "#006937"}
+                      onChange={isiHeadingColor => onUpdateComponent({ isiHeadingColor })} />
+                  </div>
+                  <div>
+                    <Label>Indication heading</Label>
+                    <ColorInput label="Indication heading color" showBrandSwatches={false} value={component.indicationHeadingColor || "#006937"}
+                      onChange={indicationHeadingColor => onUpdateComponent({ indicationHeadingColor })} />
+                  </div>
+                </section>
+              )}
+              <section aria-label="ISI spacing" className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                <h4>Spacing</h4>
+                <PaddingInput value={getOrserduIsiOuterPadding(component.padding)}
+                  onChange={padding => onUpdateComponent({ padding }, true)} />
+              </section>
+              <p className="text-xs text-slate-600">Select words on the canvas to format the copy.</p>
             </div>
           );
         }
-
-        case "orserdu-isi-animated":
-          return (
-            <div className="space-y-4">
-              <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-600">
-                Select text in the ISI block on the canvas to edit it or change its color using the inline toolbar.
-              </div>
-              <div>
-                <Label>Padding (top, right, bottom, left)</Label>
-                <PaddingInput
-                  value={getOrserduIsiOuterPadding(component.padding)}
-                  onChange={(padding) => onUpdateComponent({ padding }, true)}
-                />
-              </div>
-            </div>
-          );
-
-        case "isi":
-          return (
-            <div className="space-y-4">
-              <div>
-                <Label>Padding (top, right, bottom, left)</Label>
-                <PaddingInput
-                  value={getOrserduIsiOuterPadding(component.padding)}
-                  onChange={(padding) => onUpdateComponent({ padding }, true)}
-                />
-              </div>
-              <div>
-                <Label>Background Color</Label>
-                <ColorInput
-                  value={component.backgroundColor || "#ffffff"}
-                  onChange={(v) => onUpdateComponent({ backgroundColor: v })}
-                />
-              </div>
-              <div>
-                <Label>ISI Heading Color</Label>
-                <ColorInput
-                  value={(component as any).isiHeadingColor || "#006937"}
-                  onChange={(v) => onUpdateComponent({ isiHeadingColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Indication Heading Color</Label>
-                <ColorInput
-                  value={(component as any).indicationHeadingColor || "#006937"}
-                  onChange={(v) => onUpdateComponent({ indicationHeadingColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Bullet Color</Label>
-                <ColorInput
-                  value={(component as any).isiBulletColor || "#69d6b5"}
-                  onChange={(v) => onUpdateComponent({ isiBulletColor: v } as any)}
-                />
-              </div>
-              <div>
-                <Label>Font Size</Label>
-                <FontSizeInput
-                  value={component.fontSize || "12px"}
-                  onChange={(fontSize) => onUpdateComponent({ fontSize })}
-                />
-              </div>
-              <div>
-                <Label>Line Height</Label>
-                <LineHeightInput
-                  value={component.lineHeight || "14px"}
-                  onChange={(lineHeight) => onUpdateComponent({ lineHeight })}
-                />
-              </div>
-              <p className="text-[11px] text-gray-400">
-                To edit bullet content, select text on the canvas and use the inline toolbar.
-              </p>
-            </div>
-          );
 
         case "orserdu-isi-select":
           return (
@@ -3514,58 +3259,6 @@ export function PropertiesPanel({
               onUpdateComponent={onUpdateComponent}
             />
           );
-
-        case "ferring-footer":
-          return (
-            <div className="space-y-4">
-              <div>
-                <Label>Social Media Links</Label>
-                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
-                  {component.socialMediaLinks?.map((link, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2">
-                       <Input
-                      value={link.altText}
-                      />
-                      <Input
-                        value={link.href}
-                        onChange={(e) =>
-                          onUpdateComponent({ socialMediaLinks: component.socialMediaLinks?.map((l, i) =>
-                            i === index ? { ...l, href: e.target.value } : l
-                          )})
-                        }
-                        placeholder="Social media URL"
-                      />
-                      </div>
-                     ))}
-                </div>
-              </div>
-              <div>
-                <Label >Footer links</Label>
-                <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
-                  {component.links?.map((link, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2">
-                       <Input
-                      value={link.text}
-                      onChange={(e)=> onUpdateComponent({
-                        links: component.links?.map((l, i) => i === index ? { ...l, text: e.target.value } : l
-                        ),
-                      })}
-                      />
-                      <Input
-                        value={link.href}
-                        onChange={(e) =>
-                          onUpdateComponent({ links: component.links?.map((l, i) =>
-                            i === index ? { ...l, href: e.target.value } : l
-                          )})
-                        }
-                        placeholder="Footer link URL"
-                      />
-                      </div>
-                     ))}
-                </div>
-              </div>
-            </div>
-          )
 
           case "tryvio-isi":
             return (
@@ -4015,7 +3708,9 @@ export function PropertiesPanel({
             );
           case "raw-html":
             return (
-              <div className="flex items-center justify-center">
+              <div className="space-y-4">
+                <Label>Background color</Label>
+                <ColorInput value={component.backgroundColor || "#ffffff"} onChange={backgroundColor => onUpdateComponent({ backgroundColor })} />
                 <Button className="w-full" variant={"outline"} onClick={() => setIsRawHtmlEditorOpen(true)}><Code/>Add or Edit HTML</Button>
               </div>
             )
@@ -4254,11 +3949,11 @@ export function PropertiesPanel({
   };
 
   return (
-    <div className="eb-props space-y-5">
-      <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+    <div className="eb-props space-y-4">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <div
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+            "flex h-8 w-8 items-center justify-center rounded-lg ring-1",
             isColumn
               ? "bg-green-50 text-green-600 ring-green-100"
               : "bg-blue-50 text-blue-600 ring-blue-100",
@@ -4273,8 +3968,15 @@ export function PropertiesPanel({
               : (component.type?.charAt(0).toUpperCase() ?? "") +
                 component.type?.slice(1)}
           </h3>
-          <p className="text-xs text-gray-400">Properties</p>
         </div>
+        {onDeleteComponent && (
+          <Button type="button" variant="ghost" size="icon"
+            aria-label="Remove component" title="Remove component"
+            className="ml-auto h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600"
+            onClick={() => onDeleteComponent(component.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {component.type === "section" && (
@@ -4326,24 +4028,13 @@ export function PropertiesPanel({
         </div>
       )}
 
-      {onDeleteComponent && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full border-red-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() => onDeleteComponent(component.id)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remove this component
-        </Button>
-      )}
-
       {renderProperties()}
 
       {/* Common Properties */}
       {!hasDedicatedPaddingControl && (
-        <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+        <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
           <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <Move className="h-3.5 w-3.5" aria-hidden="true" />
             Spacing
           </h4>
           <div>
@@ -4364,19 +4055,20 @@ export function PropertiesPanel({
         </div>
       )}
 
-      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <MonitorSmartphone className="h-3.5 w-3.5" aria-hidden="true" />
           Responsive
         </h4>
         <div>
-          <Label htmlFor="diplayType">Display on</Label>
+          <Label htmlFor="displayType">Display on</Label>
           <Select
             value={component.displayType || "all"}
             onValueChange={(value) =>
               onUpdateComponent({ displayType: value as "all" | "mobile-only" | "desktop-only" })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id="displayType">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -4401,7 +4093,8 @@ export function PropertiesPanel({
               setBlockName(component.name || "");
               setIsSaveBlockOpen(true);
             }}
-            className="w-full bg-white hover:bg-gray-50"
+            size="sm"
+            className="bg-white hover:bg-gray-50"
           >
             <BookmarkPlus className="h-4 w-4 text-blue-600" />
             Save to Saved Blocks

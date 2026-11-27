@@ -2,13 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useVSBStore, VSBData } from '@/store/vsb-store';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Plus, Loader2, Download, Eye, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Download, Eye, Copy, Trash2, Undo2, Redo2 } from 'lucide-react';
 import VariableCopySection from '@/components/vsb-sections/VariableCopySection';
 import DesktopViewSection from '@/components/vsb-sections/DesktopViewSection';
 import MobileViewSection from '@/components/vsb-sections/MobileViewSection';
@@ -446,6 +446,7 @@ export default function VSBPage() {
       templateId,
       variableCopy: populatedTemplate,
       altNamePage: { images: [{ name: '', value: '' }] },
+      reviewedEmailerUpdatedAt: currentTemplate.updatedAt?.getTime() ?? 0,
       headerDetails: [
         { name: 'To', value: "[HCP\u2019s email address]" },
         { name: 'From', value: '[Variable friendly from] <[Variable from]>' },
@@ -530,16 +531,61 @@ export default function VSBPage() {
   }
 };
 
-  const handleUpdateData = (section: string, data: any) => {
-    if (!currentVsb) return;
+  type HistorySection = 'Variable Copy' | 'alt name page';
+  type History = { past: Partial<VSBData>[]; future: Partial<VSBData>[] };
+  const sectionHistory = useRef(new Map<string, History>());
 
-    let updates: Partial<VSBData> = {};
-    if (section === 'Variable Copy') updates.variableCopy = data;
-    if (section === 'alt name page') updates.altNamePage = data;
-    if (section === 'headerDetails') updates.headerDetails = data;
+  const captureSection = (vsb: VSBData, section: HistorySection): Partial<VSBData> =>
+    section === 'Variable Copy' ? {
+      variableCopy: vsb.variableCopy,
+      variableCopyHeadingColor: vsb.variableCopyHeadingColor || '#FF66CC',
+      projectTitleColor: vsb.projectTitleColor || '#006937',
+    } : { altNamePage: vsb.altNamePage };
 
-    updateVSB(currentVsb.id, updates);
+  const editSection = (section: HistorySection, updates: Partial<VSBData>) => {
+    const latest = useVSBStore.getState().currentVsb;
+    if (!latest || latest.id !== currentVsb?.id) return;
+    const key = `${latest.id}:${section}`;
+    const history = sectionHistory.current.get(key);
+    sectionHistory.current.set(key, {
+      past: [...(history?.past.slice(-99) || []), captureSection(latest, section)],
+      future: [],
+    });
+    void updateVSB(latest.id, updates);
   };
+
+  const handleUpdateData = (section: string, data: any) => {
+    if (section === 'Variable Copy') editSection(section, { variableCopy: data });
+    if (section === 'alt name page') editSection(section, { altNamePage: data });
+    if (section === 'headerDetails' && currentVsb) void updateVSB(currentVsb.id, { headerDetails: data });
+  };
+
+  const traverseHistory = (section: HistorySection, direction: 'past' | 'future') => {
+    const latest = useVSBStore.getState().currentVsb;
+    if (!latest || latest.id !== currentVsb?.id) return false;
+    const history = sectionHistory.current.get(`${latest.id}:${section}`);
+    const snapshot = history?.[direction].pop();
+    if (!history || !snapshot) return false;
+    history[direction === 'past' ? 'future' : 'past'].push(captureSection(latest, section));
+    void updateVSB(latest.id, snapshot);
+    return true;
+  };
+
+  useEffect(() => {
+    if ((activeSection !== 'Variable Copy' && activeSection !== 'alt name page') || currentVsb?.templateId !== templateId) return;
+
+    const onHistoryKey = (event: KeyboardEvent) => {
+      if ((!event.ctrlKey && !event.metaKey) || event.altKey || event.defaultPrevented) return;
+      if (event.target instanceof HTMLElement && event.target.closest('[role="dialog"], [role="alertdialog"]')) return;
+      const key = event.key.toLowerCase();
+      if (key !== 'z' && key !== 'y') return;
+      const direction = key === 'y' || event.shiftKey ? 'future' : 'past';
+      if (traverseHistory(activeSection, direction)) event.preventDefault();
+    };
+
+    window.addEventListener('keydown', onHistoryKey);
+    return () => window.removeEventListener('keydown', onHistoryKey);
+  }, [activeSection, currentVsb?.id, currentVsb?.templateId, templateId, updateVSB]);
 
   const sectionList: SectionType[] = [
     'Variable Copy',
@@ -552,6 +598,14 @@ export default function VSBPage() {
   const isVsbActive = currentVsb?.templateId === templateId;
 
   if (isVsbActive && currentVsb) {
+    const emailerUpdatedAt = currentTemplate?.id === templateId ? currentTemplate.updatedAt?.getTime() ?? 0 : 0;
+    const reviewedUpdatedAt = currentVsb.reviewedEmailerUpdatedAt ?? (Date.parse(currentVsb.createdAt ?? "") || 0);
+    const emailerHasUpdates = reviewedUpdatedAt > 0 && emailerUpdatedAt > reviewedUpdatedAt;
+
+    const historySection = activeSection === 'Variable Copy' || activeSection === 'alt name page' ? activeSection : null;
+    const activeHistory = historySection ? sectionHistory.current.get(`${currentVsb.id}:${historySection}`) : undefined;
+    const historyLabel = historySection === 'alt name page' ? 'Alt Name' : 'Variable Copy';
+
     const renderActiveSection = () => {
       switch (activeSection) {
         case 'Variable Copy':
@@ -560,9 +614,9 @@ export default function VSBPage() {
             color={currentVsb.variableCopyHeadingColor}
             projectTitleColor={currentVsb.projectTitleColor}
             onColorChange={(color) => {
-              updateVSB(currentVsb.id, { variableCopyHeadingColor: color });
+              editSection('Variable Copy', { variableCopyHeadingColor: color });
             }}
-            onProjectTitleColorChange={(color) => updateVSB(currentVsb.id, { projectTitleColor: color })}
+            onProjectTitleColorChange={(color) => editSection('Variable Copy', { projectTitleColor: color })}
             onChange={(data) => handleUpdateData('Variable Copy', data)} 
           />;
         case 'Desktop view':
@@ -620,6 +674,20 @@ export default function VSBPage() {
             <h1 className="text-xl font-bold">VSB Editor: {currentTemplate?.name || 'Template'}</h1>
           </div>
           <div className="flex items-center gap-2">
+            {historySection && (
+              <div role="group" aria-label={`${historyLabel} history`} className="flex gap-1">
+                <Button type="button" size="icon" variant="outline" aria-label={`Undo ${historyLabel} edit`}
+                  title="Undo (Ctrl/⌘+Z)" disabled={!activeHistory?.past.length}
+                  onClick={() => traverseHistory(historySection, 'past')}>
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+                <Button type="button" size="icon" variant="outline" aria-label={`Redo ${historyLabel} edit`}
+                  title="Redo (Ctrl/⌘+Shift+Z)" disabled={!activeHistory?.future.length}
+                  onClick={() => traverseHistory(historySection, 'future')}>
+                  <Redo2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             {activeSection === 'Combined Preview' && 
             (<Button className='bg-red-500' onClick={handleMLRconnection}>
               {isConnectingToMRL && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} Connect to MLR
@@ -651,6 +719,14 @@ export default function VSBPage() {
           </div>
         </header>
 
+        {emailerHasUpdates && (
+          <div role="status" className="flex items-center justify-between gap-4 border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
+            <span>This emailer was updated. Review the VSB for changes to copy, images, or components.</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => updateVSB(currentVsb.id, { reviewedEmailerUpdatedAt: emailerUpdatedAt })}>
+              Mark as reviewed
+            </Button>
+          </div>
+        )}
         <main className="flex-1 flex overflow-hidden">
           <div className="w-64 border-r bg-white flex flex-col p-4 gap-2 shrink-0 overflow-y-auto">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sections</div>
@@ -672,21 +748,7 @@ export default function VSBPage() {
               {renderActiveSection()}
             </div>
           </div>
-{/* 
-          <aside className="w-80 border-l bg-white p-4 overflow-y-auto shrink-0 hidden lg:block">
-            <h3 className="font-semibold mb-4 text-gray-500 uppercase text-xs">Preview</h3>
-            <PreviewSection
-              section={activeSection as any}
-              data={
-                activeSection === 'Variable Copy' ? currentVsb.variableCopy :
-                  activeSection === 'alt name page' ? currentVsb.altNamePage :
-                    activeSection === 'Desktop view' ? currentVsb.desktopView :
-                      currentVsb.mobileView
-              }
-              headerDetails={currentVsb.headerDetails}
-              variableCopyHeadingColor={currentVsb.variableCopyHeadingColor}
-            />
-          </aside> */}
+
         </main>
 
         <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>

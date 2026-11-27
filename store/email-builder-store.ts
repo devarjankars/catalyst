@@ -33,10 +33,10 @@ function deleteByIdRecursive(components: any[], targetId: string): any[] {
 
       // Recurse into children
       if (Array.isArray(comp.children) && comp.children.length > 0) {
-        return {
-          ...comp,
-          children: deleteByIdRecursive(comp.children, targetId),
-        };
+        const children = deleteByIdRecursive(comp.children, targetId);
+        const removedColumn = comp.type === "section" &&
+          comp.children.some((child: EmailComponent) => child.id === targetId && child.isColumn);
+        return { ...comp, children, ...(removedColumn ? { columns: Math.max(1, children.length) } : {}) };
       }
 
       return comp;

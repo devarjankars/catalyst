@@ -32,6 +32,7 @@ export interface VSBData {
   mobileView?: any[];
   /** Legacy URL of the most recently generated PDF; PDFs are not email versions. */
   currentVersion?: string;
+  reviewedEmailerUpdatedAt?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -57,6 +58,18 @@ interface VSBStoreState {
 
 // Module-level timer so it survives re-renders without being in Zustand state
 let _autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Serialize writes for one VSB so a delayed draft save cannot overwrite a newer edit.
+const pendingSaves = new Map<string, Promise<boolean>>();
+
+function queueVsbSave(id: string, snapshot: VSBData): Promise<boolean> {
+  const previous = pendingSaves.get(id);
+  const write = (previous?.catch(() => false) ?? Promise.resolve()).then(() => firebaseService.updateVSB(id, snapshot));
+  pendingSaves.set(id, write);
+  const clear = () => { if (pendingSaves.get(id) === write) pendingSaves.delete(id); };
+  void write.then(clear, clear);
+  return write;
+}
 
 export const useVSBStore = create<VSBStoreState>()(
   devtools(persist(
@@ -119,8 +132,8 @@ export const useVSBStore = create<VSBStoreState>()(
         const currentVsb = get().currentVsb;
         const currentVsbs = get().vsbs;
 
-        const newCurrentVsb = currentVsb?.id === id ? { ...currentVsb, ...updates } : currentVsb;
-        if (!newCurrentVsb) return;
+        if (currentVsb?.id !== id) return;
+        const newCurrentVsb = { ...currentVsb, ...updates };
 
         const originalVsb = currentVsbs.find(v => v.id === id);
         const hasChanges = originalVsb
@@ -136,7 +149,7 @@ export const useVSBStore = create<VSBStoreState>()(
           if (!current || current.id !== id) return;
           set({ isSyncing: true });
           try {
-            const success = await firebaseService.updateVSB(id, current);
+            const success = await queueVsbSave(id, current);
             if (success) {
               const updatedTimestamp = new Date().toISOString();
               const updatedVsbs = get().vsbs.map(v =>
@@ -144,8 +157,10 @@ export const useVSBStore = create<VSBStoreState>()(
               );
               set({
                 vsbs: updatedVsbs,
-                currentVsb: { ...current, updatedAt: updatedTimestamp },
-                hasUnsavedChanges: false,
+                ...(get().currentVsb === current ? {
+                  currentVsb: { ...current, updatedAt: updatedTimestamp },
+                  hasUnsavedChanges: false,
+                } : {}),
               });
             }
           } finally {
@@ -162,19 +177,20 @@ export const useVSBStore = create<VSBStoreState>()(
           const vsbToSave = get().currentVsb;
           if (!vsbToSave || vsbToSave.id !== id) throw new Error("No active VSB to save");
 
-          const success = await firebaseService.updateVSB(id, vsbToSave)
-          if (success) {
-            const updatedTimestamp = new Date().toISOString();
-            const updatedVsbs = get().vsbs.map(v =>
-              v.id === id ? { ...vsbToSave, updatedAt: updatedTimestamp } : v
-            );
-            set({
-              vsbs: updatedVsbs,
+          const success = await queueVsbSave(id, vsbToSave)
+          if (!success) throw new Error("Failed to save VSB");
+          const updatedTimestamp = new Date().toISOString();
+          const updatedVsbs = get().vsbs.map(v =>
+            v.id === id ? { ...vsbToSave, updatedAt: updatedTimestamp } : v
+          );
+          set({
+            vsbs: updatedVsbs,
+            ...(get().currentVsb === vsbToSave ? {
               currentVsb: { ...vsbToSave, updatedAt: updatedTimestamp },
               hasUnsavedChanges: false,
-              loading: false,
-            });
-          }
+            } : {}),
+            loading: false,
+          });
         } catch (e: any) {
           set({ error: e.message || 'Failed to save VSB', loading: false })
         }

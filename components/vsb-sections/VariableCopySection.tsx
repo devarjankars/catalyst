@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { PlusCircle, X, Link, Image as ImageIcon, MousePointer2 } from 'lucide-react';
+import { ReorderButtons } from "./reorder-buttons";
 import SenderTable from './friendlyFromTable';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import {
@@ -330,6 +331,39 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, proj
   const updateSection = (idx: number, updated: Section) =>
     onChange(variableCopy.map((s, i) => (i === idx ? updated : s)));
 
+  const renderSection = (section: Section, idx: number) => {
+    switch (section.structure) {
+      case 'table':
+        return (
+          <TableSectionRenderer
+            section={section as TableSection}
+            idx={idx}
+            onUpdate={(updated) => updateSection(idx, updated)}
+            onRemove={() => removeSection(idx)}
+          />
+        );
+      case 'third-party-placeholder':
+        return (
+          <ThirdPartyPlaceholderRenderer
+            section={section as ThirdPartySection}
+            idx={idx}
+            onUpdate={(updated) => updateSection(idx, updated)}
+            onRemove={() => removeSection(idx)}
+          />
+        );
+      case 'normal':
+      default:
+        return (
+          <NormalSectionRenderer
+            section={section as NormalSection}
+            idx={idx}
+            onUpdate={(updated) => updateSection(idx, updated)}
+            onRemove={() => removeSection(idx)}
+          />
+        );
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -364,41 +398,14 @@ const VariableCopySection: React.FC<Props> = ({ data, color, onColorChange, proj
         <p className="text-gray-400 mb-4 text-sm">No variable copy added yet.</p>
       ) : (
         <div className="space-y-4">
-          {variableCopy.map((section, idx) => {
-            switch (section.structure) {
-              case 'table':
-                return (
-                  <TableSectionRenderer
-                    key={idx}
-                    section={section as TableSection}
-                    idx={idx}
-                    onUpdate={(updated) => updateSection(idx, updated)}
-                    onRemove={() => removeSection(idx)}
-                  />
-                );
-              case 'third-party-placeholder':
-                return (
-                  <ThirdPartyPlaceholderRenderer
-                    key={idx}
-                    section={section as ThirdPartySection}
-                    idx={idx}
-                    onUpdate={(updated) => updateSection(idx, updated)}
-                    onRemove={() => removeSection(idx)}
-                  />
-                );
-              case 'normal':
-              default:
-                return (
-                  <NormalSectionRenderer
-                    key={idx}
-                    section={section as NormalSection}
-                    idx={idx}
-                    onUpdate={(updated) => updateSection(idx, updated)}
-                    onRemove={() => removeSection(idx)}
-                  />
-                );
-            }
-          })}
+          {variableCopy.map((section, idx) => (
+            <div key={idx}>
+              <div className="flex justify-end">
+                <ReorderButtons items={variableCopy} index={idx} label="section" onChange={onChange} />
+              </div>
+              {renderSection(section, idx)}
+            </div>
+          ))}
         </div>
       )}
 

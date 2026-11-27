@@ -46,9 +46,10 @@ export function SpacingInput({ value = "0px 0px 0px 0px", onChange, label, class
   }, [value]);
 
   const update = (side: keyof Sides, v: string) => {
+    const size = /^-?(?:\d+(?:\.\d+)?|\.\d+)$/.test(v) ? `${v}px` : v;
     const next = linked
-      ? { top: v, right: v, bottom: v, left: v }
-      : { ...sides, [side]: v };
+      ? { top: size, right: size, bottom: size, left: size }
+      : { ...sides, [side]: size };
     setSides(next);
     internalRef.current = true;
     onChange(serialize(next));
@@ -56,25 +57,15 @@ export function SpacingInput({ value = "0px 0px 0px 0px", onChange, label, class
 
   return (
     <div className={cn("space-y-1", className)}>
-      {label && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-gray-600">{label}</span>
-          <button
-            type="button"
-            onClick={() => setLinked((l) => !l)}
-            title={linked ? "Unlink sides" : "Link all sides"}
-            className={cn(
-              "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors",
-              linked
-                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            )}
-          >
-            {linked ? <Link2 className="w-3 h-3" /> : <Unlink2 className="w-3 h-3" />}
-            {linked ? "Linked" : "Unlinked"}
-          </button>
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-slate-600">{label || "Sides"}</span>
+        <button type="button" onClick={() => setLinked(current => !current)}
+          aria-label="Link spacing sides" aria-pressed={linked}
+          title={linked ? "Unlink spacing sides" : "Link spacing sides"}
+          className={cn("rounded p-1 text-slate-500 hover:bg-slate-200", linked && "bg-blue-100 text-blue-700")}>
+          {linked ? <Link2 className="h-3.5 w-3.5" /> : <Unlink2 className="h-3.5 w-3.5" />}
+        </button>
+      </div>
 
       {/* Figma-style T/R/B/L grid */}
       <div className="grid grid-cols-4 gap-1.5">

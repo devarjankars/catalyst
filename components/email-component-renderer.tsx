@@ -1,21 +1,20 @@
 ﻿"use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import { renderElzonrisIsi } from "@/lib/elzonris-isi-spacing";
+import { getDividerDimensions } from "@/lib/email-divider";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
+import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { GripVertical, Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
-import { SectionDropZone } from "./section-drop-zone";
+import { ColumnSection } from "./section-components/column-section";
+import { createPortal } from "react-dom";
+import { BuilderToolbarContext } from "./builder-toolbar-context";
 import { RearrangeControls } from "./rearrange-controls";
 import type { EmailComponent } from "@/types/email-builder";
 import { Input } from "./ui/input";
 import BulletList from "./bullet-list";
-import SingleColumnSection from "./section-components/single-column-section";
 import { secondsInDay } from "date-fns/constants";
-import DoubleColumnSection from "./section-components/double-column-section";
-import ThreeColumnSection from "./section-components/three-column-section";
-import FourColumnSection from "./section-components/four-column-section";
-import FiveColumnSection from "./section-components/five-column-section";
-import SixColumnSection from "./section-components/six-column-section";
 import { se } from "date-fns/locale";
 import { firebaseService } from "@/services/firebase-service";
 import { useEmailBuilderStore } from "@/store/email-builder-store";
@@ -24,9 +23,10 @@ import { DEFAULT_ORSERDU_FOOTER_LOGO } from "@/lib/asset-url";
 import { generateComponentHTML, generateEmailHTML } from "@/lib/email-generator";
 import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing";
 import { getOrserduImageTextContent } from "@/lib/orserdu-image-text";
-import { normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
-import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, normalizeOrserduReportLinkItem } from "@/lib/orserdu-report-links";
+import { getOrserduIsiBulletSpacing, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "@/lib/orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "@/lib/job-code";
+import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "@/lib/email-padding";
 import {
   GERON_ISI_HTML,
@@ -183,6 +183,8 @@ export function EmailComponentRenderer({
     }
   }, [previewMode, isLockedMode, currentTemplate, onUpdate, addTemplateImage]);
 
+  const { actions: actionsHost } = useContext(BuilderToolbarContext);
+
   const [{ handlerId }, drop] = useDrop({
     accept: "component",
     collect(monitor) {
@@ -206,12 +208,14 @@ export function EmailComponentRenderer({
       const hoverMiddleY =
         (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
-      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
+      if (!clientOffset) return;
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
+      item.index = hoverIndex;
     },
   });
 
@@ -270,7 +274,7 @@ export function EmailComponentRenderer({
           onSelectChild={onSelectChild}
           selectedComponent={selectedComponent}
           previewMode={previewMode}
-          totalComponents={component.children?.length || 0}
+          totalComponents={component.children?.find(column => column.id === sectionId)?.children?.length ?? component.children?.length ?? 0}
           parentId={sectionId} // Pass sectionId as parentId for children
           isLockedMode={isLockedMode}
         />
@@ -285,34 +289,6 @@ export function EmailComponentRenderer({
     "center" : "center"
   }
 
-  const getColumnStyles = (child: EmailComponent) => {
-    if (!child.isColumn) return {};
-
-    const alignment = child.columnAlignment || "left";
-    const verticalAlignment = child.columnVerticalAlignment || "top";
-    const width = child.columnWidth === "auto" ? undefined : child.columnWidth;
-
-    return {
-      textAlign: alignment,
-      display: "flex",
-      flexDirection: "column" as const,
-      justifyContent:
-        verticalAlignment === "top"
-          ? "flex-start"
-          : verticalAlignment === "middle"
-          ? "center"
-          : "flex-end",
-      alignItems:
-        alignment === "left"
-          ? "flex-start"
-          : alignment === "center"
-          ? "center"
-          : "flex-end",
-      width: width,
-      minHeight: child.columnMinHeight || "120px",
-    };
-  };
-
   const renderComponent = () => {
     const baseStyle = {
       padding: component.padding || "16px",
@@ -320,100 +296,17 @@ export function EmailComponentRenderer({
 
     switch (component.type) {
       case "section":
-        switch (component.columns) {
-          case 1:
-            return (
-              <SingleColumnSection
-                component={component}
-                selectedComponent={selectedComponent}
-                onSelectSection={onSelectChild}
-                sectionId={component.id}
-                onUpdateChild={onUpdateChild}
-                renderSectionChild={renderSectionChild}
-                onAddToSection={onAddToSection}
-                onMoveWithinSection={onMoveWithinSection}
-              />
-            );
-
-          case 2:
-            return (
-              <DoubleColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 3:
-            return (
-              <ThreeColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 4:
-            return (
-              <FourColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 5:
-            return (
-              <FiveColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          case 6:
-            return (
-              <SixColumnSection
-                onSelectSection={onSelectChild}
-                selectedComponent={selectedComponent}
-                onAddToSection={onAddToSection}
-                renderSectionChild={renderSectionChild}
-                onMoveWithinSection={onMoveWithinSection}
-                onUpdateChild={onUpdateChild}
-                component={component}
-                sectionId={component.id}
-                direction={component.direction || "column"}
-              />
-            );
-          default:
-            break;
-        }
+        return <ColumnSection component={component} selectedComponent={selectedComponent}
+          onSelectSection={onSelectChild} onAddToSection={isLockedMode ? undefined : onAddToSection}
+          renderSectionChild={renderSectionChild} previewMode={previewMode} />;
 
       case "text": {
         return (
           <div style={{ padding: getEmailComponentPadding(component.padding, "15px 20px 15px 20px", isNested) }} className="z-50">
             <RichTextEditor
               isSelected={isSelected}
+              useBlockColorPresets
+              selectionColorComponentId={component.id}
               value={component.content || ""}
               onChange={(content) => onUpdate({ content })}
               paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
@@ -476,6 +369,13 @@ export function EmailComponentRenderer({
         );
       }
 
+      case "design-shape": {
+        const { width, height, borderRadius } = getEmailShapeStyle(component);
+        return <div style={{ textAlign: "center", padding: component.padding }}>
+          <div style={{ width, height, borderRadius, display: "inline-block", backgroundColor: component.backgroundColor || "#006937" }} />
+        </div>;
+      }
+
       case "button":
         return (
           <div
@@ -505,8 +405,11 @@ export function EmailComponentRenderer({
               style={{
                 display: "inline-block",
                 backgroundColor: component.backgroundColor || "#007bff",
+                backgroundImage: component.buttonGradientColor ? `linear-gradient(${component.backgroundColor || "#007bff"}, ${component.buttonGradientColor})` : undefined,
+                boxShadow: component.buttonShadow ? "0 2px 6px #0004" : undefined,
                 color: component.color || "#ffffff",
                 padding: component.buttonPadding || "12px 24px",
+                border: component.buttonOutlineColor ? `1px solid ${component.buttonOutlineColor}` : undefined,
                 borderRadius: component.borderRadius || "4px",
                 textDecoration: "none",
                 fontWeight: "bold",
@@ -523,23 +426,19 @@ export function EmailComponentRenderer({
           </div>
         );
 
-      case "divider":
+      case "divider": {
+        const { width, height, color, align, padding } = getDividerDimensions(component);
         return (
-          <div style={baseStyle} className="mt-2">
-            <hr
-              style={{
-                height: component.height || "1px",
-                backgroundColor: component.backgroundColor || "#e0e0e0",
-                border: "none",
-                margin: component.margin || "20px 0",
-              }}
-            />
+          <div style={{ padding, display: "flex", justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center" }}>
+            <hr style={{ width, height, backgroundColor: color, border: 0, margin: 0 }} />
           </div>
         );
+      }
       case "raw-html":
         return (
           <div
-            className="mt-2 p-5"
+            className="mt-2"
+            style={{ padding: component.padding || "0 20px 20px 20px", backgroundColor: component.backgroundColor }}
             dangerouslySetInnerHTML={{ __html: component.html || "" }}
           ></div>
         );
@@ -609,7 +508,7 @@ export function EmailComponentRenderer({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: link.color || component.color || "#007bff",
+                      color: getOrserduFooterLinkColor(link.color || component.color),
                       fontSize: link.fontSize || component.fontSize || "14px",
                       textDecoration: "underline",
                       fontFamily: "Arial, sans-serif",
@@ -637,28 +536,26 @@ export function EmailComponentRenderer({
         case "footer-link-2" :
         return (
           <div className="flex flex-col gap-3 " style={baseStyle}>
-            <div className="flex items-center justify-between w-full mb-2">
-              <div className="w-[45%]">
-               
-                  <img width={"100%"} src={component?.logoA?.imgSrc} alt={component?.logoA?.altTex}/>
-          
-              </div>
-              <div className="w-[35%]">
-               
-                  <img width={"100%"} src={component?.logoB.imgSrc} alt={component.logoB.altTex}/>
-           
-              </div>
+            <div className="mb-2 flex w-full items-center justify-between">
+              {[component.logoA, component.logoB].map((logo, index) => logo?.imgSrc && (
+                <a key={index} className={index === 0 ? "w-[45%]" : "w-[35%]"} href={logo.href || "#"}
+                  onClick={event => { if (!previewMode) event.preventDefault(); }}>
+                  <img className="block w-full" src={logo.imgSrc} alt={logo.altTex} />
+                </a>
+              ))}
             </div>
             <div className="flex flex-wrap justify-evenly gap-10">
               {component.links?.map((link, linkIndex) => (
                 <React.Fragment key={linkIndex}>
                   <a
                     href={link.href || "#"}
+                    title={link.title || undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
                       color: component.color || "#007bff",
                       textDecoration: "underline",
+                      fontSize: component.fontSize || "14px",
                     }}
                     onClick={(e) => {
                       if (!previewMode) {
@@ -769,7 +666,7 @@ export function EmailComponentRenderer({
           >
             <div style={{ height: `${parseInt(String(paddingTop), 10) || 15}px` }} />
             {linkItems.map((item: any, i: number) => {
-              const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
+              const { linkHref, linkText, suffixText } = normalizeOrserduReportLinkItem(item);
               return (
                 <div
                   key={i}
@@ -785,10 +682,10 @@ export function EmailComponentRenderer({
                 >
                   <span dangerouslySetInnerHTML={{ __html: item.prefixText || "" }} />
                   <a
-                    href={item.linkHref || "#"}
+                    href={linkHref || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: item.linkColor || "#007bff", textDecoration: "underline" }}
+                    style={{ color: item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR, textDecoration: "underline" }}
                     onClick={(e) => !previewMode && e.preventDefault()}
                   >
                     {linkText}
@@ -853,7 +750,7 @@ export function EmailComponentRenderer({
               {links.map((link, linkIndex) => {
                 const isLast = linkIndex === links.length - 1;
                 const isEven = (linkIndex + 1) % 2 === 0;
-                const linkColor = link.color || component.color || "#0563C1";
+                const linkColor = getOrserduFooterLinkColor(link.color || component.color);
                 const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
                 const pipeColor = !isLast ? (links[linkIndex + 1].color || "#000000") : "#000000";
                 return (
@@ -942,16 +839,23 @@ export function EmailComponentRenderer({
             {!previewMode && isSelected ? (
               <RichTextEditor
                 isSelected={isSelected}
+                allowIsiBulletColorOverride
                 toolbarPlacement="selection"
                 value={generatedHtml}
-                onChange={(isiHtml) => onUpdate({
-                  isiHtml: component.type === "orserdu-isi-animated"
-                    ? isiHtml.replace(
-                        /<table\b[^>]*>\s*<tbody>\s*<tr>\s*<td\b[^>]*data-orserdu-isi-padding-wrapper(?:="true")?[^>]*>([\s\S]*)<\/td>\s*<\/tr>\s*<\/tbody>\s*<\/table>$/,
-                        "$1",
-                      )
-                    : isiHtml,
-                })}
+                onChange={(isiHtml) => {
+                  const formatted = document.createElement("div");
+                  formatted.innerHTML = generatedHtml;
+                  if (formatted.innerHTML === isiHtml) return;
+
+                  onUpdate({
+                    isiHtml: component.type === "orserdu-isi-animated"
+                      ? isiHtml.replace(
+                          /<table\b[^>]*>\s*<tbody>\s*<tr>\s*<td\b[^>]*data-orserdu-isi-padding-wrapper(?:="true")?[^>]*>([\s\S]*)<\/td>\s*<\/tr>\s*<\/tbody>\s*<\/table>$/,
+                          "$1",
+                        )
+                      : isiHtml,
+                  });
+                }}
                 style={{ padding: 0, fontFamily: "Arial, sans-serif", fontSize: "14px", color: "#2B2E34" }}
                 className="!p-0"
               />
@@ -1190,11 +1094,11 @@ export function EmailComponentRenderer({
               </div>
               {opts.map((opt, i) => (
                 <div key={i} style={{
-                  fontSize: component.fontSize || "12px",
-                  color: component.color || "#5D5D5D",
+                  fontSize: component.fontSize || DEFAULT_CUSTOM_TEXT_FONT_SIZE,
+                  color: component.color || DEFAULT_CUSTOM_TEXT_COLOR,
                   fontFamily: component.fontFamily || "Arial, sans-serif",
                   fontWeight: component.fontWeight || "normal",
-                  lineHeight: component.lineHeight || "14px",
+                  lineHeight: component.lineHeight || DEFAULT_CUSTOM_TEXT_LINE_HEIGHT,
                   textAlign: component.textAlign || "left",
                   padding: "2px 0",
                   borderBottom: i < opts.length - 1 ? "1px dotted #e0e0e0" : "none",
@@ -1485,6 +1389,7 @@ export function EmailComponentRenderer({
         case "orserdu-image-text-block":
         case "elzonris-image-text-block": {
           const isOrserdu = component.type === "orserdu-image-text-block";
+          const textColor = isOrserdu ? component.color || "#000000" : "#000000";
           const imageTextImageSrc = component.imageTextImageSrc;
           const imageTextImageAlt = component.imageTextImageAlt;
           const imageTextText1 = isOrserdu ? getOrserduImageTextContent(component) : component.imageTextText1 || "";
@@ -1506,12 +1411,12 @@ export function EmailComponentRenderer({
                   display: "flex",
                   flexDirection: imagePosition === "right" ? "row-reverse" : "row",
                   alignItems: verticalAlign === "middle" ? "center" : verticalAlign === "bottom" ? "flex-end" : "flex-start",
-                  gap: `${imageTextGap}px`,
+                  gap: imageTextImageSrc ? `${imageTextGap}px` : 0,
                   width: "100%",
                   transition: "gap 140ms ease",
                 }}
               >
-                <div
+                {imageTextImageSrc && <div
                   style={{
                     flex: `0 0 ${imageWidth}px`,
                     width: `${imageWidth}px`,
@@ -1520,26 +1425,30 @@ export function EmailComponentRenderer({
                   }}
                 >
                   <img
-                    src={imageTextImageSrc || "/placeholder.svg"}
+                    src={imageTextImageSrc}
                     alt={imageTextImageAlt || ""}
                     width={imageWidth}
                     style={{ display: "block", width: `${imageWidth}px`, maxWidth: "100%", height: "auto" }}
                   />
-                </div>
+                </div>}
                 <div style={{ flex: "1 1 0", minWidth: 0, textAlign: component.textAlign || "left" }}>
-                  <div style={{ color: "#000000", fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
+                  <div style={{ color: textColor, fontFamily: "Arial, sans-serif", fontSize: component.fontSize || "14px", lineHeight: isOrserdu ? component.lineHeight || "20px" : "20px", marginBottom: "17px" }}>
                     {!previewMode && isSelected ? (
                       <RichTextEditor
                         isSelected={isSelected}
+                        useBlockColorPresets={isOrserdu}
+                        selectionColorComponentId={isOrserdu ? component.id : undefined}
                         value={editorText}
                         onChange={(html) => onUpdate({
                           imageTextText1: html,
                           ...(isOrserdu ? { imageTextSections: undefined } : {}),
                         })}
                         paragraphSpacingPx={component.paragraphSpacingPx ?? 0}
-                        className={isOrserdu ? "rich-text-editor-reset-block-spacing" : undefined}
-                        style={{ fontSize: "14px", lineHeight: component.lineHeight || "20px", color: "#000000" }}
+                        className={isOrserdu ? "rich-text-editor-reset-block-spacing !p-0" : undefined}
+                        style={isOrserdu ? undefined : { fontSize: component.fontSize || "14px", lineHeight: component.lineHeight || "20px", color: textColor }}
                       />
+                    ) : isOrserdu ? (
+                      <div className="rich-text-editor-reset-block-spacing" dangerouslySetInnerHTML={{ __html: normalizedText }} />
                     ) : (
                       <span dangerouslySetInnerHTML={{ __html: normalizedText }} />
                     )}
@@ -1552,7 +1461,7 @@ export function EmailComponentRenderer({
 
         case "elzonris-isi":
         return (
-          <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: component.html || "" }} />
+          <div style={{ ...baseStyle, fontFamily: component.fontFamily || "Arial, sans-serif" }} dangerouslySetInnerHTML={{ __html: renderElzonrisIsi(component.html || "") }} />
         );
             case "elzonris-divider":
         return (
@@ -1734,43 +1643,38 @@ export function EmailComponentRenderer({
             </div>
           );
 
-          case "image-with-link":
+          case "image-with-link": {
+            const align = component.textAlign || "center";
+            const width = component.width?.trim() || "100%";
+            const maxWidth = component.maxWidth || "100%";
             return (
-              <div
-                style={baseStyle}
-                className={`flex flex-col items-${
-                  ImageAlimentMap[component?.textAlign || "center"] || "center"
-                } mt-2`}
-              >
+              <div style={{
+                padding: component.padding || "0",
+                display: "flex",
+                justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
+              }}>
                 <a
                   href={component.href || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: "block", width: component.width || "100%" }}
-                  onClick={(e) => {
+                  style={{ display: "block", width: /^\d+$/.test(width) ? `${width}px` : width, maxWidth: `min(100%, ${maxWidth})` }}
+                  onClick={(event) => {
                     if (!previewMode) {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      !isLockedMode && onSelect()
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!isLockedMode) onSelect();
                     }
                   }}
                 >
                   <img
-                    src={
-                      component.src ||
-                      "/placeholder.svg?height=200&width=400&text=Click+to+edit"
-                    }
+                    src={component.src || "/placeholder.svg?height=200&width=400&text=Click+to+edit"}
                     alt={component.alt || "Image"}
-                    style={{
-                      width: component.width || "100%",
-                      height: component.height || "auto",
-                      display: "block",
-                      maxWidth: component.maxWidth || "100%",
-                    }}
+                    style={{ display: "block", width: "100%", height: component.height || "auto" }}
                   />
                 </a>
               </div>
             );
+          }
           case "orserdu-isi-select": {
             const {
               heading = "SELECT IMPORTANT SAFETY INFORMATION",
@@ -1786,12 +1690,10 @@ export function EmailComponentRenderer({
               backgroundColor = "#ffffff",
               footerLine = "",
               footerPadding = "0",
-              trialDesignHtml = "",
-              trialDesignPadding = "0",
             } = component as any;
 
             return (
-              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding, isNested) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
+              <div style={{ ...baseStyle, padding: getOrserduIsiSelectPadding(component.padding) }} onClick={(e) => { e.stopPropagation(); !previewMode && !isLockedMode && onSelect(); }}>
                 {/* Heading */}
                 <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
                   <tbody><tr>
@@ -1812,14 +1714,14 @@ export function EmailComponentRenderer({
                           {(bulletItems as any[]).map((item: any, i: number) => {
                             // Respect the spaceBetweenBullets property (strip 'px' for numeric height)
                             const spacingRaw = (component as any).spaceBetweenBullets ?? "5";
-                            const spacingPx = parseInt(String(spacingRaw).replace(/px$/i, ""), 10) || 5;
+                            const spacingPx = getOrserduIsiBulletSpacing(spacingRaw);
                             const textGapPx = Math.max(0, Math.min(40, parseInt(String(bulletTextGap).replace(/px$/i, ""), 10) || 0));
                             const paddingTop = getOrserduIsiBulletSpacing(item.paddingTop);
                             const paddingBottom = getOrserduIsiBulletSpacing(item.paddingBottom);
                             return (
                             <React.Fragment key={i}>
                               <tr>
-                                <td align="left" valign="top" style={{ color: bulletColor, fontSize: "16px", lineHeight, padding: `${paddingTop}px ${textGapPx}px ${paddingBottom}px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
+                                <td align="left" valign="top" style={{ color: item.markerColor || bulletColor, fontSize: "16px", lineHeight, padding: `${paddingTop}px ${textGapPx}px ${paddingBottom}px 0`, backgroundColor: "transparent", whiteSpace: "nowrap" }}>
                                   &bull;
                                 </td>
                                 <td align="left" valign="middle" style={{ color: textColor, fontSize, fontWeight: "normal", lineHeight, fontFamily: "Arial, sans-serif", padding: `${paddingTop}px 0 ${paddingBottom}px`, backgroundColor }}>
@@ -1852,32 +1754,21 @@ export function EmailComponentRenderer({
                   </table>
                 )}
 
-                {/* Trial design paragraph */}
-                {trialDesignHtml && (
-                  <table role="presentation" width="100%" cellSpacing={0} cellPadding={0} border={0}>
-                    <tbody><tr>
-                      <td style={{ padding: getOrserduIsiPadding(trialDesignPadding), backgroundColor: "transparent" }}>
-                        <div
-                          style={{ fontSize, color: textColor, fontFamily: "Arial, sans-serif", lineHeight, fontWeight: "normal" }}
-                          dangerouslySetInnerHTML={{ __html: trialDesignHtml }}
-                        />
-                      </td>
-                    </tr></tbody>
-                  </table>
-                )}
               </div>
             );
           }
 
           case "ferring-footer":
           return (
+            <div style={{ padding: component.padding || "20px 0 0" }}>
             <div
-              
-              className="z-50 mt-2 p-[30px] flex flex-col w-full justify-start text-[#ffffff] bg-[#0083BF]"
+              className="z-50 p-[30px] flex flex-col w-full justify-start text-[#ffffff] bg-[#0083BF]"
             >
               <div className="flex items-center justify-between w-full mb-2">
                 <div className="w-[45%]">
-                  <img width={"112"} src={component?.logo?.logoSrc} alt={component?.logo?.altText}/>
+                  <a href={component.logo?.href || "#"} onClick={event => { if (!previewMode) event.preventDefault(); }}>
+                    <img width={112} src={component.logo?.logoSrc} alt={component.logo?.altText} />
+                  </a>
                 </div>
                 <div className="w-[45%] flex justify-end items-center">
                   {component.socialMediaLinks?.map((link, index) => (
@@ -1890,7 +1781,7 @@ export function EmailComponentRenderer({
               <div className="mt-3 flex items-start justify-between">
                   <div className="flex flex-col gap-4">
                     <p className="text-white text-[9.5px]">
-                      Ferring Pharmaceuticals, 100 Interpace Parkway, Parsippany, NJ 07054<br/>
+                      Ferring Pharmaceuticals, {component.address || "100 Interpace Parkway, Parsippany, NJ 07054"}<br/>
                       { isSelected ? 
                        <Input
                        value={component.jobCode || ""}
@@ -1925,6 +1816,7 @@ export function EmailComponentRenderer({
                       ))}
                  </div>
               </div>
+            </div>
             </div>
           );
       case "tryvio-isi":
@@ -2187,14 +2079,14 @@ export function EmailComponentRenderer({
             <div
               ref={dragHandleRef}
               title="Drag to reorder"
-              className="absolute -left-6 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 opacity-0 shadow-sm transition-opacity hover:text-gray-600 hover:shadow group-hover:opacity-100 z-10"
+              className="absolute -left-7 top-1/2 cursor-grab active:cursor-grabbing flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 opacity-40 shadow-sm transition-opacity hover:opacity-100 hover:text-gray-600 hover:shadow group-hover:opacity-100 z-10"
             >
               <GripVertical className="h-4 w-4 cursor-grab" />
             </div>
           }
 
           {/* Rearrange Controls */}
-          {isSelected && !isLockedMode && (
+          {isSelected && !isLockedMode && actionsHost && createPortal(
             <RearrangeControls
               componentId={component.id}
               index={index}
@@ -2202,10 +2094,10 @@ export function EmailComponentRenderer({
               onMoveUp={handleMoveUp}
               onMoveDown={handleMoveDown}
               onDuplicate={handleDuplicate}
-              onDelete={onDelete}
               showCopyToOption={showCopyToOption}
               onCopyToOption={() => onCopyToOptions?.()}
-            />
+            />,
+            actionsHost
           )}
         </>
       )}

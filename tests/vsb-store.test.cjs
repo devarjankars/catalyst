@@ -55,3 +55,32 @@ test('opening another emailer clears the previously selected VSB', async () => {
   assert.equal(store.getState().hasUnsavedChanges, false);
   assert.equal(store.getState().loading, false);
 });
+
+test('an in-flight save preserves newer copy edits and writes snapshots in order', async () => {
+  const saved = { ...draft, id: 'vsb-1' };
+  const snapshots = [];
+  let finishFirst;
+  const firstWrite = new Promise(resolve => { finishFirst = resolve; });
+  const store = loadStore({
+    updateVSB: async (_id, snapshot) => {
+      snapshots.push(snapshot);
+      return snapshots.length === 1 ? firstWrite : true;
+    },
+  });
+  store.setState({ currentVsb: saved, vsbs: [saved] });
+
+  const initialSave = store.getState().saveVSB(saved.id);
+  await Promise.resolve();
+  const copy = [{ heading: 'Restored section', structure: 'normal', options: ['Text'] }];
+  await store.getState().updateVSB(saved.id, { variableCopy: copy });
+  const restoredSave = store.getState().saveVSB(saved.id);
+
+  assert.equal(snapshots.length, 1);
+  assert.deepEqual(store.getState().currentVsb.variableCopy, copy);
+  finishFirst(true);
+  await initialSave;
+  assert.deepEqual(store.getState().currentVsb.variableCopy, copy);
+  await restoredSave;
+  assert.deepEqual(snapshots.map(snapshot => snapshot.variableCopy), [[], copy]);
+  assert.equal(store.getState().hasUnsavedChanges, false);
+});

@@ -1,5 +1,43 @@
 export const EMAIL_DARK_MODE_STYLE_MARKER = "data-email-dark-mode-styles-v2";
 
+const ORSERDU_COLOR_STYLES = "data-orserdu-color-styles";
+
+export function orserduColorClass(color: string): string {
+  return `orserdu-ink-${color.slice(1).toLowerCase()}`;
+}
+
+export function orserduInkStyle(color: string): string {
+  return `color:${color} !important;-webkit-text-fill-color:${color} !important;mso-style-textfill-type:solid;mso-style-textfill-fill-color:${color};`;
+}
+
+function ensureOrserduColorStyles(html: string): string {
+  if (html.includes(ORSERDU_COLOR_STYLES)) return html;
+  const colors = new Set(html.match(/\borserdu-ink-[a-f0-9]{6}\b/g));
+  const rules = [...colors].map(className => {
+    const color = `#${className.slice("orserdu-ink-".length)}`;
+    return `[data-ogsc] .${className}, [data-ogsc].${className}, [data-ogsb] .${className}, [data-ogsb].${className} { ${orserduInkStyle(color)} }`;
+  });
+  if (html.includes("orserdu-highlight-dark-white")) {
+    const white = orserduInkStyle("#ffffff");
+    const selector = ".orserdu-highlight-dark-white .orserdu-highlight-ink";
+    rules.push(
+      `@media (prefers-color-scheme: dark) { ${selector} { ${white} } }`,
+      `[data-ogsc] ${selector}, [data-ogsb] ${selector}, .orserdu-highlight-dark-white[data-ogsc] .orserdu-highlight-ink, .orserdu-highlight-dark-white[data-ogsb] .orserdu-highlight-ink { ${white} }`,
+    );
+  }
+  if (html.includes("orserdu-gmail-screen")) {
+    // Gmail can invert the two black layers while the box gradient retains its color.
+    rules.push(
+      "u + .orserdu-email-body .orserdu-gmail-screen { background:#000 !important;mix-blend-mode:screen; }",
+      "u + .orserdu-email-body .orserdu-gmail-difference { background:#000 !important;mix-blend-mode:difference; }",
+      "u + .orserdu-email-body .orserdu-gmail-difference, u + .orserdu-email-body .orserdu-gmail-difference * { -webkit-text-fill-color:currentColor !important; }",
+    );
+  }
+  if (!rules.length) return html;
+  const style = `<style ${ORSERDU_COLOR_STYLES}>${rules.join("\n")}</style>`;
+  return /<\/head\s*>/i.test(html) ? html.replace(/<\/head\s*>/i, `${style}</head>`) : style + html;
+}
+
 export const EMAIL_DARK_MODE_CSS = `
 @media (prefers-color-scheme: dark) {
   .dark-img {
@@ -149,7 +187,7 @@ export function removeEmailDarkModeStyles(html: string): string {
 }
 
 export function prepareEmailHtml(html: string): string {
-  let preparedHtml = ensureEmailDarkModeStyles(html);
+  let preparedHtml = ensureOrserduColorStyles(ensureEmailDarkModeStyles(html));
   const formatDetectionMeta =
     '<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">';
   const existingFormatDetectionMeta =

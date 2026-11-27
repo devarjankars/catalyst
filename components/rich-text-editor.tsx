@@ -1,11 +1,103 @@
 "use client"
 
 
-import { Italic, Link, Superscript } from "lucide-react"
+import { ArrowUpDown, Bold, Italic, Link, RotateCcw, Subscript, Superscript, Underline } from "lucide-react"
 import type React from "react"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
+import { BuilderToolbarContext } from "./builder-toolbar-context"
 import { createPortal } from "react-dom"
-import { applyTextParagraphSpacing, removeTextParagraphSpacing } from "@/lib/text-paragraph-spacing"
+import { applyTextParagraphSpacing, PARAGRAPH_SPACING_ATTRIBUTE, parseParagraphSpacing, removeTextParagraphSpacing, setTrackedParagraphStyle } from "@/lib/text-paragraph-spacing"
+
+import { TEXT_FONT_FAMILIES } from "@/lib/email-fonts"
+
+const paragraphSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
+const paragraphBoundarySelector = `${paragraphSelector},article,aside,dl,figure,footer,header,hr,ol,section,table,ul`
+const paragraphClipboardType = "application/x-catalyst-paragraphs"
+
+function normalizeLooseParagraphs(editor: HTMLElement, range: Range) {
+  const { startContainer, startOffset, endContainer, endOffset } = range
+  const children = Array.from(editor.childNodes)
+  const markers = new Map<number, Comment>()
+  for (const [node, offset] of [[startContainer, startOffset], [endContainer, endOffset]] as const) {
+    if (node === editor && !markers.has(offset)) {
+      const marker = document.createComment("")
+      editor.insertBefore(marker, children[offset] ?? null)
+      markers.set(offset, marker)
+    }
+  }
+  let paragraph: HTMLElement | null = null
+  for (const node of Array.from(editor.childNodes)) {
+    if (node instanceof HTMLElement && node.matches(paragraphBoundarySelector)) {
+      paragraph = null
+    } else if (paragraph || (node.nodeType !== Node.COMMENT_NODE &&
+      (node.nodeType !== Node.TEXT_NODE || node.textContent?.trim()))) {
+      if (!paragraph) {
+        paragraph = document.createElement("div")
+        node.before(paragraph)
+      }
+      paragraph.appendChild(node)
+    }
+  }
+  const startMarker = startContainer === editor ? markers.get(startOffset) : undefined
+  const endMarker = endContainer === editor ? markers.get(endOffset) : undefined
+  if (startMarker) range.setStartBefore(startMarker)
+  else range.setStart(startContainer, startOffset)
+  if (endMarker) range.setEndBefore(endMarker)
+  else range.setEnd(endContainer, endOffset)
+  for (const marker of markers.values()) marker.remove()
+}
+
+const fontSizes = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px", "48px"]
+const lineHeights = fontSizes.slice(2, 9)
+const typographyControl = "h-8 w-full min-w-0 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 hover:border-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+
+function PixelInput({ label, placeholder, value, options, onCommit }: {
+  label: string
+  placeholder: string
+  value: string
+  options: string[]
+  onCommit: (value: string) => void
+}) {
+  const listId = useId()
+  const [draft, setDraft] = useState<string | null>(null)
+  return (
+    <>
+      <input type="number" min="1" max="300" step="any" list={listId}
+        aria-label={label} title={`${label} in pixels`} placeholder={placeholder}
+        className={typographyControl} value={draft ?? (value.endsWith("px") ? value.slice(0, -2) : "")}
+        onChange={e => setDraft(e.currentTarget.value)}
+        onBlur={e => {
+          if (draft === null) return
+          setDraft(null)
+          const pixels = e.currentTarget.valueAsNumber
+          if (pixels >= 1 && pixels <= 300) onCommit(`${pixels}px`)
+        }}
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            e.currentTarget.blur()
+          }
+        }}
+      />
+      <datalist id={listId}>
+        {options.map(option => <option key={option} value={option.slice(0, -2)} />)}
+      </datalist>
+    </>
+  )
+}
+
+function selectedTextNodes(range: Range): Text[] {
+  const root = range.commonAncestorContainer
+  if (root.nodeType === Node.TEXT_NODE) return [root as Text]
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.textContent && range.intersectsNode(node)) nodes.push(node as Text)
+  }
+  return nodes
+}
+
+const fontLabel = (font: string) => font.split(",")[0].trim().replace(/^["']|["']$/g, "")
 
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect
 
@@ -35,10 +127,8 @@ function getNodePath(root: Node, node: Node): number[] | null {
   return current === root ? path : null;
 }
 
-function getSelectionSnapshot(root: HTMLElement): SelectionSnapshot | null {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return null;
-  const range = selection.getRangeAt(0);
+function getSelectionSnapshot(root: HTMLElement, range?: Range | null): SelectionSnapshot | null {
+  if (!range) return null;
   const startPath = getNodePath(root, range.startContainer);
   const endPath = getNodePath(root, range.endContainer);
   if (!startPath || !endPath) return null;
@@ -59,18 +149,15 @@ function resolveBoundary(root: Node, boundary: SelectionBoundary): { node: Node;
   return { node, offset: Math.min(boundary.offset, maxOffset) };
 }
 
-function restoreSelectionSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null) {
-  if (!snapshot) return;
+function rangeFromSnapshot(root: HTMLElement, snapshot: SelectionSnapshot | null): Range | null {
+  if (!snapshot) return null;
   const start = resolveBoundary(root, snapshot.start);
   const end = resolveBoundary(root, snapshot.end);
-  if (!start || !end) return;
+  if (!start || !end) return null;
   const range = document.createRange();
   range.setStart(start.node, start.offset);
   range.setEnd(end.node, end.offset);
-  const selection = window.getSelection();
-  if (!selection) return;
-  selection.removeAllRanges();
-  selection.addRange(range);
+  return range;
 }
 
 interface RichTextEditorProps {
@@ -81,18 +168,36 @@ interface RichTextEditorProps {
   className?: string
   isSelected?: boolean
   paragraphSpacingPx?: number
+  useBlockColorPresets?: boolean
+  selectionColorComponentId?: string
+  allowIsiBulletColorOverride?: boolean
   toolbarPlacement?: "below" | "selection"
 }
 
-export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, toolbarPlacement = "below" }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, style, className, isSelected, paragraphSpacingPx, useBlockColorPresets, selectionColorComponentId, allowIsiBulletColorOverride, toolbarPlacement = "below" }: RichTextEditorProps) {
+  const { formatting: formattingHost, sidebarFormatting, applySelectionColor, setSelectionColor } = useContext(BuilderToolbarContext)
+  const inTextSection = formattingHost?.dataset.formattingPlacement === "text-section"
+  const keepFormattingVisible = sidebarFormatting && inTextSection && useBlockColorPresets
+  const floating = !formattingHost && toolbarPlacement === "selection"
   const editorRef = useRef<HTMLDivElement>(null)
+  const selectionColorInputRef = useRef<HTMLInputElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const changeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const undoHistoryRef = useRef<string[]>([])
   const redoHistoryRef = useRef<string[]>([])
   const lastEditorHtmlRef = useRef<string | null>(null)
+  const editorId = useId()
+  const [hasTextSelection, setHasTextSelection] = useState(false)
+  const [selectionHexDraft, setSelectionHexDraft] = useState<string | null>(null)
+  const [selectionHexError, setSelectionHexError] = useState(false)
+  const [selectionColors, setSelectionColors] = useState<string[]>([])
+  const [selectionFont, setSelectionFont] = useState("")
+  const [selectionSize, setSelectionSize] = useState("")
+  const [selectionLineHeight, setSelectionLineHeight] = useState("")
   const [focused, setFocused] = useState(false)
-  const [paragraphPadding, setParagraphPadding] = useState("8")
+  const [paragraphPadding, setParagraphPadding] = useState("0")
+  const [mixedParagraphSpacing, setMixedParagraphSpacing] = useState(false)
+  const paragraphPaddingDirty = useRef(false)
   const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null)
   const savedRangeRef = useRef<Range | null>(null)
 
@@ -107,14 +212,28 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const editor = editorRef.current
     if (!editor) return []
 
-    const blockSelector = "blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre"
-    return Array.from(editor.querySelectorAll<HTMLElement>(blockSelector))
-      .filter((element) => !element.querySelector(blockSelector))
-      .filter((element) => range.intersectsNode(element))
+    const blocks = Array.from(editor.querySelectorAll<HTMLElement>(paragraphSelector))
+      .filter(element => !element.querySelector(paragraphSelector))
+      .filter(element => range.intersectsNode(element))
+    if (paragraphSpacingPx === undefined) return blocks
+    if (range.collapsed) {
+      const anchor = range.startContainer
+      return blocks.filter(block => block.contains(anchor)).slice(0, 1)
+    }
+    return blocks.filter(block => {
+      const boundary = document.createRange()
+      boundary.selectNodeContents(block)
+      if (boundary.collapsed) return true
+      boundary.collapse(true)
+      if (range.compareBoundaryPoints(Range.END_TO_END, boundary) <= 0) return false
+      boundary.selectNodeContents(block)
+      boundary.collapse(false)
+      return range.compareBoundaryPoints(Range.START_TO_START, boundary) < 0
+    })
   }
 
   const updateToolbarPosition = () => {
-    if (toolbarPlacement !== "selection") return
+    if (!floating) return
     const editor = editorRef.current
     const selection = window.getSelection()
     if (!editor) {
@@ -146,8 +265,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       return
     }
 
-    const toolbarWidth = toolbarRef.current?.offsetWidth || 480
-    const toolbarHeight = toolbarRef.current?.offsetHeight || 44
+    const toolbarWidth = toolbarRef.current?.offsetWidth || 256
+    const toolbarHeight = toolbarRef.current?.offsetHeight || 190
     const maxLeft = Math.max(8, window.innerWidth - toolbarWidth - 8)
     const left = Math.max(
       8,
@@ -202,7 +321,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
           : block.cloneNode(false) as HTMLElement
         if (line !== block) {
           line.removeAttribute("id")
-          if (index > 0) line.style.paddingTop = ""
+          if (index > 0) setTrackedParagraphStyle(line, "paddingTop", "")
         }
         if (selectedLineFlags[index]) selectedLines.push(line)
         nodes.forEach((node) => line.appendChild(node))
@@ -235,6 +354,36 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     return selectedLines
   }
 
+  const readSelectionStyle = (range: Range) => {
+    setHasTextSelection(!range.collapsed)
+    const colors = new Set<string>()
+    const fonts = new Set<string>()
+    const sizes = new Set<string>()
+    const nodes = range.collapsed ? [range.startContainer] : selectedTextNodes(range)
+    for (const node of nodes) {
+      const element = node instanceof HTMLElement ? node : node.parentElement
+      if (!element) continue
+      const { color, fontFamily, fontSize } = window.getComputedStyle(element)
+      const channels = color.match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+      if (channels) colors.add("#" + channels.slice(1).map(value => Number(value).toString(16).padStart(2, "0")).join(""))
+      fonts.add(fontLabel(fontFamily))
+      sizes.add(fontSize)
+    }
+    setSelectionColors([...colors])
+    setSelectionFont(fonts.size === 1 ? [...fonts][0] : "")
+    setSelectionSize(sizes.size === 1 ? [...sizes][0] : "")
+  }
+
+  const syncParagraphSpacing = (paragraphs: HTMLElement[]) => {
+    if (paragraphPaddingDirty.current) return
+    const values = paragraphSpacingPx === undefined
+      ? [Number.parseFloat(paragraphs[0]?.style.paddingTop || "") || 0]
+      : paragraphs.map(paragraph => parseParagraphSpacing(paragraph.getAttribute(PARAGRAPH_SPACING_ATTRIBUTE)) ?? paragraphSpacingPx)
+    const mixed = new Set(values).size > 1
+    setMixedParagraphSpacing(mixed)
+    setParagraphPadding(mixed ? "" : String(values[0] ?? 0))
+  }
+
   const saveSelection = () => {
     const selection = window.getSelection()
     const editor = editorRef.current
@@ -242,10 +391,10 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const range = selection.getRangeAt(0)
       if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
         savedRangeRef.current = range.cloneRange()
-        const paragraph = getParagraphsForRange(range)[0]
-        if (paragraph) {
-          setParagraphPadding(String(Number.parseFloat(paragraph.style.paddingTop) || 0))
-        }
+        readSelectionStyle(range)
+        const paragraphs = getParagraphsForRange(range)
+        setSelectionLineHeight(window.getComputedStyle(paragraphs[0] ?? editor).lineHeight)
+        syncParagraphSpacing(paragraphs)
       }
     }
     updateToolbarPosition()
@@ -260,6 +409,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }
 
   useBrowserLayoutEffect(() => {
+    if (isSelected || !useBlockColorPresets) return
+    savedRangeRef.current = null
+  }, [isSelected, useBlockColorPresets])
+
+  useBrowserLayoutEffect(() => {
     if (editorRef.current) {
       const editor = editorRef.current;
       const spacedValue = paragraphSpacingPx === undefined
@@ -268,9 +422,17 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       const normalizedTarget = document.createElement("div");
       normalizedTarget.innerHTML = spacedValue;
       if (editor.innerHTML !== normalizedTarget.innerHTML) {
-        const selectionSnapshot = getSelectionSnapshot(editor);
+        const selection = window.getSelection();
+        const liveRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        const liveSnapshot = getSelectionSnapshot(editor, liveRange);
+        const savedSnapshot = getSelectionSnapshot(editor, savedRangeRef.current);
         editor.innerHTML = normalizedTarget.innerHTML;
-        restoreSelectionSnapshot(editor, selectionSnapshot);
+        const restoredRange = rangeFromSnapshot(editor, liveSnapshot);
+        savedRangeRef.current = rangeFromSnapshot(editor, savedSnapshot) ?? restoredRange?.cloneRange() ?? null;
+        if (selection && restoredRange && document.activeElement === editor) {
+          selection.removeAllRanges();
+          selection.addRange(restoredRange);
+        }
       }
       lastEditorHtmlRef.current = editor.innerHTML
     }
@@ -281,11 +443,11 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   }, [])
 
   useLayoutEffect(() => {
-    if (toolbarPlacement === "selection" && toolbarPosition) updateToolbarPosition()
-  }, [toolbarPlacement, toolbarPosition])
+    if (floating && toolbarPosition) updateToolbarPosition()
+  }, [floating, toolbarPosition])
 
   useEffect(() => {
-    if (!focused || toolbarPlacement !== "selection") return
+    if (!focused || !floating) return
     const repositionToolbar = () => updateToolbarPosition()
     window.addEventListener("scroll", repositionToolbar, true)
     window.addEventListener("resize", repositionToolbar)
@@ -311,7 +473,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       window.removeEventListener("resize", repositionToolbar)
       document.removeEventListener("selectionchange", handleSelectionChange)
     }
-  }, [focused, toolbarPlacement])
+  }, [focused, floating])
 
   const flushInput = () => {
     if (changeTimerRef.current) {
@@ -328,16 +490,21 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     const editor = editorRef.current
     if (!editor) return
 
+    const selection = window.getSelection()
+    const snapshot = getSelectionSnapshot(editor, selection?.rangeCount ? selection.getRangeAt(0) : null)
     editor.innerHTML = html
     lastEditorHtmlRef.current = html
-    const range = document.createRange()
-    range.selectNodeContents(editor)
-    range.collapse(false)
-    const selection = window.getSelection()
+    const restoredRange = rangeFromSnapshot(editor, snapshot)
+    const range = restoredRange ?? document.createRange()
+    if (!restoredRange) {
+      range.selectNodeContents(editor)
+      range.collapse(false)
+    }
     if (selection) {
       selection.removeAllRanges()
       selection.addRange(range)
       savedRangeRef.current = range.cloneRange()
+      syncParagraphSpacing(getParagraphsForRange(range))
     }
 
     if (changeTimerRef.current) {
@@ -468,7 +635,7 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     handleInput()
   }
 
-  const toggleSuperscript = () => {
+  const toggleScript = (command: "superscript" | "subscript") => {
     restoreSelection()
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
@@ -487,14 +654,14 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
 
     if (
       targetElement &&
-      targetElement.nodeName === 'SUP' &&
+      targetElement.nodeName === (command === "superscript" ? "SUP" : "SUB") &&
       targetElement.contains(range.startContainer) &&
       targetElement.contains(range.endContainer)
     ) {
-      const supText = targetElement.textContent?.trim() || ''
+      const scriptText = targetElement.textContent?.trim() || ''
       const selectedText = range.toString().trim()
 
-      if (supText === selectedText) {
+      if (scriptText === selectedText) {
         const textNode = document.createTextNode(targetElement.textContent || '')
         targetElement.parentNode?.replaceChild(textNode, targetElement)
         const newRange = document.createRange()
@@ -506,104 +673,161 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       }
     }
 
-    document.execCommand("superscript")
+    document.execCommand(command)
     handleInput()
   }
 
-  const applyFontSize = (size: string) => {
-    restoreSelection()
+  const applyInlineStyle = (
+    selection: Selection,
+    range: Range,
+    property: "fontFamily" | "fontSize" | "color",
+    value: string,
+  ) => {
+    // Format each text run so selections spanning links or paragraphs keep their markup.
+    const runs = selectedTextNodes(range).map(node => ({
+      node,
+      start: node === range.startContainer ? range.startOffset : 0,
+      end: node === range.endContainer ? range.endOffset : node.length,
+    })).filter(({ start, end }) => end > start)
+    if (runs.length === 0) return
 
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
-
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) return
-
-    const commonAncestor = range.commonAncestorContainer
-    let targetElement: HTMLElement | null = null
-
-    if (commonAncestor.nodeType === Node.TEXT_NODE) {
-      targetElement = commonAncestor.parentElement
-    } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
-      targetElement = commonAncestor as HTMLElement
-    }
-
-    if (
-      targetElement &&
-      targetElement.nodeName === 'SPAN' &&
-      targetElement.contains(range.startContainer) &&
-      targetElement.contains(range.endContainer)
-    ) {
-      const spanText = targetElement.textContent?.trim() || ''
-      const selectedText = range.toString().trim()
-
-      if (spanText === selectedText) {
-        targetElement.style.fontSize = size
-        handleInput()
-        return
+    const formatted = runs.map(({ node, start, end }) => {
+      const parent = node.parentElement
+      if (start === 0 && end === node.length && parent?.tagName === "SPAN" && parent.childNodes.length === 1) {
+        parent.style[property] = value
+        return node
       }
-    }
-
-    const span = document.createElement("span")
-    span.style.fontSize = size
-    span.appendChild(range.extractContents())
-    range.insertNode(span)
-
-    range.setStartAfter(span)
-    range.setEndAfter(span)
-    selection.removeAllRanges()
-    selection.addRange(range)
-
-    handleInput()
-  }
-
-  const applyColor = (color: string) => {
-    restoreSelection()
-
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
-
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) return
-
-    const commonAncestor = range.commonAncestorContainer
-    let targetElement: HTMLElement | null = null
-
-    if (commonAncestor.nodeType === Node.TEXT_NODE) {
-      targetElement = commonAncestor.parentElement
-    } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
-      targetElement = commonAncestor as HTMLElement
-    }
-
-    if (
-      targetElement &&
-      targetElement.nodeName === 'SPAN' &&
-      targetElement.contains(range.startContainer) &&
-      targetElement.contains(range.endContainer)
-    ) {
-      const spanText = targetElement.textContent?.trim() || ''
-      const selectedText = range.toString().trim()
-
-      if (spanText === selectedText) {
-        targetElement.style.color = color
-        savedRangeRef.current = range.cloneRange()
-        handleInput()
-        return
-      }
-    }
-
-    const span = document.createElement("span")
-    span.style.color = color
-    span.appendChild(range.extractContents())
-    range.insertNode(span)
-
-    range.selectNodeContents(span)
+      if (end < node.length) node.splitText(end)
+      const selected = start > 0 ? node.splitText(start) : node
+      const span = document.createElement("span")
+      span.style[property] = value
+      selected.replaceWith(span)
+      span.appendChild(selected)
+      return selected
+    })
+    const last = formatted[formatted.length - 1]
+    range.setStart(formatted[0], 0)
+    range.setEnd(last, last.length)
     selection.removeAllRanges()
     selection.addRange(range)
     savedRangeRef.current = range.cloneRange()
-
+    readSelectionStyle(range)
     handleInput()
+    // Publish toolbar edits immediately so a blur save cannot replay older markup.
+    flushInput()
   }
+
+  const applyTypography = (property: "fontFamily" | "fontSize", value: string) => {
+    restoreSelection()
+    const selection = window.getSelection()
+    const editor = editorRef.current
+    if (!selection?.rangeCount || !editor) return
+    const range = selection.getRangeAt(0)
+    if (range.collapsed || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return
+    applyInlineStyle(selection, range, property, value)
+  }
+
+  const applyColor = (color: string) => {
+    const selection = window.getSelection()
+    const editor = editorRef.current
+    if (!selection || !editor) return
+
+    const isEditorSelection = (range: Range) => !range.collapsed &&
+      editor.contains(range.startContainer) && editor.contains(range.endContainer)
+    const liveRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+    if (!liveRange || !isEditorSelection(liveRange)) restoreSelection()
+    if (selection.rangeCount === 0) return
+
+    const range = selection.getRangeAt(0)
+    if (!isEditorSelection(range)) return
+
+    const commonAncestor = range.commonAncestorContainer
+    let targetElement: HTMLElement | null = null
+
+    if (commonAncestor.nodeType === Node.TEXT_NODE) {
+      targetElement = commonAncestor.parentElement
+    } else if (commonAncestor.nodeType === Node.ELEMENT_NODE) {
+      targetElement = commonAncestor as HTMLElement
+    }
+
+    const markerCell = allowIsiBulletColorOverride && targetElement?.closest("td")
+    if (markerCell && editor.contains(markerCell) &&
+        markerCell.textContent?.trim() === "•" && range.toString().trim() === "•") {
+      markerCell.setAttribute("data-orserdu-isi-bullet-color", color)
+      for (const element of [markerCell, ...markerCell.querySelectorAll<HTMLElement>("span, font, b, strong, i, em, u")]) {
+        element.style.setProperty("color", color, "important")
+        element.style.setProperty("-webkit-text-fill-color", color, "important")
+      }
+      savedRangeRef.current = range.cloneRange()
+      setSelectionColors([color])
+      handleInput()
+      return
+    }
+
+    // The element that draws the underline owns its color.
+    for (let element = targetElement; element && element !== editor; element = element.parentElement) {
+      if (!element.contains(range.startContainer) || !element.contains(range.endContainer)) break
+      const decoration = window.getComputedStyle(element).textDecorationLine
+      if (decoration.includes("underline") && element.textContent === range.toString()) {
+        element.style.textDecorationColor = color
+      }
+    }
+    applyInlineStyle(selection, range, "color", color)
+  }
+
+  useBrowserLayoutEffect(() => {
+    const input = selectionColorInputRef.current
+    if (!input) return
+    input.value = selectionColors[0] || "#000000"
+    const applyChosenColor = () => applyColor(input.value)
+    input.addEventListener("input", applyChosenColor)
+    return () => input.removeEventListener("input", applyChosenColor)
+  })
+
+  useBrowserLayoutEffect(() => {
+    const editor = editorRef.current
+    const range = savedRangeRef.current
+    if (!sidebarFormatting || !isSelected || !hasTextSelection || !focused || !editor || !range ||
+        range.collapsed || !editor.contains(range.commonAncestorContainer) ||
+        typeof Highlight === "undefined" || !CSS.highlights) return
+    const highlight = new Highlight(range)
+    CSS.highlights.set("builder-text-selection", highlight)
+    return () => {
+      if (CSS.highlights.get("builder-text-selection") === highlight) {
+        CSS.highlights.delete("builder-text-selection")
+      }
+    }
+  })
+
+  useBrowserLayoutEffect(() => {
+    if (!setSelectionColor || !selectionColorComponentId || !isSelected || !focused || !hasTextSelection) return
+    setSelectionColor({ editorId, componentId: selectionColorComponentId, color: selectionColors.length === 1 ? selectionColors[0] : "" })
+    return () => setSelectionColor(current => current?.editorId === editorId ? null : current)
+  }, [setSelectionColor, selectionColorComponentId, editorId, isSelected, focused, hasTextSelection, selectionColors])
+
+  useBrowserLayoutEffect(() => {
+    if (!applySelectionColor || !useBlockColorPresets || !isSelected || !focused) return;
+
+    const applyPreset = (color: string) => {
+      const selection = window.getSelection();
+      const editor = editorRef.current;
+      if (!editor) return false;
+      const isInside = (range: Range | null): range is Range =>
+        !!range && editor.contains(range.startContainer) && editor.contains(range.endContainer);
+      const live = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      const range = isInside(live) ? live : hasTextSelection ? savedRangeRef.current : null;
+      if (!isInside(range) || range.collapsed) return false;
+
+      savedRangeRef.current = range.cloneRange();
+      applyColor(color);
+      return true;
+    };
+
+    applySelectionColor.current = applyPreset;
+    return () => {
+      if (applySelectionColor.current === applyPreset) applySelectionColor.current = null;
+    };
+  });
 
   const applyFormattingCommand = (command: "bold" | "italic" | "underline") => {
     restoreSelection()
@@ -621,32 +845,147 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     if (paragraphs.length > 0) return paragraphs
 
     const paragraph = document.createElement("div")
+    const { startContainer, startOffset, endContainer, endOffset } = range
     while (editor.firstChild) paragraph.appendChild(editor.firstChild)
     editor.appendChild(paragraph)
+    range.setStart(startContainer === editor ? paragraph : startContainer, startOffset)
+    range.setEnd(endContainer === editor ? paragraph : endContainer, endOffset)
     return [paragraph]
   }
 
   const applyParagraphPadding = (paddingTop: string) => {
-    restoreSelection()
     const range = savedRangeRef.current
+    const editor = editorRef.current
+    if (paragraphSpacingPx !== undefined) {
+      if (!editor || !range || !editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return
+      normalizeLooseParagraphs(editor, range)
+      const value = String(Math.round(Number.parseFloat(paddingTop) * 100) / 100)
+      for (const paragraph of getParagraphsForRange(range)) {
+        paragraph.setAttribute(PARAGRAPH_SPACING_ATTRIBUTE, value)
+      }
+      restoreSelection()
+      handleInput()
+      flushInput()
+      syncParagraphSpacing(getParagraphsForRange(savedRangeRef.current ?? range))
+      return
+    }
+    if (paddingTop === "0px" && (!range || !getParagraphsForRange(range).some(paragraph => paragraph.style.paddingTop))) return
+
+    restoreSelection()
     const splitParagraphs = range ? splitSelectedBreakLines(range) : null
     const paragraphs = splitParagraphs ?? getSelectedParagraphs()
     paragraphs.forEach((paragraph) => {
-      paragraph.style.paddingTop = paddingTop === "0px" ? "" : paddingTop
+      setTrackedParagraphStyle(paragraph, "paddingTop", paddingTop === "0px" ? "" : paddingTop)
     })
+    restoreSelection()
     handleInput()
+    flushInput()
   }
 
   const applyLineHeight = (lineHeight: string) => {
     restoreSelection()
     getSelectedParagraphs().forEach((paragraph) => {
-      paragraph.style.lineHeight = lineHeight
+      setTrackedParagraphStyle(paragraph, "lineHeight", lineHeight)
     })
+    setSelectionLineHeight(lineHeight)
     handleInput()
+    flushInput()
+  }
+
+  const handleCopy = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    if (paragraphSpacingPx === undefined) return
+    const selection = window.getSelection()
+    if (!selection?.rangeCount || selection.isCollapsed) return
+    const range = selection.getRangeAt(0)
+    const paragraphs = getParagraphsForRange(range)
+    if (!paragraphs.length) return
+    let capturedText = ""
+    const copied = paragraphs.map(paragraph => {
+      const part = document.createRange()
+      part.selectNodeContents(paragraph)
+      if (paragraph.contains(range.startContainer)) part.setStart(range.startContainer, range.startOffset)
+      if (paragraph.contains(range.endContainer)) part.setEnd(range.endContainer, range.endOffset)
+      const fragment = part.cloneContents()
+      capturedText += fragment.textContent ?? ""
+      for (const br of Array.from(fragment.querySelectorAll("br"))) br.replaceWith("\n")
+      return {
+        text: fragment.textContent ?? "",
+        spacing: parseParagraphSpacing(paragraph.getAttribute(PARAGRAPH_SPACING_ATTRIBUTE)) ?? paragraphSpacingPx,
+      }
+    })
+    if (capturedText !== range.toString()) return
+    const richCopy = document.createElement("div")
+    richCopy.appendChild(range.cloneContents())
+    event.clipboardData.setData("text/html", removeTextParagraphSpacing(richCopy.innerHTML))
+    event.clipboardData.setData("text/plain", copied.map(paragraph => paragraph.text).join("\n"))
+    event.clipboardData.setData(paragraphClipboardType, JSON.stringify(copied))
+    event.preventDefault()
+  }
+
+  const pasteParagraphs = (payload: string, range: Range) => {
+    const editor = editorRef.current
+    if (!editor || !payload || paragraphSpacingPx === undefined) return false
+    let records: unknown
+    try {
+      records = JSON.parse(payload)
+    } catch {
+      return false
+    }
+    if (!Array.isArray(records) || !records.length || !records.every(record =>
+      record && typeof record.text === "string" && typeof record.spacing === "number" &&
+      Number.isFinite(record.spacing) && record.spacing >= 0 && record.spacing <= 200
+    )) return false
+
+    range.deleteContents()
+    normalizeLooseParagraphs(editor, range)
+    const paragraph = getParagraphsForRange(range)[0]
+    const inserted = records.map(record => {
+      const block = document.createElement("p")
+      block.setAttribute(PARAGRAPH_SPACING_ATTRIBUTE, String(record.spacing))
+      record.text.split("\n").forEach((line: string, index: number) => {
+        if (index > 0) block.appendChild(document.createElement("br"))
+        block.append(line)
+      })
+      if (!record.text) block.appendChild(document.createElement("br"))
+      return block
+    })
+    if (paragraph) {
+      const trailing = range.cloneRange()
+      trailing.setEnd(paragraph, paragraph.childNodes.length)
+      const rest = trailing.extractContents()
+      paragraph.after(...inserted)
+      if (rest.textContent || rest.querySelector("img,hr")) {
+        const suffix = paragraph.cloneNode(false) as HTMLElement
+        suffix.removeAttribute("id")
+        suffix.appendChild(rest)
+        inserted[inserted.length - 1].after(suffix)
+      }
+      if (!paragraph.textContent && !paragraph.querySelector("img,hr")) paragraph.remove()
+    } else {
+      if (range.startContainer === editor) {
+        const fragment = document.createDocumentFragment()
+        fragment.append(...inserted)
+        range.insertNode(fragment)
+      } else {
+        editor.append(...inserted)
+      }
+    }
+    range.selectNodeContents(inserted[inserted.length - 1])
+    range.collapse(false)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+    savedRangeRef.current = range.cloneRange()
+    handleInput()
+    flushInput()
+    return true
   }
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
+    const selected = window.getSelection()
+    const clipboardRange = selected?.rangeCount ? selected.getRangeAt(0) : null
+    if (clipboardRange && pasteParagraphs(e.clipboardData.getData(paragraphClipboardType), clipboardRange)) return
     let text = e.clipboardData.getData("text/plain");
     if (!text && navigator.clipboard) {
       try { text = await navigator.clipboard.readText(); } catch {}
@@ -668,6 +1007,25 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (paragraphSpacingPx === undefined && e.key === "Backspace" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+      const selection = window.getSelection()
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null
+      const paragraph = range?.collapsed ? getParagraphsForRange(range)[0] : null
+      if (range && paragraph && Number.parseFloat(paragraph.style.paddingTop) > 0 && paragraph.contains(range.startContainer)) {
+        const before = document.createRange()
+        before.selectNodeContents(paragraph)
+        before.setEnd(range.startContainer, range.startOffset)
+        const fragment = before.cloneContents()
+        if (!fragment.textContent && !fragment.querySelector("br,img,hr")) {
+          e.preventDefault()
+          savedRangeRef.current = range.cloneRange()
+          applyParagraphPadding("0px")
+          setParagraphPadding("0")
+          return
+        }
+      }
+    }
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case "z":
@@ -698,6 +1056,8 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
     }
   }
 
+  const selectedFontValue = TEXT_FONT_FAMILIES.find(font => fontLabel(font) === selectionFont) ?? ""
+
   return (
     <div className="relative w-full">
       <div
@@ -708,14 +1068,16 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
         onKeyUp={saveSelection}
         onMouseUp={saveSelection}
         onPaste={handlePaste}
+        onCopy={handleCopy}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
           flushInput()
           setTimeout(() => {
             const active = document.activeElement
-            if (toolbarRef.current && active && toolbarRef.current.contains(active)) return
+            if (active && (toolbarRef.current?.contains(active) ||
+                (sidebarFormatting && active.closest(".eb-properties, [data-radix-popper-content-wrapper]")))) return
             setFocused(false)
-            if (toolbarPlacement === "selection") setToolbarPosition(null)
+            if (floating) setToolbarPosition(null)
           }, 0)
         }}
         style={{ minHeight: "min-content", outline: "none", ...style }}
@@ -723,124 +1085,149 @@ export function RichTextEditor({ value, onChange, style, className, isSelected, 
       />
 
       {/* Toolbar */}
-      {typeof document !== "undefined" && isSelected && focused && (toolbarPlacement !== "selection" || toolbarPosition) && createPortal(
+      {typeof document !== "undefined" && isSelected && (focused || keepFormattingVisible) && (!sidebarFormatting || formattingHost?.isConnected) && (!floating || toolbarPosition) && createPortal(
         <div
           ref={toolbarRef}
           aria-label="Rich text formatting toolbar"
-          className={`w-fit max-w-full bg-white/95 border border-slate-200 rounded-xl shadow-xl ring-1 ring-black/5 backdrop-blur p-2 flex flex-wrap items-center gap-1.5 z-[10000] ${toolbarPlacement === "selection" ? "fixed" : "mt-2"}`}
-          style={toolbarPlacement === "selection" && toolbarPosition
+          className={formattingHost
+            ? `grid w-full gap-2 ${inTextSection ? "" : "rounded-lg border border-slate-200 bg-white p-3"}`
+            : `grid w-64 max-w-full gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg z-[10000] ${floating ? "fixed" : "mt-2"}`}
+          style={floating && toolbarPosition
             ? { top: toolbarPosition.top, left: toolbarPosition.left, maxWidth: "calc(100vw - 16px)" }
             : undefined}
           tabIndex={-1}
           onMouseDown={saveSelection}
           onClick={(event) => event.stopPropagation()}
         >
-          <button type="button" title="Bold" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("bold")}>
-            <strong>B</strong>
-          </button>
-          <button type="button" title="Italic" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("italic")}>
-            <Italic className="h-3 w-3" />
-          </button>
-          <button type="button" title="Underline" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => applyFormattingCommand("underline")}>
-            <u>U</u>
-          </button>
-          <button type="button" title="Insert link" className="px-2.5 py-1.5 text-xs hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => LinkifyText()}>
-            <Link className="h-3 w-3" />
-          </button>
-          <button type="button" title="Superscript" className="px-2.5 py-1.5 text-md hover:bg-slate-100 rounded-lg text-slate-800 transition-colors"
-            onClick={() => toggleSuperscript()}>
-            <Superscript className="h-4 w-4" />
-          </button>
-          <span className="mx-1 h-6 w-px bg-slate-200" aria-hidden="true" />
-          <label className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
-            Color
-            <input type="color" className="h-6 w-6 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
-              onMouseDown={saveSelection}
-              onChange={(e) => applyColor(e.currentTarget.value)}
-              title="Text color"
-              aria-label="Text color" />
-          </label>
+          <h3 className="text-xs font-semibold text-slate-900">{inTextSection ? "Selection formatting" : "Text formatting"}</h3>
           <select
-            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
-            value=""
-            onChange={(e) => { if (e.target.value) applyFontSize(e.target.value) }}
-            onMouseDown={() => saveSelection()}
-            title="Font Size"
+            aria-label="Selection font family"
+            title="Font family for selected text"
+            className={typographyControl}
+            value={selectedFontValue}
+            onChange={e => applyTypography("fontFamily", e.currentTarget.value)}
           >
-            <option value="" disabled>Size</option>
-            <option value="10px">10</option>
-            <option value="12px">12</option>
-            <option value="14px">14</option>
-            <option value="16px">16</option>
-            <option value="18px">18</option>
-            <option value="20px">20</option>
-            <option value="24px">24</option>
-            <option value="28px">28</option>
-            <option value="32px">32</option>
-            <option value="40px">40</option>
-            <option value="48px">48</option>
+            <option value="" disabled>{selectionFont || "Font family"}</option>
+            {TEXT_FONT_FAMILIES.map(font => <option key={font} value={font}>{fontLabel(font)}</option>)}
           </select>
-          <select
-            className="px-1 py-1 text-xs rounded border border-gray-300 bg-white text-black cursor-pointer"
-            defaultValue=""
-            onChange={(e) => {
-              if (e.target.value) applyLineHeight(e.target.value)
-              e.currentTarget.value = ""
-            }}
-            title="Line height for selected paragraph"
-          >
-            <option value="" disabled>Line height</option>
-            <option value="14px">14px line</option>
-            <option value="16px">16px line</option>
-            <option value="18px">18px line</option>
-            <option value="20px">20px line</option>
-            <option value="24px">24px line</option>
-            <option value="28px">28px line</option>
-            <option value="32px">32px line</option>
-          </select>
-          <label className="flex items-center gap-1 border-l pl-2 px-1 text-xs text-black">
-            Top space
-            <input
-              type="number"
-              min="0"
-              max="200"
-              step="any"
-              value={paragraphPadding}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  const padding = Number(paragraphPadding)
-                  if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                    applyParagraphPadding(`${padding}px`)
+          <div className="grid grid-cols-2 items-center gap-2">
+            <PixelInput label="Selection font size" placeholder="Size" value={selectionSize}
+              options={fontSizes} onCommit={value => applyTypography("fontSize", value)} />
+            <PixelInput label="Line height for selected paragraph" placeholder="Line height" value={selectionLineHeight}
+              options={lineHeights} onCommit={applyLineHeight} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input ref={selectionColorInputRef} type="color"
+              aria-label={inTextSection ? "Selection color" : "Text color"}
+              title={selectionColors.join(", ") || "Text color"}
+              className="h-8 w-9 shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+              onFocus={saveSelection} />
+            <input type="text" spellCheck={false} autoComplete="off"
+              aria-label="Selection color hex"
+              aria-invalid={selectionHexError}
+              disabled={!hasTextSelection}
+              placeholder={selectionColors.length > 1 ? "Mixed" : "#RRGGBB"}
+              value={selectionHexDraft ?? (selectionColors.length === 1 ? selectionColors[0].toUpperCase() : "")}
+              className={`${typographyControl} font-mono disabled:opacity-50 aria-invalid:border-red-500`}
+              onChange={event => {
+                setSelectionHexDraft(event.currentTarget.value)
+                setSelectionHexError(false)
+              }}
+              onKeyDown={event => {
+                if (event.key === "Escape") {
+                  setSelectionHexDraft(null)
+                  setSelectionHexError(false)
+                } else if (event.key === "Enter") {
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }
+              }}
+              onBlur={event => {
+                if (selectionHexDraft === null) return
+                const digits = event.currentTarget.value.trim().replace(/^#/, "")
+                if (!/^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(digits)) {
+                  setSelectionHexError(true)
+                  return
+                }
+                const expanded = digits.length === 3 ? digits.replace(/./g, digit => digit + digit) : digits
+                setSelectionHexDraft(null)
+                setSelectionHexError(false)
+                applyColor(`#${expanded.toLowerCase()}`)
+              }} />
+          </div>
+          {selectionHexError && <p role="alert" className="text-xs text-red-600">Enter a 3- or 6-digit hex color.</p>}
+          <div className="flex flex-wrap items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
+            {[
+              { label: "Bold", Icon: Bold, action: () => applyFormattingCommand("bold") },
+              { label: "Italic", Icon: Italic, action: () => applyFormattingCommand("italic") },
+              { label: "Underline", Icon: Underline, action: () => applyFormattingCommand("underline") },
+              { label: "Insert link", Icon: Link, action: LinkifyText },
+              { label: "Superscript", Icon: Superscript, action: () => toggleScript("superscript") },
+              { label: "Subscript", Icon: Subscript, action: () => toggleScript("subscript") },
+            ].map(({ label, Icon, action }) => (
+              <button key={label} type="button" title={label} aria-label={label}
+                className="grid h-7 w-7 place-items-center rounded text-slate-700 hover:bg-white hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                onClick={action}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <label title={paragraphSpacingPx === undefined ? "Space above selected paragraph" : "Space after selected paragraphs"} className="flex min-w-0 flex-1 items-center gap-2 text-xs text-slate-600">
+              <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="grow">Paragraph spacing</span>
+              <input
+                type="number"
+                min="0"
+                max="200"
+                step="any"
+                value={paragraphPadding}
+                placeholder={mixedParagraphSpacing ? "Mixed" : undefined}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    e.currentTarget.blur()
                   }
-                }
+                }}
+                onBlur={e => {
+                  if (!paragraphPaddingDirty.current) return
+                  paragraphPaddingDirty.current = false
+                  const field = e.currentTarget
+                  const padding = !field.validity.badInput && field.value === "" ? 0 : field.valueAsNumber
+                  if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
+                    setParagraphPadding(String(padding))
+                    applyParagraphPadding(`${padding}px`)
+                  } else {
+                    const range = savedRangeRef.current
+                    syncParagraphSpacing(range ? getParagraphsForRange(range) : [])
+                  }
+                }}
+                onChange={e => {
+                  paragraphPaddingDirty.current = true
+                  setParagraphPadding(e.target.value)
+                }}
+                className={`${typographyControl} max-w-14`}
+                aria-label={paragraphSpacingPx === undefined ? "Space above selected paragraph in pixels" : "Space after selected paragraphs in pixels"}
+              />
+              px
+            </label>
+            <button
+              type="button"
+              title="Reset paragraph spacing"
+              aria-label="Reset paragraph spacing"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
+                paragraphPaddingDirty.current = false
+                setParagraphPadding("0")
+                applyParagraphPadding("0px")
               }}
-              onMouseDown={saveSelection}
-              onBlur={() => {
-                const padding = Number(paragraphPadding)
-                if (Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                  applyParagraphPadding(`${padding}px`)
-                }
-              }}
-              onChange={(e) => {
-                const value = e.target.value
-                setParagraphPadding(value)
-                const padding = Number(value)
-                if (value !== "" && Number.isFinite(padding) && padding >= 0 && padding <= 200) {
-                  applyParagraphPadding(`${padding}px`)
-                }
-              }}
-              className="w-14 rounded border border-gray-300 px-1 py-1 text-xs text-black"
-              aria-label="Space above selected paragraph in pixels"
-            />
-            px
-          </label>
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
         </div>,
-        toolbarPlacement === "selection" ? document.body : editorRef.current?.parentElement ?? document.body,
+        formattingHost ?? (floating ? document.body : editorRef.current?.parentElement ?? document.body),
       )}
 
       {/* Link insert dialog */}

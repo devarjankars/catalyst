@@ -54,8 +54,14 @@ function BulletList({
   const handleAddItem = () =>
     onUpdate({ listItems: [...(component.listItems || []), 'New Item'] })
 
-  const handleDeleteItem = (index: number) =>
-    onUpdate({ listItems: component.listItems?.filter((_: string, i: number) => i !== index) })
+  const handleDeleteItem = (index: number) => {
+    const remaining = component.listItems?.filter((_, itemIndex) => itemIndex !== index)
+    const colors = Object.entries(component.listMarkerColors ?? {}).flatMap(([key, color]) => {
+      const itemIndex = Number(key)
+      return itemIndex === index ? [] : [[itemIndex > index ? itemIndex - 1 : itemIndex, color]]
+    })
+    onUpdate({ listItems: remaining, listMarkerColors: Object.fromEntries(colors) })
+  }
 
   const handleUpdateItem = (index: number, content: string) => {
     const updated = [...(component.listItems || [])]
@@ -67,7 +73,7 @@ function BulletList({
   const markerType = (component as any).markerType || 'bullet'
   const isCounter  = ['number', 'roman', 'alpha'].includes(markerType)
   const bg         = component.backgroundColor || 'transparent'
-  const spacePx    = parseInt((component.spaceBetweenItems || '5px').replace(/px$/i, ''), 10) || 5
+  const spacePx    = Math.max(0, Number.parseInt(component.spaceBetweenItems ?? '5', 10) || 0)
   // Mirror the outer padding the email-generator applies so canvas matches the email output
   const outerPadding = (component as any).padding || '0px 20px 0px 20px'
 
@@ -97,7 +103,6 @@ function BulletList({
   return (
     <div
       style={{
-        marginTop: '5px',
         margin: (component as any).margin || undefined,
         padding: outerPadding,
         boxSizing: 'border-box',
@@ -113,7 +118,7 @@ function BulletList({
             <>
               <tr key={`item-${index}`}>
                 {/* Marker cell */}
-                <td style={markerStyle}>
+                <td style={{ ...markerStyle, color: component.listMarkerColors?.[index] || markerStyle.color }}>
                   {getMarker(markerType, index)}
                 </td>
 

@@ -1,133 +1,58 @@
-"use client"
-
-import type { EmailComponent } from "@/types/email-builder"
+import type { EmailComponent } from "@/types/email-builder";
+import { getColumnWidth } from "./column-width";
+import { getSectionColumns } from "./section-columns";
 import { getDisplayAttributes } from "./style-generator";
 
-/*
-takes column component and generates html for it
-based on number of columns and their type (equal or custom)
-
-Props needed:
-- the component itself
-
-Returns:
-- html string
-
-*/ 
-
-interface GenerateColumnHtmlProps {
-  component: EmailComponent
-  generateComponentHTML: (component: EmailComponent) => string,
-  childHtml?: string
+function visibility(display: EmailComponent["displayType"], element: "table" | "cell") {
+  if (display === "mobile-only") return `class="mbl-show-${element}"`;
+  if (display === "desktop-only") return `class="desk-show-${element}"`;
+  return "";
 }
 
-
-export function generateColumnHtml({component,generateComponentHTML,childHtml}:GenerateColumnHtmlProps): string {
-const { children, columns, columnsType, gap , direction} = component;
-const { classAttr, innerStyle } = getDisplayAttributes(component.displayType);
-
-
-const getWidth = (colCount: number | undefined,width : string): string => {
-    if (width && width !== "auto") return width;
-    if (!colCount || colCount <= 1) return "100%";
-    return `${100 / colCount}%`;
+function widthAttribute(width: string): string {
+  return width === "auto" ? "" : `width="${width.replace(/px$/, "")}"`;
 }
 
-
-function generateTdHTML(
-  child: EmailComponent,
-  index: number,
-  totalColumns: number,
-  gap: string = "0%",
+export function generateColumnHtml(
+  section: EmailComponent,
+  renderContent: (component: EmailComponent) => string,
 ): string {
-  const verticalAlign = child.columnVerticalAlignment || "center";
-  const alignment = child.columnAlignment || "center";
+  const columns = getSectionColumns(section);
+  const horizontal = columns.length > 1 && (section.direction ?? "column") === "row";
+  const rows = horizontal ? [columns] : columns.map(column => [column]);
+  const sectionDisplay = section.displayType;
+  const sectionStyle = getDisplayAttributes(sectionDisplay).innerStyle || "";
+  const bgcolor = section.backgroundColor || "transparent";
 
   return `
-    <td
-    
-      bgcolor="${child.backgroundColor || "transparent"}"
-      valign="${verticalAlign}"
-      align="${alignment }"
-      width="${getWidth(totalColumns,child.columnWidth || "")}"
-      ${child.displayType === "mobile-only" ? 'class="mbl-show-cell"' : child.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
-      style="
-        vertical-align: ${verticalAlign};
-        background-color: ${child.backgroundColor || "transparent"};
-        border-radius: ${child.borderRadius || "0px"};
-        width: ${getWidth(totalColumns,child.columnWidth || "")};
-        min-height: ${child.columnMinHeight || "120px"};
-        padding : ${child.padding || 0}
-       ${ innerStyle ? innerStyle : "" }
-      "
-    >
-      ${generateComponentHTML(child)}
-    </td>
-    
-  `.trim();
-}
-// ${index < totalColumns - 1 ? `<td width="${gap}" style="width: ${gap};">&nbsp;</td>` : ""}
-// Wrap in a table row for email compatibility
-if((columns || 1) > 1 && direction === "row"){
-    return `
-    <tr bgcolor="${component.backgroundColor}" style="background-color:${component.backgroundColor};" ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
-      ${children
-        ?.map((child, index) =>
-          generateTdHTML(child, index, children?.length, gap)
-        )
-        .join("")}
-    </tr>
-  `;
-}
-
-// this is for vertical alignment
-if ((columns || 1) > 1 && direction === "column") {
-    return (children
-    ?.map(
-        (child,index) => `
-        <tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}>
-            <td
-                bgcolor="${child.backgroundColor || "transparent"}"
-                valign="${child.columnVerticalAlignment || "top"}"
-                align="${child.columnAlignment || "center"}"
-                ${child.displayType === "mobile-only" ? 'class="mbl-show-cell"' : child.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
-                style="
-                background-color: ${child.backgroundColor || "transparent"};
-                border-radius: ${child.borderRadius || "0px"};
-                min-height: ${child.columnMinHeight || "120px"};
-                width: 100%;
-                padding:${child.padding || 0}
-                "
-            >
-                ${generateComponentHTML(child)}
-            </td>
-        </tr>
-        
-    `
-    )
-    .join("")) || ""
-  }
-// ${index < (children?.length || 0) - 1 ? `<tr ${component.displayType === "mobile-only" ? 'class="mbl-show-tr"' : component.displayType === "desktop-only" ? 'class="desk-show-tr"' : ""}><td height="${gap}" style="height: ${gap};">&nbsp;</td></tr>` : ""}
-  // single column section 
-
-  return `
-  <tr>
-    <td
-      ${component.displayType === "mobile-only" ? 'class="mbl-show-cell"' : component.displayType === "desktop-only" ? 'class="desk-show-cell"' : ""}
-        bgcolor="${component.backgroundColor || "transparent"}"
-        valign="top"
-        align="left"
-        style="
-        width: 100%;
-        background-color: ${component.backgroundColor || "transparent"};
-        ${ innerStyle ? innerStyle : "" }
-        "
-    >
-       ${childHtml}
-    </td>
-  </tr>
-    
-  
-  `
- 
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+  ${visibility(sectionDisplay, "table")} style="background-color:${bgcolor};border-radius:${section.borderRadius || "0"};margin:${section.margin || "0"};${sectionStyle}">
+  <tr><td ${visibility(sectionDisplay, "cell")} style="padding:${section.padding || "0 20px"};${sectionStyle}">
+    <table role="presentation" width="100%" align="center" cellspacing="0" cellpadding="0" border="0"
+      style="width:100%;max-width:${section.maxWidth || "600px"};">
+      ${rows.map(row => {
+        const width = horizontal || getColumnWidth(row[0].columnWidth) === "auto" ? "100%" : getColumnWidth(row[0].columnWidth);
+        return `<tr><td>
+          <table role="presentation" ${widthAttribute(width)} cellspacing="0" cellpadding="0" border="0"
+            style="width:${width};max-width:100%;table-layout:fixed;">
+            <tr>${row.map(column => {
+              const cellWidth = horizontal ? getColumnWidth(column.columnWidth) : "100%";
+              const align = column.columnAlignment || "left";
+              const valign = column.columnVerticalAlignment || "top";
+              const padding = column === section ? "0" : column.padding || "0 20px";
+              const display = column === section ? undefined : column.displayType;
+              const displayStyle = getDisplayAttributes(display).innerStyle || "";
+              return `
+                <td ${widthAttribute(cellWidth)} align="${align}" valign="${valign}"
+                  ${visibility(display, "cell")} bgcolor="${column.backgroundColor || "transparent"}"
+                  style="width:${cellWidth};padding:${padding};text-align:${align};vertical-align:${valign};background-color:${column.backgroundColor || "transparent"};border-radius:${column.borderRadius || "0"};${displayStyle}">
+                  ${(column.children ?? []).filter(Boolean).map(renderContent).join("")}
+                </td>`;
+            }).join("")}</tr>
+          </table>
+        </td></tr>`;
+      }).join("")}
+    </table>
+  </td></tr>
+</table>`.trim();
 }

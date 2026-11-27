@@ -42,7 +42,6 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
   ) => {
     const [dropIndex, setDropIndex] = useState<number | null>(null)
     const dropIndexRef = useRef<number | null>(null)
-    const overSectionRef = useRef(false)
     // Stable inner ref used by drop/hover handlers — avoids stale forwardRef reads
     const canvasInnerRef = useRef<HTMLDivElement | null>(null)
 
@@ -73,27 +72,11 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     const [{ isOver }, drop] = useDrop({
       accept: "component",
       drop: (item: any, monitor) => {
-        if (!item.fromPalette && monitor.didDrop()) return
-        if (isLockedMode) return
+        if (isLockedMode || monitor.getDropResult<{ handled?: boolean }>()?.handled) return
 
         if (item.fromPalette) {
           const clientOffset = monitor.getClientOffset()
           const canvasEl = canvasInnerRef.current
-          if (clientOffset && canvasEl) {
-            const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
-            for (const el of sectionElements) {
-              const rect = el.getBoundingClientRect()
-              if (
-                clientOffset.x >= rect.left &&
-                clientOffset.x <= rect.right &&
-                clientOffset.y >= rect.top &&
-                clientOffset.y <= rect.bottom
-              ) {
-                return { dropZone: "section", handled: true }
-              }
-            }
-          }
-
           // Always recompute from live cursor position at drop time.
           // dropIndexRef is the fallback for the rare case clientOffset is null.
           let finalIndex = dropIndexRef.current ?? components.length
@@ -118,41 +101,23 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       },
       hover: (item: any, monitor) => {
         if (!item.fromPalette || isLockedMode) return
-        // Only update indicator when the cursor is directly over the canvas,
-        // not when it is over a nested child drop target.
-        if (!monitor.isOver({ shallow: true })) return
-
         const clientOffset = monitor.getClientOffset()
         const canvasEl = canvasInnerRef.current
         if (!clientOffset || !canvasEl) return
+
+        // Component wrappers also receive hover events for reordering.
+        // Reserve the insertion indicator for the section only over a real drop zone.
+        const target = document.elementFromPoint(clientOffset.x, clientOffset.y)
+        if (item.type !== "section" && target?.closest("[data-section-drop-zone]")) {
+          if (dropIndexRef.current !== null) setDropIndexBoth(null)
+          return
+        }
 
         const canvasRect = canvasEl.getBoundingClientRect()
         if (
           clientOffset.y < canvasRect.top - 50 ||
           clientOffset.y > canvasRect.bottom + 50
         ) {
-          setDropIndexBoth(null)
-          overSectionRef.current = false
-          return
-        }
-
-        const sectionElements = canvasEl.querySelectorAll("[data-section-id]")
-        let overSection = false
-        for (const el of sectionElements) {
-          const rect = el.getBoundingClientRect()
-          if (
-            clientOffset.x >= rect.left &&
-            clientOffset.x <= rect.right &&
-            clientOffset.y >= rect.top &&
-            clientOffset.y <= rect.bottom
-          ) {
-            overSection = true
-            break
-          }
-        }
-
-        overSectionRef.current = overSection
-        if (overSection) {
           setDropIndexBoth(null)
           return
         }
@@ -169,14 +134,14 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
 
     // Clear indicator when drag leaves canvas entirely
     useEffect(() => {
-      if (!isOver && !overSectionRef.current) setDropIndexBoth(null)
+      if (!isOver) setDropIndexBoth(null)
     }, [isOver])
 
     const handleAddToSection = (sectionId: string, component: EmailComponent, index?: number) => {
       const newComponent = { ...component, id: Date.now().toString() }
       
       // Find the section/column recursively (handles nested columns in multi-column sections)
-      const targetSection = getSectionREcursively(sectionId, components)
+      const targetSection = getSectionRecursively(sectionId, components)
       const currentChildren = targetSection?.children || []
       
       const updatedChildren = index !== undefined
@@ -191,8 +156,8 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     }
 
     const handleMoveWithinSection = (sectionId: string, dragIndex: number, hoverIndex: number) => {
-      const section = components.find((c) => c.id === sectionId)
-      if (!section?.children) return
+      const section = getSectionRecursively(sectionId, components)
+      if (!section?.children || !section.children[dragIndex] || !section.children[hoverIndex]) return
       const newChildren = [...section.children]
       const draggedComponent = newChildren[dragIndex]
       newChildren.splice(dragIndex, 1)
@@ -200,11 +165,11 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
       onUpdateComponent(sectionId, { children: newChildren })
     }
 
-    const getSectionREcursively = (id: string, comps: EmailComponent[]): EmailComponent | null => {
+    const getSectionRecursively = (id: string, comps: EmailComponent[]): EmailComponent | null => {
       for (const comp of comps) {
         if (comp.id === id) return comp
         if (comp.children) {
-          const found = getSectionREcursively(id, comp.children)
+          const found = getSectionRecursively(id, comp.children)
           if (found) return found
         }
       }
@@ -212,7 +177,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     }
 
     const handleUpdateChild = (sectionId: string, childId: string, updates: Partial<EmailComponent>) => {
-      const section = getSectionREcursively(sectionId, components)
+      const section = getSectionRecursively(sectionId, components)
       if (!section?.children) return
       const newChildren = section.children.map((child) => (child.id === childId ? { ...child, ...updates } : child))
       onUpdateComponent(sectionId, { children: newChildren })
@@ -223,7 +188,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
     }
 
     return (
-      <div className="flex justify-center">
+      <div className="flex w-full justify-center">
         <div
           ref={(node) => {
             canvasInnerRef.current = node
@@ -258,7 +223,7 @@ export const EmailCanvas = forwardRef<HTMLDivElement, EmailCanvasProps>(
               >
                 {/* Drop indicator line ABOVE this component */}
                 {dropIndex === index && isOver && !previewMode && (
-                  <div className="pointer-events-none mx-3 mb-2 h-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
+                  <div className="pointer-events-none absolute inset-x-3 top-0 z-10 h-[3px] -translate-y-1/2 rounded-full bg-blue-500 shadow-sm shadow-blue-300" />
                 )}
                 <EmailComponentRenderer
                   component={component}

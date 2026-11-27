@@ -5,6 +5,7 @@ import { firebaseService } from '@/services/firebase-service';
 import { useEmailBuilderStore } from '@/store/email-builder-store';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
+import { ReorderButtons } from "./reorder-buttons";
 import { Input } from '../ui/input';
 
 interface Props {
@@ -302,6 +303,8 @@ const AltNamePageSection: React.FC<Props> = ({ data, onChange }) => {
                     />
                   </div>
 
+                  <ReorderButtons items={images} index={idx} label="image" disabled={isUploading !== null || selectionIndex !== null}
+                    onChange={(reordered) => onChange({ ...data, images: reordered })} />
                   <Button
                     size="icon"
                     variant="ghost"

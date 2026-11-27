@@ -19,14 +19,6 @@ type EmailPreviewModalProps = {
   sourceHtmlByOption?: Partial<Record<1 | 2 | 3, string>>;
 };
 
-const DARK_CSS = `
-  body { background-color: #1e1e1e !important; }
-  table, td, div, p, span { background-color: #2c2c2c !important; color: #e8e8e8 !important; }
-  [bgcolor="#ffffff"],[bgcolor="#FFFFFF"],[bgcolor="#eeeeee"],[bgcolor="#EEEEEE"],[bgcolor="#f4f4f4"],[bgcolor="#F4F4F4"],[bgcolor="#f1f1f1"] { background-color: #2c2c2c !important; }
-  a { color: #8ab4f8 !important; }
-  img { filter: brightness(0.85); }
-`;
-
 const MOBILE_CSS = `
   .deskDisp { display: none !important; }
   .mbDisp   { display: table !important; }
@@ -52,14 +44,18 @@ function buildHtml(
   mobile = false,
   sourceHtml?: string,
 ): string {
-  const base = prepareEmailHtml(sourceHtml || generateEmailHTML(components, preheaderText));
+  const base = prepareEmailHtml(sourceHtml || generateEmailHTML(components, preheaderText))
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, (style) =>
+      style.replace(/\(\s*prefers-color-scheme\s*:\s*(dark|light)\s*\)/gi, (_query, scheme: string) =>
+        (scheme.toLowerCase() === "dark") === dark ? "(width >= 0px)" : "(width < 0px)",
+      ),
+    );
   // Inject a <base href> so relative /public-folder image paths resolve
   // correctly inside the sandboxed preview iframe.
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const baseTag = origin ? `<base href="${origin}/">` : '';
   let result = base.replace('<head>', `<head>${baseTag}`);
   if (mobile) result = result.replace("</head>", `<style>${MOBILE_CSS}</style></head>`);
-  if (dark)   result = result.replace("</head>", `<style>${DARK_CSS}</style></head>`);
   return result;
 }
 
@@ -176,12 +172,16 @@ export default function EmailPreviewModal({ open, onOpenChange, components, sour
               {/* Light / Dark toggle */}
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
+                  aria-label="Light mode"
+                  aria-pressed={!dark}
                   onClick={() => setDark(false)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!dark ? "bg-white shadow text-gray-900" : "text-gray-400 hover:text-gray-700"}`}
                 >
                   <Sun className="h-3.5 w-3.5" />
                 </button>
                 <button
+                  aria-label="Dark mode"
+                  aria-pressed={dark}
                   onClick={() => setDark(true)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${dark ? "bg-[#1e1e1e] shadow text-white" : "text-gray-400 hover:text-gray-700"}`}
                 >
@@ -228,6 +228,7 @@ export default function EmailPreviewModal({ open, onOpenChange, components, sour
             title="Email Preview"
             style={{
               width: screen,
+              colorScheme: dark ? "dark" : "light",
               minHeight: "600px",
               border: dark ? "1px solid #444" : "1px solid #e5e7eb",
               borderRadius: "4px",

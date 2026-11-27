@@ -1,3 +1,7 @@
+import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, ORSERDU_MEDWATCH_URL, ORSERDU_REPORT_PI_URL } from "@/lib/orserdu-report-links";
+import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
+import { DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import { de } from "date-fns/locale";
 import {
   ImageIcon,
@@ -30,6 +34,13 @@ import {
 
 export const componentTypes = [
   {
+    type: "design-shape",
+    label: "Shape",
+    category: "basic",
+    icon: Square,
+    defaultProps: { shape: "rectangle", width: "140px", height: "60px", backgroundColor: "#006937", textAlign: "center" },
+  },
+  {
     type: "text",
     label: "Text",
     icon: Type,
@@ -60,21 +71,6 @@ export const componentTypes = [
     },
   },
   {
-    type: "button",
-    label: "Button",
-    category : "basic",
-    icon: Square,
-    defaultProps: {
-      text: "Button",
-      href: "#",
-      backgroundColor: "#0563C1",
-      color: "#ffffff",
-      borderRadius: "4px",
-      buttonPadding: "12px 24px",
-      textAlign: "center",
-    },
-  },
-  {
     type: "section",
     label: "Section",
     category : "basic",
@@ -95,7 +91,7 @@ export const componentTypes = [
     icon: Minus,
     defaultProps: {
       height: "1px",
-      backgroundColor: "#e0e0e0",
+      backgroundColor: DEFAULT_DIVIDER_COLOR,
       margin: "20px 0",
     },
   },
@@ -121,9 +117,9 @@ export const componentTypes = [
     icon: PanelBottom,
     defaultProps: {
       links: [
-        { text: "Privacy and Terms of Use ", href: "#" },
-        { text: "CCPA Policy", href: "#" },
-        { text: "Cookies Policy", href: "#" },
+        { text: "Privacy and Terms of Use ", href: "https://stemline.com/privacy-policy" },
+        { text: "CCPA Policy", href: "https://stemline.com/ccpa-policy" },
+        { text: "Cookies Policy", href: "https://stemline.com/cookie-policy" },
         { text: "Unsubscribe", href: "#" },
       ],
     },
@@ -284,9 +280,9 @@ export const componentTypes = [
   icon: PanelBottom,
   defaultProps: {
     links: [
-      { text: "Privacy and Terms of Use", href: "#" },
-      { text: "CCPA Policy", href: "#" },
-      { text: "Cookies Policy", href: "#" },
+      { text: "Privacy and Terms of Use", href: "https://stemline.com/privacy-policy" },
+      { text: "CCPA Policy", href: "https://stemline.com/ccpa-policy" },
+      { text: "Cookies Policy", href: "https://stemline.com/cookie-policy" },
       { text: "Unsubscribe", href: "#" },
       { text: "Email Preferences", href: "#", color: "#ff66cc" },
     ],
@@ -333,11 +329,11 @@ export const componentTypes = [
       "I have the information that you requested during our previous discussion.",
       "I am reaching out to share some information you may find helpful.",
     ],
-    fontSize: "12px",
-    color: "#5D5D5D",
+    fontSize: DEFAULT_CUSTOM_TEXT_FONT_SIZE,
+    color: DEFAULT_CUSTOM_TEXT_COLOR,
     textAlign: "left",
     fontWeight: "normal",
-    lineHeight: "14px",
+    lineHeight: DEFAULT_CUSTOM_TEXT_LINE_HEIGHT,
     fontFamily: "Arial, sans-serif",
     padding: "0 20px 10px 20px",
     backgroundColor: "#ffffff",
@@ -581,16 +577,16 @@ export const componentTypes = [
         {
           prefixText: "To report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. at 1-877-332-7961 or FDA at 1-800-FDA-1088 or ",
           linkText: "www.fda.gov/medwatch",
-          linkHref: "https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program",
-          linkColor: "#007bff",
+          linkHref: ORSERDU_MEDWATCH_URL,
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ".",
           bold: true,
         },
         {
           prefixText: "Please click ",
           linkText: "here",
-          linkHref: "https://rxmenarinistemline.com/ORSERDU_elacestrant_Full_Prescribing_Information.pdf",
-          linkColor: "#007bff",
+          linkHref: ORSERDU_REPORT_PI_URL,
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: " to see full Prescribing Information.",
           bold: true,
         },
@@ -598,7 +594,7 @@ export const componentTypes = [
           prefixText: "For State pricing disclosures for ORSERDU<sup>\u00ae</sup>, please click ",
           linkText: "HERE",
           linkHref: "https://stemline.com/state-disclosures/",
-          linkColor: "#007bff",
+          linkColor: DEFAULT_ORSERDU_REPORT_LINK_COLOR,
           suffixText: ". ",
           bold: false,
         },
@@ -693,7 +689,7 @@ export const componentTypes = [
     category: "elzonris",
     icon: NotepadText,
     defaultProps: {
-      html: ` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+      html: applyElzonrisIsiSpacing(` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
             <tbody>
                 <tr>
                     <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
@@ -940,7 +936,7 @@ export const componentTypes = [
                     <td align="left" valign="middle"
                         style="color:#646464;font-family:Arial,sans-serif;font-weight:400;font-size:12px;line-height:14px;">
                         <strong>Please see Full <a
-                                href="https://rxmenarinistemline.com/ELZONRIS_US_Full_Prescribing_Information.pdf"
+                                href="http://pi.elzonris.com/"
                                 target="_blank" style="text-decoration:underline;color:#009877;line-height:18px;">Prescribing
                                 Information</a>, including Boxed WARNING.</strong></td>
                 </tr>
@@ -954,7 +950,7 @@ export const componentTypes = [
                         report SUSPECTED ADVERSE REACTIONS, contact Stemline Therapeutics, Inc. <br>at <span
                             style="color:#646464">1-877-332-7961</span> or contact the FDA at <span
                             style="color:#646464">1-800-FDA-1088</span> or <a
-                            href="https://www.fda.gov/safety/medwatch-fda-safety-information-and-adverse-event-reporting-program"
+                            href="https://www.fda.gov/medwatch"
                             target="_blank"
                             style="text-decoration:underline;color:#009877;line-height:18px;">www.fda.gov/medwatch</a>.</td>
                 </tr>
@@ -963,7 +959,7 @@ export const componentTypes = [
                     </td>
                 </tr>
             </tbody>
-        </table>`,
+        </table>`),
     },
   },
    {
@@ -1167,9 +1163,6 @@ export const componentTypes = [
       // Footer line
       footerLine: "Please see additional Important Safety Information below.",
       footerPadding: "0",
-      // Trial design paragraph (supports basic HTML: <b>, <i>, <sup>, <a>)
-      trialDesignHtml: `<b>TRIAL DESIGN:</b> EMERALD was an open-label, global, phase 3 trial of postmenopausal women or men with confirmed ER+/HER2- advanced or metastatic breast cancer (N=478) who had progressed after 1-2 lines of ET, at least one in combination with a CDK4/6i, randomized (1:1) to receive ORSERDU or endocrine therapy (fulvestrant) or an aromatase inhibitor (anastrozole, letrozole, or exemestane). A major efficacy endpoint was PFS by BIRC in patients with <i>ESR1</i>m (n=228). An exploratory post hoc analysis evaluated efficacy and safety in patients with <i>ESR1</i>m treated with prior ET + CDK4/6i for ≥12 months (n=159).<sup>1,2</sup>`,
-      trialDesignPadding: "0",
       padding: "0 20px 10px 20px",
     },
   },

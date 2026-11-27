@@ -1,15 +1,20 @@
+import { renderElzonrisIsi } from "@/lib/elzonris-isi-spacing";
+import { getDividerDimensions } from "@/lib/email-divider";
+import { getOrserduFooterLinkColor, DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
 import type { EmailComponent } from "@/types/email-builder";
+import { getEmailFontFaceCss } from "./email-fonts";
 import { getDisplayAttributes } from "./style-generator";
 import { generateColumnHtml } from "./column-html-generator";
 import { compareAsc } from "date-fns";
 import { DEFAULT_ORSERDU_FOOTER_LOGO, normalizeHtmlImageSrcs, resolveEmailAssetUrl } from "./asset-url";
 import { applyTextParagraphSpacing } from "./text-paragraph-spacing";
 import { getOrserduImageTextContent } from "./orserdu-image-text";
-import { normalizeOrserduReportLinkItem } from "./orserdu-report-links";
+import { DEFAULT_ORSERDU_REPORT_LINK_COLOR, normalizeOrserduReportLinkItem } from "./orserdu-report-links";
 import { getOrserduIsiBulletSpacing, getOrserduIsiOuterPadding, getOrserduIsiPadding, getOrserduIsiSelectPadding } from "./orserdu-isi-padding";
 import { preventJobCodeAutoLinking } from "./job-code";
+import { getEmailShapeStyle } from "@/lib/email-shape";
 import { getEmailComponentPadding } from "./email-padding";
-import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, prepareEmailHtml } from "./email-dark-mode";
+import { EMAIL_DARK_MODE_CSS, EMAIL_DARK_MODE_STYLE_MARKER, orserduColorClass, orserduInkStyle, prepareEmailHtml } from "./email-dark-mode";
 import {
   GERON_ISI_HTML,
   GERON_MEDICATION_GUIDE_URL,
@@ -69,94 +74,115 @@ function applyAnimatedIsiPadding(html: string, padding: string): string {
   return applyPaddingToCell(html, wrapperCellMatch, padding);
 }
 
+function paintOrserduInk(tag: string, color: string): string {
+  const colorClass = color === "inherit" ? "" : orserduColorClass(color);
+  const declarations = color === "inherit"
+    ? "color:inherit !important;-webkit-text-fill-color:inherit !important;"
+    : orserduInkStyle(color);
+  const classAttribute = /(\sclass\s*=)(["'])([\s\S]*?)\2/i;
+  const styleAttribute = /(\sstyle\s*=)(["'])([\s\S]*?)\2/i;
+  const ending = /(\s*\/?>)$/;
+  const classified = classAttribute.test(tag)
+    ? tag.replace(classAttribute, (_match, prefix, quote, classes: string) =>
+        `${prefix}${quote}${[...classes.split(/\s+/).filter(name => name && !name.startsWith("orserdu-ink-")), colorClass].filter(Boolean).join(" ")}${quote}`)
+    : colorClass ? tag.replace(ending, ` class="${colorClass}"$1`) : tag;
+  return styleAttribute.test(classified)
+    ? classified.replace(styleAttribute, (_match, prefix, quote, style: string) => {
+        const remaining = style.replace(/(^|;)\s*(?:color|-webkit-text-fill-color|mso-style-textfill-type|mso-style-textfill-fill-color)\s*:[^;]+/gi, "").replace(/^;+/, "");
+        return `${prefix}${quote}${declarations}${remaining}${quote}`;
+      })
+    : classified.replace(ending, ` style="${declarations}"$1`);
+}
+
+function normalizeHighlightInk(color: string): string | null {
+  const value = color.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(value)) return value;
+  if (/^#[0-9a-f]{3}$/.test(value)) return `#${value.slice(1).replace(/./g, digit => digit + digit)}`;
+  if (value === "black") return "#000000";
+  if (value === "white") return "#ffffff";
+  const rgb = value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (rgb && rgb.slice(1).every(channel => Number(channel) <= 255)) {
+    return "#" + rgb.slice(1).map(channel => Number(channel).toString(16).padStart(2, "0")).join("");
+  }
+  return null;
+}
+
+function highlightUsesWhiteInDarkMode(background: string): boolean {
+  const hex = normalizeHighlightInk(background);
+  if (!hex) return false;
+  const [red, green, blue] = [1, 3, 5].map(offset => {
+    const value = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue <= 1.05 / 4.5 - 0.05;
+}
+
+function formatHighlightCopy(html: string, ink: string, whiteInDarkMode: boolean) {
+  const stack: { name: string; color: string | null; custom: boolean }[] = [];
+  let hasCustomInk = false;
+  const copy = html.replace(/<!--[\s\S]*?-->|<\/?[a-z](?:[^"'<>]|"[^"]*"|'[^']*')*>|[^<]+|</gi, token => {
+    if (token.startsWith("<!--")) return token;
+    const tag = token.match(/^<(\/?)([a-z][\w-]*)/i);
+    if (tag) {
+      const name = tag[2].toLowerCase();
+      if (tag[1]) {
+        const index = stack.map(element => element.name).lastIndexOf(name);
+        if (index !== -1) stack.splice(index);
+      } else if (!/^(?:area|br|col|hr|img|input|source|wbr)$/.test(name) && !token.endsWith("/>")) {
+        const parent = stack[stack.length - 1];
+        const style = token.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
+        const explicit = style?.match(/(?:^|;)\s*color\s*:\s*([^;!]+)/i)?.[1] ??
+          (name === "font" ? token.match(/\scolor\s*=\s*(["'])(.*?)\1/i)?.[2] : undefined);
+        const custom = explicit !== undefined || !!parent?.custom;
+        const color = explicit !== undefined ? normalizeHighlightInk(explicit) : parent ? parent.color : ink;
+        hasCustomInk ||= custom;
+        stack.push({ name, color, custom });
+      }
+      return token;
+    }
+    if (!token.trim()) return token;
+    const parent = stack[stack.length - 1];
+    const color = parent ? parent.color : ink;
+    if (!color) return token;
+    const adapt = whiteInDarkMode && !parent?.custom;
+    const css = adapt && color !== "#ffffff" ? orserduInkStyle(color).replace(/ !important/g, "") : orserduInkStyle(color);
+    // The color attribute still gives the glyphs a color if a mail client removes the CSS.
+    return `<font color="${color}" class="${orserduColorClass(color)}${adapt ? " orserdu-highlight-ink" : ""}" style="${css}">${token}</font>`;
+  });
+  return { copy, hasCustomInk };
+}
+
+function applyOrserduBulletColor(html: string, color?: string): string {
+  const defaultColor = color && /^#[0-9a-f]{6}$/i.test(color) ? color : undefined;
+
+  const marker = /(<td\b[^>]*>)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(•|&bull;|&#0*8226;|&#x0*2022;)((?:(?:<\/?(?:span|font|b|strong|i|em|u)\b[^>]*>)|\s|&nbsp;)*)(<\/td>)/gi;
+
+  return html.replace(marker, (_match, cell, before, bullet, after, close) => {
+    const override = cell.match(/\sdata-orserdu-isi-bullet-color=(["'])(#[0-9a-f]{6})\1/i)?.[2];
+    const cellStyle = cell.match(/\sstyle\s*=\s*(["'])(.*?)\1/i)?.[2];
+    const savedColor = cellStyle?.match(/(?:^|;)\s*color\s*:\s*(#[0-9a-f]{6})(?=$|[\s;!])/i)?.[1];
+    const markerColor = override ?? defaultColor ?? savedColor ?? "#69d6b5";
+
+    const paintWrappers = (text: string) => text.replace(
+      /<(?:span|font|b|strong|i|em|u)\b[^>]*>/gi,
+      (tag) => paintOrserduInk(tag, markerColor),
+    );
+    return paintOrserduInk(cell, markerColor) + paintWrappers(before) + bullet + paintWrappers(after) + close;
+  });
+}
+
 function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'desktop' | 'mobile', isNested = false): string {
   if (!component) return ""; // Defensive check
   if ((component.type === "isi" || component.type === "orserdu-isi-animated") && component.isiHtml) {
-    return component.type === "isi"
-      ? applyPaddingToFirstTableCell(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested))
-      : applyAnimatedIsiPadding(component.isiHtml, getOrserduIsiOuterPadding(component.padding, isNested));
+    const padding = getOrserduIsiOuterPadding(component.padding, isNested);
+    const html = component.type === "isi"
+      ? applyPaddingToFirstTableCell(component.isiHtml, padding)
+      : applyAnimatedIsiPadding(component.isiHtml, padding);
+    return applyOrserduBulletColor(html, component.isiBulletColor);
   }
   switch (component.type) {
     case "section":
-      const childrenHTML = (component.children || [])
-        .filter((child) => !!child) // Filter out undefined children
-        .map((child) => generateComponentHTML(child, pdfMode, true))
-        .join("");
-
-      const display = (component.displayType ||
-        "all") as EmailComponent["displayType"];
-      const { classAttr, innerStyle } = getDisplayAttributes(display);
-
-      const getColumnStyles = (child: EmailComponent) => {
-        if (!child.isColumn) return "";
-
-        const alignment = child.columnAlignment || "left";
-        const verticalAlignment = child.columnVerticalAlignment || "center";
-
-        return `
-      text-align: ${alignment};
-      vertical-align: ${
-        verticalAlignment === "top"
-          ? "top"
-          : verticalAlignment === "middle"
-            ? "middle"
-            : "bottom"
-      };
-      min-height: ${child.columnMinHeight || "120px"};
-    `;
-      };
-
-      return `
-    <table
-      role="presentation"
-      width="100%"
-      cellspacing="0"
-      cellpadding="0"
-      border="0"
-      align="center"
-      bgcolor="${component.backgroundColor}"
-       ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
-       
-
-       style="
-        background-color:${component.backgroundColor};
-        ${innerStyle ? innerStyle : ""}
-       "
-    >
-      <tr bgcolor="${component.backgroundColor}" style="background-color:${component.backgroundColor};">
-        <td bgcolor="${component.backgroundColor}" align="${component.columnAlignment || "top"}"  ${display === "mobile-only" ? 'class="mbl-show-cell"' : display === "desktop-only" ? 'class="desk-show-cell"' : ""} style="background-color:${component.backgroundColor};padding:${component.padding || "0 20px 0 20px"};${innerStyle ? innerStyle : ""}">
-          <table
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-            width="100%"
-            align="center"
-            bgcolor="${component.backgroundColor}"
-             ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
-            style="
-              max-width: ${component.maxWidth || "600px"};
-              ${component.isColumn ? getColumnStyles(component) : ""}
-              ${innerStyle ? innerStyle : ""}
-              background-color:${component.backgroundColor};
-            "
-          >
-            ${
-              component.columns && component.columns > 1
-                ? generateColumnHtml({
-                    component,
-                    generateComponentHTML: (child) => generateComponentHTML(child, pdfMode, true),
-                  })
-                : generateColumnHtml({
-                    component,
-                    generateComponentHTML: (child) => generateComponentHTML(child, pdfMode, true),
-                    childHtml: childrenHTML,
-                  })
-            }
-          </table>
-        </td>
-      </tr>
-    </table>
-  `.trim();
+      return generateColumnHtml(component, child => generateComponentHTML(child, pdfMode, true));
 
     case "text": {
       const display = (component.displayType ||
@@ -245,6 +271,17 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       `;
     }
 
+    case "design-shape": {
+      const { width, height, borderRadius } = getEmailShapeStyle(component);
+      const color = component.backgroundColor || "#006937";
+      return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
+        <td align="center" style="padding:${component.padding || "0"};">
+          <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="width:${width};"><tr>
+            <td bgcolor="${color}" style="background-color:${color};height:${height};border-radius:${borderRadius};font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+        </td>
+      </tr></table>`;
+    }
     case "button": {
       const display = (component.displayType ||
         "all") as EmailComponent["displayType"];
@@ -281,6 +318,9 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
                       };
                       border-radius: ${component.borderRadius || "4px"};
                       padding: ${component.buttonPadding || "12px 24px"};
+                      ${component.buttonOutlineColor ? `border: 1px solid ${component.buttonOutlineColor};` : ""}
+                      ${component.buttonGradientColor ? `background-image: linear-gradient(${component.backgroundColor || "#007bff"}, ${component.buttonGradientColor});` : ""}
+                      ${component.buttonShadow ? "box-shadow: 0 2px 6px #0004;" : ""}
                       ${component.width ? `width: ${component.width};` : ""}
                       ${component.height ? `height: ${component.height};` : ""}
                       ${innerStyle ? innerStyle : ""}
@@ -308,37 +348,19 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
             ? "desk-show-table"
             : "";
 
-      const dividerStyle = `
-    line-height: ${component.height || "1px"};
-    font-size: 0px;
-    height: ${component.height || "1px"};
-    background-color: ${component.backgroundColor || "#e0e0e0"};
-    mso-line-height-rule: exactly;
-  `.trim();
-
+      const { width, height, color, align, padding } = getDividerDimensions(component);
       return `
-    <table
-      role="presentation"
-      width="100%"
-      cellspacing="0"
-      cellpadding="0"
-      border="0"
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
       ${visibilityClass ? `class="${visibilityClass}"` : ""}
-      ${display === "mobile-only" ? 'style="mso-hide: all;"' : ""}
-    >
-      <tbody>
-        <tr>
-          <td style="padding: ${component.padding || "0 20px 20px 20px"};">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-              <tr>
-                <td style="${dividerStyle}">&nbsp;</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `;
+      ${display === "mobile-only" ? 'style="mso-hide:all;"' : ""}>
+      <tr><td align="${align}" style="padding:${padding};">
+        <table role="presentation" width="${width.replace(/px$/, "")}" align="${align}" cellspacing="0" cellpadding="0" border="0"
+          style="width:${width};max-width:100%;">
+          <tr><td height="${height.replace(/px$/, "")}" bgcolor="${color}"
+            style="height:${height};line-height:${height};font-size:0;background-color:${color};mso-line-height-rule:exactly;">&nbsp;</td></tr>
+        </table>
+      </td></tr>
+    </table>`;
     }
     case "raw-html":
       return `
@@ -353,7 +375,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
     >
       <tbody>
         <tr>
-          <td  width="100%"  align="center" style="padding: ${component.padding || "0 20px 20px 20px"};" >
+          <td  width="100%"  align="center" style="padding: ${component.padding || "0 20px 20px 20px"};background-color:${component.backgroundColor || "transparent"};" >
             ${component.html}
           </td>
         </tr>
@@ -430,7 +452,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       const { innerStyle } = getDisplayAttributes(footerDisplay);
       const links = component.links || [];
       const fontSize = component.fontSize || "12px";
-      const color = component.color || "#0563C1";
+      const color = getOrserduFooterLinkColor(component.color);
       const padding = component.padding || "10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
 
@@ -451,7 +473,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         const row = links.slice(i, i + 2);
         const rowHTML = row.map((link, j) => {
           const isLast = j === row.length - 1;
-          const linkColor = link.color || color;
+          const linkColor = getOrserduFooterLinkColor(link.color || color);
           const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
           const nextLink = row[j + 1];
           const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
@@ -473,7 +495,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       // ΓöÇΓöÇ Desktop layout: all links inline ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
       const desktopHTML = links.map((link, index) => {
         const isLast = index === links.length - 1;
-        const linkColor = link.color || color;
+        const linkColor = getOrserduFooterLinkColor(link.color || color);
         const isEmailPreferences = link.text?.trim().toLowerCase() === "email preferences";
         const nextLink = links[index + 1];
         const pipeColor = nextLink?.text?.trim().toLowerCase() === "email preferences"
@@ -541,7 +563,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         .map(
           (link, index) => `
       <a target="_blank" href="${link.href || "#"}" title="${link.title || ""}" style="color: ${
-        link.color || component.color || "#0463c1"
+        getOrserduFooterLinkColor(link.color || component.color)
       }; text-decoration: underline; font-size: ${
         link.fontSize || component.fontSize || "12px"
       }; margin-right: 10px;font-family: Arial, sans-serif;${innerStyle ? innerStyle : ""}">
@@ -575,7 +597,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
           <td bgcolor="${component.backgroundColor || "#ffffff"}" ${footerDisplay && footerDisplay === "mobile-only" ? 'class="mbl-show-cell"' : footerDisplay && footerDisplay === "desktop-only" ? 'class="desk-show-cell"' : ""} style="padding: ${component.padding || "20px 20px 20px 20px"}; text-align: ${
             component.textAlign || "left"
           }; background-color: ${component.backgroundColor || "#fffff"};${innerStyle ? innerStyle : ""}">
-            <div style="color: ${component.color || "#0463c1"}; font-size: ${
+            <div style="color: ${getOrserduFooterLinkColor(component.color)}; font-size: ${
               component.fontSize || "14px"
             }; line-height: ${component.lineHeight};">
               ${linksHTML}
@@ -585,6 +607,31 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       </tbody>
     </table>
   `.trim();
+    }
+
+    case "footer-link-2": {
+      const display = component.displayType;
+      const { innerStyle } = getDisplayAttributes(display);
+      const logos = [component.logoA, component.logoB];
+      const color = component.color || "#007bff";
+      return `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          ${display === "mobile-only" ? 'class="mbl-show-table"' : display === "desktop-only" ? 'class="desk-show-table"' : ""}
+          style="${innerStyle}">
+          <tr><td style="padding:${component.padding || "16px"};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>${logos.map((logo, index) => `
+                <td width="50%" align="${index === 0 ? "left" : "right"}">
+                  ${logo?.imgSrc ? `<a href="${escapeHtmlText(logo.href || "#")}"><img width="${index === 0 ? 250 : 190}"
+                    style="display:block;max-width:100%;height:auto;border:0;" src="${escapeHtmlText(logo.imgSrc)}" alt="${escapeHtmlText(logo.altTex || "")}"></a>` : ""}
+                </td>`).join("")}</tr>
+            </table>
+            <p style="margin:12px 0 0;text-align:center;line-height:1.4;">
+              ${(component.links || []).map(link => `<a href="${escapeHtmlText(link.href || "#")}" title="${escapeHtmlText(link.title || "")}"
+                style="color:${color};font-size:${component.fontSize || "14px"};text-decoration:underline;">${escapeHtmlText(link.text || "")}</a>`).join(" &nbsp; ")}
+            </p>
+          </td></tr>
+        </table>`;
     }
 
     case "footer-links(3)": {
@@ -721,15 +768,30 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
         ? 'style="display:none;mso-hide:all;"'
         : "";
 
+      const preserveOrserduColors = component.type === "orserdu-highlight-box";
+      const backgroundStyle = preserveOrserduColors
+        ? `background-color:${boxBgColor} !important;background-image:linear-gradient(${boxBgColor},${boxBgColor}) !important;`
+        : `background-color:${boxBgColor};`;
+      const ink = preserveOrserduColors ? normalizeHighlightInk(boxTextColor) : null;
+      const textColorStyle = ink ? orserduInkStyle(ink) : `color:${boxTextColor};`;
+      const textClass = ink ? orserduColorClass(ink) : "";
+      const whiteInDarkMode = !!ink && highlightUsesWhiteInDarkMode(boxBgColor);
+      const darkClass = whiteInDarkMode ? " orserdu-highlight-dark-white" : "";
+      const formatted = ink ? formatHighlightCopy(boxText, ink, whiteInDarkMode) : { copy: boxText, hasCustomInk: false };
+      const copy = ink === "#ffffff" && !formatted.hasCustomInk
+        ? `<div class="orserdu-gmail-screen"><div class="orserdu-gmail-difference ${textClass}" style="${textColorStyle}">${formatted.copy}</div></div>`
+        : formatted.copy;
+
       return `
 <table ${displayClass} ${displayStyle} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tbody><tr>
     <td style="padding:${outerPad};">
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
-        style="background-color:${boxBgColor};">
+        style="${backgroundStyle}">
         <tbody><tr>
-          <td style="padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};color:${boxTextColor};mso-line-height-rule:exactly;">
-            ${boxText}
+          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy ${textClass}${darkClass}" bgcolor="${boxBgColor}"` : ""}
+            style="${preserveOrserduColors ? backgroundStyle : ""}padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};${textColorStyle}mso-line-height-rule:exactly;">
+            ${copy}
           </td>
         </tr></tbody>
       </table>
@@ -756,15 +818,15 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
 
       const rows = linkItems.map((item: any) => {
         const bold = item.bold ? "bold" : "normal";
-        const linkColor = item.linkColor || "#007bff";
-        const { linkText, suffixText } = normalizeOrserduReportLinkItem(item);
+        const linkColor = item.linkColor || DEFAULT_ORSERDU_REPORT_LINK_COLOR;
+        const { linkHref, linkText, suffixText } = normalizeOrserduReportLinkItem(item);
         return `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tbody>
             <tr>
               <td style="padding:${itemPadding};background-color:transparent;">
                 <div style="font-size:${fontSize};color:${color};text-align:left;font-weight:${bold};font-family:${fontFamily};line-height:${lineHeight};background-color:transparent;">
-                  ${item.prefixText || ""}<a href="${item.linkHref || "#"}" target="_blank" rel="noopener noreferrer" style="color:${linkColor};text-decoration:underline;">${linkText}</a>${suffixText}
+                  ${item.prefixText || ""}<a href="${escapeHtmlText(linkHref || "#")}" target="_blank" rel="noopener noreferrer" style="color:${linkColor};text-decoration:underline;">${linkText}</a>${suffixText}
                 </div>
               </td>
             </tr>
@@ -1049,7 +1111,7 @@ case "isi": {
           </table>
           `;
       return applyAnimatedIsiPadding(
-        html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`),
+        applyOrserduBulletColor(html, isiBulletColor),
         getOrserduIsiOuterPadding(component.padding, isNested),
       );
     }
@@ -1144,7 +1206,7 @@ case "isi": {
 </tbody>
 </table>
       `;
-      return html.replaceAll("color:#69d6b5;font-size:16px;", `color:${isiBulletColor};font-size:16px;`);
+      return applyOrserduBulletColor(html, isiBulletColor);
     }
     case "bullet-list": {
       const display = (component.displayType ||
@@ -1156,7 +1218,7 @@ case "isi": {
       const markerType = (component as any).markerType || "bullet";
 
       // Parse spaceBetweenItems ΓÇö strip "px" for the HTML height= attribute
-      const spacePx = parseInt((component.spaceBetweenItems || "5px").replace(/px$/i, ""), 10) || 5;
+      const spacePx = Math.max(0, Number.parseInt(component.spaceBetweenItems ?? "5", 10) || 0);
 
       // Margin ΓÇö only emit when it is set to something other than all-zeros
       const rawMargin = (component as any).margin || "";
@@ -1196,7 +1258,6 @@ case "isi": {
       const isCounter = ["number", "roman", "alpha"].includes(markerType);
 
       const bulletStyle = [
-        `color:${component.markerColor || "#000000"}`,
         `font-size:${component.discSize || "16px"}`,
         `line-height:${component.lineHeight || "18px"}`,
         `font-family:${fontFamily}`,
@@ -1219,15 +1280,16 @@ case "isi": {
 
       const markerWidth = isCounter ? "5%" : "2%";
 
-      const listItemsHTML = (component.listItems || [])
+      const listItems = component.listItems ?? [];
+      const listItemsHTML = listItems
         .map((item, idx) => `
         <tr>
-          <td bgcolor="${bg}" align="left" valign="top" width="${markerWidth}" style="${bulletStyle}">${getMarker(idx)}</td>
+          <td bgcolor="${bg}" align="left" valign="top" width="${markerWidth}" style="color:${component.listMarkerColors?.[idx] || component.markerColor || "#000000"};${bulletStyle}">${getMarker(idx)}</td>
           <td bgcolor="${bg}" align="left" valign="middle" style="${itemStyle}">${item}</td>
         </tr>
-        <tr>
+        ${spacePx > 0 && idx < listItems.length - 1 ? `<tr>
           <td colspan="2" bgcolor="${bg}" height="${spacePx}" style="font-size:0px;line-height:${spacePx}px;mso-line-height-rule:exactly;background-color:${bg};">&nbsp;</td>
-        </tr>`)
+        </tr>` : ""}`)
         .join("");
 
       return `
@@ -1345,11 +1407,11 @@ case "isi": {
       const { innerStyle } = getDisplayAttributes(display);
       const opts = component.customTextOptions || [];
       const token = opts.length ? `{{customText[${opts.join("|")}]}}` : "";
-      const fontSize = component.fontSize || "12px";
-      const color = component.color || "#5D5D5D";
+      const fontSize = component.fontSize || DEFAULT_CUSTOM_TEXT_FONT_SIZE;
+      const color = component.color || DEFAULT_CUSTOM_TEXT_COLOR;
       const fontFamily = component.fontFamily || "Arial, sans-serif";
       const fontWeight = component.fontWeight || "normal";
-      const lineHeight = component.lineHeight || "14px";
+      const lineHeight = component.lineHeight || DEFAULT_CUSTOM_TEXT_LINE_HEIGHT;
       const textAlign = component.textAlign || "left";
       const padding = component.padding || "0 20px 10px 20px";
       const bgColor = component.backgroundColor || "#ffffff";
@@ -1714,6 +1776,10 @@ case "isi": {
         "all") as EmailComponent["displayType"];
       const { classAttr, innerStyle } = getDisplayAttributes(display);
 
+      const logo = component.logo;
+      const logoImage = logo?.logoSrc ? `<img src="${escapeHtmlText(logo.logoSrc)}" width="112" alt="${escapeHtmlText(logo.altText || "")}" style="border:0;">` : "";
+      const logoHtml = logo?.href && logoImage ? `<a href="${escapeHtmlText(logo.href)}" target="_blank">${logoImage}</a>` : logoImage;
+
       const socialMediaLinksHtml = (component.socialMediaLinks || [])
         .map(
           (link) => `
@@ -1781,13 +1847,13 @@ case "isi": {
        
         >
             <tr>
-                <td width="100%" style="padding: 20px 0 0px 0;">
+                <td width="100%" style="padding:${component.padding || "20px 0 0"};">
                     <table class="desk-show-table" bgcolor="#0083BF" width="100%" border="0" cellspacing="0" cellpadding="0">
                         <tr bgcolor="#0083BF">
                             <td bgcolor="#0083BF">
                                 <table width="100%" bgcolor="#0083BF">
                                     <td bgcolor="#0083BF" align="left" width="50%" style="padding: 30px 0 20px 30px;">
-                                        <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
+                                        ${logoHtml}
                                     </td>
         
                                     <td valign="top" align="right" bgcolor="#0083BF" width="50%" style="padding: 30px 20px 20px 0;">
@@ -1842,7 +1908,7 @@ case "isi": {
                             <table align="center" bgcolor="#0083BF">
                               <tr bgcolor="#0083BF" align="center">
                                 <td bgcolor="#0083BF" style="padding: 10px 0px 20px 0px;">
-                                  <img src="${component.logo?.logoSrc}" width="112" alt="${component.logo?.altText}" >
+                                  ${logoHtml}
                                 </td>
                               </tr>
                               <tr bgcolor="#0083BF" align="center">
@@ -1928,7 +1994,7 @@ case "isi": {
           <tr>
             <td style="padding: ${component.padding || "0 20px 0 20px"}; font-family: ${component.fontFamily || "Arial, sans-serif"};">
               <div style="font-family: ${component.fontFamily || "Arial, sans-serif"};">
-                ${component.html || ""}
+                ${renderElzonrisIsi(component.html || "")}
               </div>
             </td>
           </tr>
@@ -2022,12 +2088,12 @@ case "isi": {
 
     case "orserdu-isi-select": {
       const c = component as any;
-      const outerPadding   = getOrserduIsiSelectPadding(c.padding, isNested);
+      const outerPadding   = getOrserduIsiSelectPadding(c.padding);
       const heading        = c.heading        ?? "SELECT IMPORTANT SAFETY INFORMATION";
       const headingColor   = c.headingColor   ?? "#006937";
       const headingFontSize= c.headingFontSize?? "16px";
       const headingPadding = getOrserduIsiPadding(c.headingPadding);
-      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string; paddingTop?: string; paddingBottom?: string }>;
+      const bulletItems    = (c.bulletItems   ?? []) as Array<{ boldText?: string; normalText?: string; paddingTop?: string; paddingBottom?: string; markerColor?: string }>;
       const bulletColor    = c.bulletColor    ?? "#69d6b5";
       const textColor      = c.textColor      ?? "#000000";
       const fontSize       = c.fontSize       ?? "14px";
@@ -2035,17 +2101,15 @@ case "isi": {
       const backgroundColor= c.backgroundColor?? "#ffffff";
       const footerLine     = c.footerLine     ?? "";
       const footerPadding  = getOrserduIsiPadding(c.footerPadding);
-      const trialDesignHtml= c.trialDesignHtml?? "";
-      const trialDesignPad = getOrserduIsiPadding(c.trialDesignPadding);
       const bulletTextGap = Math.max(0, Math.min(40, Number.parseInt(String(c.bulletTextGap ?? "4").replace(/px$/i, ""), 10) || 0));
 
       // Respect the configurable spaceBetweenBullets value
-      const spacingPx = parseInt(String(c.spaceBetweenBullets ?? "5").replace(/px$/i, ""), 10) || 5;
+      const spacingPx = getOrserduIsiBulletSpacing(c.spaceBetweenBullets ?? "5");
 
       const bulletRows = bulletItems.map((item, i) => `
         <tr>
           <td align="left" valign="top"
-            style="color:${bulletColor};font-size:16px;line-height:${lineHeight};padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px ${bulletTextGap}px ${getOrserduIsiBulletSpacing(item.paddingBottom)}px 0;background-color:transparent;white-space:nowrap;">
+            style="color:${item.markerColor || bulletColor};font-size:16px;line-height:${lineHeight};padding:${getOrserduIsiBulletSpacing(item.paddingTop)}px ${bulletTextGap}px ${getOrserduIsiBulletSpacing(item.paddingBottom)}px 0;background-color:transparent;white-space:nowrap;">
             &bull;
           </td>
           <td align="left" valign="middle"
@@ -2083,16 +2147,6 @@ case "isi": {
             <td style="padding:${footerPadding};background-color:transparent;">
               <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
                 <b>${footerLine}</b>
-              </div>
-            </td>
-          </tr></tbody>
-        </table>` : ""}
-        ${trialDesignHtml ? `
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-          <tbody><tr>
-            <td style="padding:${trialDesignPad};background-color:transparent;">
-              <div style="font-size:${fontSize};color:${textColor};text-align:left;font-weight:normal;font-family:Arial,sans-serif;line-height:${lineHeight};background-color:transparent;">
-                ${trialDesignHtml}
               </div>
             </td>
           </tr></tbody>
@@ -2473,13 +2527,16 @@ return `
       const textContent = isOrserdu
         ? applyTextParagraphSpacing(rawTextContent, component.paragraphSpacingPx ?? 0, false)
         : rawTextContent;
+      const textColor = isOrserdu ? component.color || "#000000" : "#000000";
       const textCell = `
-                <td valign="${verticalAlign}" align="${textAlign}" style="color:#000000;font-family:Arial,sans-serif;font-size:14px;line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
+                <td valign="${verticalAlign}" align="${textAlign}" style="color:${textColor};font-family:Arial,sans-serif;font-size:${component.fontSize || "14px"};line-height:${isOrserdu ? component.lineHeight || "20px" : "20px"};text-align:${textAlign};">
                   <div>${textContent}</div>
                 </td>`;
-      const contentCells = imagePosition === "right"
-        ? `${textCell}${gapCell}${imageCell}`
-        : `${imageCell}${gapCell}${textCell}`;
+      const contentCells = !imageSrc
+        ? textCell
+        : imagePosition === "right"
+          ? `${textCell}${gapCell}${imageCell}`
+          : `${imageCell}${gapCell}${textCell}`;
       return `
       <table class="${visibilityClass}" valign="top" width="100%" align="center" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0">
         <tbody><tr>
@@ -2515,6 +2572,10 @@ export function generateEmailHTML(
     .map((component) => generateComponentHTML(component, pdfMode))
     .join("");
 
+  const assetBaseUrl =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const fontFaceCss = getEmailFontFaceCss(assetBaseUrl, componentHTML);
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -2534,6 +2595,7 @@ export function generateEmailHTML(
           <meta name="supported-color-schemes" content="light dark">
 
     <title>Email Template</title>
+    ${fontFaceCss ? `<style>${fontFaceCss}</style>` : ""}
 
     <!--to support dark mode meta tags-->
     <style type="text/css">
@@ -2598,7 +2660,7 @@ export function generateEmailHTML(
         .geron-footer-table td.mbDisp { display: none !important; }
        
 
-        sup {
+        sup, sub {
             line-height: 0;
             font-size: 60%;
             mso-ansi-font-size: 95%;
@@ -2784,7 +2846,7 @@ export function generateEmailHTML(
         }
     </style>
 </head>
-<body style=" margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; " topmargin="0"
+<body class="orserdu-email-body" style=" margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; " topmargin="0"
    leftmargin="0" marginheight="0" marginwidth="0">
     <div
         style=" display: none !important; mso-hide: all; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; ">
@@ -2806,8 +2868,5 @@ export function generateEmailHTML(
 </html>
   `.trim();
   const preparedHtml = prepareEmailHtml(html);
-  const assetBaseUrl =
-    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_EMAIL_ASSET_BASE_URL) ||
-    (typeof window !== "undefined" ? window.location.origin : "");
   return assetBaseUrl ? normalizeHtmlImageSrcs(preparedHtml, assetBaseUrl) : preparedHtml;
 }

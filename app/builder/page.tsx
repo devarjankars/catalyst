@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { LoadingSpinner } from "@/components/loading-spinner";
@@ -12,10 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useEmailBuilderStore } from "@/store/email-builder-store";
 import { firebaseService } from "@/services/firebase-service";
 import { toast } from "sonner";
-import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import { matchesBrand } from "@/lib/brand-filter"
 import { useLoggedInUserStore } from "@/store/logged-in-user";
-import type { BrandId } from "@/types/template";
+import type { BrandId, EmailTemplateVersion, EmailTemplateVersionContent } from "@/types/template";
 import type { Brand } from "@/components/brand-selection-modal";
 
 // ── Lazy-loaded panels (kept out of the initial bundle) ────────────────────
@@ -23,6 +22,8 @@ import React from "react";
 // EmailCanvas uses forwardRef internally, so we import it directly to preserve
 // ref forwarding. next/dynamic's LoadableComponent wrapper drops refs even with
 // the React.forwardRef workaround, causing the console warning.
+import { BuilderToolbarContext, type SelectionColor } from "@/components/builder-toolbar-context";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailCanvas } from "@/components/email-canvas";
 const ComponentPalette = nextDynamic(
   () => import("@/components/component-palette").then((m) => ({ default: m.ComponentPalette })),
@@ -195,6 +196,72 @@ export default function EmailBuilder() {
   const [copyToTargets, setCopyToTargets] = useState<(1 | 2 | 3)[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [openPreview, setOpenPreview] = useState(false);
+
+  const [selectionColor, setSelectionColor] = useState<SelectionColor | null>(null);
+  const applySelectionColor = useRef<((color: string) => boolean) | null>(null);
+  const [formattingHost, setFormattingHost] = useState<HTMLDivElement | null>(null);
+  const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [versions, setVersions] = useState<EmailTemplateVersion[]>([]);
+  const [versionName, setVersionName] = useState("");
+  const [versionBusy, setVersionBusy] = useState(false);
+  const [versionError, setVersionError] = useState("");
+
+  const refreshVersions = async () => {
+    if (!currentTemplate) return;
+    setVersionDialogOpen(true);
+    setVersionBusy(true);
+    setVersionError("");
+    setVersions([]);
+    try {
+      setVersions(await firebaseService.listTemplateVersions(currentTemplate.id));
+    } catch {
+      setVersionError("Could not load version history.");
+    } finally {
+      setVersionBusy(false);
+    }
+  };
+
+  const saveVersion = async () => {
+    if (!currentTemplate) return;
+    setVersionBusy(true);
+    setVersionError("");
+    const editor = useEmailBuilderStore.getState();
+    try {
+      await firebaseService.saveTemplateVersion(currentTemplate.id, versionName.trim(), {
+        components: editor.components,
+        optionMode: editor.optionMode,
+        optionSubMode: editor.optionSubMode,
+        option2Components: editor.option2Components,
+        option3Components: editor.option3Components,
+        preheaderText: editor.preheaderText,
+      });
+      setVersionName("");
+    } catch {
+      setVersionError("Could not save this version.");
+      setVersionBusy(false);
+      return;
+    }
+    await refreshVersions();
+  };
+
+  const restoreVersion = (content: EmailTemplateVersionContent) => {
+    const editor = useEmailBuilderStore.getState();
+    editor.pushHistory();
+    useEmailBuilderStore.setState({
+      components: content.components,
+      optionMode: content.optionMode ?? "single",
+      optionSubMode: content.optionSubMode ?? "header-only",
+      option2Components: content.option2Components ?? [],
+      option3Components: content.option3Components ?? [],
+      preheaderText: content.preheaderText ?? "",
+      activeOption: 1,
+      selectedComponent: null,
+    });
+    editor.checkForChanges();
+    setVersionDialogOpen(false);
+    toast.success("Version loaded into the draft");
+  };
 
   // Run the builder initialization only ONCE per mount. The URL is rewritten
   // after mode selection (history.replaceState), which changes `searchParams`
@@ -491,7 +558,9 @@ function replaceImagesInComponents(components: any[]): any[] {
   const handleSaveComponentChanges = async () => {
     if (!currentTemplate) return false;
 
-    flushPendingUpdates();
+    const {
+      components, optionMode, optionSubMode, option2Components, option3Components, preheaderText,
+    } = useEmailBuilderStore.getState();
     setSaving(true);
     try {
       const updatedTemplate = await firebaseService.updateTemplate(
@@ -515,9 +584,32 @@ function replaceImagesInComponents(components: any[]): any[] {
       );
 
       if (!updatedTemplate) throw new Error('Failed to save emailer');
-      setCurrentTemplate(updatedTemplate);
-      setOriginalTemplate(updatedTemplate);
-      markComponentsSaved();
+      const editor = useEmailBuilderStore.getState();
+      if (editor.currentTemplate?.id === currentTemplate.id) {
+        useEmailBuilderStore.setState({
+          currentTemplate: updatedTemplate,
+          originalTemplate: updatedTemplate,
+          originalComponents: components,
+          originalOption2Components: option2Components,
+          originalOption3Components: option3Components,
+        });
+        editor.checkForChanges();
+      }
+
+      if (currentTemplate.isUserCreated) {
+        try {
+          await firebaseService.saveTemplateVersion(currentTemplate.id, "Before draft save", {
+            components: currentTemplate.components,
+            optionMode: currentTemplate.optionMode,
+            optionSubMode: currentTemplate.optionSubMode,
+            option2Components: currentTemplate.option2Components,
+            option3Components: currentTemplate.option3Components,
+            preheaderText: currentTemplate.preheaderText,
+          });
+        } catch {
+          toast.warning("Draft saved. The previous version could not be archived.");
+        }
+      }
       return true;
     } catch (error) {
       console.error("Failed to save component changes:", error);
@@ -534,7 +626,6 @@ function replaceImagesInComponents(components: any[]): any[] {
     category: string,
     brand: BrandId
   ) => {
-    flushPendingUpdates();
     setSaving(true);
     try {
       const normalizedName = name.trim().toLowerCase();
@@ -669,25 +760,6 @@ if (activeSelectedId) {
   parentId = null;
 }
 
-  // ── Debounced properties update ─────────────────────────────────────────
-  // Capture latest ids in a ref so the debounced callback stays stable
-  const activeIdRef = useRef(activeSelectedId);
-  const parentIdRef = useRef(parentId);
-  activeIdRef.current = activeSelectedId;
-  parentIdRef.current = parentId;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const {
-    debouncedUpdate: debouncedUpdateComponent,
-    flush: flushPendingUpdates,
-  } = useDebouncedUpdate(
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useCallback((updates: any) => {
-      if (!activeIdRef.current) return;
-      updateComponent(activeIdRef.current, updates, parentIdRef.current);
-    }, [updateComponent])
-  );
-
   if (loading) {
     return (
       <div className="h-full flex flex-col bg-gray-50 animate-pulse">
@@ -763,7 +835,7 @@ if (activeSelectedId) {
   const needsTemplateSave = hasUnsavedTemplate || isWorkingCopy;
 
   return (
-    <>
+    <BuilderToolbarContext.Provider value={{ sidebarFormatting: true, formatting: formattingHost, actions: actionsHost, applySelectionColor, selectionColor, setSelectionColor }}>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Auto-save restore banner */}
         {/* Header - sticky */}
@@ -866,6 +938,13 @@ if (activeSelectedId) {
               </Button>
             )}
 
+            {currentTemplate?.isUserCreated && isEdit && !isWorkingCopy && (
+              <Button variant="outline" size="sm" onClick={() => void refreshVersions()} title="Version history"
+                aria-label="Version history" className="h-7 w-7 p-0">
+                <HistoryIcon className="w-3.5 h-3.5" />
+              </Button>
+            )}
+
             {canSaveComponentChanges && (
               <Button variant="outline" size="sm" onClick={() => handleSaveComponentChanges()} disabled={saving}
                 className="h-7 px-2.5 text-xs rounded-md border-gray-300 flex items-center gap-1.5">
@@ -902,26 +981,24 @@ if (activeSelectedId) {
 
           {/* Components panel */}
           {!previewMode && (
-            <div className="w-72 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Components</h4>
+            <aside aria-label="Component library" className="flex w-[260px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+              <div className="shrink-0 border-b border-slate-200 px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-900">Components</h2>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">
-                <ComponentPalette
-                  onAddComponent={addComponent}
-                  customComponents={customComponents}
-                  disabled={isHeaderOnlyLocked}
-                  selectedBrand={selectedBrand}
-                  getSelectionInfo={() => {
-                    return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
-                  }}
-                  applyUpdates={(updates, parentId) => {
-                    if (!activeSelectedId) return
-                    updateComponent(activeSelectedId, updates, parentId)
-                  }}
-                />
-              </div>
-            </div>
+              <ComponentPalette
+                onAddComponent={addComponent}
+                customComponents={customComponents}
+                disabled={isHeaderOnlyLocked}
+                selectedBrand={selectedBrand}
+                getSelectionInfo={() => {
+                  return { components: getActiveComponents(), selectedComponent: activeSelectedId || selectedComponent }
+                }}
+                applyUpdates={(updates, parentId) => {
+                  if (!activeSelectedId) return
+                  updateComponent(activeSelectedId, updates, parentId)
+                }}
+              />
+            </aside>
           )}
 
           {/* Canvas */}
@@ -941,25 +1018,16 @@ if (activeSelectedId) {
             {(optionMode === "two" || optionMode === "three") && (
               <div className="mb-5 w-full max-w-[600px] sticky top-0 z-20 pt-4 pb-3 bg-[#f0f2f5]">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  {/* Tab row */}
-                  <div className="flex border-b border-gray-100">
-                    {(optionMode === "two" ? [1, 2] : [1, 2, 3] as const).map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => setActiveOption(opt as 1 | 2 | 3)}
-                        className={`flex-1 py-2.5 text-sm font-medium transition-colors relative ${
-                          activeOption === opt
-                            ? "text-[#BC2030] bg-red-50"
-                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-                        }`}
-                      >
-                        Option {opt}
-                        {activeOption === opt && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BC2030] rounded-t-full" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <Tabs value={String(activeOption)} onValueChange={(value) => setActiveOption(Number(value) as 1 | 2 | 3)}>
+                    <TabsList aria-label="Email options" className="grid h-auto w-full grid-flow-col auto-cols-fr gap-1 rounded-none bg-slate-100 p-1.5">
+                      {(optionMode === "two" ? [1, 2] : [1, 2, 3]).map(option => (
+                        <TabsTrigger key={option} value={String(option)}
+                          className="rounded-md px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-[#BC2030] data-[state=active]:shadow-sm">
+                          Option {option}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
                   {/* Info row */}
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
                     <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
@@ -1031,20 +1099,26 @@ if (activeSelectedId) {
 
           {/* Right Panel: Properties */}
           {!previewMode && (selectedComponent || (currentTemplate && isEdit)) && (
-            <div className="w-[272px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shrink-0">
-              <div className="px-3 py-2.5 border-b border-gray-100 shrink-0">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Properties</span>
+            <aside aria-label="Properties" className="eb-properties flex w-[304px] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-slate-50">
+              <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-900">Properties</h2>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              <div ref={setActionsHost} className="shrink-0 border-b border-slate-200 bg-white px-3 py-2 empty:hidden" />
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {selectedComponentData?.type !== "text" && (
+                    <div ref={setFormattingHost} className="px-3 pt-3 empty:hidden" />
+                  )}
                   {selectedComponent ? (
                     <div className="p-3">
                       <PropertiesPanel
+                        key={activeSelectedId}
                         component={selectedComponentData}
+                        formattingRef={setFormattingHost}
                         onDeleteComponent={deleteComponent}
-                        onUpdateComponent={(updates, immediate = false) => {
+                        onUpdateComponent={(updates) => {
                           if (!activeSelectedId) return;
-                          debouncedUpdateComponent(updates, immediate);
+                          updateComponent(activeSelectedId, updates, parentId);
                         }}
                         onSaveAsCustom={(name) => saveAsCustomComponent(name)}
                       />
@@ -1059,7 +1133,7 @@ if (activeSelectedId) {
                   )}
                 </div>
 
-            </div>
+            </aside>
           )}
         </div>
       </div>
@@ -1107,6 +1181,36 @@ if (activeSelectedId) {
         onOpenChange={setModeDialogOpen}
         onSelectMode={handleModeSelect}
       />
+
+      <Dialog open={versionDialogOpen} onOpenChange={open => { if (!versionBusy) setVersionDialogOpen(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Version history</DialogTitle>
+            <DialogDescription>Draft saves archive the previous saved version. You can also name a snapshot of the current draft. Loading a version puts it back in your draft for review.</DialogDescription>
+          </DialogHeader>
+          <form className="flex gap-2" onSubmit={event => { event.preventDefault(); void saveVersion(); }}>
+            <input aria-label="Version name" className="flex-1 rounded-md border px-3 text-sm" required maxLength={100}
+              value={versionName} onChange={event => setVersionName(event.target.value)} />
+            <Button type="submit" disabled={versionBusy || !versionName.trim()}>Save version</Button>
+          </form>
+          {versionError && <p role="alert" className="text-sm text-red-600">{versionError}</p>}
+          <div className="space-y-2 overflow-auto max-h-64">
+            {versionBusy && <p className="text-sm text-gray-500" role="status">Loading versions…</p>}
+            {!versionBusy && !versionError && versions.length === 0 && <p className="text-sm text-gray-500">No saved versions yet.</p>}
+            {versions.map(version => (
+              <div key={version.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{version.name}</p>
+                  <p className="text-xs text-gray-500">{version.savedAt?.toLocaleString()}</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" disabled={versionBusy} onClick={() => restoreVersion(version.content)}>
+                  Load into draft
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Email Preview Modal */}
       <EmailPreviewModal
@@ -1169,6 +1273,6 @@ if (activeSelectedId) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </BuilderToolbarContext.Provider>
   );
 }

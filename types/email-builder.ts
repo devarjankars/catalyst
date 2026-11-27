@@ -1,6 +1,6 @@
 export interface EmailComponent {
   id: string
-  type: "text" | "image" | "button" | "divider" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated" | "orserdu-report-links" | "orserdu-highlight-box" | "geron-highlight-box" | "geron-isi" | "geron-abbreviations" | "geron-references" | "geron-footer"
+  type: "text" | "image" | "button" | "divider" | "design-shape" | "section" | "custom" | "cta-button" | "footer-links" | "footer-links(3)" | "isi" | "sisi" | "bullet-list" | "header-image" | "Salutation" | "footer-tokens" | "orsedu-footer" | "orserdu-footer" | "chevron-divider" | "footer-link-2" | "image-with-link" | "ferring-footer" | "raw-html" | "elzonris-isi" | "footer-link-3" | "footer-with-Preferences" | "elzonris-divider" | "elzonris-brand-logo" | "elzonris-pi" | "elzonris-ref-abbr" | "elzonris-references" | "elzonris-abbreviations" | "elzonris-view-in-browser" | "orserdu-abbreviations" | "orserdu-references" | "orserdu-view-in-browser" | "orserdu-image-text-block" | "elzonris-image-text-block" | "email-footer" | "custom-text" | "tryvio-footer" | "tryvio-references" | "tryvio-abbreviations" | "tryvio-isi" | "tryvio-abbrev-ref" | "orserdu-isi-select" | "orserdu-emerald-stats" | "orserdu-isi-animated" | "orserdu-report-links" | "orserdu-highlight-box" | "geron-highlight-box" | "geron-isi" | "geron-abbreviations" | "geron-references" | "geron-footer"
 
   category: "basic" | "custom" | "orserdu" | "ferring" | "geron" | "user-created" | "idorsia"
 
@@ -33,6 +33,11 @@ export interface EmailComponent {
   columnWidth?: string
   columnMinHeight?: string
 
+  // Divider properties
+  dividerOrientation?: "horizontal" | "vertical"
+  dividerStroke?: string
+  dividerLength?: string
+
   // Text properties
   content?: string
   fontSize?: string
@@ -54,6 +59,10 @@ export interface EmailComponent {
   href?: string
   linkTitle?: string
   buttonPadding?: string
+  buttonOutlineColor?: string
+  buttonShadow?: boolean
+  buttonGradientColor?: string
+  shape?: "rectangle" | "circle" | "line"
 
   //cta-button properties
   imageSrc?: string
@@ -91,6 +100,7 @@ export interface EmailComponent {
   markerColor?: string
   discSize?: string
   listItems?: string[]
+  listMarkerColors?: Record<string, string>
   spaceBetweenItems?: string
 
   // footer tokens properties
@@ -194,6 +204,7 @@ export interface EmailComponent {
     normalText?: string;
     paddingTop?: string;
     paddingBottom?: string;
+    markerColor?: string;
   }>
   paragraphSpacingPx?: number
 
