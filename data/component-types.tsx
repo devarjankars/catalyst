@@ -1,3 +1,4 @@
+import { applyElzonrisIsiSpacing } from "@/lib/elzonris-isi-spacing";
 import { DEFAULT_ORSERDU_REPORT_LINK_COLOR } from "@/lib/orserdu-report-links";
 import { DEFAULT_DIVIDER_COLOR } from "@/lib/email-divider";
 import { DEFAULT_CUSTOM_TEXT_COLOR, DEFAULT_CUSTOM_TEXT_LINE_HEIGHT, DEFAULT_CUSTOM_TEXT_FONT_SIZE } from "@/lib/email-text-style";
@@ -688,7 +689,7 @@ export const componentTypes = [
     category: "elzonris",
     icon: NotepadText,
     defaultProps: {
-      html: ` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
+      html: applyElzonrisIsiSpacing(` <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
             <tbody>
                 <tr>
                     <td width="100%" height="15" style="font-size:0px;line-height:15px;mso-line-height-rule:exactly;">&nbsp;
@@ -958,7 +959,7 @@ export const componentTypes = [
                     </td>
                 </tr>
             </tbody>
-        </table>`,
+        </table>`),
     },
   },
    {
