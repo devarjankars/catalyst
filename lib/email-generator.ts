@@ -93,6 +93,64 @@ function paintOrserduInk(tag: string, color: string): string {
     : classified.replace(ending, ` style="${declarations}"$1`);
 }
 
+function normalizeHighlightInk(color: string): string | null {
+  const value = color.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(value)) return value;
+  if (/^#[0-9a-f]{3}$/.test(value)) return `#${value.slice(1).replace(/./g, digit => digit + digit)}`;
+  if (value === "black") return "#000000";
+  if (value === "white") return "#ffffff";
+  const rgb = value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+  if (rgb && rgb.slice(1).every(channel => Number(channel) <= 255)) {
+    return "#" + rgb.slice(1).map(channel => Number(channel).toString(16).padStart(2, "0")).join("");
+  }
+  return null;
+}
+
+function highlightUsesWhiteInDarkMode(background: string): boolean {
+  const hex = normalizeHighlightInk(background);
+  if (!hex) return false;
+  const [red, green, blue] = [1, 3, 5].map(offset => {
+    const value = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue <= 1.05 / 4.5 - 0.05;
+}
+
+function formatHighlightCopy(html: string, ink: string, whiteInDarkMode: boolean) {
+  const stack: { name: string; color: string | null; custom: boolean }[] = [];
+  let hasCustomInk = false;
+  const copy = html.replace(/<!--[\s\S]*?-->|<\/?[a-z](?:[^"'<>]|"[^"]*"|'[^']*')*>|[^<]+|</gi, token => {
+    if (token.startsWith("<!--")) return token;
+    const tag = token.match(/^<(\/?)([a-z][\w-]*)/i);
+    if (tag) {
+      const name = tag[2].toLowerCase();
+      if (tag[1]) {
+        const index = stack.map(element => element.name).lastIndexOf(name);
+        if (index !== -1) stack.splice(index);
+      } else if (!/^(?:area|br|col|hr|img|input|source|wbr)$/.test(name) && !token.endsWith("/>")) {
+        const parent = stack[stack.length - 1];
+        const style = token.match(/\sstyle\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
+        const explicit = style?.match(/(?:^|;)\s*color\s*:\s*([^;!]+)/i)?.[1] ??
+          (name === "font" ? token.match(/\scolor\s*=\s*(["'])(.*?)\1/i)?.[2] : undefined);
+        const custom = explicit !== undefined || !!parent?.custom;
+        const color = explicit !== undefined ? normalizeHighlightInk(explicit) : parent ? parent.color : ink;
+        hasCustomInk ||= custom;
+        stack.push({ name, color, custom });
+      }
+      return token;
+    }
+    if (!token.trim()) return token;
+    const parent = stack[stack.length - 1];
+    const color = parent ? parent.color : ink;
+    if (!color) return token;
+    const adapt = whiteInDarkMode && !parent?.custom;
+    const css = adapt && color !== "#ffffff" ? orserduInkStyle(color).replace(/ !important/g, "") : orserduInkStyle(color);
+    // The color attribute still gives the glyphs a color if a mail client removes the CSS.
+    return `<font color="${color}" class="${orserduColorClass(color)}${adapt ? " orserdu-highlight-ink" : ""}" style="${css}">${token}</font>`;
+  });
+  return { copy, hasCustomInk };
+}
+
 function applyOrserduBulletColor(html: string, color?: string): string {
   const defaultColor = color && /^#[0-9a-f]{6}$/i.test(color) ? color : undefined;
 
@@ -713,26 +771,15 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       const backgroundStyle = preserveOrserduColors
         ? `background-color:${boxBgColor} !important;background-image:linear-gradient(${boxBgColor},${boxBgColor}) !important;`
         : `background-color:${boxBgColor};`;
-      const ink = /^#[0-9a-f]{3}$/i.test(boxTextColor)
-        ? `#${boxTextColor.slice(1).replace(/./g, (channel: string) => channel + channel)}`
-        : boxTextColor;
-      const protectInk = preserveOrserduColors && /^#[0-9a-f]{6}$/i.test(ink);
-      const textColorStyle = protectInk ? orserduInkStyle(ink) : `color:${boxTextColor};`;
-      const textClass = protectInk ? orserduColorClass(ink) : "";
-      let hasCustomInk = false;
-      let copy = protectInk
-        ? boxText.replace(/<(?:p|div|span|font|b|strong|i|em|u|a|li|ul|ol|blockquote|h[1-6])\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi, (tag: string) => {
-            const style = tag.match(/\sstyle\s*=\s*(["'])(.*?)\1/i)?.[2];
-            if (style && /(?:^|;)\s*color\s*:/i.test(style)) {
-              hasCustomInk = true;
-              return tag;
-            }
-            return paintOrserduInk(tag, "inherit");
-          })
-        : boxText;
-      if (protectInk && ink.toLowerCase() === "#ffffff" && !hasCustomInk) {
-        copy = `<div class="orserdu-gmail-screen"><div class="orserdu-gmail-difference ${textClass}" style="${textColorStyle}">${copy}</div></div>`;
-      }
+      const ink = preserveOrserduColors ? normalizeHighlightInk(boxTextColor) : null;
+      const textColorStyle = ink ? orserduInkStyle(ink) : `color:${boxTextColor};`;
+      const textClass = ink ? orserduColorClass(ink) : "";
+      const whiteInDarkMode = !!ink && highlightUsesWhiteInDarkMode(boxBgColor);
+      const darkClass = whiteInDarkMode ? " orserdu-highlight-dark-white" : "";
+      const formatted = ink ? formatHighlightCopy(boxText, ink, whiteInDarkMode) : { copy: boxText, hasCustomInk: false };
+      const copy = ink === "#ffffff" && !formatted.hasCustomInk
+        ? `<div class="orserdu-gmail-screen"><div class="orserdu-gmail-difference ${textClass}" style="${textColorStyle}">${formatted.copy}</div></div>`
+        : formatted.copy;
 
       return `
 <table ${displayClass} ${displayStyle} role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -741,7 +788,7 @@ function generateComponentHTMLInternal(component: EmailComponent, pdfMode?: 'des
       <table width="100%" align="center" bgcolor="${boxBgColor}" border="0" cellspacing="0" cellpadding="0"
         style="${backgroundStyle}">
         <tbody><tr>
-          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy ${textClass}" bgcolor="${boxBgColor}"` : ""}
+          <td ${preserveOrserduColors ? `class="orserdu-highlight-copy ${textClass}${darkClass}" bgcolor="${boxBgColor}"` : ""}
             style="${preserveOrserduColors ? backgroundStyle : ""}padding:${boxPadding};font-family:Arial,sans-serif;font-size:${boxFontSize};line-height:${boxLineHeight};font-weight:${boxFontWeight};${textColorStyle}mso-line-height-rule:exactly;">
             ${copy}
           </td>

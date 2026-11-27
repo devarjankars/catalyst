@@ -17,6 +17,14 @@ function ensureOrserduColorStyles(html: string): string {
     const color = `#${className.slice("orserdu-ink-".length)}`;
     return `[data-ogsc] .${className}, [data-ogsc].${className}, [data-ogsb] .${className}, [data-ogsb].${className} { ${orserduInkStyle(color)} }`;
   });
+  if (html.includes("orserdu-highlight-dark-white")) {
+    const white = orserduInkStyle("#ffffff");
+    const selector = ".orserdu-highlight-dark-white .orserdu-highlight-ink";
+    rules.push(
+      `@media (prefers-color-scheme: dark) { ${selector} { ${white} } }`,
+      `[data-ogsc] ${selector}, [data-ogsb] ${selector}, .orserdu-highlight-dark-white[data-ogsc] .orserdu-highlight-ink, .orserdu-highlight-dark-white[data-ogsb] .orserdu-highlight-ink { ${white} }`,
+    );
+  }
   if (html.includes("orserdu-gmail-screen")) {
     // Gmail can invert the two black layers while the box gradient retains its color.
     rules.push(
@@ -141,11 +149,6 @@ export const EMAIL_DARK_MODE_CSS = `
 
   .dm-footer {
     background-color: #242426 !important;
-  }
-
-  .orserdu-highlight-copy * {
-    color: inherit !important;
-    -webkit-text-fill-color: inherit !important;
   }
 
   .elzonris-cta-bg {
