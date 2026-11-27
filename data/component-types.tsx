@@ -282,7 +282,7 @@ export const componentTypes = [
       { text: "Privacy and Terms of Use", href: "https://stemline.com/privacy-policy" },
       { text: "CCPA Policy", href: "https://stemline.com/ccpa-policy" },
       { text: "Cookies Policy", href: "https://stemline.com/cookie-policy" },
-      { text: "Unsubscribe", href: "https://stemline.com/cookie-policy" },
+      { text: "Unsubscribe", href: "#" },
       { text: "Email Preferences", href: "#", color: "#ff66cc" },
     ],
     fontSize: "12px",
